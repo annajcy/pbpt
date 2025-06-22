@@ -1,0 +1,17 @@
+# Doxyfile.in
+
+# 项目信息
+PROJECT_NAME           = "@CMAKE_PROJECT_NAME@"
+PROJECT_VERSION        = "@CMAKE_PROJECT_VERSION@"
+OUTPUT_DIRECTORY       = "@CMAKE_SOURCE_DIR@/docs"
+CREATE_SUBDIRS         = YES
+
+# 输入源
+INPUT                  = "@CMAKE_SOURCE_DIR@/src" 
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp *.cpp *h
+
+# 输出格式
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO

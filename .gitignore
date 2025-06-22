@@ -1,0 +1,70 @@
+# 忽略编译生成的文件
+*.o
+*.so
+*.dll
+*.exe
+*.out
+*.a
+*.lib
+
+# 忽略构建目录（如 CMake 的 build 目录）
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# 忽略 CMake 生成的缓存文件
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+compile_commands.json
+
+# 忽略 IDE 配置文件
+# Visual Studio
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.pdb
+ipch/
+*.idb
+*.opensdf
+*.VC.db
+*.VC.VC.opendb
+*.VSCodeCounter
+
+# CLion/JetBrains
+.idea/
+*.iml
+*.iws
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# 忽略系统生成的文件
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.tmp
+
+# 忽略测试或临时文件
+*.bak
+*.old
+*.orig
+*.test
+*.d
+
+# 忽略静态分析工具生成的文件
+.clangd/
+.coverage
+
+# 忽略其他临时和缓存文件
+*.gch
+*.lock
+*.cache
+
+*.engine_cpp
+*.diagram.cpp
+*.gen.txt

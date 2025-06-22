@@ -1,0 +1,59 @@
+# .github/workflows/ci.yml
+
+# 工作流的名称
+name: C++ CI/CD
+
+# 触发工作流的事件
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # 第 1 步: 检出代码
+      # 必须是第一步，因为后续步骤需要访问项目文件
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Prepare Vulkan SDK
+      uses: humbletim/setup-vulkan-sdk@v1.2.1
+      with:
+        vulkan-query-version: 1.4.304.0
+        vulkan-components: Vulkan-Headers, Vulkan-Loader
+        vulkan-use-cache: true
+
+    # 第 3 步: 安装其他系统依赖 (如 zlib, xorg)
+    - name: Install dependencies
+      run: |
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y xorg-dev libglu1-mesa-dev libwayland-dev libxkbcommon-dev zlib1g-dev
+        elif [ "${{ runner.os }}" == "macOS" ]; then
+          brew install zlib 
+        elif [ "${{ runner.os }}" == "Windows" ]; then
+          echo "Windows dependencies (GDI, zlib) are handled by the runner or FetchContent."
+        fi
+      shell: bash
+
+      # 第 4 步: 配置 CMake
+      # 此时所有系统依赖都已就绪
+    - name: Configure CMake
+      run: cmake -S . -B build -DPBPT_BUILD_TESTS=ON
+
+      # 第 5 步: 构建项目
+    - name: Build
+      run: cmake --build build --config Release
+
+      # 第 6 步: 运行测试
+    - name: Test
+      run: ctest --test-dir build -C Release --output-on-failure
