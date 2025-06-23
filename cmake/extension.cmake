@@ -49,19 +49,9 @@ set(GLFW_BUILD_TESTS    OFF)
 set(GLFW_BUILD_DOCS     OFF)
 FetchContent_MakeAvailable(glfw)
 
-# --- zlib ---
-include(FetchContent)
-FetchContent_Declare(
-  zlib_dep
-  GIT_REPOSITORY https://github.com/madler/zlib.git
-  GIT_TAG        v1.3.1
-)
-set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "Do not build zlib example programs")
-FetchContent_MakeAvailable(zlib_dep)
-
 # --- Assimp ---
 FetchContent_Declare(assimp GIT_REPOSITORY https://github.com/assimp/assimp.git GIT_TAG v5.4.1)
-set(ASSIMP_BUILD_ZLIB OFF) 
+set(ASSIMP_BUILD_ZLIB ON) 
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 set(ASSIMP_INSTALL OFF)
