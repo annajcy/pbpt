@@ -48,7 +48,7 @@ int main() {
 
     // 创建一个图像数据缓冲区
     // 使用 std::vector 来自动管理内存
-    std::vector<uint8_t> image_data(width_write * height_write * channels_write);
+    std::vector<unsigned char> image_data(width_write * height_write * channels_write);
 
     // 填充图像数据 (生成一个红色的图像)
     for (int y = 0; y < height_write; ++y) {
