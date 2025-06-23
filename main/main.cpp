@@ -84,7 +84,7 @@ int main() {
 
     // stbi_load(文件名, &宽, &高, &每个像素的组件数, 强制的组件数)
     // 最后一个参数为 0 表示使用文件自身的通道数
-    uint8_t* data = stbi_load("test.png", &width_read, &height_read, &channels_read, 0);
+    unsigned char* data = stbi_load("test.png", &width_read, &height_read, &channels_read, 0);
 
     // 检查加载是否成功
     if (data == nullptr) {
