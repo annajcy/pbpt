@@ -49,17 +49,8 @@ set(GLFW_BUILD_TESTS    OFF)
 set(GLFW_BUILD_DOCS     OFF)
 FetchContent_MakeAvailable(glfw)
 
-FetchContent_Declare(
-  zlib                           # 内容的名称，可以自定义
-  GIT_REPOSITORY https://github.com/madler/zlib.git
-  GIT_TAG        v1.3.1          # 指定一个具体的 Git 标签或提交哈希
-)
-set(ZLIB_BUILD_EXAMPLES OFF)
-FetchContent_MakeAvailable(zlib)
-
 # --- Assimp ---
 FetchContent_Declare(assimp GIT_REPOSITORY https://github.com/assimp/assimp.git GIT_TAG v5.4.1)
-set(ASSIMP_BUILD_ZLIB OFF CACHE BOOL "Do not build Assimp's bundled zlib")
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 set(ASSIMP_INSTALL OFF)
