@@ -79,12 +79,9 @@ FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git G
 # IMGUI_BUILD_EXAMPLES 是 imgui 内部的选项，无需设置，FetchContent_MakeAvailable 会处理
 FetchContent_MakeAvailable(imgui)
 
-# [修复] 1. 将 ImGui 定义为一个真正的静态库 (STATIC)，而不是接口库 (INTERFACE)
 #          因为它有自己的源文件需要编译。
 add_library(imgui_lib STATIC) # 使用一个不与 FetchContent 目标冲突的新名字
 
-# [修复] 2. 使用 target_* 命令为库添加源文件、头文件目录和依赖
-#          并正确使用 PUBLIC/PRIVATE 关键字控制依赖传递
 
 # ImGui 的源文件是其内部实现，使用 PRIVATE
 target_sources(imgui_lib PRIVATE
@@ -127,24 +124,8 @@ FetchContent_MakeAvailable(glm)
 # ====================================================================
 #  将所有依赖项聚合到列表中，供主目标使用
 # ====================================================================
-
-# 渲染后端专用库
-if (RENDER_BACKEND STREQUAL "Vulkan")
-  list(APPEND render_backend 
-    Vulkan::Vulkan
-  )
-elseif (RENDER_BACKEND STREQUAL "OpenGL")
-  list(APPEND render_backend 
-    glbinding::glbinding
-    glbinding::glbinding-aux
-    OpenGL::GL
-  )
-endif()
-
 # 通用第三方库
 list(APPEND ext_lib
-  # [修复] 3. 移除了 glfw，因为 imgui_lib 会通过 PUBLIC 依赖自动把它传递过来
-  # glfw 
   imgui_lib      # 使用我们新创建的、配置正确的 imgui 目标
   glm::glm       # 最好使用由 FetchContent 创建的带命名空间的目标名
   stb

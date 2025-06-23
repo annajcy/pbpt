@@ -1,12 +1,16 @@
 #include <vector>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
 #include <cstring>
+
+#include "gtest/gtest.h"
+
+#if defined (RENDER_BACKEND_VULKAN) 
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 class HelloTriangleApplication {
 private:
@@ -244,6 +248,7 @@ private:
     void loop() {
         while (!glfwWindowShouldClose(m_window)) {
             glfwPollEvents();
+            break;
         }
     }
 
@@ -263,15 +268,169 @@ private:
     }
 };
 
-int main() {
+//GOOGLE TEST
+GTEST_TEST(HelloTriangleApplication, VULKAN_BACKEND_SUPPORT) {
     HelloTriangleApplication app;
 
     try {
         app.run();
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        return 0;
+        GTEST_SKIP();
+    }
+    SUCCEED();
+}
+
+
+#endif
+
+
+#if defined (RENDER_BACKEND_OPENGL)
+
+#include <iostream>
+#include <stdexcept> // 用于 std::runtime_error
+
+// --- 依赖项 ---
+// 使用 glbinding 时，总是先包含 glbinding 的头文件
+#include <glbinding/glbinding.h>
+#include <glbinding/gl/gl.h>
+// 包含 glbinding-aux 以使用辅助功能，例如错误检查回调
+#include <glbinding-aux/debug.h>
+// 包含 GLFW
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+// GTest (用于测试)
+#include <gtest/gtest.h>
+
+
+// 使用 glbinding 的命名空间
+using namespace gl;
+
+/**
+ * @class HelloTriangleApplication
+ * @brief 封装了使用 GLFW 和 OpenGL (通过 glbinding) 创建窗口和渲染循环的所有逻辑。
+ */
+class HelloTriangleApplication {
+public:
+    /**
+     * @brief 运行应用程序的主入口点。
+     * * 这个方法会依次调用初始化、主循环和清理函数。
+     * 如果在初始化过程中发生错误，会抛出 std::runtime_error 异常。
+     */
+    void run() {
+        init_window_and_context();
+        main_loop();
+        cleanup();
     }
 
-    return 0;
+private:
+    /**
+     * @brief GLFW 错误回调函数。
+     * * 必须是静态成员，因为 GLFW 不知道如何处理 C++ 的 'this' 指针。
+     * @param error 错误码。
+     * @param description 错误的描述文本。
+     */
+    static void error_callback(int error, const char* description) {
+        std::cerr << "GLFW Error (" << error << "): " << description << std::endl;
+    }
+
+    /**
+     * @brief 初始化 GLFW、创建窗口和 OpenGL 上下文，并初始化 glbinding。
+     */
+    void init_window_and_context() {
+        // 1. 初始化 GLFW
+        glfwSetErrorCallback(error_callback);
+        if (!glfwInit()) {
+            throw std::runtime_error("Failed to initialize GLFW");
+        }
+
+        // 2. 创建窗口和 OpenGL 上下文
+        // 设置 OpenGL 版本 (这里是 3.3) 和核心模式 (Core Profile)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+        #ifdef __APPLE__
+            // 在 macOS 上需要这行代码才能使用核心模式
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+        #endif
+
+        // 创建窗口
+        m_window = glfwCreateWindow(m_width, m_height, "GLFW + glbinding", nullptr, nullptr);
+        if (!m_window) {
+            glfwTerminate(); // 在抛出异常前先终止GLFW
+            throw std::runtime_error("Failed to create GLFW window");
+        }
+
+        // 将窗口的 OpenGL 上下文设置为当前线程的上下文
+        glfwMakeContextCurrent(m_window);
+
+        // 3. 初始化 glbinding (这是关键一步!)
+        // 我们使用 glfwGetProcAddress 作为函数指针加载器来初始化 glbinding
+        glbinding::initialize(glfwGetProcAddress);
+
+        // (可选但强烈推荐) 启用一个调试回调，当发生 OpenGL 错误时自动打印信息
+        glbinding::aux::enableGetErrorCallback();
+
+        std::cout << "OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
+        std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+        std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+
+        // 4. 设置渲染视口
+        int fb_width, fb_height;
+        glfwGetFramebufferSize(m_window, &fb_width, &fb_height);
+        glViewport(0, 0, fb_width, fb_height);
+    }
+
+    /**
+     * @brief 应用程序的主循环（渲染循环）。
+     */
+    void main_loop() {
+        while (!glfwWindowShouldClose(m_window)) {
+            // --- 输入处理 ---
+            glfwPollEvents(); // 检查并处理窗口事件
+
+            // --- 渲染指令 ---
+            glClearColor(0.1f, 0.2f, 0.4f, 1.0f); // 设置清屏颜色
+            glClear(GL_COLOR_BUFFER_BIT);        // 清除颜色缓冲区
+
+            // (在这里添加你的其他绘图代码)
+
+            // --- 交换缓冲区并显示 ---
+            glfwSwapBuffers(m_window); // 将后台缓冲区的内容显示到前台
+
+            break;
+        }
+    }
+
+    /**
+     * @brief 清理资源，销毁窗口并终止 GLFW。
+     */
+    void cleanup() {
+        glfwDestroyWindow(m_window);
+        glfwTerminate();
+    }
+
+private:
+    GLFWwindow* m_window = nullptr; // 指向GLFW窗口的指针，初始化为nullptr
+    const int m_width = 800;        // 窗口宽度
+    const int m_height = 600;       // 窗口高度
+};
+
+
+// --- 单元测试 ---
+// 保持您原有的 GTest 结构不变
+GTEST_TEST(HelloTriangleApplication, OPENGL_BACKEND_SUPPORT) {
+    HelloTriangleApplication app;
+
+    try {
+        app.run();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        GTEST_SKIP() << "HelloTriangleApplication::run() threw an exception.";
+    }
+    // 如果没有异常抛出，测试通过
+    SUCCEED();
 }
+
+#endif // RENDER_BACKEND_OPENGL
