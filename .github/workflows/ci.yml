@@ -31,9 +31,10 @@ jobs:
           sudo apt-get install -y xorg-dev libglu1-mesa-dev libwayland-dev libxkbcommon-dev zlib1g-dev
         elif [ "${{ runner.os }}" == "macOS" ]; then
           echo "Installing dependencies for macOS..."
-          brew install zlib 
+          brew install zlib
         elif [ "${{ runner.os }}" == "Windows" ]; then
-          echo "Windows dependencies (GDI, zlib) are handled by the runner or FetchContent."
+          echo "Installing dependencies for Windows..."
+          choco install zlib
         fi
       shell: bash
 
