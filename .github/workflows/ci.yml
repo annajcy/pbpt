@@ -22,6 +22,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11.5
     
     - name: Install dependencies
       run: |
@@ -34,7 +37,7 @@ jobs:
           brew install zlib
         elif [ "${{ runner.os }}" == "Windows" ]; then
           echo "Installing dependencies for Windows..."
-          powershell -Command "Invoke-WebRequest -Uri https://git.io/JnHTY -OutFile install_zlib.bat; & ./install_zlib.bat; Remove-Item -Path install_zlib.bat -Force"
+          vcpkg install zlib:x64-windows
         fi
       shell: bash
 
