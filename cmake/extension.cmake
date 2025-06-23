@@ -1,6 +1,3 @@
-# 管理所有第三方依赖项
-include(FetchContent)
-
 # --- 测试框架 (只有在需要时才获取) ---
 if(PBPT_BUILD_TESTS)
   FetchContent_Declare(
@@ -45,21 +42,6 @@ if(slang_FOUND)
     message(STATUS "Successfully found Slang ${slang_VERSION} via FetchContent.")
 endif()
 
-# --------------------------------------------------------------------
-# 渲染后端
-# --------------------------------------------------------------------
-if (RENDER_BACKEND STREQUAL "Vulkan")
-  find_package(Vulkan REQUIRED)
-  message(STATUS "Vulkan_VERSION: ${Vulkan_VERSION}")
-elseif(RENDER_BACKEND STREQUAL "OpenGL")
-  find_package(OpenGL REQUIRED)
-  message(STATUS "OpenGL_VERSION: ${OpenGL_VERSION}")
-  FetchContent_Declare(glbinding GIT_REPOSITORY https://github.com/cginternals/glbinding.git GIT_TAG v3.3.0)
-  set(OPTION_BUILD_TESTS OFF)
-  FetchContent_MakeAvailable(glbinding)
-  message(STATUS "glbinding_VERSION: ${glbinding_VERSION}")
-endif()
-
 # --- GLFW ---
 FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 3.4)
 set(GLFW_BUILD_EXAMPLES OFF)
@@ -67,8 +49,19 @@ set(GLFW_BUILD_TESTS    OFF)
 set(GLFW_BUILD_DOCS     OFF)
 FetchContent_MakeAvailable(glfw)
 
+# --- zlib ---
+include(FetchContent)
+FetchContent_Declare(
+  zlib_dep
+  GIT_REPOSITORY https://github.com/madler/zlib.git
+  GIT_TAG        v1.3.1
+)
+set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "Do not build zlib example programs")
+FetchContent_MakeAvailable(zlib_dep)
+
 # --- Assimp ---
 FetchContent_Declare(assimp GIT_REPOSITORY https://github.com/assimp/assimp.git GIT_TAG v5.4.1)
+set(ASSIMP_BUILD_ZLIB OFF) 
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 set(ASSIMP_INSTALL OFF)
@@ -81,7 +74,6 @@ FetchContent_MakeAvailable(imgui)
 
 #          因为它有自己的源文件需要编译。
 add_library(imgui_lib STATIC) # 使用一个不与 FetchContent 目标冲突的新名字
-
 
 # ImGui 的源文件是其内部实现，使用 PRIVATE
 target_sources(imgui_lib PRIVATE
