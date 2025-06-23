@@ -110,30 +110,22 @@ constexpr&#160;</td><td class="memItemRight" valign="bottom"><b>Point</b> () noe
 requires (sizeof...(args) == N)</td></tr>
 <tr class="memitem:ab7c4e8ad30190b66daba4a1e1f4ca914 template"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab7c4e8ad30190b66daba4a1e1f4ca914">Point</a> (Args &amp;&amp;... args) noexcept</td></tr>
 <tr class="memdesc:ab7c4e8ad30190b66daba4a1e1f4ca914"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a point from a list of individual coordinate values.  <br /></td></tr>
-<tr class="memitem:a1cfb9a4e59b6f220cd78cc9a38f3bb4a" id="r_a1cfb9a4e59b6f220cd78cc9a38f3bb4a"><td class="memItemLeft" align="right" valign="top"><a id="a1cfb9a4e59b6f220cd78cc9a38f3bb4a" name="a1cfb9a4e59b6f220cd78cc9a38f3bb4a"></a>
-constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>x</b> () noexcept</td></tr>
-<tr class="memdesc:a1cfb9a4e59b6f220cd78cc9a38f3bb4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the first coordinate (x-axis). @requires N &gt; 0. <br /></td></tr>
-<tr class="memitem:afa273dd9cf7e3041215d497d96d0a36d" id="r_afa273dd9cf7e3041215d497d96d0a36d"><td class="memItemLeft" align="right" valign="top"><a id="afa273dd9cf7e3041215d497d96d0a36d" name="afa273dd9cf7e3041215d497d96d0a36d"></a>
-constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>y</b> () noexcept</td></tr>
-<tr class="memdesc:afa273dd9cf7e3041215d497d96d0a36d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the second coordinate (y-axis). @requires N &gt; 1. <br /></td></tr>
-<tr class="memitem:aa7bce7710f8c40458fb033c98be70eaa" id="r_aa7bce7710f8c40458fb033c98be70eaa"><td class="memItemLeft" align="right" valign="top"><a id="aa7bce7710f8c40458fb033c98be70eaa" name="aa7bce7710f8c40458fb033c98be70eaa"></a>
-constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>z</b> () noexcept</td></tr>
-<tr class="memdesc:aa7bce7710f8c40458fb033c98be70eaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the third coordinate (z-axis). @requires N &gt; 2. <br /></td></tr>
-<tr class="memitem:a54aa3ddeb39416171570ad7eb61eb357" id="r_a54aa3ddeb39416171570ad7eb61eb357"><td class="memItemLeft" align="right" valign="top"><a id="a54aa3ddeb39416171570ad7eb61eb357" name="a54aa3ddeb39416171570ad7eb61eb357"></a>
-constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>w</b> () noexcept</td></tr>
-<tr class="memdesc:a54aa3ddeb39416171570ad7eb61eb357"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the fourth coordinate (w-axis). @requires N &gt; 3. <br /></td></tr>
-<tr class="memitem:a1b5534483cdf79ce32eb4443435425b4" id="r_a1b5534483cdf79ce32eb4443435425b4"><td class="memItemLeft" align="right" valign="top"><a id="a1b5534483cdf79ce32eb4443435425b4" name="a1b5534483cdf79ce32eb4443435425b4"></a>
-constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>x</b> () const noexcept</td></tr>
-<tr class="memdesc:a1b5534483cdf79ce32eb4443435425b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the first coordinate (x-axis). @requires N &gt; 0. <br /></td></tr>
-<tr class="memitem:a1f288fd943f0257cef66aaa19e1d0f14" id="r_a1f288fd943f0257cef66aaa19e1d0f14"><td class="memItemLeft" align="right" valign="top"><a id="a1f288fd943f0257cef66aaa19e1d0f14" name="a1f288fd943f0257cef66aaa19e1d0f14"></a>
-constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>y</b> () const noexcept</td></tr>
-<tr class="memdesc:a1f288fd943f0257cef66aaa19e1d0f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the second coordinate (y-axis). @requires N &gt; 1. <br /></td></tr>
-<tr class="memitem:a3006f92be248358d4a964af9fde79383" id="r_a3006f92be248358d4a964af9fde79383"><td class="memItemLeft" align="right" valign="top"><a id="a3006f92be248358d4a964af9fde79383" name="a3006f92be248358d4a964af9fde79383"></a>
-constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>z</b> () const noexcept</td></tr>
-<tr class="memdesc:a3006f92be248358d4a964af9fde79383"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the third coordinate (z-axis). @requires N &gt; 2. <br /></td></tr>
-<tr class="memitem:a00d44c9202df1807b2cf35cb9180de05" id="r_a00d44c9202df1807b2cf35cb9180de05"><td class="memItemLeft" align="right" valign="top"><a id="a00d44c9202df1807b2cf35cb9180de05" name="a00d44c9202df1807b2cf35cb9180de05"></a>
-constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>w</b> () const noexcept</td></tr>
-<tr class="memdesc:a00d44c9202df1807b2cf35cb9180de05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the fourth coordinate (w-axis). @requires N &gt; 3. <br /></td></tr>
+<tr class="memitem:a1cfb9a4e59b6f220cd78cc9a38f3bb4a" id="r_a1cfb9a4e59b6f220cd78cc9a38f3bb4a"><td class="memItemLeft" align="right" valign="top">constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1cfb9a4e59b6f220cd78cc9a38f3bb4a">x</a> () noexcept</td></tr>
+<tr class="memdesc:a1cfb9a4e59b6f220cd78cc9a38f3bb4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the first coordinate (x-axis).  <br /></td></tr>
+<tr class="memitem:afa273dd9cf7e3041215d497d96d0a36d" id="r_afa273dd9cf7e3041215d497d96d0a36d"><td class="memItemLeft" align="right" valign="top">constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afa273dd9cf7e3041215d497d96d0a36d">y</a> () noexcept</td></tr>
+<tr class="memdesc:afa273dd9cf7e3041215d497d96d0a36d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the second coordinate (y-axis).  <br /></td></tr>
+<tr class="memitem:aa7bce7710f8c40458fb033c98be70eaa" id="r_aa7bce7710f8c40458fb033c98be70eaa"><td class="memItemLeft" align="right" valign="top">constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa7bce7710f8c40458fb033c98be70eaa">z</a> () noexcept</td></tr>
+<tr class="memdesc:aa7bce7710f8c40458fb033c98be70eaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the third coordinate (z-axis).  <br /></td></tr>
+<tr class="memitem:a54aa3ddeb39416171570ad7eb61eb357" id="r_a54aa3ddeb39416171570ad7eb61eb357"><td class="memItemLeft" align="right" valign="top">constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a54aa3ddeb39416171570ad7eb61eb357">w</a> () noexcept</td></tr>
+<tr class="memdesc:a54aa3ddeb39416171570ad7eb61eb357"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the fourth coordinate (w-axis).  <br /></td></tr>
+<tr class="memitem:a1b5534483cdf79ce32eb4443435425b4" id="r_a1b5534483cdf79ce32eb4443435425b4"><td class="memItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1b5534483cdf79ce32eb4443435425b4">x</a> () const noexcept</td></tr>
+<tr class="memdesc:a1b5534483cdf79ce32eb4443435425b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the first coordinate (x-axis).  <br /></td></tr>
+<tr class="memitem:a1f288fd943f0257cef66aaa19e1d0f14" id="r_a1f288fd943f0257cef66aaa19e1d0f14"><td class="memItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1f288fd943f0257cef66aaa19e1d0f14">y</a> () const noexcept</td></tr>
+<tr class="memdesc:a1f288fd943f0257cef66aaa19e1d0f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the second coordinate (y-axis).  <br /></td></tr>
+<tr class="memitem:a3006f92be248358d4a964af9fde79383" id="r_a3006f92be248358d4a964af9fde79383"><td class="memItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3006f92be248358d4a964af9fde79383">z</a> () const noexcept</td></tr>
+<tr class="memdesc:a3006f92be248358d4a964af9fde79383"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the third coordinate (z-axis).  <br /></td></tr>
+<tr class="memitem:a00d44c9202df1807b2cf35cb9180de05" id="r_a00d44c9202df1807b2cf35cb9180de05"><td class="memItemLeft" align="right" valign="top">constexpr T&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a00d44c9202df1807b2cf35cb9180de05">w</a> () const noexcept</td></tr>
+<tr class="memdesc:a00d44c9202df1807b2cf35cb9180de05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the fourth coordinate (w-axis).  <br /></td></tr>
 <tr class="memitem:acd4ffe984be2e39cdbb9be22ffbff73e" id="r_acd4ffe984be2e39cdbb9be22ffbff73e"><td class="memItemLeft" align="right" valign="top"><a id="acd4ffe984be2e39cdbb9be22ffbff73e" name="acd4ffe984be2e39cdbb9be22ffbff73e"></a>
 constexpr int&#160;</td><td class="memItemRight" valign="bottom"><b>dims</b> () const noexcept</td></tr>
 <tr class="memdesc:acd4ffe984be2e39cdbb9be22ffbff73e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of dimensions of the point. <br /></td></tr>
@@ -287,10 +279,11 @@ requires (sizeof...(args) == N)</div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">args</td><td>The coordinate values. @requires The number of arguments <span class="tt">sizeof...(args)</span> must be equal to <span class="tt">N</span>. </td></tr>
+    <tr><td class="paramname">args</td><td>The coordinate values. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>The number of arguments <span class="tt">sizeof...(args)</span> must be equal to <span class="tt">N</span>. </dd></dl>
 
 </div>
 </div>
@@ -427,6 +420,246 @@ template&lt;typename T, int N&gt; </div>
 
 </div>
 </div>
+<a id="a00d44c9202df1807b2cf35cb9180de05" name="a00d44c9202df1807b2cf35cb9180de05"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00d44c9202df1807b2cf35cb9180de05">&#9670;&#160;</a></span>w() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::w </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Const access to the fourth coordinate (w-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 3. </dd></dl>
+
+</div>
+</div>
+<a id="a54aa3ddeb39416171570ad7eb61eb357" name="a54aa3ddeb39416171570ad7eb61eb357"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54aa3ddeb39416171570ad7eb61eb357">&#9670;&#160;</a></span>w() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T &amp; <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::w </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Accesses the fourth coordinate (w-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 3. </dd></dl>
+
+</div>
+</div>
+<a id="a1b5534483cdf79ce32eb4443435425b4" name="a1b5534483cdf79ce32eb4443435425b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b5534483cdf79ce32eb4443435425b4">&#9670;&#160;</a></span>x() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::x </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Const access to the first coordinate (x-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 0. </dd></dl>
+
+</div>
+</div>
+<a id="a1cfb9a4e59b6f220cd78cc9a38f3bb4a" name="a1cfb9a4e59b6f220cd78cc9a38f3bb4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1cfb9a4e59b6f220cd78cc9a38f3bb4a">&#9670;&#160;</a></span>x() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T &amp; <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::x </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Accesses the first coordinate (x-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 0. </dd></dl>
+
+</div>
+</div>
+<a id="a1f288fd943f0257cef66aaa19e1d0f14" name="a1f288fd943f0257cef66aaa19e1d0f14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f288fd943f0257cef66aaa19e1d0f14">&#9670;&#160;</a></span>y() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::y </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Const access to the second coordinate (y-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 1. </dd></dl>
+
+</div>
+</div>
+<a id="afa273dd9cf7e3041215d497d96d0a36d" name="afa273dd9cf7e3041215d497d96d0a36d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa273dd9cf7e3041215d497d96d0a36d">&#9670;&#160;</a></span>y() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T &amp; <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::y </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Accesses the second coordinate (y-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 1. </dd></dl>
+
+</div>
+</div>
+<a id="a3006f92be248358d4a964af9fde79383" name="a3006f92be248358d4a964af9fde79383"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3006f92be248358d4a964af9fde79383">&#9670;&#160;</a></span>z() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::z </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Const access to the third coordinate (z-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 2. </dd></dl>
+
+</div>
+</div>
+<a id="aa7bce7710f8c40458fb033c98be70eaa" name="aa7bce7710f8c40458fb033c98be70eaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa7bce7710f8c40458fb033c98be70eaa">&#9670;&#160;</a></span>z() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T &amp; <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::z </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Accesses the third coordinate (z-axis). </p>
+<dl class="section note"><dt>Note</dt><dd>N &gt; 2. </dd></dl>
+
+</div>
+</div>
 <a id="a58d9bf368655f509c11d4b836a216e08" name="a58d9bf368655f509c11d4b836a216e08"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a58d9bf368655f509c11d4b836a216e08">&#9670;&#160;</a></span>zeros()</h2>
 
@@ -515,7 +748,7 @@ template&lt;typename T, int N&gt; </div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>pbpt</b></li><li class="navelem"><a href="../../d1/d2f/namespacepbpt_1_1math.html">math</a></li><li class="navelem"><a href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a></li>
+    <li class="navelem"><a href="../../d8/dab/namespacepbpt.html">pbpt</a></li><li class="navelem"><a href="../../d1/d2f/namespacepbpt_1_1math.html">math</a></li><li class="navelem"><a href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.14.0 </li>
   </ul>
 </div>

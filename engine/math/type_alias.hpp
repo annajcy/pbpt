@@ -11,9 +11,6 @@
  */
 
 namespace pbpt {
-/**
- * @brief The main namespace for the Physically Based Path Tracer project.
- */
 namespace math {
 
 /**

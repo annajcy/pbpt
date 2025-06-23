@@ -14,9 +14,12 @@
  * This is achieved by checking `std::is_constant_evaluated()`.
  */
 
+ /**
+ * @brief The main namespace for the Physically Based Path Tracer project.
+ */
 namespace pbpt {
 /**
- * @brief The main namespace for the Physically Based Path Tracer project.
+ * @brief The namespace for math library implementation
  */
 namespace math {
 /**
@@ -26,7 +29,6 @@ namespace math {
 namespace detail {
 
 /**
- * @internal
  * @brief A `constexpr` implementation of the square root function using the Newton-Raphson method.
  * @details This function recursively approximates the square root. It is intended for
  * compile-time use only and is called by the public `pbpt::math::sqrt` function.

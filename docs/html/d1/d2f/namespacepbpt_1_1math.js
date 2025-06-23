@@ -1,6 +1,8 @@
 var namespacepbpt_1_1math =
 [
-    [ "detail", "d1/d30/namespacepbpt_1_1math_1_1detail.html", null ],
+    [ "detail", "d1/d30/namespacepbpt_1_1math_1_1detail.html", [
+      [ "sqrt_newton_raphson", "d1/d30/namespacepbpt_1_1math_1_1detail.html#a498e700b59ce33ea68c0cc819c7ef070", null ]
+    ] ],
     [ "Point", "d7/d1b/classpbpt_1_1math_1_1_point.html", "d7/d1b/classpbpt_1_1math_1_1_point" ],
     [ "Ray", "de/d7d/classpbpt_1_1math_1_1_ray.html", "de/d7d/classpbpt_1_1math_1_1_ray" ],
     [ "Vec", "dd/da3/classpbpt_1_1math_1_1_vec.html", "dd/da3/classpbpt_1_1math_1_1_vec" ],

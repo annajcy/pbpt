@@ -27,6 +27,7 @@ var NAVTREEINDEX0 =
 "d1/d2f/namespacepbpt_1_1math.html#adab0d8645ae236673922a01a427eff8d":[0,0,0,0,17],
 "d1/d2f/namespacepbpt_1_1math.html#afbb833a945b8d33091ff5f35e5539c03":[0,0,0,0,15],
 "d1/d30/namespacepbpt_1_1math_1_1detail.html":[0,0,0,0,0],
+"d1/d30/namespacepbpt_1_1math_1_1detail.html#a498e700b59ce33ea68c0cc819c7ef070":[0,0,0,0,0,0],
 "d7/d1b/classpbpt_1_1math_1_1_point.html":[0,0,0,0,1],
 "d7/d1b/classpbpt_1_1math_1_1_point.html":[1,0,0,0,0],
 "d7/d1b/classpbpt_1_1math_1_1_point.html#a00d44c9202df1807b2cf35cb9180de05":[0,0,0,0,1,10],
@@ -69,6 +70,7 @@ var NAVTREEINDEX0 =
 "d7/d1b/classpbpt_1_1math_1_1_point.html#afa273dd9cf7e3041215d497d96d0a36d":[1,0,0,0,0,15],
 "d7/d7c/function_8hpp.html":[2,0,0,0,0],
 "d7/d7c/function_8hpp_source.html":[2,0,0,0,0],
+"d8/dab/namespacepbpt.html":[0,0,0],
 "da/d16/vector_8hpp.html":[2,0,0,0,4],
 "da/d16/vector_8hpp_source.html":[2,0,0,0,4],
 "db/d1d/ray_8hpp.html":[2,0,0,0,2],
@@ -152,6 +154,5 @@ var NAVTREEINDEX0 =
 "namespacemembers_func.html":[0,1,1],
 "namespacemembers_type.html":[0,1,2],
 "namespaces.html":[0,0],
-"pages.html":[],
-"":[0,0,0]
+"pages.html":[]
 };

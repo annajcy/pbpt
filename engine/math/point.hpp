@@ -79,7 +79,7 @@ public:
      * @details The number of arguments must exactly match the point's dimension N.
      * @tparam Args A parameter pack of types convertible to T.
      * @param args The coordinate values.
-     * @requires The number of arguments `sizeof...(args)` must be equal to `N`.
+     * @note The number of arguments `sizeof...(args)` must be equal to `N`.
      */
     template<std::convertible_to<T>... Args>
     constexpr explicit Point(Args&&... args) noexcept requires(sizeof...(args) == N)
@@ -87,22 +87,22 @@ public:
 
     // --- 访问器 (Accessors) ---
 
-    /** @brief Accesses the first coordinate (x-axis). @requires N > 0. */
+    /** @brief Accesses the first coordinate (x-axis). @note N > 0. */
     constexpr T& x() noexcept requires(N > 0) { return m_coords.x(); }
-    /** @brief Accesses the second coordinate (y-axis). @requires N > 1. */
+    /** @brief Accesses the second coordinate (y-axis). @note N > 1. */
     constexpr T& y() noexcept requires(N > 1) { return m_coords.y(); }
-    /** @brief Accesses the third coordinate (z-axis). @requires N > 2. */
+    /** @brief Accesses the third coordinate (z-axis). @note N > 2. */
     constexpr T& z() noexcept requires(N > 2) { return m_coords.z(); }
-    /** @brief Accesses the fourth coordinate (w-axis). @requires N > 3. */
+    /** @brief Accesses the fourth coordinate (w-axis). @note N > 3. */
     constexpr T& w() noexcept requires(N > 3) { return m_coords.w(); }
 
-    /** @brief Const access to the first coordinate (x-axis). @requires N > 0. */
+    /** @brief Const access to the first coordinate (x-axis). @note N > 0. */
     constexpr T x() const noexcept requires(N > 0) { return m_coords.x(); }
-    /** @brief Const access to the second coordinate (y-axis). @requires N > 1. */
+    /** @brief Const access to the second coordinate (y-axis). @note N > 1. */
     constexpr T y() const noexcept requires(N > 1) { return m_coords.y(); }
-    /** @brief Const access to the third coordinate (z-axis). @requires N > 2. */
+    /** @brief Const access to the third coordinate (z-axis). @note N > 2. */
     constexpr T z() const noexcept requires(N > 2) { return m_coords.z(); }
-    /** @brief Const access to the fourth coordinate (w-axis). @requires N > 3. */
+    /** @brief Const access to the fourth coordinate (w-axis). @note N > 3. */
     constexpr T w() const noexcept requires(N > 3) { return m_coords.w(); }
 
     /** @brief Returns the number of dimensions of the point. */

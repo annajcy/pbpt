@@ -15,9 +15,6 @@
  */
 
 namespace pbpt {
-/**
- * @brief The main namespace for the Physically Based Path Tracer project.
- */
 namespace math {
 
 /**
@@ -73,7 +70,7 @@ public:
      * The number of arguments must exactly match the vector's dimension N.
      * @tparam Args A parameter pack of types convertible to T.
      * @param args The component values.
-     * @requires The number of arguments `sizeof...(args)` must be equal to `N`.
+     * @note The number of arguments `sizeof...(args)` must be equal to `N`.
      */
     template<std::convertible_to<T>... Args>
     constexpr explicit Vec(Args&&... args) noexcept requires(sizeof...(args) == N) {
@@ -82,22 +79,22 @@ public:
 
     // --- 访问器 (Accessors) ---
 
-    /** @brief Accesses the first component (x-axis). @requires N > 0. */
+    /** @brief Accesses the first component (x-axis). @note N > 0. */
     constexpr T& x() noexcept requires(N > 0) { return m_data[0]; }
-    /** @brief Accesses the second component (y-axis). @requires N > 1. */
+    /** @brief Accesses the second component (y-axis). @note N > 1. */
     constexpr T& y() noexcept requires(N > 1) { return m_data[1]; }
-    /** @brief Accesses the third component (z-axis). @requires N > 2. */
+    /** @brief Accesses the third component (z-axis). @note N > 2. */
     constexpr T& z() noexcept requires(N > 2) { return m_data[2]; }
-    /** @brief Accesses the fourth component (w-axis). @requires N > 3. */
+    /** @brief Accesses the fourth component (w-axis). @note N > 3. */
     constexpr T& w() noexcept requires(N > 3) { return m_data[3]; }
 
-    /** @brief Const access to the first component (x-axis). @requires N > 0. */
+    /** @brief Const access to the first component (x-axis). @note N > 0. */
     constexpr T x() const noexcept requires(N > 0) { return m_data[0]; }
-    /** @brief Const access to the second component (y-axis). @requires N > 1. */
+    /** @brief Const access to the second component (y-axis). @note N > 1. */
     constexpr T y() const noexcept requires(N > 1) { return m_data[1]; }
-    /** @brief Const access to the third component (z-axis). @requires N > 2. */
+    /** @brief Const access to the third component (z-axis). @note N > 2. */
     constexpr T z() const noexcept requires(N > 2) { return m_data[2]; }
-    /** @brief Const access to the fourth component (w-axis). @requires N > 3. */
+    /** @brief Const access to the fourth component (w-axis). @note N > 3. */
     constexpr T w() const noexcept requires(N > 3) { return m_data[3]; }
 
     /** @brief Returns the number of dimensions of the vector. */
@@ -247,7 +244,7 @@ public:
      * @brief Calculates the cross product of this vector and another.
      * @param rhs The other vector.
      * @return The resulting vector perpendicular to the two input vectors.
-     * @requires This operation is only defined for 3D vectors (N == 3).
+     * @note This operation is only defined for 3D vectors (N == 3).
      */
     constexpr Vec cross(const Vec& rhs) const noexcept requires(N == 3) {
         return Vec(
