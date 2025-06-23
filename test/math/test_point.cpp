@@ -71,13 +71,6 @@ TEST(PointTest, AlgebraicOperations) {
     EXPECT_FLOAT_EQ(p_new.x(), p2.x());
     EXPECT_FLOAT_EQ(p_new.y(), p2.y());
     EXPECT_FLOAT_EQ(p_new.z(), p2.z());
-    
-    // 规则 2 (交换律): Vector + Point = Point
-    auto p_new_commutative = v + p1;
-    static_assert(std::is_same_v<decltype(p_new_commutative), Point3>, "Vector + Point should yield a Point");
-    EXPECT_FLOAT_EQ(p_new_commutative.x(), p2.x());
-    EXPECT_FLOAT_EQ(p_new_commutative.y(), p2.y());
-    EXPECT_FLOAT_EQ(p_new_commutative.z(), p2.z());
 
     // 规则 3: Point - Vector = Point
     auto p_subtracted = p2 - v;

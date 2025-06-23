@@ -2,7 +2,7 @@ find_package(Doxygen COMPONENTS dot)
 
 if(DOXYGEN_FOUND)
     # 设置 Doxyfile.in 模板文件的位置和生成后 Doxyfile 的位置
-    set(DOXYFILE_IN "Doxyfile.in")
+    set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in")
     set(DOXYFILE_OUT "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
 
     # 使用 configure_file 命令，根据模板生成最终的配置文件

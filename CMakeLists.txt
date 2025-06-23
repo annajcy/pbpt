@@ -41,7 +41,7 @@ endif()
 # 文档生成
 # ====================================================================
 if(PBPT_BUILD_DOCUMENTATION)
-  add_subdirectory(docs)
+  include(document)
   message(STATUS "Documentation is enabled.")
 else()
   message(STATUS "Documentation is disabled. To enable it, set PBPT_BUILD_DOCUMENTATION to ON.")

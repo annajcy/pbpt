@@ -1,0 +1,3 @@
+[submodule "pbpt_docs"]
+	path = pbpt_docs
+	url = https://github.com/annajcy/pbpt_docs.git

@@ -190,17 +190,6 @@ constexpr Point<T, N> operator+(const Point<T, N>& lhs, const Vec<T, N>& rhs) no
 }
 
 /**
- * @brief Rule 2 (Commutative): Translates a point by a vector (`Vector + Point = Point`).
- * @param lhs The displacement vector.
- * @param rhs The starting point.
- * @return The new, translated point.
- */
-template<typename T, int N>
-constexpr Point<T, N> operator+(const Vec<T, N>& lhs, const Point<T, N>& rhs) noexcept {
-    return rhs + lhs;
-}
-
-/**
  * @brief Rule 3: Translates a point by the negative of a vector (`Point - Vector = Point`).
  * @param lhs The starting point.
  * @param rhs The displacement vector to subtract.
