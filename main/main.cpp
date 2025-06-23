@@ -4,6 +4,7 @@
 
 #include "slang.h"
 #include "imgui.h"
+#include <vector>
 
 #if defined (RENDER_BACKEND_VULKAN)
     #include "vulkan/vulkan.h"
@@ -31,7 +32,6 @@ int main() {
     math::Point3 p(1.0, 2.0, 3.0);
     std::cout << "p: " << p << std::endl;
     std::cout << static_cast<int>(slang::BindingType::BaseMask) << std::endl;
-    std::cout << vk::ApiVersion << std::endl;
 
     ImGui::CreateContext();
     std::cout << ImGui::GetVersion() << std::endl;
