@@ -2,13 +2,19 @@
 #include "assimp/Importer.hpp"
 #include "math/point.hpp"
 
-#include "vulkan/vulkan.h"
-#include "vulkan/vulkan_core.h"
-#include "vulkan/vulkan.hpp"
-
 #include "slang.h"
 #include "imgui.h"
-#include "imgui_impl_vulkan.h"
+
+#if defined (RENDER_BACKEND_VULKAN)
+    #include "vulkan/vulkan.h"
+    #include "vulkan/vulkan_core.h"
+    #include "vulkan/vulkan.hpp"
+    #include "imgui_impl_vulkan.h"
+#endif
+
+#if defined (RENDER_BACKEND_OPENGL)
+
+#endif
 
 #include "glm/glm.hpp"
 
@@ -26,13 +32,6 @@ int main() {
     std::cout << "p: " << p << std::endl;
     std::cout << static_cast<int>(slang::BindingType::BaseMask) << std::endl;
     std::cout << vk::ApiVersion << std::endl;
-
-    vk::ApplicationInfo app_info;
-    app_info.pApplicationName = "PBPT";
-    app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.pEngineName = "PBPT Engine";
-    app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.apiVersion = vk::ApiVersion;
 
     ImGui::CreateContext();
     std::cout << ImGui::GetVersion() << std::endl;
