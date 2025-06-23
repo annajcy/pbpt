@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <stdexcept> // 用于 std::runtime_error
 
-#include "ray.hpp"
+#include "math/ray.hpp"
 
 // 使用命名空间以简化代码
 using namespace pbpt::math;

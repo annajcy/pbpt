@@ -3,7 +3,7 @@
 #include <type_traits> 
 
 #include "test_type_alias.hpp"
-#include "point.hpp"
+#include "math/point.hpp"
 
 using namespace pbpt::math;
 

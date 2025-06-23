@@ -3,7 +3,7 @@
 #include <type_traits>
 
 // 包含被测试的头文件和其依赖
-#include "vector.hpp"
+#include "math/vector.hpp"
 // 假设 type_alias.hpp 和 function.hpp 已被 vector.hpp 包含
 
 // 使用命名空间以简化代码
