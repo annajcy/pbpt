@@ -51,7 +51,7 @@ FetchContent_MakeAvailable(glfw)
 
 # --- Assimp ---
 FetchContent_Declare(assimp GIT_REPOSITORY https://github.com/assimp/assimp.git GIT_TAG v5.4.1)
-set(ASSIMP_BUILD_ZLIB ON) 
+set(ASSIMP_BUILD_ZLIB OFF CACHE BOOL "Do not build Assimp's bundled zlib")
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 set(ASSIMP_INSTALL OFF)
@@ -62,7 +62,7 @@ FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git G
 # IMGUI_BUILD_EXAMPLES 是 imgui 内部的选项，无需设置，FetchContent_MakeAvailable 会处理
 FetchContent_MakeAvailable(imgui)
 
-#          因为它有自己的源文件需要编译。
+# 因为它有自己的源文件需要编译。
 add_library(imgui_lib STATIC) # 使用一个不与 FetchContent 目标冲突的新名字
 
 # ImGui 的源文件是其内部实现，使用 PRIVATE
@@ -90,7 +90,6 @@ elseif(RENDER_BACKEND STREQUAL "OpenGL")
   # ImGui 的使用者也需要链接 OpenGL 和 glfw，所以用 PUBLIC
   target_link_libraries(imgui_lib PUBLIC OpenGL::GL glfw)
 endif()
-
 
 # --- STB ---
 FetchContent_Declare(stb GIT_REPOSITORY https://github.com/nothings/stb.git GIT_TAG master)
@@ -121,3 +120,5 @@ if (PBPT_BUILD_TESTS)
     GTest::gtest_main # 使用由 FetchContent 创建的带命名空间的目标名
   )
 endif()
+
+list(APPEND ext_move_lib slang::slang)

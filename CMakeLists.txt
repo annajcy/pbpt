@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(FetchContent)
 
 option(PBPT_BUILD_TESTS "Build the project's tests" ON)
-option(BUILD_DOCUMENTATION "Build the Doxygen documentation" ON)
+option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" ON)
 option(PBPT_BUILD_EXAMPLES "Build the project's examples" ON)
 
 # ====================================================================
@@ -21,7 +21,8 @@ include(utils)
 # ====================================================================
 # 添加项目源代码
 # ====================================================================
-add_subdirectory(src)
+add_subdirectory(engine)
+add_subdirectory(main)
 
 # ====================================================================
 # 测试构建选项
@@ -39,6 +40,10 @@ endif()
 # ====================================================================
 # 文档生成
 # ====================================================================
-if(BUILD_DOCUMENTATION)
+if(PBPT_BUILD_DOCUMENTATION)
   add_subdirectory(docs)
+  message(STATUS "Documentation is enabled.")
+else()
+  message(STATUS "Documentation is disabled. To enable it, set PBPT_BUILD_DOCUMENTATION to ON.")
 endif()
+
