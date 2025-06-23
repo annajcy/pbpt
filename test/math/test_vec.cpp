@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <sstream>
+#include <stdexcept>
 #include <type_traits>
 
 // 包含被测试的头文件和其依赖
@@ -115,9 +116,9 @@ TEST(VectorFinalConstexprTest, CompileTimeErrorChecks) {
 
 TEST(VectorFinalRuntimeTest, OutOfBoundsAccess) {
     Vec3 v;
-    // 验证运行时下标越界会抛出 std::out_of_range
-    EXPECT_THROW(v[3], std::out_of_range);
-    EXPECT_THROW(v[-1], std::out_of_range);
+    // 验证运行时下标越界会抛出 std::runtime_error
+    EXPECT_THROW(v[3], std::runtime_error);
+    EXPECT_THROW(v[-1], std::runtime_error);
 }
 
 TEST(VectorFinalRuntimeTest, NormalizeZeroVector) {

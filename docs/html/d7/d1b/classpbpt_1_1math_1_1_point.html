@@ -91,58 +91,414 @@ $(function(){initNavTree('d7/d1b/classpbpt_1_1math_1_1_point.html','../../','d1/
   <div class="headertitle"><div class="title">pbpt::math::Point&lt; T, N &gt; Class Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>A template class for an N-dimensional point in space.  
+ <a href="#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="../../d0/de4/point_8hpp_source.html">point.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a164f09a6c1a49ab6e5cb747e451c09bc" id="r_a164f09a6c1a49ab6e5cb747e451c09bc"><td class="memItemLeft" align="right" valign="top"><a id="a164f09a6c1a49ab6e5cb747e451c09bc" name="a164f09a6c1a49ab6e5cb747e451c09bc"></a>
-constexpr&#160;</td><td class="memItemRight" valign="bottom"><b>Point</b> (T value) noexcept</td></tr>
-<tr class="memitem:a7a146c2f9634f263cca9204b237939a1" id="r_a7a146c2f9634f263cca9204b237939a1"><td class="memItemLeft" align="right" valign="top"><a id="a7a146c2f9634f263cca9204b237939a1" name="a7a146c2f9634f263cca9204b237939a1"></a>
-constexpr&#160;</td><td class="memItemRight" valign="bottom"><b>Point</b> (const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;vec) noexcept</td></tr>
-<tr class="memitem:ab7c4e8ad30190b66daba4a1e1f4ca914" id="r_ab7c4e8ad30190b66daba4a1e1f4ca914"><td class="memTemplParams" colspan="2"><a id="ab7c4e8ad30190b66daba4a1e1f4ca914" name="ab7c4e8ad30190b66daba4a1e1f4ca914"></a>
-template&lt;std::convertible_to&lt; T &gt;... Args&gt; <br />
+<tr class="memitem:a349654edbf4ca320a4a267ede35e377d" id="r_a349654edbf4ca320a4a267ede35e377d"><td class="memItemLeft" align="right" valign="top"><a id="a349654edbf4ca320a4a267ede35e377d" name="a349654edbf4ca320a4a267ede35e377d"></a>
+constexpr&#160;</td><td class="memItemRight" valign="bottom"><b>Point</b> () noexcept</td></tr>
+<tr class="memdesc:a349654edbf4ca320a4a267ede35e377d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor. Initializes the point at the origin. <br /></td></tr>
+<tr class="memitem:a164f09a6c1a49ab6e5cb747e451c09bc" id="r_a164f09a6c1a49ab6e5cb747e451c09bc"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a164f09a6c1a49ab6e5cb747e451c09bc">Point</a> (T value) noexcept</td></tr>
+<tr class="memdesc:a164f09a6c1a49ab6e5cb747e451c09bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a point with all coordinates set to a single scalar value.  <br /></td></tr>
+<tr class="memitem:a7a146c2f9634f263cca9204b237939a1" id="r_a7a146c2f9634f263cca9204b237939a1"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7a146c2f9634f263cca9204b237939a1">Point</a> (const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;vec) noexcept</td></tr>
+<tr class="memdesc:a7a146c2f9634f263cca9204b237939a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a point from a coordinate vector.  <br /></td></tr>
+<tr class="memitem:ab7c4e8ad30190b66daba4a1e1f4ca914" id="r_ab7c4e8ad30190b66daba4a1e1f4ca914"><td class="memTemplParams" colspan="2">template&lt;std::convertible_to&lt; T &gt;... Args&gt; <br />
 requires (sizeof...(args) == N)</td></tr>
-<tr class="memitem:ab7c4e8ad30190b66daba4a1e1f4ca914 template"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><b>Point</b> (Args &amp;&amp;... args) noexcept</td></tr>
+<tr class="memitem:ab7c4e8ad30190b66daba4a1e1f4ca914 template"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab7c4e8ad30190b66daba4a1e1f4ca914">Point</a> (Args &amp;&amp;... args) noexcept</td></tr>
+<tr class="memdesc:ab7c4e8ad30190b66daba4a1e1f4ca914"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a point from a list of individual coordinate values.  <br /></td></tr>
 <tr class="memitem:a1cfb9a4e59b6f220cd78cc9a38f3bb4a" id="r_a1cfb9a4e59b6f220cd78cc9a38f3bb4a"><td class="memItemLeft" align="right" valign="top"><a id="a1cfb9a4e59b6f220cd78cc9a38f3bb4a" name="a1cfb9a4e59b6f220cd78cc9a38f3bb4a"></a>
 constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>x</b> () noexcept</td></tr>
+<tr class="memdesc:a1cfb9a4e59b6f220cd78cc9a38f3bb4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the first coordinate (x-axis). @requires N &gt; 0. <br /></td></tr>
 <tr class="memitem:afa273dd9cf7e3041215d497d96d0a36d" id="r_afa273dd9cf7e3041215d497d96d0a36d"><td class="memItemLeft" align="right" valign="top"><a id="afa273dd9cf7e3041215d497d96d0a36d" name="afa273dd9cf7e3041215d497d96d0a36d"></a>
 constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>y</b> () noexcept</td></tr>
+<tr class="memdesc:afa273dd9cf7e3041215d497d96d0a36d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the second coordinate (y-axis). @requires N &gt; 1. <br /></td></tr>
 <tr class="memitem:aa7bce7710f8c40458fb033c98be70eaa" id="r_aa7bce7710f8c40458fb033c98be70eaa"><td class="memItemLeft" align="right" valign="top"><a id="aa7bce7710f8c40458fb033c98be70eaa" name="aa7bce7710f8c40458fb033c98be70eaa"></a>
 constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>z</b> () noexcept</td></tr>
+<tr class="memdesc:aa7bce7710f8c40458fb033c98be70eaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the third coordinate (z-axis). @requires N &gt; 2. <br /></td></tr>
 <tr class="memitem:a54aa3ddeb39416171570ad7eb61eb357" id="r_a54aa3ddeb39416171570ad7eb61eb357"><td class="memItemLeft" align="right" valign="top"><a id="a54aa3ddeb39416171570ad7eb61eb357" name="a54aa3ddeb39416171570ad7eb61eb357"></a>
 constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>w</b> () noexcept</td></tr>
+<tr class="memdesc:a54aa3ddeb39416171570ad7eb61eb357"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accesses the fourth coordinate (w-axis). @requires N &gt; 3. <br /></td></tr>
 <tr class="memitem:a1b5534483cdf79ce32eb4443435425b4" id="r_a1b5534483cdf79ce32eb4443435425b4"><td class="memItemLeft" align="right" valign="top"><a id="a1b5534483cdf79ce32eb4443435425b4" name="a1b5534483cdf79ce32eb4443435425b4"></a>
 constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>x</b> () const noexcept</td></tr>
+<tr class="memdesc:a1b5534483cdf79ce32eb4443435425b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the first coordinate (x-axis). @requires N &gt; 0. <br /></td></tr>
 <tr class="memitem:a1f288fd943f0257cef66aaa19e1d0f14" id="r_a1f288fd943f0257cef66aaa19e1d0f14"><td class="memItemLeft" align="right" valign="top"><a id="a1f288fd943f0257cef66aaa19e1d0f14" name="a1f288fd943f0257cef66aaa19e1d0f14"></a>
 constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>y</b> () const noexcept</td></tr>
+<tr class="memdesc:a1f288fd943f0257cef66aaa19e1d0f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the second coordinate (y-axis). @requires N &gt; 1. <br /></td></tr>
 <tr class="memitem:a3006f92be248358d4a964af9fde79383" id="r_a3006f92be248358d4a964af9fde79383"><td class="memItemLeft" align="right" valign="top"><a id="a3006f92be248358d4a964af9fde79383" name="a3006f92be248358d4a964af9fde79383"></a>
 constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>z</b> () const noexcept</td></tr>
+<tr class="memdesc:a3006f92be248358d4a964af9fde79383"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the third coordinate (z-axis). @requires N &gt; 2. <br /></td></tr>
 <tr class="memitem:a00d44c9202df1807b2cf35cb9180de05" id="r_a00d44c9202df1807b2cf35cb9180de05"><td class="memItemLeft" align="right" valign="top"><a id="a00d44c9202df1807b2cf35cb9180de05" name="a00d44c9202df1807b2cf35cb9180de05"></a>
 constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>w</b> () const noexcept</td></tr>
+<tr class="memdesc:a00d44c9202df1807b2cf35cb9180de05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Const access to the fourth coordinate (w-axis). @requires N &gt; 3. <br /></td></tr>
 <tr class="memitem:acd4ffe984be2e39cdbb9be22ffbff73e" id="r_acd4ffe984be2e39cdbb9be22ffbff73e"><td class="memItemLeft" align="right" valign="top"><a id="acd4ffe984be2e39cdbb9be22ffbff73e" name="acd4ffe984be2e39cdbb9be22ffbff73e"></a>
 constexpr int&#160;</td><td class="memItemRight" valign="bottom"><b>dims</b> () const noexcept</td></tr>
+<tr class="memdesc:acd4ffe984be2e39cdbb9be22ffbff73e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of dimensions of the point. <br /></td></tr>
 <tr class="memitem:ae1e3f9e30bf930167e5e48a3abf6630b" id="r_ae1e3f9e30bf930167e5e48a3abf6630b"><td class="memItemLeft" align="right" valign="top"><a id="ae1e3f9e30bf930167e5e48a3abf6630b" name="ae1e3f9e30bf930167e5e48a3abf6630b"></a>
 constexpr T&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (int index) const</td></tr>
+<tr class="memdesc:ae1e3f9e30bf930167e5e48a3abf6630b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides const access to the point's coordinates by index. <br /></td></tr>
 <tr class="memitem:ab15d2501d80f3bc107c464c9fd536ee1" id="r_ab15d2501d80f3bc107c464c9fd536ee1"><td class="memItemLeft" align="right" valign="top"><a id="ab15d2501d80f3bc107c464c9fd536ee1" name="ab15d2501d80f3bc107c464c9fd536ee1"></a>
 constexpr T &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (int index)</td></tr>
-<tr class="memitem:a457e97730997efb2859070d2e780faa1" id="r_a457e97730997efb2859070d2e780faa1"><td class="memItemLeft" align="right" valign="top"><a id="a457e97730997efb2859070d2e780faa1" name="a457e97730997efb2859070d2e780faa1"></a>
-constexpr&#160;</td><td class="memItemRight" valign="bottom"><b>operator Vec&lt; T, N &gt;</b> () const noexcept</td></tr>
-<tr class="memitem:a1f30fc08e34fe1492329fb20c8741254" id="r_a1f30fc08e34fe1492329fb20c8741254"><td class="memItemLeft" align="right" valign="top"><a id="a1f30fc08e34fe1492329fb20c8741254" name="a1f30fc08e34fe1492329fb20c8741254"></a>
-constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+=</b> (const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;rhs) noexcept</td></tr>
-<tr class="memitem:a72d0f035051fd59377e2f96664a19d05" id="r_a72d0f035051fd59377e2f96664a19d05"><td class="memItemLeft" align="right" valign="top"><a id="a72d0f035051fd59377e2f96664a19d05" name="a72d0f035051fd59377e2f96664a19d05"></a>
-constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator-=</b> (const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;rhs) noexcept</td></tr>
+<tr class="memdesc:ab15d2501d80f3bc107c464c9fd536ee1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provides mutable access to the point's coordinates by index. <br /></td></tr>
+<tr class="memitem:a457e97730997efb2859070d2e780faa1" id="r_a457e97730997efb2859070d2e780faa1"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a457e97730997efb2859070d2e780faa1">operator Vec&lt; T, N &gt;</a> () const noexcept</td></tr>
+<tr class="memdesc:a457e97730997efb2859070d2e780faa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Explicitly converts the point to its underlying coordinate vector.  <br /></td></tr>
+<tr class="memitem:a1f30fc08e34fe1492329fb20c8741254" id="r_a1f30fc08e34fe1492329fb20c8741254"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1f30fc08e34fe1492329fb20c8741254">operator+=</a> (const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;rhs) noexcept</td></tr>
+<tr class="memdesc:a1f30fc08e34fe1492329fb20c8741254"><td class="mdescLeft">&#160;</td><td class="mdescRight">Translates the point by adding a vector.  <br /></td></tr>
+<tr class="memitem:a72d0f035051fd59377e2f96664a19d05" id="r_a72d0f035051fd59377e2f96664a19d05"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a72d0f035051fd59377e2f96664a19d05">operator-=</a> (const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;rhs) noexcept</td></tr>
+<tr class="memdesc:a72d0f035051fd59377e2f96664a19d05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Translates the point by subtracting a vector.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a58d9bf368655f509c11d4b836a216e08" id="r_a58d9bf368655f509c11d4b836a216e08"><td class="memItemLeft" align="right" valign="top"><a id="a58d9bf368655f509c11d4b836a216e08" name="a58d9bf368655f509c11d4b836a216e08"></a>
-static constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a>&#160;</td><td class="memItemRight" valign="bottom"><b>zeros</b> () noexcept</td></tr>
-<tr class="memitem:ab52bc7e44a54b3ea1d87f45afbb4c049" id="r_ab52bc7e44a54b3ea1d87f45afbb4c049"><td class="memItemLeft" align="right" valign="top"><a id="ab52bc7e44a54b3ea1d87f45afbb4c049" name="ab52bc7e44a54b3ea1d87f45afbb4c049"></a>
-static constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ones</b> () noexcept</td></tr>
+<tr class="memitem:a58d9bf368655f509c11d4b836a216e08" id="r_a58d9bf368655f509c11d4b836a216e08"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a58d9bf368655f509c11d4b836a216e08">zeros</a> () noexcept</td></tr>
+<tr class="memdesc:a58d9bf368655f509c11d4b836a216e08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a point at the origin (0, 0, ...).  <br /></td></tr>
+<tr class="memitem:ab52bc7e44a54b3ea1d87f45afbb4c049" id="r_ab52bc7e44a54b3ea1d87f45afbb4c049"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab52bc7e44a54b3ea1d87f45afbb4c049">ones</a> () noexcept</td></tr>
+<tr class="memdesc:ab52bc7e44a54b3ea1d87f45afbb4c049"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a point with all coordinates set to one.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-friends" class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a6d0e197b491ee2191ccda4d84636fbc1" id="r_a6d0e197b491ee2191ccda4d84636fbc1"><td class="memItemLeft" align="right" valign="top"><a id="a6d0e197b491ee2191ccda4d84636fbc1" name="a6d0e197b491ee2191ccda4d84636fbc1"></a>
-std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (std::ostream &amp;os, const <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp;point)</td></tr>
+<tr class="memitem:a6d0e197b491ee2191ccda4d84636fbc1" id="r_a6d0e197b491ee2191ccda4d84636fbc1"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6d0e197b491ee2191ccda4d84636fbc1">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp;point)</td></tr>
+<tr class="memdesc:a6d0e197b491ee2191ccda4d84636fbc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream insertion operator for printing the point's coordinates.  <br /></td></tr>
 </table>
+<a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename T, int N&gt;<br />
+class pbpt::math::Point&lt; T, N &gt;</div><p>A template class for an N-dimensional point in space. </p>
+<p>Represents a specific location in an N-dimensional affine space. Unlike a <span class="tt"><a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html" title="A template class for N-dimensional mathematical vectors.">Vec</a></span>, which represents direction and magnitude (a displacement), a <span class="tt"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html" title="A template class for an N-dimensional point in space.">Point</a></span> represents a coordinate.</p>
+<p>The class's interface enforces these geometric distinctions through its operator overloads:</p><ul>
+<li>You can subtract two points to get the vector between them (<span class="tt"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html" title="A template class for an N-dimensional point in space.">Point</a> - <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html" title="A template class for an N-dimensional point in space.">Point</a> = <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html" title="A template class for N-dimensional mathematical vectors.">Vec</a></span>).</li>
+<li>You can add or subtract a vector to a point to get a new, translated point (<span class="tt"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html" title="A template class for an N-dimensional point in space.">Point</a> +/- <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html" title="A template class for N-dimensional mathematical vectors.">Vec</a> = <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html" title="A template class for an N-dimensional point in space.">Point</a></span>).</li>
+<li>Operations like adding two points are deliberately not defined, as they are geometrically meaningless in most contexts.</li>
+</ul>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The underlying floating-point type of the point's coordinates. </td></tr>
+    <tr><td class="paramname">N</td><td>The number of dimensions. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html" title="A template class for N-dimensional mathematical vectors.">Vec</a> </dd></dl>
+</div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a164f09a6c1a49ab6e5cb747e451c09bc" name="a164f09a6c1a49ab6e5cb747e451c09bc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a164f09a6c1a49ab6e5cb747e451c09bc">&#9670;&#160;</a></span>Point() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::Point </td>
+          <td>(</td>
+          <td class="paramtype">T</td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel explicit">explicit</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a point with all coordinates set to a single scalar value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>The value to assign to all coordinates. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a7a146c2f9634f263cca9204b237939a1" name="a7a146c2f9634f263cca9204b237939a1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7a146c2f9634f263cca9204b237939a1">&#9670;&#160;</a></span>Point() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::Point </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>vec</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel explicit">explicit</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a point from a coordinate vector. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">vec</td><td>The vector representing the point's coordinates from the origin. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ab7c4e8ad30190b66daba4a1e1f4ca914" name="ab7c4e8ad30190b66daba4a1e1f4ca914"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7c4e8ad30190b66daba4a1e1f4ca914">&#9670;&#160;</a></span>Point() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<div class="memtemplate">
+template&lt;std::convertible_to&lt; T &gt;... Args&gt; <br />
+requires (sizeof...(args) == N)</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::Point </td>
+          <td>(</td>
+          <td class="paramtype">Args &amp;&amp;...</td>          <td class="paramname"><span class="paramname"><em>args</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel explicit">explicit</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a point from a list of individual coordinate values. </p>
+<p>The number of arguments must exactly match the point's dimension N. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Args</td><td>A parameter pack of types convertible to T. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">args</td><td>The coordinate values. @requires The number of arguments <span class="tt">sizeof...(args)</span> must be equal to <span class="tt">N</span>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
+<a id="ab52bc7e44a54b3ea1d87f45afbb4c049" name="ab52bc7e44a54b3ea1d87f45afbb4c049"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab52bc7e44a54b3ea1d87f45afbb4c049">&#9670;&#160;</a></span>ones()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::ones </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a point with all coordinates set to one. </p>
+<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html" title="A template class for an N-dimensional point in space.">Point</a> instance with all coordinates set to 1.0. </dd></dl>
+
+</div>
+</div>
+<a id="a457e97730997efb2859070d2e780faa1" name="a457e97730997efb2859070d2e780faa1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a457e97730997efb2859070d2e780faa1">&#9670;&#160;</a></span>operator Vec&lt; T, N &gt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::operator <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel explicit">explicit</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Explicitly converts the point to its underlying coordinate vector. </p>
+<p>This allows a point to be treated as a vector from the origin when an explicit cast is used. </p><dl class="section return"><dt>Returns</dt><dd>The <span class="tt"><a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html" title="A template class for N-dimensional mathematical vectors.">Vec</a>&lt;T, N&gt;</span> representing the point's coordinates. </dd></dl>
+
+</div>
+</div>
+<a id="a1f30fc08e34fe1492329fb20c8741254" name="a1f30fc08e34fe1492329fb20c8741254"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f30fc08e34fe1492329fb20c8741254">&#9670;&#160;</a></span>operator+=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp; <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::operator+= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>rhs</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Translates the point by adding a vector. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rhs</td><td>The displacement vector to add. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the modified point. </dd></dl>
+
+</div>
+</div>
+<a id="a72d0f035051fd59377e2f96664a19d05" name="a72d0f035051fd59377e2f96664a19d05"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a72d0f035051fd59377e2f96664a19d05">&#9670;&#160;</a></span>operator-=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> &amp; <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::operator-= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec</a>&lt; T, N &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>rhs</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Translates the point by subtracting a vector. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rhs</td><td>The displacement vector to subtract. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the modified point. </dd></dl>
+
+</div>
+</div>
+<a id="a58d9bf368655f509c11d4b836a216e08" name="a58d9bf368655f509c11d4b836a216e08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58d9bf368655f509c11d4b836a216e08">&#9670;&#160;</a></span>zeros()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a> <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">pbpt::math::Point</a>&lt; T, N &gt;::zeros </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a point at the origin (0, 0, ...). </p>
+<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html" title="A template class for an N-dimensional point in space.">Point</a> instance at the origin. </dd></dl>
+
+</div>
+</div>
+<a name="doc-related-members" id="doc-related-members"></a><h2 id="header-doc-related-members" class="groupheader">Friends And Related Symbol Documentation</h2>
+<a id="a6d0e197b491ee2191ccda4d84636fbc1" name="a6d0e197b491ee2191ccda4d84636fbc1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d0e197b491ee2191ccda4d84636fbc1">&#9670;&#160;</a></span>operator&lt;&lt;</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, int N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream &amp; operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;</td>          <td class="paramname"><span class="paramname"><em>os</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a>&lt; T, N &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>point</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel friend">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Stream insertion operator for printing the point's coordinates. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">os</td><td>The output stream. </td></tr>
+    <tr><td class="paramname">point</td><td>The point to print. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the output stream. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>/Users/jinceyang/Desktop/codebase/pbpt/engine/math/<a class="el" href="../../d0/de4/point_8hpp_source.html">point.hpp</a></li>
 </ul>
@@ -159,7 +515,7 @@ std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operato
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>pbpt</b></li><li class="navelem"><b>math</b></li><li class="navelem"><a href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a></li>
+    <li class="navelem"><b>pbpt</b></li><li class="navelem"><a href="../../d1/d2f/namespacepbpt_1_1math.html">math</a></li><li class="navelem"><a href="../../d7/d1b/classpbpt_1_1math_1_1_point.html">Point</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.14.0 </li>
   </ul>
 </div>

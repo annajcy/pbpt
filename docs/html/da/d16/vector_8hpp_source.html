@@ -91,210 +91,299 @@ $(function(){initNavTree('da/d16/vector_8hpp_source.html','../../',''); });
   <div class="headertitle"><div class="title">vector.hpp</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
+<a href="../../da/d16/vector_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;array&gt;</span></div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;concepts&gt;</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;concepts&gt;</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;iostream&gt;</span></div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &quot;type_alias.hpp&quot;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;function.hpp&quot;</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">namespace </span>pbpt {</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">namespace </span>math {</div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
-<div class="foldopen" id="foldopen00016" data-start="{" data-end="};">
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">   16</a></span><span class="keyword">class </span>Vec {</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    <span class="keyword">static_assert</span>(N &gt; 0, <span class="stringliteral">&quot;Vector dimensions must be positive&quot;</span>);</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>    <span class="keyword">static_assert</span>(std::is_floating_point_v&lt;T&gt;, <span class="stringliteral">&quot;Vector type must be floating point&quot;</span>);</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    std::array&lt;T, N&gt; m_data{};</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="comment">// --- 静态工厂函数 ---</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> Vec zeros() <span class="keyword">noexcept</span> { <span class="keywordflow">return</span> Vec(0.0); }</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> Vec ones() <span class="keyword">noexcept</span> { <span class="keywordflow">return</span> Vec(1.0); }</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="comment">// --- 构造函数 ---</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keyword">constexpr</span> Vec() <span class="keyword">noexcept</span> = <span class="keywordflow">default</span>;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keyword">constexpr</span> <span class="keyword">explicit</span> Vec(T value) <span class="keyword">noexcept</span> { m_data.fill(value); }</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keyword">template</span>&lt;std::convertible_to&lt;T&gt;... Args&gt;</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keyword">constexpr</span> <span class="keyword">explicit</span> Vec(Args&amp;&amp;... args) <span class="keyword">noexcept</span> <span class="keyword">requires</span>(<span class="keyword">sizeof</span>...(args) == N) {</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        m_data = {<span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(args)...};</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    }</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <span class="comment">// --- 访问器 ---</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="comment">// (保持不变, 已经是 constexpr)</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keyword">constexpr</span> T&amp; x() <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 0) { <span class="keywordflow">return</span> m_data[0]; }</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="keyword">constexpr</span> T&amp; y() <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 1) { <span class="keywordflow">return</span> m_data[1]; }</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keyword">constexpr</span> T&amp; z() <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 2) { <span class="keywordflow">return</span> m_data[2]; }</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="keyword">constexpr</span> T&amp; w() <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 3) { <span class="keywordflow">return</span> m_data[3]; }</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">constexpr</span> T x() <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 0) { <span class="keywordflow">return</span> m_data[0]; }</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keyword">constexpr</span> T y() <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 1) { <span class="keywordflow">return</span> m_data[1]; }</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keyword">constexpr</span> T z() <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 2) { <span class="keywordflow">return</span> m_data[2]; }</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keyword">constexpr</span> T w() <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N &gt; 3) { <span class="keywordflow">return</span> m_data[3]; }</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keyword">constexpr</span> <span class="keywordtype">int</span> dims() <span class="keyword">const</span> <span class="keyword">noexcept</span> { <span class="keywordflow">return</span> N; }</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="comment">// --- 下标访问 ---</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="keyword">constexpr</span> T operator[](<span class="keywordtype">int</span> index)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="keywordflow">if</span> (index &lt; 0 || index &gt;= N) {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Index out of range&quot;</span>;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                <span class="keywordflow">throw</span> std::out_of_range(<span class="stringliteral">&quot;Index out of range&quot;</span>);</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>            }</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        }</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keywordflow">return</span> m_data[index];</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    }</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keyword">constexpr</span> T&amp; operator[](<span class="keywordtype">int</span> index) {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="keywordflow">if</span> (index &lt; 0 || index &gt;= N) {</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Index out of range&quot;</span>;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                <span class="keywordflow">throw</span> std::out_of_range(<span class="stringliteral">&quot;Index out of range&quot;</span>);</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            }</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        }</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        <span class="keywordflow">return</span> m_data[index];</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    }</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    </div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="comment">// --- 一元运算符 ---</span></div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keyword">constexpr</span> Vec operator-() <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        Vec result{};</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) result[i] = -m_data[i];</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    }</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="comment">// --- 复合赋值运算符 ---</span></div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keyword">constexpr</span> Vec&amp; operator+=(<span class="keyword">const</span> Vec&amp; rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) m_data[i] += rhs[i];</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    }</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keyword">constexpr</span> Vec&amp; operator-=(<span class="keyword">const</span> Vec&amp; rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) m_data[i] -= rhs[i];</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    }</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keyword">constexpr</span> Vec&amp; operator*=(<span class="keyword">const</span> T&amp; rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) m_data[i] *= rhs;</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    }</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="comment">// --- 向量数学运算 ---</span></div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keyword">constexpr</span> T length_squared() <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        T result = 0;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            result += m_data[i] * m_data[i];</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    }</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keyword">constexpr</span> T length()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        <span class="keywordflow">return</span> pbpt::math::sqrt(length_squared());</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    }</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keyword">constexpr</span> Vec normalized()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>        Vec result = *<span class="keyword">this</span>;</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>        T len = length();</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        <span class="keywordflow">if</span> (len == 0) {</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Cannot normalize a zero vector&quot;</span>;</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Cannot normalize a zero vector&quot;</span>);</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            }</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        }</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <span class="keywordflow">return</span> result * (1.0 / len);</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    }</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keyword">constexpr</span> Vec&amp; normalize() {</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        T len = length();</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        <span class="keywordflow">if</span> (len == 0) {</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Cannot normalize a zero vector&quot;</span>;</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Cannot normalize a zero vector&quot;</span>);</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>            }</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        }</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span> *= (1.0 / len);</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    }</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    </div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keyword">constexpr</span> T dot(<span class="keyword">const</span> Vec&amp; rhs) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>        T result = 0;</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) result += m_data[i] * rhs.m_data[i];</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    }</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    <span class="keyword">constexpr</span> Vec cross(<span class="keyword">const</span> Vec&amp; rhs) <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N == 3) {</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        <span class="keywordflow">return</span> Vec(</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>            y() * rhs.z() - z() * rhs.y(),</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>            z() * rhs.x() - x() * rhs.z(),</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>            x() * rhs.y() - y() * rhs.x()</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        );</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    }</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    </div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <span class="keyword">friend</span> std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, <span class="keyword">const</span> Vec&amp; vec) {</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        os &lt;&lt; <span class="charliteral">&#39;(&#39;</span>;</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; ++i) {</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>            os &lt;&lt; vec.m_data[i] &lt;&lt; (i == N - 1 ? <span class="stringliteral">&quot;&quot;</span> : <span class="stringliteral">&quot;, &quot;</span>);</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        }</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        os &lt;&lt; <span class="charliteral">&#39;)&#39;</span>;</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        <span class="keywordflow">return</span> os;</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    }</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>};</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &quot;<a class="code" href="../../df/d5b/type__alias_8hpp.html">type_alias.hpp</a>&quot;</span> <span class="comment">// Presumed to contain &#39;using Float = double;&#39; or similar.</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;<a class="code" href="../../d7/d7c/function_8hpp.html">function.hpp</a>&quot;</span>   <span class="comment">// Presumed to contain &#39;pbpt::math::sqrt&#39;.</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">namespace </span>pbpt {</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">namespace </span><a class="code hl_namespace" href="../../d1/d2f/namespacepbpt_1_1math.html">math</a> {</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
+<div class="foldopen" id="foldopen00035" data-start="{" data-end="};">
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">   35</a></span><span class="keyword">class </span><a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keyword">static_assert</span>(N &gt; 0, <span class="stringliteral">&quot;Vector dimensions must be positive&quot;</span>);</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <span class="keyword">static_assert</span>(std::is_floating_point_v&lt;T&gt;, <span class="stringliteral">&quot;Vector type must be floating point&quot;</span>);</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    std::array&lt;T, N&gt; m_data{};</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="comment">// --- 静态工厂函数 (Static Factory Functions) ---</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a8bc4200d8afb04415468825dd92e89c9">   49</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a8bc4200d8afb04415468825dd92e89c9">zeros</a>() noexcept { <span class="keywordflow">return</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>(0.0); }</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a06a6b45220086ae8b6c41c26fce25c1e">   55</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a06a6b45220086ae8b6c41c26fce25c1e">ones</a>() noexcept { <span class="keywordflow">return</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>(1.0); }</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="comment">// --- 构造函数 (Constructors) ---</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">   62</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>() noexcept = default;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ae7a371e9e8463907ef23a0a7cf694372">   68</a></span>    constexpr explicit <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>(T value) noexcept { m_data.fill(value); }</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keyword">template</span>&lt;std::convertible_to&lt;T&gt;... Args&gt;</div>
+<div class="foldopen" id="foldopen00079" data-start="{" data-end="}">
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a5681de95dc0d7c9a64092e7eca0b4f82">   79</a></span>    <span class="keyword">constexpr</span> <span class="keyword">explicit</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a5681de95dc0d7c9a64092e7eca0b4f82">Vec</a>(Args&amp;&amp;... args) <span class="keyword">noexcept</span> <span class="keyword">requires</span>(<span class="keyword">sizeof</span>...(args) == N) {</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        m_data = {<span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(args)...};</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    }</div>
 </div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span> </div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span><span class="comment">// --- 全局运算符 ---</span></div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> operator+(<span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; lhs, <span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="keyword">auto</span> result = lhs;</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    result += rhs;</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    <span class="keywordflow">return</span> result;</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>}</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span> </div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span><span class="keyword">constexpr</span> Vec&lt;T, N&gt; operator-(<span class="keyword">const</span> Vec&lt;T, N&gt;&amp; lhs, <span class="keyword">const</span> Vec&lt;T, N&gt;&amp; rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <span class="keyword">auto</span> result = lhs;</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    result -= rhs;</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    <span class="keywordflow">return</span> result;</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>}</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span> </div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N, std::convertible_to&lt;T&gt; U&gt;</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span><span class="keyword">constexpr</span> Vec&lt;T, N&gt; operator*(<span class="keyword">const</span> Vec&lt;T, N&gt;&amp; lhs, U rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    <span class="keyword">auto</span> result = lhs;</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    result *= <span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(rhs);</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    <span class="keywordflow">return</span> result;</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>}</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N, std::convertible_to&lt;T&gt; U&gt;</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> operator*(U lhs, <span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keywordflow">return</span> rhs * <span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(lhs);</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>}</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> operator*(<span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; lhs, <span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> result{};</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) result[i] = lhs[i] * rhs[i];</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <span class="keywordflow">return</span> result;</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>}</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span><span class="comment">// --- 类型别名 ---</span></div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><span class="keyword">using </span>Vec2 = <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;Float, 2&gt;</a>;</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span><span class="keyword">using </span>Vec3 = <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;Float, 3&gt;</a>;</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span><span class="keyword">using </span>Vec4 = <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;Float, 4&gt;</a>;</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span> </div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>} <span class="comment">// namespace math</span></div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>} <span class="comment">// namespace pbpt</span></div>
-<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">pbpt::math::Vec</a></div><div class="ttdef"><b>Definition</b> vector.hpp:16</div></div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="comment">// --- 访问器 (Accessors) ---</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeacace5c1b38a5ecd4227c8b29d8d8b7">   86</a></span>    <span class="keyword">constexpr</span> T&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeacace5c1b38a5ecd4227c8b29d8d8b7">x</a>() noexcept requires(N &gt; 0) { <span class="keywordflow">return</span> m_data[0]; }</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aefc9b35faa6c15b39ada805fdcb5cd53">   88</a></span>    <span class="keyword">constexpr</span> T&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aefc9b35faa6c15b39ada805fdcb5cd53">y</a>() noexcept requires(N &gt; 1) { <span class="keywordflow">return</span> m_data[1]; }</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad7850e13af605e5394665f93f2a0b584">   90</a></span>    <span class="keyword">constexpr</span> T&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad7850e13af605e5394665f93f2a0b584">z</a>() noexcept requires(N &gt; 2) { <span class="keywordflow">return</span> m_data[2]; }</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a83133eb4f037b8e9e9a5e5a6c9d6b1f2">   92</a></span>    <span class="keyword">constexpr</span> T&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a83133eb4f037b8e9e9a5e5a6c9d6b1f2">w</a>() noexcept requires(N &gt; 3) { <span class="keywordflow">return</span> m_data[3]; }</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ab739a849eb5acc16fa6b18fb1a9d6c26">   95</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ab739a849eb5acc16fa6b18fb1a9d6c26">x</a>() const noexcept requires(N &gt; 0) { <span class="keywordflow">return</span> m_data[0]; }</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad0d337288669ee16584d6319b4d118c0">   97</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad0d337288669ee16584d6319b4d118c0">y</a>() const noexcept requires(N &gt; 1) { <span class="keywordflow">return</span> m_data[1]; }</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ae53220db05651d0e5d1dacbe23ff7e72">   99</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ae53220db05651d0e5d1dacbe23ff7e72">z</a>() const noexcept requires(N &gt; 2) { <span class="keywordflow">return</span> m_data[2]; }</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a9d57aad3cdda01641f3342a4dcf1101b">  101</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a9d57aad3cdda01641f3342a4dcf1101b">w</a>() const noexcept requires(N &gt; 3) { <span class="keywordflow">return</span> m_data[3]; }</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span></div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a4f360198770d13bf2d8633ee8ad79e8c">  104</a></span>    <span class="keyword">constexpr</span> <span class="keywordtype">int</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a4f360198770d13bf2d8633ee8ad79e8c">dims</a>() const noexcept { <span class="keywordflow">return</span> N; }</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="comment">// --- 下标访问 (Subscript Access) ---</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span></div>
+<div class="foldopen" id="foldopen00115" data-start="{" data-end="}">
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a99a5248ae83759f3f111fa003bc756ba">  115</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a99a5248ae83759f3f111fa003bc756ba">operator[]</a>(<span class="keywordtype">int</span> index)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        <span class="keywordflow">if</span> (index &lt; 0 || index &gt;= N) {</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Index out of range&quot;</span>;</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>                <span class="keywordflow">throw</span> std::out_of_range(<span class="stringliteral">&quot;Index out of range&quot;</span>);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            }</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        }</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        <span class="keywordflow">return</span> m_data[index];</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    }</div>
+</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span></div>
+<div class="foldopen" id="foldopen00132" data-start="{" data-end="}">
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeba41071b851b707486d58ee98e5c6c8">  132</a></span>    <span class="keyword">constexpr</span> T&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeba41071b851b707486d58ee98e5c6c8">operator[]</a>(<span class="keywordtype">int</span> index) {</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>        <span class="keywordflow">if</span> (index &lt; 0 || index &gt;= N) {</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Index out of range&quot;</span>;</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Index out of range&quot;</span>);</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>            }</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        }</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>        <span class="keywordflow">return</span> m_data[index];</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    }</div>
+</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    </div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="comment">// --- 一元运算符 (Unary Operators) ---</span></div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span></div>
+<div class="foldopen" id="foldopen00149" data-start="{" data-end="}">
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a866bb0d71493f1fc8054a8a6c830148f">  149</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a866bb0d71493f1fc8054a8a6c830148f">operator-</a>() const noexcept {</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> result{};</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) result[i] = -m_data[i];</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    }</div>
+</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    <span class="comment">// --- 复合赋值运算符 (Compound Assignment Operators) ---</span></div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    </div>
+<div class="foldopen" id="foldopen00158" data-start="{" data-end="}">
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a45f8da1a2861f3ffc101e9dbf188ce39">  158</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a45f8da1a2861f3ffc101e9dbf188ce39">operator+=</a>(<span class="keyword">const</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) m_data[i] += rhs[i];</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    }</div>
+</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span></div>
+<div class="foldopen" id="foldopen00163" data-start="{" data-end="}">
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ab20275b6c322070e977e07e1e9f720ee">  163</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ab20275b6c322070e977e07e1e9f720ee">operator-=</a>(<span class="keyword">const</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) m_data[i] -= rhs[i];</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    }</div>
+</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span></div>
+<div class="foldopen" id="foldopen00168" data-start="{" data-end="}">
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeee5412f82478b6cd23852d9c6009dca">  168</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeee5412f82478b6cd23852d9c6009dca">operator*=</a>(<span class="keyword">const</span> T&amp; rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) m_data[i] *= rhs;</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    }</div>
+</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span> </div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    <span class="comment">// --- 向量数学运算 (Vector Math Operations) ---</span></div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span></div>
+<div class="foldopen" id="foldopen00181" data-start="{" data-end="}">
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a67730865097a2236d6ac8d8d5fbb13ae">  181</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a67730865097a2236d6ac8d8d5fbb13ae">length_squared</a>() const noexcept {</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>        T result = 0;</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) </div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>            result += m_data[i] * m_data[i];</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    }</div>
+</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span></div>
+<div class="foldopen" id="foldopen00193" data-start="{" data-end="}">
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a0dd4cc2dde01c69f772f82d40a3ad669">  193</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a0dd4cc2dde01c69f772f82d40a3ad669">length</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="../../d1/d2f/namespacepbpt_1_1math.html#a05c90d3b8d7543103db19c3638a4105f">pbpt::math::sqrt</a>(<a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a67730865097a2236d6ac8d8d5fbb13ae">length_squared</a>());</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    }</div>
+</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span></div>
+<div class="foldopen" id="foldopen00204" data-start="{" data-end="}">
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a54834a510587ed50e222428de36f40c9">  204</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a54834a510587ed50e222428de36f40c9">normalized</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>        <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> result = *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        T len = <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a0dd4cc2dde01c69f772f82d40a3ad669">length</a>();</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        <span class="keywordflow">if</span> (len == 0) {</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Cannot normalize a zero vector&quot;</span>;</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Cannot normalize a zero vector&quot;</span>);</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>            }</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>        }</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>        <span class="keywordflow">return</span> result * (1.0 / len);</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    }</div>
+</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span></div>
+<div class="foldopen" id="foldopen00223" data-start="{" data-end="}">
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aab206f1160a2462893bfc0f7e8feb741">  223</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aab206f1160a2462893bfc0f7e8feb741">normalize</a>() {</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        T len = <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a0dd4cc2dde01c69f772f82d40a3ad669">length</a>();</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>        <span class="keywordflow">if</span> (len == 0) {</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>            <span class="keywordflow">if</span> (std::is_constant_evaluated()) {</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                <span class="keywordflow">throw</span> <span class="stringliteral">&quot;Compile-time error: Cannot normalize a zero vector&quot;</span>;</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Cannot normalize a zero vector&quot;</span>);</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>            }</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>        }</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span> *= (1.0 / len);</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    }</div>
+</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>    </div>
+<div class="foldopen" id="foldopen00240" data-start="{" data-end="}">
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ac8143d0b212e2f733124fe200d99fa9c">  240</a></span>    <span class="keyword">constexpr</span> T <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ac8143d0b212e2f733124fe200d99fa9c">dot</a>(<span class="keyword">const</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; rhs) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>        T result = 0;</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) result += m_data[i] * rhs.m_data[i];</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    }</div>
+</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span></div>
+<div class="foldopen" id="foldopen00252" data-start="{" data-end="}">
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a846f97e7a00b678eaab712a683aeb0f0">  252</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a846f97e7a00b678eaab712a683aeb0f0">cross</a>(<span class="keyword">const</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; rhs) <span class="keyword">const</span> <span class="keyword">noexcept</span> <span class="keyword">requires</span>(N == 3) {</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>(</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>            <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aefc9b35faa6c15b39ada805fdcb5cd53">y</a>() * rhs.z() - <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad7850e13af605e5394665f93f2a0b584">z</a>() * rhs.y(),</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>            <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad7850e13af605e5394665f93f2a0b584">z</a>() * rhs.x() - <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeacace5c1b38a5ecd4227c8b29d8d8b7">x</a>() * rhs.z(),</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>            <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeacace5c1b38a5ecd4227c8b29d8d8b7">x</a>() * rhs.y() - <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aefc9b35faa6c15b39ada805fdcb5cd53">y</a>() * rhs.x()</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>        );</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    }</div>
+</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>    </div>
+<div class="foldopen" id="foldopen00267" data-start="{" data-end="}">
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno"><a class="line" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#acbefb4a101f8c046ab1ce7508bacb649">  267</a></span>    <span class="keyword">friend</span> std::ostream&amp; <a class="code hl_friend" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#acbefb4a101f8c046ab1ce7508bacb649">operator&lt;&lt;</a>(std::ostream&amp; os, <span class="keyword">const</span> <a class="code hl_function" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">Vec</a>&amp; vec) {</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>        os &lt;&lt; <span class="charliteral">&#39;(&#39;</span>;</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; ++i) {</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>            os &lt;&lt; vec.m_data[i] &lt;&lt; (i == N - 1 ? <span class="stringliteral">&quot;&quot;</span> : <span class="stringliteral">&quot;, &quot;</span>);</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>        }</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>        os &lt;&lt; <span class="charliteral">&#39;)&#39;</span>;</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        <span class="keywordflow">return</span> os;</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    }</div>
+</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>};</div>
+</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span> </div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span><span class="comment">// --- 全局运算符 (Global Operators) ---</span></div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span></div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
+<div class="foldopen" id="foldopen00281" data-start="{" data-end="}">
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#ad7b4977de74b0f4bee859ae3f0601427">  281</a></span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> <a class="code hl_function" href="../../d1/d2f/namespacepbpt_1_1math.html#a18c5bad8a1667f9c09c0867ab2e4e0d2">operator+</a>(<span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; lhs, <span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>    <span class="keyword">auto</span> result = lhs;</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    result += rhs;</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>    <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>}</div>
+</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span></div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
+<div class="foldopen" id="foldopen00289" data-start="{" data-end="}">
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#ab322b88f1c8c32b3ca9ffded558fc244">  289</a></span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> <a class="code hl_function" href="../../d1/d2f/namespacepbpt_1_1math.html#a12ff96bd79ad504aa681734a9e724999">operator-</a>(<span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; lhs, <span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    <span class="keyword">auto</span> result = lhs;</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    result -= rhs;</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>    <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>}</div>
+</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span></div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N, std::convertible_to&lt;T&gt; U&gt;</div>
+<div class="foldopen" id="foldopen00297" data-start="{" data-end="}">
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#a091be3334727259c800cd41ef0159896">  297</a></span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> <a class="code hl_function" href="../../d1/d2f/namespacepbpt_1_1math.html#a091be3334727259c800cd41ef0159896">operator*</a>(<span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; lhs, U rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    <span class="keyword">auto</span> result = lhs;</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    result *= <span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(rhs);</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>}</div>
+</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span></div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N, std::convertible_to&lt;T&gt; U&gt;</div>
+<div class="foldopen" id="foldopen00305" data-start="{" data-end="}">
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#adab0d8645ae236673922a01a427eff8d">  305</a></span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> <a class="code hl_function" href="../../d1/d2f/namespacepbpt_1_1math.html#a091be3334727259c800cd41ef0159896">operator*</a>(U lhs, <span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>    <span class="keywordflow">return</span> rhs * <span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(lhs);</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>}</div>
+</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span></div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keywordtype">int</span> N&gt;</div>
+<div class="foldopen" id="foldopen00313" data-start="{" data-end="}">
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#afbb833a945b8d33091ff5f35e5539c03">  313</a></span><span class="keyword">constexpr</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> <a class="code hl_function" href="../../d1/d2f/namespacepbpt_1_1math.html#a091be3334727259c800cd41ef0159896">operator*</a>(<span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; lhs, <span class="keyword">const</span> <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a>&amp; rhs) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>    <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;T, N&gt;</a> result{};</div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>    <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; N; i++) result[i] = lhs[i] * rhs[i];</div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>    <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>}</div>
+</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span> </div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span><span class="comment">// --- 类型别名 (Type Aliases) ---</span></div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span></div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#a53778e0e417a41a6e31dd39fe03284e1">  322</a></span><span class="keyword">using </span><a class="code hl_typedef" href="../../d1/d2f/namespacepbpt_1_1math.html#a53778e0e417a41a6e31dd39fe03284e1">Vec2</a> = <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;Float, 2&gt;</a>;</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#abea633c29809254b40af8aa4c04a9476">  324</a></span><span class="keyword">using </span><a class="code hl_typedef" href="../../d1/d2f/namespacepbpt_1_1math.html#abea633c29809254b40af8aa4c04a9476">Vec3</a> = <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;Float, 3&gt;</a>;</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno"><a class="line" href="../../d1/d2f/namespacepbpt_1_1math.html#a21e24e517be3396138f9c79c1d95668d">  326</a></span><span class="keyword">using </span><a class="code hl_typedef" href="../../d1/d2f/namespacepbpt_1_1math.html#a21e24e517be3396138f9c79c1d95668d">Vec4</a> = <a class="code hl_class" href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">Vec&lt;Float, 4&gt;</a>;</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>} <span class="comment">// namespace math</span></div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>} <span class="comment">// namespace pbpt</span></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html">pbpt::math::Vec</a></div><div class="ttdoc">A template class for N-dimensional mathematical vectors.</div><div class="ttdef"><b>Definition</b> vector.hpp:35</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a06a6b45220086ae8b6c41c26fce25c1e"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a06a6b45220086ae8b6c41c26fce25c1e">pbpt::math::Vec::ones</a></div><div class="ttdeci">static constexpr Vec ones() noexcept</div><div class="ttdoc">Creates a vector with all components set to one.</div><div class="ttdef"><b>Definition</b> vector.hpp:55</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a0dd4cc2dde01c69f772f82d40a3ad669"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a0dd4cc2dde01c69f772f82d40a3ad669">pbpt::math::Vec::length</a></div><div class="ttdeci">constexpr T length() const</div><div class="ttdoc">Calculates the length (Euclidean norm) of the vector.</div><div class="ttdef"><b>Definition</b> vector.hpp:193</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a2bb9417f5cdf55126aed8a2fefdb2844"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a2bb9417f5cdf55126aed8a2fefdb2844">pbpt::math::Vec::Vec</a></div><div class="ttdeci">constexpr Vec() noexcept=default</div><div class="ttdoc">Default constructor. Initializes all components to zero.</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a45f8da1a2861f3ffc101e9dbf188ce39"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a45f8da1a2861f3ffc101e9dbf188ce39">pbpt::math::Vec::operator+=</a></div><div class="ttdeci">constexpr Vec &amp; operator+=(const Vec &amp;rhs) noexcept</div><div class="ttdoc">Adds another vector to this one component-wise.</div><div class="ttdef"><b>Definition</b> vector.hpp:158</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a4f360198770d13bf2d8633ee8ad79e8c"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a4f360198770d13bf2d8633ee8ad79e8c">pbpt::math::Vec::dims</a></div><div class="ttdeci">constexpr int dims() const noexcept</div><div class="ttdoc">Returns the number of dimensions of the vector.</div><div class="ttdef"><b>Definition</b> vector.hpp:104</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a54834a510587ed50e222428de36f40c9"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a54834a510587ed50e222428de36f40c9">pbpt::math::Vec::normalized</a></div><div class="ttdeci">constexpr Vec normalized() const</div><div class="ttdoc">Returns a new vector that is a normalized version of this one.</div><div class="ttdef"><b>Definition</b> vector.hpp:204</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a5681de95dc0d7c9a64092e7eca0b4f82"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a5681de95dc0d7c9a64092e7eca0b4f82">pbpt::math::Vec::Vec</a></div><div class="ttdeci">constexpr Vec(Args &amp;&amp;... args) noexcept</div><div class="ttdoc">Constructs a vector from a list of individual components.</div><div class="ttdef"><b>Definition</b> vector.hpp:79</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a67730865097a2236d6ac8d8d5fbb13ae"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a67730865097a2236d6ac8d8d5fbb13ae">pbpt::math::Vec::length_squared</a></div><div class="ttdeci">constexpr T length_squared() const noexcept</div><div class="ttdoc">Calculates the squared length (magnitude) of the vector.</div><div class="ttdef"><b>Definition</b> vector.hpp:181</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a83133eb4f037b8e9e9a5e5a6c9d6b1f2"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a83133eb4f037b8e9e9a5e5a6c9d6b1f2">pbpt::math::Vec::w</a></div><div class="ttdeci">constexpr T &amp; w() noexcept</div><div class="ttdoc">Accesses the fourth component (w-axis). @requires N &gt; 3.</div><div class="ttdef"><b>Definition</b> vector.hpp:92</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a846f97e7a00b678eaab712a683aeb0f0"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a846f97e7a00b678eaab712a683aeb0f0">pbpt::math::Vec::cross</a></div><div class="ttdeci">constexpr Vec cross(const Vec &amp;rhs) const noexcept</div><div class="ttdoc">Calculates the cross product of this vector and another.</div><div class="ttdef"><b>Definition</b> vector.hpp:252</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a866bb0d71493f1fc8054a8a6c830148f"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a866bb0d71493f1fc8054a8a6c830148f">pbpt::math::Vec::operator-</a></div><div class="ttdeci">constexpr Vec operator-() const noexcept</div><div class="ttdoc">Negates the vector.</div><div class="ttdef"><b>Definition</b> vector.hpp:149</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a8bc4200d8afb04415468825dd92e89c9"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a8bc4200d8afb04415468825dd92e89c9">pbpt::math::Vec::zeros</a></div><div class="ttdeci">static constexpr Vec zeros() noexcept</div><div class="ttdoc">Creates a vector with all components set to zero.</div><div class="ttdef"><b>Definition</b> vector.hpp:49</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a99a5248ae83759f3f111fa003bc756ba"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a99a5248ae83759f3f111fa003bc756ba">pbpt::math::Vec::operator[]</a></div><div class="ttdeci">constexpr T operator[](int index) const</div><div class="ttdoc">Provides const access to the vector&#39;s components by index.</div><div class="ttdef"><b>Definition</b> vector.hpp:115</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_a9d57aad3cdda01641f3342a4dcf1101b"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#a9d57aad3cdda01641f3342a4dcf1101b">pbpt::math::Vec::w</a></div><div class="ttdeci">constexpr T w() const noexcept</div><div class="ttdoc">Const access to the fourth component (w-axis). @requires N &gt; 3.</div><div class="ttdef"><b>Definition</b> vector.hpp:101</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_aab206f1160a2462893bfc0f7e8feb741"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aab206f1160a2462893bfc0f7e8feb741">pbpt::math::Vec::normalize</a></div><div class="ttdeci">constexpr Vec &amp; normalize()</div><div class="ttdoc">Normalizes this vector in-place, making its length 1.</div><div class="ttdef"><b>Definition</b> vector.hpp:223</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_ab20275b6c322070e977e07e1e9f720ee"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ab20275b6c322070e977e07e1e9f720ee">pbpt::math::Vec::operator-=</a></div><div class="ttdeci">constexpr Vec &amp; operator-=(const Vec &amp;rhs) noexcept</div><div class="ttdoc">Subtracts another vector from this one component-wise.</div><div class="ttdef"><b>Definition</b> vector.hpp:163</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_ab739a849eb5acc16fa6b18fb1a9d6c26"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ab739a849eb5acc16fa6b18fb1a9d6c26">pbpt::math::Vec::x</a></div><div class="ttdeci">constexpr T x() const noexcept</div><div class="ttdoc">Const access to the first component (x-axis). @requires N &gt; 0.</div><div class="ttdef"><b>Definition</b> vector.hpp:95</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_ac8143d0b212e2f733124fe200d99fa9c"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ac8143d0b212e2f733124fe200d99fa9c">pbpt::math::Vec::dot</a></div><div class="ttdeci">constexpr T dot(const Vec &amp;rhs) const noexcept</div><div class="ttdoc">Calculates the dot product of this vector and another.</div><div class="ttdef"><b>Definition</b> vector.hpp:240</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_acbefb4a101f8c046ab1ce7508bacb649"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#acbefb4a101f8c046ab1ce7508bacb649">pbpt::math::Vec::operator&lt;&lt;</a></div><div class="ttdeci">friend std::ostream &amp; operator&lt;&lt;(std::ostream &amp;os, const Vec &amp;vec)</div><div class="ttdoc">Stream insertion operator for printing the vector.</div><div class="ttdef"><b>Definition</b> vector.hpp:267</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_ad0d337288669ee16584d6319b4d118c0"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad0d337288669ee16584d6319b4d118c0">pbpt::math::Vec::y</a></div><div class="ttdeci">constexpr T y() const noexcept</div><div class="ttdoc">Const access to the second component (y-axis). @requires N &gt; 1.</div><div class="ttdef"><b>Definition</b> vector.hpp:97</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_ad7850e13af605e5394665f93f2a0b584"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ad7850e13af605e5394665f93f2a0b584">pbpt::math::Vec::z</a></div><div class="ttdeci">constexpr T &amp; z() noexcept</div><div class="ttdoc">Accesses the third component (z-axis). @requires N &gt; 2.</div><div class="ttdef"><b>Definition</b> vector.hpp:90</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_ae53220db05651d0e5d1dacbe23ff7e72"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#ae53220db05651d0e5d1dacbe23ff7e72">pbpt::math::Vec::z</a></div><div class="ttdeci">constexpr T z() const noexcept</div><div class="ttdoc">Const access to the third component (z-axis). @requires N &gt; 2.</div><div class="ttdef"><b>Definition</b> vector.hpp:99</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_aeacace5c1b38a5ecd4227c8b29d8d8b7"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeacace5c1b38a5ecd4227c8b29d8d8b7">pbpt::math::Vec::x</a></div><div class="ttdeci">constexpr T &amp; x() noexcept</div><div class="ttdoc">Accesses the first component (x-axis). @requires N &gt; 0.</div><div class="ttdef"><b>Definition</b> vector.hpp:86</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_aeba41071b851b707486d58ee98e5c6c8"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeba41071b851b707486d58ee98e5c6c8">pbpt::math::Vec::operator[]</a></div><div class="ttdeci">constexpr T &amp; operator[](int index)</div><div class="ttdoc">Provides mutable access to the vector&#39;s components by index.</div><div class="ttdef"><b>Definition</b> vector.hpp:132</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_aeee5412f82478b6cd23852d9c6009dca"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aeee5412f82478b6cd23852d9c6009dca">pbpt::math::Vec::operator*=</a></div><div class="ttdeci">constexpr Vec &amp; operator*=(const T &amp;rhs) noexcept</div><div class="ttdoc">Multiplies this vector by a scalar.</div><div class="ttdef"><b>Definition</b> vector.hpp:168</div></div>
+<div class="ttc" id="aclasspbpt_1_1math_1_1_vec_html_aefc9b35faa6c15b39ada805fdcb5cd53"><div class="ttname"><a href="../../dd/da3/classpbpt_1_1math_1_1_vec.html#aefc9b35faa6c15b39ada805fdcb5cd53">pbpt::math::Vec::y</a></div><div class="ttdeci">constexpr T &amp; y() noexcept</div><div class="ttdoc">Accesses the second component (y-axis). @requires N &gt; 1.</div><div class="ttdef"><b>Definition</b> vector.hpp:88</div></div>
+<div class="ttc" id="afunction_8hpp_html"><div class="ttname"><a href="../../d7/d7c/function_8hpp.html">function.hpp</a></div><div class="ttdoc">Provides basic, constexpr-aware mathematical functions.</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html">pbpt::math</a></div><div class="ttdoc">The main namespace for the Physically Based Path Tracer project.</div><div class="ttdef"><b>Definition</b> function.hpp:21</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html_a05c90d3b8d7543103db19c3638a4105f"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html#a05c90d3b8d7543103db19c3638a4105f">pbpt::math::sqrt</a></div><div class="ttdeci">constexpr T sqrt(T x)</div><div class="ttdoc">Calculates the square root of a number with constexpr support.</div><div class="ttdef"><b>Definition</b> function.hpp:86</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html_a091be3334727259c800cd41ef0159896"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html#a091be3334727259c800cd41ef0159896">pbpt::math::operator*</a></div><div class="ttdeci">constexpr Vec&lt; T, N &gt; operator*(const Vec&lt; T, N &gt; &amp;lhs, U rhs) noexcept</div><div class="ttdoc">Multiplies a vector by a scalar.</div><div class="ttdef"><b>Definition</b> vector.hpp:297</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html_a12ff96bd79ad504aa681734a9e724999"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html#a12ff96bd79ad504aa681734a9e724999">pbpt::math::operator-</a></div><div class="ttdeci">constexpr Vec&lt; T, N &gt; operator-(const Point&lt; T, N &gt; &amp;lhs, const Point&lt; T, N &gt; &amp;rhs) noexcept</div><div class="ttdoc">Rule 1: Calculates the displacement vector between two points (Point - Point = Vector).</div><div class="ttdef"><b>Definition</b> point.hpp:175</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html_a18c5bad8a1667f9c09c0867ab2e4e0d2"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html#a18c5bad8a1667f9c09c0867ab2e4e0d2">pbpt::math::operator+</a></div><div class="ttdeci">constexpr Point&lt; T, N &gt; operator+(const Point&lt; T, N &gt; &amp;lhs, const Vec&lt; T, N &gt; &amp;rhs) noexcept</div><div class="ttdoc">Rule 2: Translates a point by a vector, resulting in a new point (Point + Vector = Point).</div><div class="ttdef"><b>Definition</b> point.hpp:186</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html_a21e24e517be3396138f9c79c1d95668d"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html#a21e24e517be3396138f9c79c1d95668d">pbpt::math::Vec4</a></div><div class="ttdeci">Vec&lt; Float, 4 &gt; Vec4</div><div class="ttdoc">A 4-dimensional vector of type Float.</div><div class="ttdef"><b>Definition</b> vector.hpp:326</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html_a53778e0e417a41a6e31dd39fe03284e1"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html#a53778e0e417a41a6e31dd39fe03284e1">pbpt::math::Vec2</a></div><div class="ttdeci">Vec&lt; Float, 2 &gt; Vec2</div><div class="ttdoc">A 2-dimensional vector of type Float.</div><div class="ttdef"><b>Definition</b> vector.hpp:322</div></div>
+<div class="ttc" id="anamespacepbpt_1_1math_html_abea633c29809254b40af8aa4c04a9476"><div class="ttname"><a href="../../d1/d2f/namespacepbpt_1_1math.html#abea633c29809254b40af8aa4c04a9476">pbpt::math::Vec3</a></div><div class="ttdeci">Vec&lt; Float, 3 &gt; Vec3</div><div class="ttdoc">A 3-dimensional vector of type Float.</div><div class="ttdef"><b>Definition</b> vector.hpp:324</div></div>
+<div class="ttc" id="atype__alias_8hpp_html"><div class="ttname"><a href="../../df/d5b/type__alias_8hpp.html">type_alias.hpp</a></div><div class="ttdoc">Defines the primary floating-point type alias for the math library.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a href="../../dir_996f45160da62e1a3d7f6046fad68f51.html">engine</a></li><li class="navelem"><a href="../../dir_6092418e369ca819ce866d11ef016080.html">math</a></li><li class="navelem"><b>vector.hpp</b></li>
+    <li class="navelem"><a href="../../dir_996f45160da62e1a3d7f6046fad68f51.html">engine</a></li><li class="navelem"><a href="../../dir_6092418e369ca819ce866d11ef016080.html">math</a></li><li class="navelem"><a href="../../da/d16/vector_8hpp.html">vector.hpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.14.0 </li>
   </ul>
 </div>
