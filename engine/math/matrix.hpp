@@ -5,8 +5,10 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility> // For std::forward and std::move
+#include <functional>
 
 #include "vector.hpp" // Assumed to be available from the user's code.
+
 
 /**
  * @file matrix.hpp

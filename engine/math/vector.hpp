@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <type_traits>
 #include <iostream>
+#include <functional>
+
 
 #include "type_alias.hpp" // Presumed to contain 'using Float = double;' or similar.
 #include "function.hpp"   // Presumed to contain 'pbpt::math::sqrt'.
