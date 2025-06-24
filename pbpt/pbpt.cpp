@@ -9,7 +9,6 @@
 #include "math/matrix.hpp"
 
 
-
 #if defined (RENDER_BACKEND_VULKAN)
     #include "vulkan/vulkan.h"
     #include "vulkan/vulkan_core.h"

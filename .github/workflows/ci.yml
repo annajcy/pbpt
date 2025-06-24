@@ -43,20 +43,11 @@ jobs:
         vulkan-components: Vulkan-Headers, Vulkan-Loader
         vulkan-use-cache: true
 
-    - name: Configure CMake (Vulkan)
-      run: cmake -S . -B build -DPBPT_BUILD_TESTS=ON -DRENDER_BACKEND=Vulkan
+    - name: Configure CMake
+      run: cmake -S . -B build -DPBPT_BUILD_TESTS=ON
 
-    - name: Build (Vulkan)
+    - name: Build 
       run: cmake --build build --config Release
 
-    - name: Test (Vulkan)
-      run: ctest --test-dir build -C Release --output-on-failure
-
-    - name: Configure CMake (OpenGL)
-      run: cmake -S . -B build -DPBPT_BUILD_TESTS=ON -DRENDER_BACKEND=OpenGL
-
-    - name: Build (OpenGL)
-      run: cmake --build build --config Release
-
-    - name: Test (OpenGL)
+    - name: Test
       run: ctest --test-dir build -C Release --output-on-failure

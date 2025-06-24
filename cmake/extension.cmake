@@ -13,6 +13,16 @@ else()
   message(STATUS "PBPT_BUILD_TESTS is OFF")
 endif()
 
+find_package(Vulkan REQUIRED)
+message(STATUS "Vulkan_VERSION: ${Vulkan_VERSION}")
+
+find_package(OpenGL REQUIRED)
+message(STATUS "OpenGL dir: ${OPENGL_INCLUDE_DIR}")
+FetchContent_Declare(glbinding GIT_REPOSITORY https://github.com/cginternals/glbinding.git GIT_TAG v3.3.0)
+set(OPTION_BUILD_TESTS OFF)
+FetchContent_MakeAvailable(glbinding)
+message(STATUS "glbinding_VERSION: ${glbinding_VERSION}")
+
 # --------------------------------------------------------------------
 # 下载并解压 Slang SDK (这部分逻辑很棒，保持不变)
 # --------------------------------------------------------------------
@@ -60,35 +70,41 @@ FetchContent_MakeAvailable(assimp)
 FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git GIT_TAG v1.91.9b)
 # IMGUI_BUILD_EXAMPLES 是 imgui 内部的选项，无需设置，FetchContent_MakeAvailable 会处理
 FetchContent_MakeAvailable(imgui)
+# 创建一个统一的、包含所有后端的 ImGui 静态库
+add_library(imgui_multibackend STATIC)
 
-# 因为它有自己的源文件需要编译。
-add_library(imgui_lib STATIC) # 使用一个不与 FetchContent 目标冲突的新名字
-
-# ImGui 的源文件是其内部实现，使用 PRIVATE
-target_sources(imgui_lib PRIVATE
+# 添加所有需要编译的源文件：核心 + 所有后端
+target_sources(imgui_multibackend PRIVATE
+  # ImGui 核心文件
   ${imgui_SOURCE_DIR}/imgui.cpp
   ${imgui_SOURCE_DIR}/imgui_draw.cpp
   ${imgui_SOURCE_DIR}/imgui_tables.cpp
   ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+  
+  # GLFW 窗口后端
   ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+  
+  # OpenGL 渲染后端
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+  
+  # Vulkan 渲染后端
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
 )
 
-# ImGui 的头文件目录需要被链接到它的目标所包含，使用 PUBLIC
-target_include_directories(imgui_lib PUBLIC
+# 添加 ImGui 的头文件目录
+target_include_directories(imgui_multibackend PUBLIC
   ${imgui_SOURCE_DIR}
   ${imgui_SOURCE_DIR}/backends
 )
 
-# 为 ImGui 添加后端相关的源文件和依赖
-if(RENDER_BACKEND STREQUAL "Vulkan")
-  target_sources(imgui_lib PRIVATE ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp)
-  # ImGui 的使用者也需要链接 Vulkan 和 glfw，所以用 PUBLIC
-  target_link_libraries(imgui_lib PUBLIC Vulkan::Vulkan glfw)
-elseif(RENDER_BACKEND STREQUAL "OpenGL")
-  target_sources(imgui_lib PRIVATE ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
-  # ImGui 的使用者也需要链接 OpenGL 和 glfw，所以用 PUBLIC
-  target_link_libraries(imgui_lib PUBLIC OpenGL::GL glfw)
-endif()
+# 将所有依赖项公开链接到这个库。
+# 使用 PUBLIC，这样链接到 imgui_multibackend 的任何目标都能自动获得这些依赖。
+target_link_libraries(imgui_multibackend PUBLIC
+  glfw
+  Vulkan::Vulkan
+  glbinding::glbinding
+)
+message(STATUS "Configuring ImGui with BOTH Vulkan and OpenGL backends.")
 
 # --- STB ---
 FetchContent_Declare(stb GIT_REPOSITORY https://github.com/nothings/stb.git GIT_TAG master)
@@ -106,11 +122,17 @@ FetchContent_MakeAvailable(glm)
 # ====================================================================
 # 通用第三方库
 list(APPEND ext_lib
-  imgui_lib      # 使用我们新创建的、配置正确的 imgui 目标
+  imgui_multibackend
   glm::glm       # 最好使用由 FetchContent 创建的带命名空间的目标名
   stb
   assimp::assimp # 使用由 FetchContent 创建的带命名空间的目标名
   slang::slang
+)
+
+list(APPEND render_backend
+  Vulkan::Vulkan
+  glbinding::glbinding
+  glbinding::glbinding-aux
 )
 
 # 测试专用库

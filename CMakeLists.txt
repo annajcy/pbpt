@@ -11,24 +11,27 @@ option(PBPT_BUILD_TESTS "Build the project's tests" ON)
 option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" ON)
 option(PBPT_BUILD_EXAMPLES "Build the project's examples" ON)
 
-# ====================================================================
-# 全局构建选项和配置
-# ====================================================================
-include(platform)
+set(RENDER_BACKEND "Vulkan" CACHE STRING "Select the rendering backend (Vulkan or OpenGL)")
+set_property(CACHE RENDER_BACKEND PROPERTY STRINGS "Vulkan" "OpenGL")
+message(STATUS "Selected rendering backend: ${RENDER_BACKEND}")
+
+if (RENDER_BACKEND STREQUAL "Vulkan")
+  add_definitions("-DRENDER_BACKEND_VULKAN")
+endif()
+
+if (RENDER_BACKEND STREQUAL "OpenGL")
+  add_definitions("-DRENDER_BACKEND_OPENGL")
+endif()
+
 include(extension) 
 include(utils)
 
-# ====================================================================
 # 添加项目源代码
-# ====================================================================
 add_subdirectory(engine)
-add_subdirectory(main)
+add_subdirectory(pbpt)
 
-# ====================================================================
 # 测试构建选项
-# ====================================================================
 if(PBPT_BUILD_TESTS)
-  # 为测试启用 CTest
   enable_testing()
   add_subdirectory(test)
   message(STATUS "Tests are enabled.")
@@ -36,10 +39,7 @@ else()
   message(STATUS "Tests are disabled. To enable them, set PBPT_BUILD_TESTS to ON.")
 endif()
 
-
-# ====================================================================
 # 文档生成
-# ====================================================================
 if(PBPT_BUILD_DOCUMENTATION)
   include(document)
   message(STATUS "Documentation is enabled.")
