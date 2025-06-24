@@ -28,7 +28,7 @@ include(utils)
 
 # 添加项目源代码
 add_subdirectory(engine)
-add_subdirectory(pbpt)
+add_subdirectory(main)
 
 # 测试构建选项
 if(PBPT_BUILD_TESTS)

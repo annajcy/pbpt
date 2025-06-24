@@ -20,8 +20,6 @@
 
 #endif
 
-#include "glm/glm.hpp"
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -38,12 +36,6 @@ int main() {
 
     ImGui::CreateContext();
     std::cout << ImGui::GetVersion() << std::endl;
-
-    glm::vec3 v(1.0, 2.0, 3.0);
-    std::cout << v.x << std::endl;
-    std::cout << v.y << std::endl;
-    std::cout << v.z << std::endl;
-    std::cout << glm::dot(v, v) << std::endl;
 
     const int width_write = 100;
     const int height_write = 100;

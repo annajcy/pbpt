@@ -112,18 +112,12 @@ FetchContent_MakeAvailable(stb)
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
 
-# --- GLM (OpenGL Mathematics) ---
-FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG 1.0.1)
-FetchContent_MakeAvailable(glm)
-# glm 目标已由 FetchContent_MakeAvailable 创建，它是一个 INTERFACE 库，可以直接使用
-
 # ====================================================================
 #  将所有依赖项聚合到列表中，供主目标使用
 # ====================================================================
 # 通用第三方库
 list(APPEND ext_lib
   imgui_multibackend
-  glm::glm       # 最好使用由 FetchContent 创建的带命名空间的目标名
   stb
   assimp::assimp # 使用由 FetchContent 创建的带命名空间的目标名
   slang::slang
