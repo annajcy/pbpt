@@ -119,6 +119,25 @@ public:
         }
         return m_data[index];
     }
+
+    /**
+     * @brief Provides const access to the vector's components by index.
+     * @param index The zero-based index of the component to access.
+     * @return A const reference to the component.
+     * @throw std::out_of_range If `index` is out of bounds [0, N-1] at runtime.
+     * @note In a `constexpr` context, out-of-bounds access will result in a compile-time error.
+     */
+    constexpr T operator()(int index) const {
+        if (index < 0 || index >= N) {
+            if (std::is_constant_evaluated()) {
+                throw "Compile-time error: Index out of range";
+            } else {
+                throw std::out_of_range("Index out of range");
+            }
+        }
+        return m_data[index];
+    }
+
     /**
      * @brief Provides mutable access to the vector's components by index.
      * @param index The zero-based index of the component to access.
@@ -253,21 +272,13 @@ public:
             x() * rhs.y() - y() * rhs.x()
         );
     }
-    
+
     /**
-     * @brief Stream insertion operator for printing the vector.
-     * @details Prints the vector in the format (c1, c2, ..., cN).
-     * @param os The output stream.
-     * @param vec The vector to print.
-     * @return A reference to the output stream.
+     * @brief Applies a function to each element of the vector.
+     * @param func The function to apply.
      */
-    friend std::ostream& operator<<(std::ostream& os, const Vec& vec) {
-        os << '(';
-        for (int i = 0; i < N; ++i) {
-            os << vec.m_data[i] << (i == N - 1 ? "" : ", ");
-        }
-        os << ')';
-        return os;
+    void apply(const std::function<void(T&, int)>& func) {
+        for (int i = 0; i < N; ++i) func(m_data[i], i);
     }
 };
 
@@ -311,6 +322,23 @@ constexpr Vec<T, N> operator*(const Vec<T, N>& lhs, const Vec<T, N>& rhs) noexce
     Vec<T, N> result{};
     for (int i = 0; i < N; i++) result[i] = lhs[i] * rhs[i];
     return result;
+}
+
+/**
+* @brief Stream insertion operator for printing the vector.
+* @details Prints the vector in the format (c1, c2, ..., cN).
+* @param os The output stream.
+* @param vec The vector to print.
+* @return A reference to the output stream.
+*/
+template<typename T, int N>
+std::ostream& operator<<(std::ostream& os, const Vec<T, N>& vec) {
+    os << "Vec" << N << "(";
+    for (int i = 0; i < N; ++i) {
+        os << vec[i] << (i == N - 1 ? "" : ", ");
+    }
+    os << ')';
+    return os;
 }
 
 // --- 类型别名 (Type Aliases) ---

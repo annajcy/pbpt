@@ -10,3 +10,8 @@ add_executable(test_ray test_ray.cpp)
 target_link_libraries(test_ray PRIVATE pbpt_engine gtest_main )
 gtest_discover_tests(test_ray)
 
+add_executable(test_matrix test_matrix.cpp)
+target_link_libraries(test_matrix PRIVATE pbpt_engine gtest_main )
+gtest_discover_tests(test_matrix)
+
+

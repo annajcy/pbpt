@@ -132,7 +132,7 @@ TEST(PointTest, StreamOutput) {
 
     // Point 的流输出利用了 Vec 的流输出
     // 假设 Vec 的输出格式是 "(x, y, z)"
-    EXPECT_EQ(ss.str(), "(1.1, -2.2, 3.3)");
+    EXPECT_EQ(ss.str(), "Point3(1.1, -2.2, 3.3)");
 }
 
 

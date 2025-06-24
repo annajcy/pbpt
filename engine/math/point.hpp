@@ -156,8 +156,11 @@ public:
      * @return A reference to the output stream.
      */
     friend std::ostream& operator<<(std::ostream& os, const Point& point) {
-        // A point prints just like its coordinate vector.
-        os << static_cast<Vec<T, N>>(point);
+        os << "Point" << N << "(";
+        for (int i = 0; i < N; ++i) {
+            os << point[i] << (i == N - 1 ? "" : ", ");
+        }
+        os << ")";
         return os;
     }
 };

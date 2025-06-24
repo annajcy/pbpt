@@ -132,5 +132,5 @@ TEST(VectorFinalRuntimeTest, StreamOutput) {
     Vec3 v(1.1, -2.2, 3.3);
     std::stringstream ss;
     ss << v;
-    EXPECT_EQ(ss.str(), "(1.1, -2.2, 3.3)");
+    EXPECT_EQ(ss.str(), "Vec3(1.1, -2.2, 3.3)");
 }

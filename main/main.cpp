@@ -6,6 +6,8 @@
 #include "imgui.h"
 #include <vector>
 
+#include "math/matrix.hpp"
+
 #if defined (RENDER_BACKEND_VULKAN)
     #include "vulkan/vulkan.h"
     #include "vulkan/vulkan_core.h"
@@ -108,6 +110,29 @@ int main() {
     Assimp::Importer importer{};
     bool is_supported = importer.IsExtensionSupported("obj");
     std::cout << "IsExtensionSupported: " << is_supported << std::endl;
+
+    using namespace math;
+
+    Mat2 m(Vec2(4, 7), Vec2(2, 6)); // Determinant is 10
+    std::cout << "Determinant: " << m.determinant() << std::endl;
+    Mat2 m_inv = m.inverse();
+    std::cout << "Inverse: " << m_inv << std::endl;
+    Mat2 identity = m * m_inv;
+    std::cout << "Identity: " << identity << std::endl;
+    // Test singular matrix exception
+    Mat2 singular(Vec2(2, 4), Vec2(2, 4));
+    std::cout << "Determinant: " << singular.determinant() << std::endl;
+    //singular.inverse();
+
+    Mat4 m1 = Mat4::identity();
+    m1(0, 1) = 5; m1(0, 2) = 6;
+    m1(1, 1) = 7; m1(1, 2) = 8;
+
+    std::cout << "m1: " << m1 << std::endl;
+    
+    // Test contiguous submatrix
+    Mat2 sub = m1.submatrix<2, 2>(0, 1);
+    std::cout << "Submatrix: " << sub << std::endl;
 
     return 0;
 }
