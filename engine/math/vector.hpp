@@ -16,8 +16,7 @@
  * @brief Defines a generic, N-dimensional, constexpr-friendly vector class.
  */
 
-namespace pbpt {
-namespace math {
+namespace pbpt::math {
 
 /**
  * @class Vec
@@ -31,7 +30,7 @@ namespace math {
  * @tparam N The number of dimensions of the vector.
  */
 template<typename T, int N>
-class Vec {
+class Vector {
     static_assert(N > 0, "Vector dimensions must be positive");
     static_assert(std::is_floating_point_v<T>, "Vector type must be floating point");
 
@@ -42,29 +41,33 @@ public:
     // --- 静态工厂函数 (Static Factory Functions) ---
 
     /**
+     * @brief Creates a vector with all components set to a single scalar value.
+     * @param value The value to assign to all components.
+     */
+    static constexpr Vector filled(T value) noexcept {
+        Vector vec;
+        vec.m_data.fill(value);
+        return vec;
+    }
+
+    /**
      * @brief Creates a vector with all components set to zero.
      * @return A new Vec instance with all components initialized to 0.0.
      */
-    static constexpr Vec zeros() noexcept { return Vec(0.0); }
+    static constexpr Vector zeros() noexcept { return filled(0.0); }
 
     /**
      * @brief Creates a vector with all components set to one.
      * @return A new Vec instance with all components initialized to 1.0.
      */
-    static constexpr Vec ones() noexcept { return Vec(1.0); }
+    static constexpr Vector ones() noexcept { return filled(1.0); }
 
     // --- 构造函数 (Constructors) ---
 
     /**
      * @brief Default constructor. Initializes all components to zero.
      */
-    constexpr Vec() noexcept = default;
-
-    /**
-     * @brief Constructs a vector with all components set to a single scalar value.
-     * @param value The value to assign to all components.
-     */
-    constexpr explicit Vec(T value) noexcept { m_data.fill(value); }
+    constexpr Vector() noexcept = default;
 
     /**
      * @brief Constructs a vector from a list of individual components.
@@ -75,7 +78,7 @@ public:
      * @note The number of arguments `sizeof...(args)` must be equal to `N`.
      */
     template<std::convertible_to<T>... Args>
-    constexpr explicit Vec(Args&&... args) noexcept requires(sizeof...(args) == N) {
+    constexpr explicit Vector(Args&&... args) noexcept requires(sizeof...(args) == N) {
         m_data = {static_cast<T>(args)...};
     }
 
@@ -164,8 +167,8 @@ public:
      * @brief Negates the vector.
      * @return A new vector where each component is the negation of the original.
      */
-    constexpr Vec operator-() const noexcept {
-        Vec result{};
+    constexpr Vector operator-() const noexcept {
+        Vector result{};
         for (int i = 0; i < N; i++) result[i] = -m_data[i];
         return result;
     }
@@ -173,17 +176,17 @@ public:
     // --- 复合赋值运算符 (Compound Assignment Operators) ---
     
     /** @brief Adds another vector to this one component-wise. */
-    constexpr Vec& operator+=(const Vec& rhs) noexcept {
+    constexpr Vector& operator+=(const Vector& rhs) noexcept {
         for (int i = 0; i < N; i++) m_data[i] += rhs[i];
         return *this;
     }
     /** @brief Subtracts another vector from this one component-wise. */
-    constexpr Vec& operator-=(const Vec& rhs) noexcept {
+    constexpr Vector& operator-=(const Vector& rhs) noexcept {
         for (int i = 0; i < N; i++) m_data[i] -= rhs[i];
         return *this;
     }
     /** @brief Multiplies this vector by a scalar. */
-    constexpr Vec& operator*=(const T& rhs) noexcept {
+    constexpr Vector& operator*=(const T& rhs) noexcept {
         for (int i = 0; i < N; i++) m_data[i] *= rhs;
         return *this;
     }
@@ -219,8 +222,8 @@ public:
      * @throw std::runtime_error If the vector's length is zero.
      * @note In a `constexpr` context, normalizing a zero vector will result in a compile-time error.
      */
-    constexpr Vec normalized() const {
-        Vec result = *this;
+    constexpr Vector normalized() const {
+        Vector result = *this;
         T len = length();
         if (len == 0) {
             if (std::is_constant_evaluated()) {
@@ -238,7 +241,7 @@ public:
      * @throw std::runtime_error If the vector's length is zero.
      * @note In a `constexpr` context, normalizing a zero vector will result in a compile-time error.
      */
-    constexpr Vec& normalize() {
+    constexpr Vector& normalize() {
         T len = length();
         if (len == 0) {
             if (std::is_constant_evaluated()) {
@@ -255,7 +258,7 @@ public:
      * @param rhs The other vector.
      * @return The scalar dot product.
      */
-    constexpr T dot(const Vec& rhs) const noexcept {
+    constexpr T dot(const Vector& rhs) const noexcept {
         T result = 0;
         for (int i = 0; i < N; i++) result += m_data[i] * rhs.m_data[i];
         return result;
@@ -267,8 +270,8 @@ public:
      * @return The resulting vector perpendicular to the two input vectors.
      * @note This operation is only defined for 3D vectors (N == 3).
      */
-    constexpr Vec cross(const Vec& rhs) const noexcept requires(N == 3) {
-        return Vec(
+    constexpr Vector cross(const Vector& rhs) const noexcept requires(N == 3) {
+        return Vector(
             y() * rhs.z() - z() * rhs.y(),
             z() * rhs.x() - x() * rhs.z(),
             x() * rhs.y() - y() * rhs.x()
@@ -288,7 +291,7 @@ public:
 
 /** @brief Adds two vectors component-wise. */
 template<typename T, int N>
-constexpr Vec<T, N> operator+(const Vec<T, N>& lhs, const Vec<T, N>& rhs) noexcept {
+constexpr Vector<T, N> operator+(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
     auto result = lhs;
     result += rhs;
     return result;
@@ -296,7 +299,7 @@ constexpr Vec<T, N> operator+(const Vec<T, N>& lhs, const Vec<T, N>& rhs) noexce
 
 /** @brief Subtracts one vector from another component-wise. */
 template<typename T, int N>
-constexpr Vec<T, N> operator-(const Vec<T, N>& lhs, const Vec<T, N>& rhs) noexcept {
+constexpr Vector<T, N> operator-(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
     auto result = lhs;
     result -= rhs;
     return result;
@@ -304,7 +307,7 @@ constexpr Vec<T, N> operator-(const Vec<T, N>& lhs, const Vec<T, N>& rhs) noexce
 
 /** @brief Multiplies a vector by a scalar. */
 template<typename T, int N, std::convertible_to<T> U>
-constexpr Vec<T, N> operator*(const Vec<T, N>& lhs, U rhs) noexcept {
+constexpr Vector<T, N> operator*(const Vector<T, N>& lhs, U rhs) noexcept {
     auto result = lhs;
     result *= static_cast<T>(rhs);
     return result;
@@ -312,7 +315,7 @@ constexpr Vec<T, N> operator*(const Vec<T, N>& lhs, U rhs) noexcept {
 
 /** @brief Multiplies a scalar by a vector. */
 template<typename T, int N, std::convertible_to<T> U>
-constexpr Vec<T, N> operator*(U lhs, const Vec<T, N>& rhs) noexcept {
+constexpr Vector<T, N> operator*(U lhs, const Vector<T, N>& rhs) noexcept {
     return rhs * static_cast<T>(lhs);
 }
 
@@ -320,8 +323,8 @@ constexpr Vec<T, N> operator*(U lhs, const Vec<T, N>& rhs) noexcept {
  * @warning This is NOT a dot product or cross product.
  */
 template<typename T, int N>
-constexpr Vec<T, N> operator*(const Vec<T, N>& lhs, const Vec<T, N>& rhs) noexcept {
-    Vec<T, N> result{};
+constexpr Vector<T, N> operator*(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
+    Vector<T, N> result{};
     for (int i = 0; i < N; i++) result[i] = lhs[i] * rhs[i];
     return result;
 }
@@ -334,7 +337,7 @@ constexpr Vec<T, N> operator*(const Vec<T, N>& lhs, const Vec<T, N>& rhs) noexce
 * @return A reference to the output stream.
 */
 template<typename T, int N>
-std::ostream& operator<<(std::ostream& os, const Vec<T, N>& vec) {
+std::ostream& operator<<(std::ostream& os, const Vector<T, N>& vec) {
     os << "Vec" << N << "(";
     for (int i = 0; i < N; ++i) {
         os << vec[i] << (i == N - 1 ? "" : ", ");
@@ -346,11 +349,10 @@ std::ostream& operator<<(std::ostream& os, const Vec<T, N>& vec) {
 // --- 类型别名 (Type Aliases) ---
 
 /** @brief A 2-dimensional vector of type `Float`. */
-using Vec2 = Vec<Float, 2>;
+using Vec2 = Vector<Float, 2>;
 /** @brief A 3-dimensional vector of type `Float`. */
-using Vec3 = Vec<Float, 3>;
+using Vec3 = Vector<Float, 3>;
 /** @brief A 4-dimensional vector of type `Float`. */
-using Vec4 = Vec<Float, 4>;
+using Vec4 = Vector<Float, 4>;
 
 } // namespace math
-} // namespace pbpt

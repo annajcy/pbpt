@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
 #include "math/matrix.hpp" // The header file for the Matrix class to be tested.
+#include "math/type_alias.hpp"
+#include "math/vector.hpp"
 
-
-using namespace pbpt::math;
+namespace pbpt::math::testing {
 
 /**
  * @brief Helper function to compare two matrices for near-equality.
@@ -23,11 +24,13 @@ void ExpectMatricesNear(const Matrix<T, R, C>& m1, const Matrix<T, R, C>& m2, T 
     }
 }
 
-// Test suite for the Matrix class
+
 class MatrixTest : public ::testing::Test {
 protected:
     // You can set up shared objects here if needed
 };
+
+// --- Constructor and Factory Tests ---
 
 TEST_F(MatrixTest, DefaultConstructorAndZeros) {
     Mat3 m; // Default constructor should create a zero matrix
@@ -51,16 +54,65 @@ TEST_F(MatrixTest, IdentityFactory) {
     }
 }
 
-TEST_F(MatrixTest, VectorConstructor) {
+
+TEST_F(MatrixTest, ValueListConstructor) {
+    // Test with correct number of values (3x3 matrix of floats)
+    Mat3 mat1(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f);
+    EXPECT_FLOAT_EQ(mat1(0, 0), 1.0f);
+    EXPECT_FLOAT_EQ(mat1(1, 1), 5.0f);
+    EXPECT_FLOAT_EQ(mat1(2, 2), 9.0f);
+
+    // Test with correct number of values (2x2 matrix)
+    Mat2 mat2(1.1f, 2.2f, 3.3f, 4.4f);
+    EXPECT_FLOAT_EQ(mat2(0, 0), 1.1f);
+    EXPECT_FLOAT_EQ(mat2(1, 1), 4.4f);
+
+    // Test with single value (1x1 matrix) - This also checks for ambiguity resolution
+    Matrix<Float, 1, 1> mat3(3.14f);
+    EXPECT_FLOAT_EQ(mat3(0, 0), 3.14);
+
+    // Test with mixed types that can be converted to matrix type
+    Matrix<Float, 2, 1> mat5(1.0, 2.5f); // double and float literal
+    EXPECT_FLOAT_EQ(mat5(0, 0), 1.0);
+    EXPECT_FLOAT_EQ(mat5(1, 0), 2.5);
+}
+
+
+TEST_F(MatrixTest, ColVectorConstructor) {
     Vec3 r0(1, 2, 3);
     Vec3 r1(4, 5, 6);
     Vec3 r2(7, 8, 9);
     Mat3 m(r0, r1, r2);
 
-    EXPECT_EQ(m(0, 0), 1); EXPECT_EQ(m(0, 1), 2); EXPECT_EQ(m(0, 2), 3);
-    EXPECT_EQ(m(1, 0), 4); EXPECT_EQ(m(1, 1), 5); EXPECT_EQ(m(1, 2), 6);
-    EXPECT_EQ(m(2, 0), 7); EXPECT_EQ(m(2, 1), 8); EXPECT_EQ(m(2, 2), 9);
+    EXPECT_FLOAT_EQ(m(0, 0), 1); EXPECT_FLOAT_EQ(m(0, 1), 4); EXPECT_FLOAT_EQ(m(0, 2), 7);
+    EXPECT_FLOAT_EQ(m(1, 0), 2); EXPECT_FLOAT_EQ(m(1, 1), 5); EXPECT_FLOAT_EQ(m(1, 2), 8);
+    EXPECT_FLOAT_EQ(m(2, 0), 3); EXPECT_FLOAT_EQ(m(2, 1), 6); EXPECT_FLOAT_EQ(m(2, 2), 9);
 }
+
+TEST_F(MatrixTest, ColumnVectorConstructor) {
+    // For a 3x2 matrix, the constructor should expect 2 column vectors of size 3.
+    using TestMat = Matrix<Float, 3, 2>;
+    using ColVec = Vector<Float, 3>;
+
+    ColVec c0(1.f, 2.f, 3.f);
+    ColVec c1(4.f, 5.f, 6.f);
+    
+    // Construct the matrix from two column vectors
+    TestMat m(c0, c1);
+
+    // Column 0 should be {1, 2, 3}
+    EXPECT_FLOAT_EQ(m(0, 0), 1.f);
+    EXPECT_FLOAT_EQ(m(1, 0), 2.f);
+    EXPECT_FLOAT_EQ(m(2, 0), 3.f);
+
+    // Column 1 should be {4, 5, 6}
+    EXPECT_FLOAT_EQ(m(0, 1), 4.f);
+    EXPECT_FLOAT_EQ(m(1, 1), 5.f);
+    EXPECT_FLOAT_EQ(m(2, 1), 6.f);
+}
+
+
+// --- Core Functionality Tests ---
 
 TEST_F(MatrixTest, AccessorsAndDimensions) {
     Mat3x4 m;
@@ -77,15 +129,28 @@ TEST_F(MatrixTest, AccessorsAndDimensions) {
 }
 
 TEST_F(MatrixTest, RowAndColExtractionToVec) {
-    Mat2 m(Vec2(1, 2), Vec2(3, 4));
-    
+    // Mat2 m(
+    //     1, 2, 
+    //     3, 4
+    // );
+
+    Mat2 m(
+        Vec2(1, 3),
+        Vec2(2, 4)
+    );
+
     // This now tests the implicit conversion from a view to a Vec
     Vec2 r0 = m.row(0);
     EXPECT_EQ(r0.x(), 1); EXPECT_EQ(r0.y(), 2);
 
     Vec2 c1 = m.col(1);
     EXPECT_EQ(c1.x(), 2); EXPECT_EQ(c1.y(), 4);
+
+    Vec2 c2 = m.col(0);
+    EXPECT_EQ(c2.x(), 1); EXPECT_EQ(c2.y(), 3);
 }
+
+// --- Arithmetic and Algebra Tests ---
 
 TEST_F(MatrixTest, AdditionAndSubtraction) {
     Mat2 m1(Vec2(1, 2), Vec2(3, 4));
@@ -123,7 +188,7 @@ TEST_F(MatrixTest, MatrixVectorMultiplication) {
     Vec3 v(2, 1, 3);
     
     Vec3 result = m * v;
-    Vec3 expected(13, 31, 49);
+    Vec3 expected(27, 33, 39);
     
     EXPECT_NEAR(result.x(), expected.x(), 1e-6);
     EXPECT_NEAR(result.y(), expected.y(), 1e-6);
@@ -135,20 +200,20 @@ TEST_F(MatrixTest, MatrixMatrixMultiplication) {
     Mat2 m2(Vec2(2, 0), Vec2(1, 2));
 
     Mat2 result = m1 * m2;
-    Mat2 expected(Vec2(4, 4), Vec2(10, 8));
+    Mat2 expected(Vec2(2, 4), Vec2(7, 10));
     ExpectMatricesNear(result, expected);
 }
 
 TEST_F(MatrixTest, Transpose) {
-    Matrix<Float, 2, 3> m(Vec3(1, 2, 3), Vec3(4, 5, 6));
+    Matrix<Float, 2, 3> m(1.f, 2.f, 3.f, 4.f, 5.f, 6.f);
     
     Matrix<Float, 3, 2> mt = m.transpose();
     
     EXPECT_EQ(mt.row_dims(), 3);
     EXPECT_EQ(mt.col_dims(), 2);
     EXPECT_EQ(mt(0, 0), 1);
-    EXPECT_EQ(mt(1, 0), 2);
-    EXPECT_EQ(mt(2, 1), 6);
+    EXPECT_EQ(mt(1, 0), 2); // m(0,1) becomes mt(1,0)
+    EXPECT_EQ(mt(2, 1), 6); // m(1,2) becomes mt(2,1)
 }
 
 TEST_F(MatrixTest, Determinant) {
@@ -160,11 +225,17 @@ TEST_F(MatrixTest, Determinant) {
 }
 
 TEST_F(MatrixTest, Inverse) {
-    Mat2 m(Vec2(4, 7), Vec2(2, 6)); // Determinant is 10
+    //Mat2 m(Vec2(4, 7), Vec2(2, 6)); // Determinant is 10
+    
+    Mat2 m(
+        4, 2,
+        7, 6
+    ); 
+
     Mat2 m_inv = m.inverse();
     EXPECT_NEAR(m_inv(0, 0), 0.6f, 1e-6);
-    EXPECT_NEAR(m_inv(0, 1), -0.7f, 1e-6);
-    EXPECT_NEAR(m_inv(1, 0), -0.2f, 1e-6);
+    EXPECT_NEAR(m_inv(0, 1), -0.2f, 1e-6);
+    EXPECT_NEAR(m_inv(1, 0), -0.7f, 1e-6);
     EXPECT_NEAR(m_inv(1, 1), 0.4f, 1e-6);
 
     Mat2 identity = m * m_inv;
@@ -175,6 +246,8 @@ TEST_F(MatrixTest, Inverse) {
     Mat2 singular(Vec2(2, 4), Vec2(2, 4));
     EXPECT_THROW(singular.inverse(), std::runtime_error);
 }
+
+// --- View and Submatrix Tests ---
 
 TEST_F(MatrixTest, SubmatrixCopy) {
     Mat4 m = Mat4::identity();
@@ -208,8 +281,8 @@ TEST_F(MatrixTest, MatrixViewModificationAndAssignment) {
     
     // 5. Verify the block in the original matrix is updated
     EXPECT_EQ(m(1, 1), 10);
-    EXPECT_EQ(m(1, 2), 20);
-    EXPECT_EQ(m(2, 1), 30);
+    EXPECT_EQ(m(2, 1), 20);
+    EXPECT_EQ(m(1, 2), 30);
     EXPECT_EQ(m(2, 2), 40);
     
     // 6. Convert the view back to a new, owning Matrix and check its contents
@@ -222,8 +295,8 @@ TEST_F(MatrixTest, VectorViewTest) {
     
     // --- Test Row View ---
     auto row1_view = m.row(1);
-    EXPECT_EQ(row1_view[0], 4);
-    EXPECT_EQ(row1_view[2], 6);
+    EXPECT_EQ(row1_view[0], 2);
+    EXPECT_EQ(row1_view[2], 8);
 
     // Modify through row view
     row1_view[1] = 99.0f;
@@ -281,7 +354,13 @@ TEST_F(MatrixTest, ConstMatrixViewTest) {
 
 TEST_F(MatrixTest, ViewApplyWithStdFunction) {
     // Test VectorView::apply
-    Mat3 m(Vec3(1, 2, 3), Vec3(4, 5, 6), Vec3(7, 8, 9));
+    // Mat3 m(Vec3(1, 2, 3), Vec3(4, 5, 6), Vec3(7, 8, 9));
+    Mat3 m(
+        1, 2, 3, 
+        4, 5, 6, 
+        7, 8, 9
+    );
+
     auto row1_view = m.row(1);
 
     std::function<void(Float&, int)> multiply_by_index_plus_one = 
@@ -297,8 +376,12 @@ TEST_F(MatrixTest, ViewApplyWithStdFunction) {
     EXPECT_EQ(m(1, 2), 18);
 
     // Test MatrixView::apply
-    Mat2 m2(Vec2(1, 2), Vec2(3, 4));
-    Mat2::View<2, 2> full_view = m2.view<2, 2>(0, 0);
+    Mat2 m2(
+        1, 2, 
+        3, 4
+    );
+    
+    auto full_view = m2.view<2, 2>(0, 0);
 
     std::function<void(Float&, int, int)> add_row_and_col = 
         [](Float& elem, int r, int c) {
@@ -315,3 +398,93 @@ TEST_F(MatrixTest, ViewApplyWithStdFunction) {
     EXPECT_EQ(m2(1, 0), 13);
     EXPECT_EQ(m2(1, 1), 15);
 }
+
+// --- Homogeneous Transformation Tests ---
+
+class MatrixHomoTransformTest : public ::testing::Test {};
+
+TEST_F(MatrixHomoTransformTest, PointTranslation) {
+    Mat4 translation_matrix = Mat4::identity();
+    translation_matrix(0, 3) = 5.0;
+    translation_matrix(1, 3) = -2.0;
+
+    const Pt3 p_original(10, 20, 30);
+    const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
+
+    const Homo3 h_transformed = translation_matrix * h_original;
+    const Pt3 p_final = h_transformed.to_point();
+
+    EXPECT_DOUBLE_EQ(h_transformed.raw().w(), 1.0); // Check it's still a point
+    EXPECT_DOUBLE_EQ(p_final.x(), 10.0 + 5.0);
+    EXPECT_DOUBLE_EQ(p_final.y(), 20.0 - 2.0);
+    EXPECT_DOUBLE_EQ(p_final.z(), 30.0);
+}
+
+TEST_F(MatrixHomoTransformTest, VectorTranslation) {
+    Mat4 translation_matrix = Mat4::identity();
+    translation_matrix(0, 3) = 5.0;
+    translation_matrix(1, 3) = -2.0;
+
+    const Vec3 v_original(1, 1, 1);
+    const Homo3 h_original(v_original.x(), v_original.y(), v_original.z(), 0.0);
+
+    const Homo3 h_transformed = translation_matrix * h_original;
+    const Vec3 v_final = h_transformed.to_vector();
+
+    EXPECT_DOUBLE_EQ(h_transformed.raw().w(), 0.0); // Check it's still a vector
+    EXPECT_DOUBLE_EQ(v_final.x(), v_original.x());
+    EXPECT_DOUBLE_EQ(v_final.y(), v_original.y());
+    EXPECT_DOUBLE_EQ(v_final.z(), v_original.z());
+}
+
+TEST_F(MatrixHomoTransformTest, PointRotation) {
+    Mat4 rotation_matrix = Mat4::zeros();
+    rotation_matrix(0, 0) = 0.0; rotation_matrix(0, 1) = -1.0;
+    rotation_matrix(1, 0) = 1.0; rotation_matrix(1, 1) = 0.0;
+    rotation_matrix(2, 2) = 1.0;
+    rotation_matrix(3, 3) = 1.0;
+
+    const Pt3 p_original(10, 0, 0);
+    const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
+
+    const Homo3 h_transformed = rotation_matrix * h_original;
+    const Pt3 p_final = h_transformed.to_point();
+
+    EXPECT_NEAR(p_final.x(), 0.0, 1e-9);
+    EXPECT_NEAR(p_final.y(), 10.0, 1e-9);
+    EXPECT_NEAR(p_final.z(), 0.0, 1e-9);
+}
+
+TEST_F(MatrixHomoTransformTest, CombinedScaleAndTranslate) {
+    Mat4 scale_matrix = Mat4::identity();
+    scale_matrix(0, 0) = 2.0;
+    scale_matrix(1, 1) = 2.0;
+    scale_matrix(2, 2) = 2.0;
+
+    Mat4 translate_matrix = Mat4::identity();
+    translate_matrix(0, 3) = 5.0;
+
+    const Mat4 combined_matrix = translate_matrix * scale_matrix;
+
+    const Pt3 p_original(10, 10, 10);
+    const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
+
+    const Homo3 h_transformed = combined_matrix * h_original;
+    const Pt3 p_final = h_transformed.to_point();
+    
+    EXPECT_DOUBLE_EQ(p_final.x(), 25.0);
+    EXPECT_DOUBLE_EQ(p_final.y(), 20.0);
+    EXPECT_DOUBLE_EQ(p_final.z(), 20.0);
+}
+
+
+// Note: The following test would fail to compile due to static_assert/requires clause,
+// so it's commented out but shown here for documentation purposes
+/*
+TEST_F(MatrixTest, ValueConstructorWithWrongNumberOfValues) {
+    // This should fail to compile due to the requires clause
+    Matrix<int, 2, 2> mat(1, 2, 3); // Only 3 values for 2x2=4 elements
+}
+*/
+
+} // namespace pbpt::math::testing

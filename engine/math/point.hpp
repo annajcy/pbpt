@@ -12,9 +12,7 @@
  * `Point - Point = Vector` and `Point + Vector = Point`.
  */
 
-namespace pbpt {
-namespace math {
-
+namespace pbpt::math {
 /**
  * @class Point
  * @brief A template class for an N-dimensional point in space.
@@ -40,39 +38,37 @@ private:
     /**
      * @brief The internal coordinates of the point, stored as a vector from the origin.
      */
-    Vec<T, N> m_coords{};
+    Vector<T, N> m_coords{};
 
 public:
+    // --- 静态工厂函数 (Static Factory Functions) ---
+
+    constexpr static Point filled(T value) noexcept { return Point(Vector<T, N>::filled(value)); }
+
     /**
      * @brief Creates a point at the origin (0, 0, ...).
      * @return A new Point instance at the origin.
      */
-    constexpr static Point zeros() noexcept { return Point(Vec<T, N>::zeros()); }
+    constexpr static Point zeros() noexcept { return Point(Vector<T, N>::zeros()); }
 
     /**
      * @brief Creates a point with all coordinates set to one.
      * @return A new Point instance with all coordinates set to 1.0.
      */
-    constexpr static Point ones() noexcept { return Point(Vec<T, N>::ones()); }
+    constexpr static Point ones() noexcept { return Point(Vector<T, N>::ones()); }
     
     // --- 构造函数 (Constructors) ---
 
     /**
      * @brief Default constructor. Initializes the point at the origin.
      */
-    constexpr Point() noexcept : m_coords(Vec<T, N>::zeros()) {}
-
-    /**
-     * @brief Constructs a point with all coordinates set to a single scalar value.
-     * @param value The value to assign to all coordinates.
-     */
-    constexpr explicit Point(T value) noexcept : m_coords(value) {}
+    constexpr Point() noexcept : m_coords(Vector<T, N>::zeros()) {}
 
     /**
      * @brief Constructs a point from a coordinate vector.
      * @param vec The vector representing the point's coordinates from the origin.
      */
-    constexpr explicit Point(const Vec<T, N>& vec) noexcept : m_coords(vec) {}
+    constexpr explicit Point(const Vector<T, N>& vec) noexcept : m_coords(vec) {}
 
     /**
      * @brief Constructs a point from a list of individual coordinate values.
@@ -123,7 +119,7 @@ public:
      * when an explicit cast is used.
      * @return The `Vec<T, N>` representing the point's coordinates.
      */
-    constexpr explicit operator Vec<T, N>() const noexcept { return m_coords; }
+    constexpr explicit operator Vector<T, N>() const noexcept { return m_coords; }
 
     // --- 复合赋值运算符 (Compound Assignment Operators) ---
 
@@ -132,7 +128,7 @@ public:
      * @param rhs The displacement vector to add.
      * @return A reference to the modified point.
      */
-    constexpr Point& operator+=(const Vec<T, N>& rhs) noexcept {
+    constexpr Point& operator+=(const Vector<T, N>& rhs) noexcept {
         m_coords += rhs;
         return *this;
     }
@@ -142,7 +138,7 @@ public:
      * @param rhs The displacement vector to subtract.
      * @return A reference to the modified point.
      */
-    constexpr Point& operator-=(const Vec<T, N>& rhs) noexcept {
+    constexpr Point& operator-=(const Vector<T, N>& rhs) noexcept {
         m_coords -= rhs;
         return *this;
     }
@@ -175,8 +171,8 @@ public:
  * @return The `Vec<T, N>` that goes from `rhs` to `lhs`.
  */
 template<typename T, int N>
-constexpr Vec<T, N> operator-(const Point<T, N>& lhs, const Point<T, N>& rhs) noexcept {
-    return static_cast<Vec<T, N>>(lhs) - static_cast<Vec<T, N>>(rhs);
+constexpr Vector<T, N> operator-(const Point<T, N>& lhs, const Point<T, N>& rhs) noexcept {
+    return static_cast<Vector<T, N>>(lhs) - static_cast<Vector<T, N>>(rhs);
 }
 
 /**
@@ -186,7 +182,7 @@ constexpr Vec<T, N> operator-(const Point<T, N>& lhs, const Point<T, N>& rhs) no
  * @return The new, translated point.
  */
 template<typename T, int N>
-constexpr Point<T, N> operator+(const Point<T, N>& lhs, const Vec<T, N>& rhs) noexcept {
+constexpr Point<T, N> operator+(const Point<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
     auto result = lhs;
     result += rhs;
     return result;
@@ -199,7 +195,7 @@ constexpr Point<T, N> operator+(const Point<T, N>& lhs, const Vec<T, N>& rhs) no
  * @return The new, translated point.
  */
 template<typename T, int N>
-constexpr Point<T, N> operator-(const Point<T, N>& lhs, const Vec<T, N>& rhs) noexcept {
+constexpr Point<T, N> operator-(const Point<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
     auto result = lhs;
     result -= rhs;
     return result;
@@ -215,17 +211,16 @@ template<typename T, int N>
 constexpr Point<T, N> mid_point(const Point<T, N>& lhs, const Point<T, N>& rhs) noexcept {
     // Conceptually: start at lhs, and move halfway towards rhs.
     // (lhs + (rhs - lhs) * 0.5) which simplifies to (lhs + rhs) * 0.5
-    return Point<T, N>((static_cast<Vec<T, N>>(lhs) + static_cast<Vec<T, N>>(rhs)) * 0.5);
+    return Point<T, N>((static_cast<Vector<T, N>>(lhs) + static_cast<Vector<T, N>>(rhs)) * 0.5);
 }
 
 // --- 类型别名 (Type Aliases) ---
 
 /** @brief A 2-dimensional point of type `Float`. */
-using Point2 = Point<Float, 2>;
+using Pt2 = Point<Float, 2>;
 /** @brief A 3-dimensional point of type `Float`. */
-using Point3 = Point<Float, 3>;
+using Pt3 = Point<Float, 3>;
 /** @brief A 4-dimensional point of type `Float`. */
-using Point4 = Point<Float, 4>;
+using Pt4 = Point<Float, 4>;
 
 } // namespace math
-} // namespace pbpt

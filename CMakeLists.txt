@@ -10,7 +10,7 @@ include(FetchContent)
 option(PBPT_BUILD_TESTS "Build the project's tests" ON)
 option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" ON)
 option(PBPT_BUILD_EXAMPLES "Build the project's examples" ON)
-
+option(FLOAT_64BIT "Use double precision floating point" OFF)
 set(RENDER_BACKEND "Vulkan" CACHE STRING "Select the rendering backend (Vulkan or OpenGL)")
 set_property(CACHE RENDER_BACKEND PROPERTY STRINGS "Vulkan" "OpenGL")
 message(STATUS "Selected rendering backend: ${RENDER_BACKEND}")
@@ -21,6 +21,10 @@ endif()
 
 if (RENDER_BACKEND STREQUAL "OpenGL")
   add_definitions("-DRENDER_BACKEND_OPENGL")
+endif()
+
+if(FLOAT_64BIT)
+  add_definitions("-DFLOAT_64BIT")
 endif()
 
 include(extension) 

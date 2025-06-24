@@ -4,21 +4,19 @@
 #include <concepts>
 #include <stdexcept>
 #include <type_traits>
-#include <utility> // For std::forward and std::move
+#include <utility>
 #include <functional>
 
-#include "vector.hpp" // Assumed to be available from the user's code.
-
+#include "vector.hpp" 
+#include "homogeneous.hpp" 
 
 /**
  * @file matrix.hpp
  * @brief Defines a generic, RxC-dimensional, constexpr-friendly matrix class and its views.
  */
 
-namespace pbpt {
-namespace math {
-
-// Forward declarations
+namespace pbpt::math {
+//Forward declarations
 template<typename T, int R, int C>
 class Matrix;
 
@@ -28,10 +26,10 @@ class VectorView;
 template<typename T, int N>
 class ConstVectorView;
 
-template<typename T, int OrigR, int OrigC, int R, int C>
+template<typename T, int R, int C, int ViewR, int ViewC>
 class MatrixView;
 
-template<typename T, int OrigR, int OrigC, int R, int C>
+template<typename T, int R, int C, int ViewR, int ViewC>
 class ConstMatrixView;
 
 
@@ -72,7 +70,7 @@ public:
      * @param rhs The other vector.
      * @return The scalar dot product.
      */
-    constexpr T dot(const Vec<T, N>& rhs) const {
+    constexpr T dot(const Vector<T, N>& rhs) const {
         T result = 0;
         for (int i = 0; i < N; ++i) result += (*this)[i] * rhs[i];
         return result;
@@ -106,8 +104,8 @@ public:
      * @brief Converts the view into a new, owning Vec instance.
      * @details This performs a copy of the elements from the viewed region.
      */
-    constexpr operator Vec<T, N>() const {
-        Vec<T, N> result;
+    constexpr operator Vector<T, N>() const {
+        Vector<T, N> result;
         for (int i = 0; i < N; ++i) result[i] = (*this)[i];
         return result;
     }
@@ -136,7 +134,7 @@ public:
      * @param other The vector to copy from.
      * @return A reference to this view.
      */
-    constexpr VectorView& operator=(const Vec<T, N>& other) {
+    constexpr VectorView& operator=(const Vector<T, N>& other) {
         for (int i = 0; i < N; ++i) (*this)[i] = other[i];
         return *this;
     }
@@ -165,11 +163,11 @@ public:
  * @class ConstMatrixView
  * @brief A non-owning, read-only view/proxy into a sub-region of another Matrix.
  */
-template<typename T, int OrigR, int OrigC, int R, int C>
+template<typename T, int R, int C, int ViewR, int ViewC>
 class ConstMatrixView {
 protected:
     /** @brief A const reference to the original matrix. */
-    const Matrix<T, OrigR, OrigC>& m_original;
+    const Matrix<T, R, C>& m_original;
     /** @brief The starting row of the view in the original matrix's coordinate system. */
     int m_row_start{};
     /** @brief The starting column of the view in the original matrix's coordinate system. */
@@ -182,7 +180,7 @@ public:
      * @param row_start The starting row index of the view.
      * @param col_start The starting column index of the view.
      */
-    constexpr ConstMatrixView(const Matrix<T, OrigR, OrigC>& original, int row_start, int col_start)
+    constexpr ConstMatrixView(const Matrix<T, R, C>& original, int row_start, int col_start)
         : m_original(original), m_row_start(row_start), m_col_start(col_start) {}
 
     /**
@@ -199,10 +197,10 @@ public:
      * @brief Converts the view into a new, owning Matrix instance.
      * @details This performs a copy of the elements from the viewed region.
      */
-    constexpr operator Matrix<T, R, C>() const {
-        Matrix<T, R, C> result;
-        for (int i = 0; i < R; ++i) {
-            for (int j = 0; j < C; ++j) {
+    constexpr operator Matrix<T, ViewR, ViewC>() const {
+        Matrix<T, ViewR, ViewC> result;
+        for (int i = 0; i < ViewR; ++i) {
+            for (int j = 0; j < ViewC; ++j) {
                 result(i, j) = (*this)(i, j);
             }
         }
@@ -214,12 +212,12 @@ public:
  * @class MatrixView
  * @brief A non-owning, mutable view/proxy into a sub-region of another Matrix.
  */
-template<typename T, int OrigR, int OrigC, int R, int C>
-class MatrixView : public ConstMatrixView<T, OrigR, OrigC, R, C> {
+template<typename T, int R, int C, int ViewR, int ViewC>
+class MatrixView : public ConstMatrixView<T, R, C, ViewR, ViewC> {
 public:
 
     /** @brief Inherits constructors from ConstMatrixView. */
-    using ConstMatrixView<T, OrigR, OrigC, R, C>::ConstMatrixView;
+    using ConstMatrixView<T, R, C, ViewR, ViewC>::ConstMatrixView;
 
     /**
      * @brief Provides mutable access to an element of the view.
@@ -228,7 +226,7 @@ public:
      * @return A mutable reference to the element in the original matrix.
      */
     constexpr T& operator()(int r, int c) {
-        return const_cast<Matrix<T, OrigR, OrigC>&>(this->m_original)(this->m_row_start + r, this->m_col_start + c);
+        return const_cast<Matrix<T, R, C>&>(this->m_original)(this->m_row_start + r, this->m_col_start + c);
     }
 
     /**
@@ -236,9 +234,9 @@ public:
      * @param other The matrix to copy from.
      * @return A reference to this view.
      */
-    constexpr MatrixView& operator=(const Matrix<T, R, C>& other) {
-        for (int i = 0; i < R; ++i) {
-            for (int j = 0; j < C; ++j) {
+    constexpr MatrixView& operator=(const Matrix<T, ViewR, ViewC>& other) {
+        for (int i = 0; i < ViewR; ++i) {
+            for (int j = 0; j < ViewC; ++j) {
                 (*this)(i, j) = other(i, j);
             }
         }
@@ -250,8 +248,8 @@ public:
      * @param func The function to apply.
      */
     void apply(const std::function<void(T&, int, int)>& func) {
-        for (int i = 0; i < R; ++i) {
-            for (int j = 0; j < C; ++j) {
+        for (int i = 0; i < ViewR; ++i) {
+            for (int j = 0; j < ViewC; ++j) {
                 func((*this)(i, j), i, j);
             }
         }
@@ -296,7 +294,6 @@ private:
     std::array<T, R * C> m_data{};
 
 public:
-
     /**
      * @brief Provides a view into a sub-region of the matrix.
      * @tparam R1 The number of rows in the view.
@@ -305,8 +302,8 @@ public:
      * @param c The starting column index of the view.
      * @return A MatrixView instance.
      */
-    template<int R1, int C1>
-    using View = MatrixView<T, R, C, R1, C1>;
+    template<int ViewR, int ViewC>
+    using View = MatrixView<T, R, C, ViewR, ViewC>;
 
     /**
      * @brief Provides a const view into a sub-region of the matrix.
@@ -316,12 +313,8 @@ public:
      * @param c The starting column index of the view.
      * @return A ConstMatrixView instance.
      */
-    template<int R1, int C1>
-    using ConstView = ConstMatrixView<T, R, C, R1, C1>;
-
-
-
-
+    template<int ViewR, int ViewC>
+    using ConstView = ConstMatrixView<T, R, C, ViewR, ViewC>;
 
     // --- 静态工厂函数 (Static Factory Functions) ---
 
@@ -350,21 +343,36 @@ public:
     constexpr Matrix() noexcept = default;
 
     /**
-     * @brief Constructs a matrix from a list of row vectors.
-     * @details The number of vectors must match the number of rows (R).
-     * Each vector's dimension must match the number of columns (C).
-     * @param rows A parameter pack of Vec<T, C> objects.
-     */
+    * @brief Constructs a matrix from a list of col vectors.
+    * @details The number of vectors must match the number of columns (C).
+    * Each vector's dimension must match the number of rows (R).
+    * The requires clause ensures this constructor is only enabled for Vector types.
+    * @param col_vecs A parameter pack of column vectors.
+    */
     template<typename... Vecs>
-    constexpr explicit Matrix(Vecs&&... rows) noexcept requires(sizeof...(Vecs) == R) {
-        std::array<Vec<T, C>, R> row_vectors = {std::forward<Vecs>(rows)...};
-        for(int i = 0; i < R; ++i) {
-            for(int j = 0; j < C; ++j) {
-                m_data[i * C + j] = row_vectors[i][j];
+    // 将类型检查 (std::is_same_v<...>) 加入 requires 子句
+    requires(sizeof...(Vecs) == C && (std::is_same_v<Vector<T, R>, std::remove_cvref_t<Vecs>> && ...))
+    constexpr explicit Matrix(Vecs&&... col_vecs) noexcept {
+        
+        int col_index = 0;
+        (([&] {
+            for(int row_index = 0; row_index < R; ++row_index) {
+                (*this)(row_index, col_index) = col_vecs[row_index];
             }
-        }
+            ++col_index;
+        })(), ...);
     }
 
+    /**
+     * @brief Constructs a matrix from a list of values.
+     * @details The number of values must match the number of elements (R * C).
+     * @tparam Vals The parameter pack of values.
+     */
+
+    template<std::convertible_to<T>... Vals>
+    // 使用折叠表达式 (&& ...) 来展开参数包
+    requires(sizeof...(Vals) == R * C && (std::is_arithmetic_v<std::remove_cvref_t<Vals>> && ...))
+    constexpr Matrix(Vals&&... vals) noexcept : m_data{static_cast<T>(std::forward<Vals>(vals))...} {}
 
     // --- 访问器 (Accessors) ---
 
@@ -561,34 +569,34 @@ public:
      * @param col_start The starting column index for the view.
      * @return A MatrixView object that refers to a part of this matrix.
      */
-    template <int NewR, int NewC>
-    constexpr MatrixView<T, R, C, NewR, NewC> view(int row_start, int col_start) {
+    template <int ViewR, int ViewC>
+    constexpr Matrix::View<ViewR, ViewC> view(int row_start, int col_start) {
         // Basic bounds check to ensure the view doesn't immediately go out of bounds
         if (std::is_constant_evaluated()) {
-            if (row_start + NewR > R || col_start + NewC > C) {
+            if (row_start + ViewR > R || col_start + ViewC > C) {
                 throw "Compile-time error: View dimensions exceed original matrix bounds";
             }
         }
-        return MatrixView<T, R, C, NewR, NewC>(*this, row_start, col_start);
+        return Matrix::View<ViewR, ViewC>(*this, row_start, col_start);
     }
     
     /**
      * @brief Creates a non-owning, read-only view into a sub-region of this const matrix.
-     * @tparam NewR The number of rows in the view.
-     * @tparam NewC The number of columns in the view.
+     * @tparam ViewR The number of rows in the view.
+     * @tparam ViewC The number of columns in the view.
      * @param row_start The starting row index for the view.
      * @param col_start The starting column index for the view.
      * @return A ConstMatrixView object that refers to a part of this matrix.
      */
-    template <int NewR, int NewC>
-    constexpr ConstMatrixView<T, R, C, NewR, NewC> view(int row_start, int col_start) const {
+    template <int ViewR, int ViewC>
+    constexpr Matrix::ConstView<ViewR, ViewC> view(int row_start, int col_start) const {
         // Basic bounds check to ensure the view doesn't immediately go out of bounds
         if (std::is_constant_evaluated()) {
-            if (row_start + NewR > R || col_start + NewC > C) {
+            if (row_start + ViewR > R || col_start + ViewC > C) {
                 throw "Compile-time error: View dimensions exceed original matrix bounds";
             }
         }
-        return ConstMatrixView<T, R, C, NewR, NewC>(*this, row_start, col_start);
+        return Matrix::ConstView<ViewR, ViewC>(*this, row_start, col_start);
     }
     
     /**
@@ -712,12 +720,36 @@ constexpr Matrix<T, R, C> operator*(const Matrix<T, R, C>& mat, U scalar) noexce
  * @return A new Vec<T, R>
  */
 template<typename T, int R, int C>
-constexpr Vec<T, R> operator*(const Matrix<T, R, C>& lhs, const Vec<T, C>& rhs) noexcept {
-    Vec<T, R> result{};
+constexpr Vector<T, R> operator*(const Matrix<T, R, C>& lhs, const Vector<T, C>& rhs) noexcept {
+    Vector<T, R> result{};
     for (int i = 0; i < R; ++i) {
         result[i] = lhs.row(i).dot(rhs);
     }
     return result;
+}
+
+// In a file where both Matrix<T,R,C> and Homo<T,N> are visible
+// (e.g., at the end of homogeneous_coord.hpp, after including matrix.hpp)
+
+/**
+ * @brief Transforms a homogeneous coordinate by a matrix.
+ * @details This is the core operation for applying geometric transformations.
+ * The (N+1)x(N+1) matrix `lhs` is multiplied by the (N+1)-dimensional
+ * homogeneous coordinate vector represented by `rhs`.
+ * * @tparam T The underlying floating-point type.
+ * @tparam N The original dimension of the space (e.g., 3 for 3D graphics).
+ * @param lhs The (N+1)x(N+1) transformation matrix.
+ * @param rhs The homogeneous coordinate to be transformed.
+ * @return A new Homo<T, N> representing the transformed coordinate.
+ */
+template<typename T, int N>
+constexpr Homogeneous<T, N> operator*(const Matrix<T, N + 1, N + 1>& lhs, const Homogeneous<T, N>& rhs) noexcept {
+    // Reuse the existing Matrix * Vec operator.
+    // It multiplies the matrix with the Homo's internal (N+1) vector.
+    Vector<T, N + 1> result_coords = lhs * rhs.raw();
+    
+    // Construct a new Homo object from the resulting coordinates.
+    return Homogeneous<T, N>(result_coords);
 }
 
 /**
@@ -762,4 +794,3 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
 }
 
 } // namespace math
-} // namespace pbpt

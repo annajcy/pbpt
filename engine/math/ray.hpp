@@ -12,8 +12,8 @@
  * and a direction vector.
  */
 
-namespace pbpt {
-namespace math {
+namespace pbpt::math {
+
 
 /**
  * @class Ray
@@ -35,7 +35,7 @@ template<typename T, int N>
 class Ray {
 private:
     Point<T, N> m_origin{};
-    Vec<T, N> m_direction{};
+    Vector<T, N> m_direction{};
 
 public:
     // --- 构造函数 (Constructors) ---
@@ -46,7 +46,7 @@ public:
      * along the positive x-axis `(1,0,...)`.
      */
     constexpr Ray() noexcept
-        : m_origin(Point<T, N>::zeros()), m_direction(Vec<T, N>::zeros()) {
+        : m_origin(Point<T, N>::zeros()), m_direction(Vector<T, N>::zeros()) {
         // Default direction is along the x-axis.
         m_direction.x() = 1.0;
     }
@@ -58,7 +58,7 @@ public:
      * @note The provided `direction` vector will be normalized upon construction
      * to ensure the internal direction is always a unit vector.
      */
-    constexpr Ray(const Point<T, N>& origin, const Vec<T, N>& direction)
+    constexpr Ray(const Point<T, N>& origin, const Vector<T, N>& direction)
         : m_origin(origin), m_direction(direction.normalized()) {}
 
     /**
@@ -84,7 +84,7 @@ public:
      * @return A const reference to the ray's direction vector.
      * @note The returned vector is guaranteed to be a unit vector.
      */
-    constexpr const Vec<T, N>& direction() const noexcept { return m_direction; }
+    constexpr const Vector<T, N>& direction() const noexcept { return m_direction; }
 
     // --- 核心方法 (Core Methods) ---
 
@@ -111,4 +111,3 @@ using Ray3 = Ray<Float, 3>;
 using Ray2 = Ray<Float, 2>;
 
 } // namespace math
-} // namespace pbpt

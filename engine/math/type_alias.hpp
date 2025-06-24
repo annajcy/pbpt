@@ -10,8 +10,7 @@
  * double precision.
  */
 
-namespace pbpt {
-namespace math {
+namespace pbpt::math {
 
 /**
  * @brief The primary floating-point type used throughout the math library.
@@ -31,4 +30,3 @@ using Float = float;
 #endif
 
 } // namespace math
-} // namespace pbpt

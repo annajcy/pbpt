@@ -4,6 +4,11 @@
 #include <stdexcept>
 #include <type_traits>
 
+// Define _USE_MATH_DEFINES for M_PI on MSVC, or just define pi ourselves for portability.
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 /**
  * @file function.hpp
  * @brief Provides basic, constexpr-aware mathematical functions.
@@ -15,13 +20,9 @@
  */
 
  /**
- * @brief The main namespace for the Physically Based Path Tracer project.
- */
-namespace pbpt {
-/**
  * @brief The namespace for math library implementation
  */
-namespace math {
+namespace pbpt::math {
 /**
  * @brief Contains internal implementation details for the math library.
  * @warning Users should not directly use anything from this namespace.
@@ -67,6 +68,33 @@ constexpr T abs(T x) {
     }
     return x;
 }
+
+
+/**
+ * @brief Converts an angle from radians to degrees.
+ * @details This function converts an angle from radians to degrees.
+ * @tparam T The floating-point type of the angle.
+ * @param rad The angle in radians.
+ * @return requires constexpr 
+ */
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr T rad2deg(T rad) {
+    return rad * 180.0 / M_PI;
+}
+
+/**
+ * @brief Converts an angle from degrees to radians.
+ * @tparam T The floating-point type of the angle.
+ * @param deg The angle in degrees.
+ * @return The angle in radians.
+ */
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr T deg2rad(T deg) {
+    return deg * M_PI / 180.0;
+}
+
 
 /**
  * @brief Calculates the square root of a number with `constexpr` support.
@@ -115,4 +143,3 @@ constexpr T sqrt(T x) {
 }
 
 } // namespace math
-} // namespace pbpt

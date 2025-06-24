@@ -7,8 +7,7 @@
 #include "math/vector.hpp"
 // 假设 type_alias.hpp 和 function.hpp 已被 vector.hpp 包含
 
-// 使用命名空间以简化代码
-using namespace pbpt::math;
+namespace pbpt::math::testing {
 
 // --- 编译时测试 (验证 constexpr 功能) ---
 // 这个套件中的所有断言都在编译期间完成，确保了编译时计算的正确性。
@@ -133,4 +132,6 @@ TEST(VectorFinalRuntimeTest, StreamOutput) {
     std::stringstream ss;
     ss << v;
     EXPECT_EQ(ss.str(), "Vec3(1.1, -2.2, 3.3)");
+}
+
 }
