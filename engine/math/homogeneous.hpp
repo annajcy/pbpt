@@ -7,7 +7,7 @@
 #include <iostream>
 
 /**
- * @file homo.hpp
+ * @file homogeneous.hpp
  * @brief Defines a class for N-dimensional homogeneous coordinates.
  * @details This file provides the `Homo` class, which is essential for performing
  * 3D transformations in a unified manner. It allows points and vectors to be
@@ -19,7 +19,7 @@ namespace pbpt {
 namespace math {
 
 /**
- * @class Homo
+ * @class Homogeneous
  * @brief A template class for an N-dimensional homogeneous coordinate.
  * @details This class unifies the mathematical treatment of points and vectors
  * for use in projective geometry, particularly for 3D transformations. It

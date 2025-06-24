@@ -43,6 +43,11 @@ private:
 public:
     // --- 静态工厂函数 (Static Factory Functions) ---
 
+    /**
+     * @brief Creates a point filled with a specified value.
+     * @param value The value to fill all coordinates with.
+     * @return A new Point instance filled with the given value.
+     */
     constexpr static Point filled(T value) noexcept { return Point(Vector<T, N>::filled(value)); }
 
     /**

@@ -19,7 +19,7 @@
 namespace pbpt::math {
 
 /**
- * @class Vec
+ * @class Vector
  * @brief A template class for N-dimensional mathematical vectors.
  * @details This class provides a generic, fixed-size vector implementation suitable for
  * various mathematical and geometric calculations. It is designed to be highly

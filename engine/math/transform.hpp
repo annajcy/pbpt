@@ -74,8 +74,8 @@ public:
     * @return A Mat4 that rotates points/vectors around the world's X-axis.
     */
     static constexpr Mat4 rotate_x(Float angle_rad) noexcept {
-        const Float s = std::sin(angle_rad);
-        const Float c = std::cos(angle_rad);
+        const Float s = sin(angle_rad);
+        const Float c = cos(angle_rad);
         return Mat4(
             1, 0, 0, 0,
             0, c, -s, 0,
@@ -90,8 +90,8 @@ public:
     * @return A Mat4 that rotates points/vectors around the world's Y-axis.
     */
     static constexpr Mat4 rotate_y(Float angle_rad) noexcept {
-        const Float s = std::sin(angle_rad);
-        const Float c = std::cos(angle_rad);
+        const Float s = sin(angle_rad);
+        const Float c = cos(angle_rad);
         return Mat4(
             c, 0, s, 0,
             0, 1, 0, 0,
@@ -106,8 +106,8 @@ public:
     * @return A Mat4 that rotates points/vectors around the world's Z-axis.
     */
     static constexpr Mat4 rotate_z(Float angle_rad) noexcept {
-        const Float s = std::sin(angle_rad);
-        const Float c = std::cos(angle_rad);
+        const Float s = sin(angle_rad);
+        const Float c = cos(angle_rad);
         return Mat4(
             c, -s, 0, 0,
             s, c, 0, 0,
@@ -125,8 +125,8 @@ public:
 static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     // 确保旋转轴是单位向量，这对于公式的正确性至关重要
     const Vec3 a = axis.normalized();
-    const Float s = std::sin(angle_rad);
-    const Float c = std::cos(angle_rad);
+    const Float s = sin(angle_rad);
+    const Float c = cos(angle_rad);
     const Float omc = 1.0f - c; // one-minus-cosine
 
     const Float ax = a.x();
@@ -184,7 +184,7 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     * @return A Mat4 representing the perspective projection.
     */
     static constexpr Mat4 perspective(Float fov_y_rad, Float aspect_ratio, Float z_near, Float z_far) noexcept {
-        const Float tan_half_fovy = std::tan(fov_y_rad / 2.0);
+        const Float tan_half_fovy = tan(fov_y_rad / 2.0);
         Mat4 result = Mat4::zeros();
 
         result(0, 0) = 1.0 / (aspect_ratio * tan_half_fovy);
