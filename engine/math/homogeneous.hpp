@@ -1,6 +1,7 @@
 #pragma once
 
 #include "point.hpp"
+#include "matrix.hpp"
 #include <concepts>
 #include <stdexcept>
 #include <type_traits>
@@ -48,6 +49,7 @@ private:
     Vector<T, N + 1> m_data{};
 
 public:
+
     // --- 构造函数 (Constructors) ---
 
     /**
@@ -110,10 +112,14 @@ public:
     constexpr T& w() { return m_data[N]; }
 
     // 访问运算符
-    constexpr T operator[](int index) const { return m_data[index]; }
+    /** @brief Returns the value of the homogeneous coordinate at the specified index.*/
+    constexpr const T& operator[](int index) const { return m_data[index]; }
+
+    /** @brief Returns the value of the homogeneous coordinate at the specified index.*/
     constexpr T& operator[](int index) { return m_data[index]; }
-    constexpr T at(int index) const { return m_data.at(index); }
-    constexpr T& at(int index) { return m_data.at(index); }
+
+    /** @brief Returns the value of the homogeneous coordinate at the specified index.*/
+    constexpr const T& at(int index) const { return m_data.at(index); }
 
 
     // --- 状态检查 (State Checks) ---
@@ -200,6 +206,18 @@ public:
         os << "HCoord" << N << (h.is_point() ? "[P] " : "[V] ") << h.raw();
         return os;
     }
+
+    /**
+     * @brief Multiplication operator for a matrix and a homogeneous coordinate.
+     * @details This operator performs matrix-vector multiplication, where the matrix
+     * is of size (N+1)x(N+1) and the homogeneous coordinate is of size (N+1).
+     * @param mat The matrix to multiply.
+     * @param h The homogeneous coordinate to multiply.
+     * @return The result of the matrix-vector multiplication.
+     */
+    friend Homogeneous operator*(const Matrix<T, N + 1, N + 1>& mat, const Homogeneous& h) {
+        return Homogeneous(mat * h.raw());
+    }
 };
 
 // --- 类型别名 (Type Aliases) ---
@@ -209,5 +227,6 @@ public:
  * @details This is a convenient alias for `Homo<Float, 3>`, which internally uses a `Vec4`.
  */
 using Homo3 = Homogeneous<Float, 3>;
+using Homo2 = Homogeneous<Float, 2>;
 
 } // namespace homogeneous

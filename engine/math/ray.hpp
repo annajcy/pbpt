@@ -98,18 +98,8 @@ public:
      * @return The `Point<T, N>` at the specified parameter `t`.
      */
     constexpr Point<T, N> at(T t) const noexcept {
-        return m_origin + m_direction * t;
+        return m_origin + t * m_direction;
     }
-};
-
-template <typename T, int N>
-class RayDifferential : public Ray<T, N> {
-public:
-    RayDifferential() = default;
-    RayDifferential(const Point<T, N>& origin, const Vector<T, N>& direction)
-        : Ray<T, N>(origin, direction) {}
-    RayDifferential(const Point<T, N>& origin, const Point<T, N>& target)
-        : Ray<T, N>(origin, target) {}
 };
 
 // --- 类型别名 (Type Aliases) ---

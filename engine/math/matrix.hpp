@@ -8,7 +8,6 @@
 #include <functional>
 
 #include "vector.hpp" 
-#include "homogeneous.hpp" 
 
 /**
  * @file matrix.hpp
@@ -150,8 +149,11 @@ protected:
     int m_col_start{};
 
 public:
+    /*** @brief Provides a view into a sub-region of the matrix.*/
     using RowView = VectorView<T, ViewC>;
+    /*** @brief Provides a view into a sub-region of the matrix.*/
     using ColView = VectorView<T, ViewR>;
+
     /**
      * @brief Constructs a view from a Matrix instance.
      * @param original The matrix to view.
@@ -250,23 +252,6 @@ public:
     }
 };
 
-
-// --- 类型别名 (Type Aliases) ---
-/*@breif
-
-*/
-// --- 类型别名 (Type Aliases) ---
-/** @brief A 2x2 matrix of type `Float`. */
-using Mat2 = Matrix<Float, 2, 2>;
-/** @brief A 3x3 matrix of type `Float`. */
-using Mat3 = Matrix<Float, 3, 3>;
-/** @brief A 4x4 matrix of type `Float`. */
-using Mat4 = Matrix<Float, 4, 4>;
-/** @brief A 3x4 matrix of type `Float`. */
-using Mat3x4 = Matrix<Float, 3, 4>;
-/** @brief A 4x3 matrix of type `Float`. */
-using Mat4x3 = Matrix<Float, 4, 3>;
-
 /**
  * @class Matrix
  * @brief A template class for RxC dimensional mathematical matrices.
@@ -296,7 +281,11 @@ public:
      */
     template<int ViewR, int ViewC>
     using MatView = MatrixView<T, R, C, ViewR, ViewC>;
+
+    /*** @brief Provides a view into a sub-region of the matrix.*/
     using RowView = VectorView<T, C>;
+
+    /*** @brief Provides a view into a sub-region of the matrix.*/
     using ColView = VectorView<T, R>;
 
     // --- 静态工厂函数 (Static Factory Functions) ---
@@ -418,7 +407,6 @@ public:
     constexpr const ColView col(int c) const {
         return ColView(&(*this).at(0, c), C);
     }
-
 
     /** @brief Returns the number of rows. */
     constexpr int row_dims() const noexcept { return R; }
@@ -619,138 +607,125 @@ public:
         }
         return sub;
     }
+
+    // Matrix-Matrix Addition
+    /**
+    * @brief Matrix addition.
+    * @details Element-wise addition of two matrices.
+    * @return A new Matrix<T, R, C>
+    */
+    constexpr Matrix operator+(const Matrix& rhs) const noexcept {
+        auto result = *this;
+        return result += rhs;
+    }
+
+    // Matrix-Matrix Subtraction
+    /**
+    * @brief Matrix subtraction.
+    * @details Element-wise subtraction of two matrices.
+    * @return A new Matrix<T, R, C>
+    */
+    constexpr Matrix operator-(const Matrix& rhs) const noexcept {
+        auto result = *this;
+        return result -= rhs;
+    }
+
+    // Matrix-Scalar Multiplication
+    /**
+    * @brief Matrix multiplication by a scalar.
+    * @details Multiplies each element of the matrix by the scalar.
+    * @return A new Matrix<T, R, C>
+    */
+    template<std::convertible_to<T> U>
+    constexpr Matrix operator*(U scalar) const noexcept {
+        Matrix result{};
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                result[r][c] = (*this)[r][c] * scalar;
+            }
+        }
+        return result;
+    }
+
+    // Scalar-Matrix Multiplication
+    /**
+    * @brief Matrix multiplication by a scalar.
+    * @details Multiplies each element of the matrix by the scalar.
+    * @return A new Matrix<T, R, C>
+    */
+    template<std::convertible_to<T> U>
+    friend constexpr Matrix operator*(U scalar, const Matrix<T, R, C>& mat) noexcept {
+        auto result = mat;
+        return result *= static_cast<T>(scalar);
+    }
+
+    // --- 核心乘法运算 (Core Multiplication) ---
+
+    /**
+    * @brief Matrix-Vector multiplication.
+    */
+    constexpr Vector<T, R> operator*(const Vector<T, R>& rhs) const noexcept {
+        Vector<T, R> result{};
+        for (int r = 0; r < R; ++r) {
+            result[r] = row(r).dot(rhs);
+        }
+        return result;
+    }
+
+    /**
+    * @brief Matrix-Matrix multiplication.
+    * @details The number of columns in the left matrix must equal the number of rows
+    * in the right matrix.
+    * @return A new Matrix<T, R, M>
+    */
+    template<int M>
+    constexpr Matrix<T, R, M> operator*(const Matrix<T, C, M>& rhs) const noexcept {
+        Matrix<T, R, M> result{};
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < M; ++c) {
+                result[r][c] = row(r).dot(rhs.col(c));
+            }
+        }
+        return result;
+    }
+
+    /**
+    * @brief Matrix stream output.
+    * 
+    * @tparam T The matrix element type.
+    * @tparam R The number of rows in the matrix.
+    * @tparam C The number of columns in the matrix.
+    * @param os The output stream.
+    * @param mat The matrix to output.
+    * @return std::ostream& The output stream.
+    */
+    friend std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
+        os << "Matrix " << R << "x" << C << "[\n";
+        for (int i = 0; i < R; ++i) {
+            os << "  ";
+            for (int j = 0; j < C; ++j) {
+                os << mat.at(i, j) << (j == C - 1 ? "" : ",\t");
+            }
+            os << "\n";
+        }
+        os << "]";
+        return os;
+    }
 };
 
-// --- 全局运算符 (Global Operators) ---
-
-// Matrix-Matrix Addition
-/**
- * @brief Matrix addition.
- * @details Element-wise addition of two matrices.
- * @return A new Matrix<T, R, C>
- */
-template<typename T, int R, int C>
-constexpr Matrix<T, R, C> operator+(const Matrix<T, R, C>& lhs, const Matrix<T, R, C>& rhs) noexcept {
-    auto result = lhs;
-    return result += rhs;
-}
-
-
-// Matrix-Matrix Subtraction
-/**
- * @brief Matrix subtraction.
- * @details Element-wise subtraction of two matrices.
- * @return A new Matrix<T, R, C>
- */
-template<typename T, int R, int C>
-constexpr Matrix<T, R, C> operator-(const Matrix<T, R, C>& lhs, const Matrix<T, R, C>& rhs) noexcept {
-    auto result = lhs;
-    return result -= rhs;
-}
-
-// Scalar-Matrix Multiplication
-/**
- * @brief Matrix multiplication by a scalar.
- * @details Multiplies each element of the matrix by the scalar.
- * @return A new Matrix<T, R, C>
- */
-template<typename T, int R, int C, std::convertible_to<T> U>
-constexpr Matrix<T, R, C> operator*(U scalar, const Matrix<T, R, C>& mat) noexcept {
-    auto result = mat;
-    return result *= static_cast<T>(scalar);
-}
-
-// Matrix-Scalar Multiplication
-/**
- * @brief Matrix multiplication by a scalar.
- * @details Multiplies each element of the matrix by the scalar.
- * @return A new Matrix<T, R, C>
- */
-template<typename T, int R, int C, std::convertible_to<T> U>
-constexpr Matrix<T, R, C> operator*(const Matrix<T, R, C>& mat, U scalar) noexcept {
-    return scalar * mat;
-}
-
-// --- 核心乘法运算 (Core Multiplication) ---
-
-/**
- * @brief Matrix-Vector multiplication.
- * @details Transforms a column vector by a matrix.
- * Result is a new column vector.
- * @return A new Vec<T, R>
- */
-template<typename T, int R, int C>
-constexpr Vector<T, R> operator*(const Matrix<T, R, C>& lhs, const Vector<T, C>& rhs) noexcept {
-    Vector<T, R> result{};
-    for (int i = 0; i < R; ++i) {
-        result[i] = lhs.row(i).dot(rhs);
-    }
-    return result;
-}
-
-// In a file where both Matrix<T,R,C> and Homo<T,N> are visible
-// (e.g., at the end of homogeneous_coord.hpp, after including matrix.hpp)
-
-/**
- * @brief Transforms a homogeneous coordinate by a matrix.
- * @details This is the core operation for applying geometric transformations.
- * The (N+1)x(N+1) matrix `lhs` is multiplied by the (N+1)-dimensional
- * homogeneous coordinate vector represented by `rhs`.
- * * @tparam T The underlying floating-point type.
- * @tparam N The original dimension of the space (e.g., 3 for 3D graphics).
- * @param lhs The (N+1)x(N+1) transformation matrix.
- * @param rhs The homogeneous coordinate to be transformed.
- * @return A new Homo<T, N> representing the transformed coordinate.
- */
-template<typename T, int N>
-constexpr Homogeneous<T, N> operator*(const Matrix<T, N + 1, N + 1>& lhs, const Homogeneous<T, N>& rhs) noexcept {
-    // Reuse the existing Matrix * Vec operator.
-    // It multiplies the matrix with the Homo's internal (N+1) vector.
-    Vector<T, N + 1> result_coords = lhs * rhs.raw();
-    
-    // Construct a new Homo object from the resulting coordinates.
-    return Homogeneous<T, N>(result_coords);
-}
-
-/**
- * @brief Matrix-Matrix multiplication.
- * @details The number of columns in the left matrix must equal the number of rows
- * in the right matrix.
- * @return A new Matrix<T, R1, C2>
- */
-template<typename T, int R1, int C1, int C2>
-constexpr Matrix<T, R1, C2> operator*(const Matrix<T, R1, C1>& lhs, const Matrix<T, C1, C2>& rhs) noexcept {
-    Matrix<T, R1, C2> result{};
-    for (int r = 0; r < R1; ++r) {
-        for (int c = 0; c < C2; ++c) {
-            result[r][c] = lhs.row(r).dot(rhs.col(c));
-        }
-    }
-    return result;
-}
-
-/**
- * @brief Matrix stream output.
- * 
- * @tparam T The matrix element type.
- * @tparam R The number of rows in the matrix.
- * @tparam C The number of columns in the matrix.
- * @param os The output stream.
- * @param mat The matrix to output.
- * @return std::ostream& The output stream.
- */
-template<typename T, int R, int C>
-std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
-    os << "Matrix " << R << "x" << C << "[\n";
-    for (int i = 0; i < R; ++i) {
-        os << "  ";
-        for (int j = 0; j < C; ++j) {
-            os << mat.at(i, j) << (j == C - 1 ? "" : ",\t");
-        }
-        os << "\n";
-    }
-    os << "]";
-    return os;
-}
+// --- 类型别名 (Type Aliases) ---
+/*@breif 
+*/
+// --- 类型别名 (Type Aliases) ---
+/** @brief A 2x2 matrix of type `Float`. */
+using Mat2 = Matrix<Float, 2, 2>;
+/** @brief A 3x3 matrix of type `Float`. */
+using Mat3 = Matrix<Float, 3, 3>;
+/** @brief A 4x4 matrix of type `Float`. */
+using Mat4 = Matrix<Float, 4, 4>;
+/** @brief A 3x4 matrix of type `Float`. */
+using Mat3x4 = Matrix<Float, 3, 4>;
+/** @brief A 4x3 matrix of type `Float`. */
+using Mat4x3 = Matrix<Float, 4, 3>;
 
 } // namespace math

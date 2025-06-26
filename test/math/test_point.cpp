@@ -2,7 +2,6 @@
 #include <sstream> 
 #include <type_traits> 
 
-#include "test_type_alias.hpp"
 #include "math/point.hpp"
 
 namespace pbpt::math::testing {
@@ -103,7 +102,7 @@ TEST(PointTest, MidPointFunction) {
     Pt3 p1(0.0, 0.0, 0.0);
     Pt3 p2(10.0, -20.0, 30.0);
     
-    Pt3 mid = mid_point(p1, p2);
+    Pt3 mid = p1.mid(p2);
     
     EXPECT_FLOAT_EQ(mid.x(), 5.0);
     EXPECT_FLOAT_EQ(mid.y(), -10.0);

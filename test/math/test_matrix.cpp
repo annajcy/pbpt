@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "math/homogeneous.hpp"
 #include "math/matrix.hpp" // The header file for the Matrix class to be tested.
 #include "math/global.hpp"
 #include "math/vector.hpp"
@@ -411,7 +412,7 @@ TEST_F(MatrixHomoTransformTest, PointTranslation) {
     const Pt3 p_original(10, 20, 30);
     const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
 
-    const Homo3 h_transformed = translation_matrix * h_original;
+    const Homo3 h_transformed = Homo3(translation_matrix * h_original.raw());
     const Pt3 p_final = h_transformed.to_point();
 
     EXPECT_DOUBLE_EQ(h_transformed.raw().w(), 1.0); // Check it's still a point
@@ -428,7 +429,7 @@ TEST_F(MatrixHomoTransformTest, VectorTranslation) {
     const Vec3 v_original(1, 1, 1);
     const Homo3 h_original(v_original.x(), v_original.y(), v_original.z(), 0.0);
 
-    const Homo3 h_transformed = translation_matrix * h_original;
+    const Homo3 h_transformed = Homo3(translation_matrix * h_original.raw());
     const Vec3 v_final = h_transformed.to_vector();
 
     EXPECT_DOUBLE_EQ(h_transformed.raw().w(), 0.0); // Check it's still a vector
@@ -447,7 +448,7 @@ TEST_F(MatrixHomoTransformTest, PointRotation) {
     const Pt3 p_original(10, 0, 0);
     const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
 
-    const Homo3 h_transformed = rotation_matrix * h_original;
+    const Homo3 h_transformed = Homo3(rotation_matrix * h_original.raw());
     const Pt3 p_final = h_transformed.to_point();
 
     EXPECT_NEAR(p_final.x(), 0.0, 1e-9);
@@ -469,7 +470,7 @@ TEST_F(MatrixHomoTransformTest, CombinedScaleAndTranslate) {
     const Pt3 p_original(10, 10, 10);
     const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
 
-    const Homo3 h_transformed = combined_matrix * h_original;
+    const Homo3 h_transformed = Homo3(combined_matrix * h_original.raw());
     const Pt3 p_final = h_transformed.to_point();
     
     EXPECT_DOUBLE_EQ(p_final.x(), 25.0);

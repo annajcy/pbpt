@@ -272,6 +272,16 @@ constexpr T tan(T x) {
     return sin(x) / cos(x);
 }
 
+/**
+ * @brief Compares two floating-point values for equality.
+ * @details This function checks if the absolute difference between `a` and `b` is less than
+ * a predefined epsilon (`EPSILON`). This is a conservative approach, but it's useful in
+ * `constexpr` contexts where exact comparisons are not always possible.
+ * @tparam T Floating-point type of the values.
+ * @param a The first value.
+ * @param b The second value.
+ * @return `true` if `abs(a - b) < EPSILON`, `false` otherwise.
+ */
 template <typename T>
 requires std::is_floating_point_v<T>
 constexpr bool is_equal(T a, T b) {

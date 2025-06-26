@@ -332,78 +332,70 @@ public:
     void apply(const std::function<void(T&, int)>& func) {
         for (int i = 0; i < N; ++i) func(m_data[i], i);
     }
-};
 
-// --- 全局运算符 (Global Operators) ---
-
-/** @brief Adds two vectors component-wise. */
-template<typename T, int N>
-constexpr Vector<T, N> operator+(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
-    auto result = lhs;
-    result += rhs;
-    return result;
-}
-
-/** @brief Subtracts one vector from another component-wise. */
-template<typename T, int N>
-constexpr Vector<T, N> operator-(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
-    auto result = lhs;
-    result -= rhs;
-    return result;
-}
-
-/** @brief Multiplies a vector by a scalar. */
-template<typename T, int N, std::convertible_to<T> U>
-constexpr Vector<T, N> operator*(const Vector<T, N>& lhs, U rhs) noexcept {
-    auto result = lhs;
-    result *= static_cast<T>(rhs);
-    return result;
-}
-
-/** @brief Multiplies a scalar by a vector. */
-template<typename T, int N, std::convertible_to<T> U>
-constexpr Vector<T, N> operator*(U lhs, const Vector<T, N>& rhs) noexcept {
-    return rhs * static_cast<T>(lhs);
-}
-
-/** * @brief Multiplies two vectors component-wise (Hadamard product).
- * @warning This is NOT a dot product or cross product.
- */
-template<typename T, int N>
-constexpr Vector<T, N> operator*(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
-    Vector<T, N> result{};
-    for (int i = 0; i < N; i++) result[i] = lhs[i] * rhs[i];
-    return result;
-}
-
-/**
- * @brief Divides a vector by a scalar.
- */
-template <typename T, int N, std::convertible_to<T> U>
-constexpr Vector<T, N> operator/(const Vector<T, N>& lhs, U rhs) {
-    Vector<T, N> result = lhs;
-    result /= rhs;
-    return result;
-}
-
-
-
-/**
-* @brief Stream insertion operator for printing the vector.
-* @details Prints the vector in the format (c1, c2, ..., cN).
-* @param os The output stream.
-* @param vec The vector to print.
-* @return A reference to the output stream.
-*/
-template<typename T, int N>
-std::ostream& operator<<(std::ostream& os, const Vector<T, N>& vec) {
-    os << "Vec" << N << "(";
-    for (int i = 0; i < N; ++i) {
-        os << vec[i] << (i == N - 1 ? "" : ", ");
+    /** @brief Adds two vectors component-wise. */
+    constexpr Vector operator+(const Vector<T, N>& rhs) const noexcept {
+        auto result = *this;
+        result += rhs;
+        return result;
     }
-    os << ')';
-    return os;
-}
+
+    /** @brief Subtracts one vector from another component-wise. */
+    constexpr Vector operator-(const Vector<T, N>& rhs) const noexcept {
+        auto result = *this;
+        result -= rhs;
+        return result;
+    }
+
+    /** @brief Multiplies a vector by a scalar. */
+    template<std::convertible_to<T> U>
+    constexpr Vector operator*(U value) const noexcept {
+        auto result = *this;
+        result *= static_cast<T>(value);
+        return result;
+    }
+
+    /** @brief Multiplies a scalar by a vector. */
+    template<std::convertible_to<T> U>
+    friend constexpr Vector operator*(U lhs, const Vector<T, N>& rhs) noexcept {
+        return rhs * static_cast<T>(lhs);
+    }
+
+    /** * @brief Multiplies two vectors component-wise (Hadamard product).
+    * @warning This is NOT a dot product or cross product.
+    */
+    constexpr Vector operator*(const Vector<T, N>& rhs) const noexcept {
+        Vector<T, N> result{};
+        for (int i = 0; i < N; i++) result[i] = (*this)[i] * rhs[i];
+        return result;
+    }
+
+    /**
+    * @brief Divides a vector by a scalar.
+    */
+    template <std::convertible_to<T> U>
+    constexpr Vector operator/(U rhs) const {
+        Vector result = *this;
+        result /= static_cast<T>(rhs);
+        return result;
+    }
+
+    /**
+    * @brief Stream insertion operator for printing the vector.
+    * @details Prints the vector in the format (c1, c2, ..., cN).
+    * @param os The output stream.
+    * @param vec The vector to print.
+    * @return A reference to the output stream.
+    */
+    friend std::ostream& operator<<(std::ostream& os, const Vector& vec) {
+        os << "Vec" << N << "(";
+        for (int i = 0; i < N; ++i) {
+            os << vec[i] << (i == N - 1 ? "" : ", ");
+        }
+        os << ')';
+        return os;
+    }
+};
 
 // --- 类型别名 (Type Aliases) ---
 

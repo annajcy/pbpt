@@ -1,6 +1,7 @@
 #pragma once
 
 #include "matrix.hpp" // Assumes this includes vector.hpp and point.hpp
+#include "point.hpp"
 
 /**
  * @file transform.hpp
@@ -157,10 +158,10 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
         const Vec3 u = s.cross(f);                  // Recalculated Up vector
 
         return Mat4(
-            s.x(), s.y(), s.z(), -s.dot(eye.to_vector()),
-            u.x(), u.y(), u.z(), -u.dot(eye.to_vector()),
+            s.x(),  s.y(),  s.z(),  -s.dot(eye.to_vector()),
+            u.x(),  u.y(),  u.z(),  -u.dot(eye.to_vector()),
             -f.x(), -f.y(), -f.z(), f.dot(eye.to_vector()),
-            0, 0, 0, 1
+            0,      0,      0,      1
         );
     }
 
@@ -180,10 +181,10 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     static constexpr Mat4 perspective(Float fov_y_rad, Float aspect_ratio, Float z_near, Float z_far) noexcept {
         const Float tan_half_fovy = tan(fov_y_rad / 2.0);
         return Mat4(
-            1.0 / (aspect_ratio * tan_half_fovy), 0, 0, 0,
-            0, 1.0 / (tan_half_fovy), 0, 0,
-            0, 0, z_far / (z_far - z_near), -z_far * z_near / (z_far - z_near),
-            0, 0, 1.0, 0
+            1.0 / (aspect_ratio * tan_half_fovy), 0,                     0,                        0,
+            0,                                    1.0 / (tan_half_fovy), 0,                        0,
+            0,                                    0,                     z_far / (z_far - z_near), -z_far * z_near / (z_far - z_near),
+            0,                                    0,                     1.0,                      0
         );
     }
 
@@ -203,10 +204,10 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     static constexpr Mat4 orthographic(Float left, Float right, Float bottom, Float top, Float z_near, Float z_far) noexcept {
   
         return Mat4(
-            2.0 / (right - left), 0, 0, -(right + left) / (right - left),
-            0, 2.0 / (top - bottom), 0, -(top + bottom) / (top - bottom),
-            0, 0, 1.0 / (z_far - z_near), -z_near / (z_far - z_near),
-            0, 0, 0, 1
+            2.0 / (right - left), 0,                    0,                      -(right + left) / (right - left),
+            0,                    2.0 / (top - bottom), 0,                      -(top + bottom) / (top - bottom),
+            0,                    0,                    1.0 / (z_far - z_near), -z_near / (z_far - z_near),
+            0,                    0,                    0,                      1
         );
     }
 
@@ -215,10 +216,8 @@ private:
     Mat4 m_inv_mat{};
 
 public:
-    // 构造函数
-    Transform() = default;
-    Transform(const Mat4& mat) : m_mat(mat), m_inv_mat(mat.inversed()) {}
-
+    constexpr Transform() noexcept = default;
+    constexpr Transform(const Mat4& mat) : m_mat(mat), m_inv_mat(mat.inversed()) {}
 };
 
 

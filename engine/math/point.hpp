@@ -115,7 +115,7 @@ public:
     constexpr const T& operator[](int index) const { return m_coords[index]; }
     /** @brief Provides mutable access to the point's coordinates by index. */
     constexpr T& operator[](int index) { return m_coords[index]; }
-
+    /** @brief Provides safe const access to the point's coordinates by index.*/
     constexpr const T& at(int index) const { return m_coords.at(index); }
 
     // --- 显式转换 (Explicit Conversion) ---
@@ -166,63 +166,51 @@ public:
         os << ")";
         return os;
     }
+
+    /**
+    * @brief Rule 1: Calculates the displacement vector between two points (`Point - Point = Vector`).
+    * @param rhs The starting point.
+    * @return The `Vec<T, N>` that goes from `rhs` to `lhs`.
+    */
+    constexpr Vector<T, N> operator-(const Point& rhs) const noexcept {
+        return this->to_vector() - rhs.to_vector();
+    }
+
+    /**
+    * @brief Rule 2: Translates a point by a vector, resulting in a new point (`Point + Vector = Point`).
+    * @param rhs The displacement vector.
+    * @return The new, translated point.
+    */
+    constexpr Point operator+(const Vector<T, N>& rhs) const noexcept {
+        auto result = *this;
+        result += rhs;
+        return result;
+    }
+
+    /**
+    * @brief Rule 3: Translates a point by the negative of a vector (`Point - Vector = Point`).
+    * @param rhs The displacement vector to subtract.
+    * @return The new, translated point.
+    */
+    constexpr Point operator-(const Vector<T, N>& rhs) const noexcept {
+        auto result = *this;
+        result -= rhs;
+        return result;
+    }
+
+    /**
+    * @brief Calculates the midpoint between two points.
+    * @param rhs The second point.
+    * @return The point that lies exactly halfway between `lhs` and `rhs`.
+    */
+    constexpr Point mid(const Point<T, N>& rhs) const noexcept {
+        // Conceptually: start at lhs, and move halfway towards rhs.
+        // (lhs + (rhs - lhs) * 0.5) which simplifies to (lhs + rhs) * 0.5
+        return Point<T, N>(this->to_vector() + rhs.to_vector() * 0.5);
+    }
 };
 
-// --- 全局二元运算符 (Global Binary Operators) ---
-// These operators define the fundamental rules of affine geometry.
-
-/**
- * @brief Rule 1: Calculates the displacement vector between two points (`Point - Point = Vector`).
- * @param lhs The destination point.
- * @param rhs The starting point.
- * @return The `Vec<T, N>` that goes from `rhs` to `lhs`.
- */
-template<typename T, int N>
-constexpr Vector<T, N> operator-(const Point<T, N>& lhs, const Point<T, N>& rhs) noexcept {
-    return lhs.to_vector() - rhs.to_vector();
-}
-
-/**
- * @brief Rule 2: Translates a point by a vector, resulting in a new point (`Point + Vector = Point`).
- * @param lhs The starting point.
- * @param rhs The displacement vector.
- * @return The new, translated point.
- */
-template<typename T, int N>
-constexpr Point<T, N> operator+(const Point<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
-    auto result = lhs;
-    result += rhs;
-    return result;
-}
-
-/**
- * @brief Rule 3: Translates a point by the negative of a vector (`Point - Vector = Point`).
- * @param lhs The starting point.
- * @param rhs The displacement vector to subtract.
- * @return The new, translated point.
- */
-template<typename T, int N>
-constexpr Point<T, N> operator-(const Point<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
-    auto result = lhs;
-    result -= rhs;
-    return result;
-}
-
-/**
- * @brief Calculates the midpoint between two points.
- * @param lhs The first point.
- * @param rhs The second point.
- * @return The point that lies exactly halfway between `lhs` and `rhs`.
- */
-template<typename T, int N>
-constexpr Point<T, N> mid_point(const Point<T, N>& lhs, const Point<T, N>& rhs) noexcept {
-    // Conceptually: start at lhs, and move halfway towards rhs.
-    // (lhs + (rhs - lhs) * 0.5) which simplifies to (lhs + rhs) * 0.5
-    return Point<T, N>(lhs.to_vector() + rhs.to_vector() * 0.5);
-}
-
 // --- 类型别名 (Type Aliases) ---
-
 /** @brief A 2-dimensional point of type `Float`. */
 using Pt2 = Point<Float, 2>;
 /** @brief A 3-dimensional point of type `Float`. */

@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file type_alias.hpp
+ * @file global.hpp
  * @brief Defines the primary floating-point type alias for the math library.
  * @details This header centralizes the floating-point precision for the entire
  * pbpt::math namespace. By changing the definition here (or by defining
