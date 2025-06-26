@@ -2,6 +2,8 @@
 #include "assimp/Importer.hpp"
 #include "math/point.hpp"
 
+#include "math/global.hpp"
+#include "math/vector.hpp"
 #include "slang.h"
 #include "imgui.h"
 #include <vector>
@@ -108,7 +110,7 @@ int main() {
 
     Mat2 m(Vec2(4, 7), Vec2(2, 6)); // Determinant is 10
     std::cout << "Determinant: " << m.determinant() << std::endl;
-    Mat2 m_inv = m.inverse();
+    Mat2 m_inv = m.inversed();
     std::cout << "Inverse: " << m_inv << std::endl;
     Mat2 identity = m * m_inv;
     std::cout << "Identity: " << identity << std::endl;
@@ -118,14 +120,27 @@ int main() {
     //singular.inverse();
 
     Mat4 m1 = Mat4::identity();
-    m1(0, 1) = 5; m1(0, 2) = 6;
-    m1(1, 1) = 7; m1(1, 2) = 8;
+    m1[0][1] = 5; m1[0][2] = 6;
+    m1[1][1] = 7; m1[1][2] = 8;
 
     std::cout << "m1: " << m1 << std::endl;
     
     // Test contiguous submatrix
-    Mat2 sub = m1.submatrix<2, 2>(0, 1);
+    Mat2 sub = m1.view<2, 2>(0, 1).to_matrix();
     std::cout << "Submatrix: " << sub << std::endl;
+
+    Mat2 d(
+        1, 2, 
+        3, 4
+    );
+
+    for (int i = 0; i < 2; i ++) {
+        for (int j = 0; j < 2; j ++)
+            std::cout << d[i][j] << " ";
+        std::cout << std::endl;
+    }
+        
+    std::cout << std::endl;
 
     return 0;
 }

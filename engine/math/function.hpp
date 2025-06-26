@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/global.hpp"
 #include <cmath>
 #include <stdexcept>
 #include <type_traits>
@@ -156,7 +157,6 @@ constexpr T deg2rad(T deg) {
     return deg * M_PI / 180.0;
 }
 
-
 /**
  * @brief Calculates the square root of a number with `constexpr` support.
  * @details This function intelligently switches its implementation based on the evaluation context.
@@ -270,6 +270,12 @@ template <typename T>
 requires std::is_floating_point_v<T>
 constexpr T tan(T x) {
     return sin(x) / cos(x);
+}
+
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr bool is_equal(T a, T b) {
+    return abs(a - b) < EPSILON;
 }
 
 } // namespace math

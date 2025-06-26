@@ -18,30 +18,17 @@
 namespace pbpt::math {
 //Forward declarations
 template<typename T, int R, int C>
+requires std::is_floating_point_v<T> && (R > 0) && (C > 0)
 class Matrix;
 
-template<typename T, int N>
-class VectorView;
-
-template<typename T, int N>
-class ConstVectorView;
-
-template<typename T, int R, int C, int ViewR, int ViewC>
-class MatrixView;
-
-template<typename T, int R, int C, int ViewR, int ViewC>
-class ConstMatrixView;
-
-
 /**
- * @class ConstVectorView
- * @brief A non-owning, read-only view/proxy of vector-like data (e.g., a matrix row/column).
- * @tparam T The underlying floating-point type.
- * @tparam N The number of elements in the view.
+ * @class VectorView
+ * @brief A non-owning, mutable view/proxy of vector-like data.
+ * @details Extends ConstVectorView to allow modification of the underlying data.
  */
 template<typename T, int N>
-class ConstVectorView {
-protected:
+class VectorView {
+    protected:
     /** @brief Pointer to the first element of the viewed data. */
     const T* m_start_ptr;
     /** @brief The distance (in number of elements) between consecutive elements in the view. */
@@ -53,15 +40,22 @@ public:
      * @param start Pointer to the first element.
      * @param stride The step size to move between elements. For a row view, this is 1. For a column view, this is the column count of the source matrix.
      */
-    constexpr ConstVectorView(const T* start, int stride) : m_start_ptr(start), m_stride(stride) {}
+    constexpr VectorView(const T* start, int stride) : m_start_ptr(start), m_stride(stride) {}
 
     /**
      * @brief Provides read-only access to an element of the view.
      * @param i The index of the element.
      * @return A const reference to the element in the original data source.
      */
-    constexpr T operator[](int i) const { return m_start_ptr[i * m_stride]; }
-    
+    constexpr const T& operator[](int i) const { return m_start_ptr[i * m_stride]; }
+
+    /**
+     * @brief Provides read-only access to an element of the view.
+     * @param i The index of the element.
+     * @return A const reference to the element in the original data source.
+     */
+    constexpr const T& at(int i) const { return m_start_ptr[i * m_stride]; }
+
     /** @brief Returns the number of dimensions of the view. */
     constexpr int dims() const noexcept { return N; }
 
@@ -77,19 +71,7 @@ public:
     }
 
     /**
-     * @brief Calculates the dot product with another read-only view.
-     * @param rhs The other vector view.
-     * @return The scalar dot product.
-     */
-
-    constexpr T dot(const ConstVectorView<T, N>& rhs) const {
-        T result = 0;
-        for (int i = 0; i < N; ++i) result += (*this)[i] * rhs[i];
-        return result;
-    }
-
-    /**
-     * @brief Calculates the dot product with a mutable view.
+     * @brief Calculates the dot product with another vector view.
      * @param rhs The other vector view.
      * @return The scalar dot product.
      */
@@ -104,23 +86,11 @@ public:
      * @brief Converts the view into a new, owning Vec instance.
      * @details This performs a copy of the elements from the viewed region.
      */
-    constexpr operator Vector<T, N>() const {
+    constexpr Vector<T, N> to_vector() const {
         Vector<T, N> result;
         for (int i = 0; i < N; ++i) result[i] = (*this)[i];
         return result;
     }
-};
-
-/**
- * @class VectorView
- * @brief A non-owning, mutable view/proxy of vector-like data.
- * @details Extends ConstVectorView to allow modification of the underlying data.
- */
-template<typename T, int N>
-class VectorView : public ConstVectorView<T, N> {
-public:
-    /** @brief Inherits constructors from ConstVectorView. */
-    using ConstVectorView<T, N>::ConstVectorView;
 
     /**
      * @brief Provides mutable access to an element of the view.
@@ -128,6 +98,13 @@ public:
      * @return A mutable reference to the element in the original data source.
      */
     constexpr T& operator[](int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
+
+    /**
+     * @brief Provides mutable access to an element of the view.
+     * @param i The index of the element.
+     * @return A mutable reference to the element in the original data source.
+     */
+    constexpr T& at(int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
 
      /**
      * @brief Assigns an owning vector's content to the region represented by this view.
@@ -144,7 +121,7 @@ public:
      * @param other The vector view to copy from.
      * @return A reference to this view.
      */
-    constexpr VectorView& operator=(const ConstVectorView<T, N>& other) {
+    constexpr VectorView& operator=(const VectorView<T, N>& other) {
         for (int i = 0; i < N; ++i) (*this)[i] = other[i];
         return *this;
     }
@@ -158,13 +135,12 @@ public:
     }
 };
 
-
 /**
- * @class ConstMatrixView
- * @brief A non-owning, read-only view/proxy into a sub-region of another Matrix.
+ * @class MatrixView
+ * @brief A non-owning, mutable view/proxy into a sub-region of another Matrix.
  */
 template<typename T, int R, int C, int ViewR, int ViewC>
-class ConstMatrixView {
+class MatrixView {
 protected:
     /** @brief A const reference to the original matrix. */
     const Matrix<T, R, C>& m_original;
@@ -174,13 +150,15 @@ protected:
     int m_col_start{};
 
 public:
+    using RowView = VectorView<T, ViewC>;
+    using ColView = VectorView<T, ViewR>;
     /**
      * @brief Constructs a view from a Matrix instance.
      * @param original The matrix to view.
      * @param row_start The starting row index of the view.
      * @param col_start The starting column index of the view.
      */
-    constexpr ConstMatrixView(const Matrix<T, R, C>& original, int row_start, int col_start)
+    constexpr MatrixView(const Matrix<T, R, C>& original, int row_start, int col_start)
         : m_original(original), m_row_start(row_start), m_col_start(col_start) {}
 
     /**
@@ -189,35 +167,51 @@ public:
      * @param c The column index relative to the view.
      * @return A const reference to the element in the original matrix.
      */
-    constexpr const T& operator()(int r, int c) const {
-        return m_original(m_row_start + r, m_col_start + c);
+    constexpr const T& at(int r, int c) const {
+        return m_original.at(m_row_start + r, m_col_start + c);
+    }
+
+    /**
+     * @brief Returns a non-owning, read-only view of a row.
+     */
+    constexpr const RowView operator[](int r) const {
+        return RowView(&(*this).at(r, 0), 1);
+    }
+
+    /**
+     * @brief Returns a non-owning, read-only view of a row.
+     */
+    constexpr RowView operator[](int r) {
+        return RowView(&(*this).at(r, 0), 1);
+    }
+
+    /**
+     * @brief Returns a non-owning, read-only view of a row.
+     */
+    constexpr const RowView row(int r) const {
+        return RowView(&(*this).at(r, 0), 1);
+    }
+    
+    /**
+     * @brief Returns a non-owning, mutable view of a column.
+     */
+    constexpr ColView col(int c) {
+        return ColView(&(*this).at(0, c), ViewC);
     }
     
     /**
      * @brief Converts the view into a new, owning Matrix instance.
      * @details This performs a copy of the elements from the viewed region.
      */
-    constexpr operator Matrix<T, ViewR, ViewC>() const {
+    constexpr Matrix<T, ViewR, ViewC> to_matrix() const {
         Matrix<T, ViewR, ViewC> result;
         for (int i = 0; i < ViewR; ++i) {
             for (int j = 0; j < ViewC; ++j) {
-                result(i, j) = (*this)(i, j);
+                result[i][j] = (*this)[i][j];
             }
         }
         return result;
     }
-};
-
-/**
- * @class MatrixView
- * @brief A non-owning, mutable view/proxy into a sub-region of another Matrix.
- */
-template<typename T, int R, int C, int ViewR, int ViewC>
-class MatrixView : public ConstMatrixView<T, R, C, ViewR, ViewC> {
-public:
-
-    /** @brief Inherits constructors from ConstMatrixView. */
-    using ConstMatrixView<T, R, C, ViewR, ViewC>::ConstMatrixView;
 
     /**
      * @brief Provides mutable access to an element of the view.
@@ -225,8 +219,8 @@ public:
      * @param c The column index relative to the view.
      * @return A mutable reference to the element in the original matrix.
      */
-    constexpr T& operator()(int r, int c) {
-        return const_cast<Matrix<T, R, C>&>(this->m_original)(this->m_row_start + r, this->m_col_start + c);
+    constexpr T& at(int r, int c) {
+        return const_cast<T&>(this->m_original.at(this->m_row_start + r, this->m_col_start + c));
     }
 
     /**
@@ -237,7 +231,7 @@ public:
     constexpr MatrixView& operator=(const Matrix<T, ViewR, ViewC>& other) {
         for (int i = 0; i < ViewR; ++i) {
             for (int j = 0; j < ViewC; ++j) {
-                (*this)(i, j) = other(i, j);
+                (*this).at(i, j) = other.at(i, j);
             }
         }
         return *this;
@@ -250,11 +244,10 @@ public:
     void apply(const std::function<void(T&, int, int)>& func) {
         for (int i = 0; i < ViewR; ++i) {
             for (int j = 0; j < ViewC; ++j) {
-                func((*this)(i, j), i, j);
+                func((*this).at(i, j), i, j);
             }
         }
     }
-    
 };
 
 
@@ -285,9 +278,8 @@ using Mat4x3 = Matrix<Float, 4, 3>;
  * @tparam C The number of columns.
  */
 template<typename T, int R, int C>
+requires std::is_floating_point_v<T> && (R > 0) && (C > 0)
 class Matrix {
-    static_assert(R > 0 && C > 0, "Matrix dimensions must be positive");
-    static_assert(std::is_floating_point_v<T>, "Matrix type must be floating point");
 
 private:
     // Row-major storage for cache efficiency and intuitive C++ access.
@@ -303,18 +295,9 @@ public:
      * @return A MatrixView instance.
      */
     template<int ViewR, int ViewC>
-    using View = MatrixView<T, R, C, ViewR, ViewC>;
-
-    /**
-     * @brief Provides a const view into a sub-region of the matrix.
-     * @tparam R1 The number of rows in the view.
-     * @tparam C1 The number of columns in the view.
-     * @param r The starting row index of the view.
-     * @param c The starting column index of the view.
-     * @return A ConstMatrixView instance.
-     */
-    template<int ViewR, int ViewC>
-    using ConstView = ConstMatrixView<T, R, C, ViewR, ViewC>;
+    using MatView = MatrixView<T, R, C, ViewR, ViewC>;
+    using RowView = VectorView<T, C>;
+    using ColView = VectorView<T, R>;
 
     // --- 静态工厂函数 (Static Factory Functions) ---
 
@@ -330,7 +313,7 @@ public:
     static constexpr Matrix identity() noexcept requires(R == C) {
         Matrix result{};
         for (int i = 0; i < R; ++i) {
-            result(i, i) = 1.0;
+            result[i][i] = 1.0;
         }
         return result;
     }
@@ -357,7 +340,7 @@ public:
         int col_index = 0;
         (([&] {
             for(int row_index = 0; row_index < R; ++row_index) {
-                (*this)(row_index, col_index) = col_vecs[row_index];
+                (*this)[row_index][col_index] = col_vecs[row_index];
             }
             ++col_index;
         })(), ...);
@@ -383,7 +366,7 @@ public:
      * @return A const reference to the component.
      * @throw std::out_of_range If index is out of bounds at runtime.
      */
-    constexpr const T& operator()(int r, int c) const {
+    constexpr const T& at(int r, int c) const {
         if (r < 0 || r >= R || c < 0 || c >= C) {
             if (std::is_constant_evaluated()) {
                  throw "Compile-time error: Matrix index out of range";
@@ -395,49 +378,45 @@ public:
     }
 
     /**
-     * @brief Provides mutable access to matrix components by row and column.
-     * @param r The zero-based row index.
-     * @param c The zero-based column index.
-     * @return A mutable reference to the component.
-     * @throw std::out_of_range If index is out of bounds at runtime.
-     */
-    constexpr T& operator()(int r, int c) {
-        if (r < 0 || r >= R || c < 0 || c >= C) {
-            if (std::is_constant_evaluated()) {
-                 throw "Compile-time error: Matrix index out of range";
-            } else {
-                 throw std::out_of_range("Matrix index out of range");
-            }
-        }
-        return m_data[r * C + c];
-    }
-    
-    /**
      * @brief Returns a non-owning, mutable view of a row.
      */
-    constexpr VectorView<T, C> row(int r) {
-        return VectorView<T, C>(&(*this)(r, 0), 1);
+    constexpr RowView operator[](int r) {
+        return RowView(&(*this).at(r, 0), 1);
     }
 
     /**
      * @brief Returns a non-owning, read-only view of a row.
      */
-    constexpr ConstVectorView<T, C> row(int r) const {
-        return ConstVectorView<T, C>(&(*this)(r, 0), 1);
+    constexpr const RowView operator[](int r) const {
+        return RowView(&(*this).at(r, 0), 1);
+    }
+    
+    /**
+     * @brief Returns a non-owning, mutable view of a row.
+     */
+    constexpr RowView row(int r) {
+        return RowView(&(*this).at(r, 0), 1);
+    }
+
+    /**
+     * @brief Returns a non-owning, read-only view of a row.
+     */
+    constexpr const RowView row(int r) const {
+        return RowView(&(*this).at(r, 0), 1);
     }
     
     /**
      * @brief Returns a non-owning, mutable view of a column.
      */
-    constexpr VectorView<T, R> col(int c) {
-        return VectorView<T, R>(&(*this)(0, c), C);
+    constexpr ColView col(int c) {
+        return ColView(&(*this).at(0, c), C);
     }
 
     /**
      * @brief Returns a non-owning, read-only view of a column.
      */
-    constexpr ConstVectorView<T, R> col(int c) const {
-        return ConstVectorView<T, R>(&(*this)(0, c), C);
+    constexpr const ColView col(int c) const {
+        return ColView(&(*this).at(0, c), C);
     }
 
 
@@ -461,6 +440,28 @@ public:
      */
     T* data() noexcept { return m_data.data(); }
 
+    // 比较运算符
+
+    /**
+     * @brief Compares two matrices for equality.
+     * @param rhs The matrix to compare with.
+     * @return true if the matrices are equal, false otherwise.
+     */
+    constexpr bool operator==(const Matrix& rhs) const noexcept {
+        for (int i = 0; i < R * C; ++i) {
+            if (!math::is_equal(m_data[i], rhs.m_data[i])) return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief Compares two matrices for inequality.
+     * @param rhs The matrix to compare with.
+     * @return true if the matrices are not equal, false otherwise.
+     */
+    constexpr bool operator!=(const Matrix& rhs) const noexcept {
+        return !(*this == rhs);
+    }
 
     // --- 复合赋值运算符 (Compound Assignment Operators) ---
     
@@ -504,7 +505,7 @@ public:
         Matrix<T, C, R> result{};
         for (int i = 0; i < R; ++i) {
             for (int j = 0; j < C; ++j) {
-                result(j, i) = (*this)(i, j);
+                result[j][i] = (*this)[i][j];
             }
         }
         return result;
@@ -516,19 +517,19 @@ public:
      */
     constexpr T determinant() const requires(R == C) {
         if constexpr (R == 1) {
-            return (*this)(0, 0);
+            return (*this).at(0, 0);
         } else if constexpr (R == 2) {
-            return (*this)(0, 0) * (*this)(1, 1) - (*this)(0, 1) * (*this)(1, 0);
+            return (*this).at(0, 0) * (*this).at(1, 1) - (*this).at(0, 1) * (*this).at(1, 0);
         } else if constexpr (R == 3) {
-            return (*this)(0, 0) * ((*this)(1, 1) * (*this)(2, 2) - (*this)(1, 2) * (*this)(2, 1)) -
-                   (*this)(0, 1) * ((*this)(1, 0) * (*this)(2, 2) - (*this)(1, 2) * (*this)(2, 0)) +
-                   (*this)(0, 2) * ((*this)(1, 0) * (*this)(2, 1) - (*this)(1, 1) * (*this)(2, 0));
+            return (*this).at(0, 0) * ((*this).at(1, 1) * (*this).at(2, 2) - (*this).at(1, 2) * (*this).at(2, 1)) -
+                   (*this).at(0, 1) * ((*this).at(1, 0) * (*this).at(2, 2) - (*this).at(1, 2) * (*this).at(2, 0)) +
+                   (*this).at(0, 2) * ((*this).at(1, 0) * (*this).at(2, 1) - (*this).at(1, 1) * (*this).at(2, 0));
         } else {
             // General case: Laplace expansion (less efficient, but works for any size)
             T det = 0;
             for (int c = 0; c < C; ++c) {
                 T sign = (c % 2 == 0) ? 1 : -1;
-                det += sign * (*this)(0, c) * submatrix(0, c).determinant();
+                det += sign * (*this).at(0, c) * submatrix(0, c).determinant();
             }
             return det;
         }
@@ -539,7 +540,7 @@ public:
      * @note Only available for square matrices.
      * @throws std::runtime_error if the matrix is singular (determinant is zero).
      */
-    constexpr Matrix inverse() const requires(R == C) {
+    constexpr Matrix inversed() const requires(R == C) {
         T det = determinant();
         if (det == 0) {
             if (std::is_constant_evaluated()) {
@@ -553,7 +554,7 @@ public:
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
                 T sign = ((r + c) % 2 == 0) ? 1 : -1;
-                cofactor_matrix(r, c) = sign * submatrix(r, c).determinant();
+                cofactor_matrix[r][c] = sign * submatrix(r, c).determinant();
             }
         }
 
@@ -570,14 +571,14 @@ public:
      * @return A MatrixView object that refers to a part of this matrix.
      */
     template <int ViewR, int ViewC>
-    constexpr Matrix::View<ViewR, ViewC> view(int row_start, int col_start) {
+    constexpr Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) {
         // Basic bounds check to ensure the view doesn't immediately go out of bounds
         if (std::is_constant_evaluated()) {
             if (row_start + ViewR > R || col_start + ViewC > C) {
                 throw "Compile-time error: View dimensions exceed original matrix bounds";
             }
         }
-        return Matrix::View<ViewR, ViewC>(*this, row_start, col_start);
+        return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
     
     /**
@@ -589,62 +590,21 @@ public:
      * @return A ConstMatrixView object that refers to a part of this matrix.
      */
     template <int ViewR, int ViewC>
-    constexpr Matrix::ConstView<ViewR, ViewC> view(int row_start, int col_start) const {
+    constexpr const Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) const {
         // Basic bounds check to ensure the view doesn't immediately go out of bounds
         if (std::is_constant_evaluated()) {
             if (row_start + ViewR > R || col_start + ViewC > C) {
                 throw "Compile-time error: View dimensions exceed original matrix bounds";
             }
         }
-        return Matrix::ConstView<ViewR, ViewC>(*this, row_start, col_start);
+        return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
     
-    /**
-     * @brief Extracts a submatrix by specifying which rows and columns to keep. Returns a copy.
-     * @tparam NewR The number of rows in the new submatrix.
-     * @tparam NewC The number of columns in the new submatrix.
-     * @param rows_to_keep An array of row indices to include in the submatrix.
-     * @param cols_to_keep An array of column indices to include in the submatrix.
-     * @return A new Matrix<T, NewR, NewC> containing the specified elements.
-     */
-    template <int NewR, int NewC>
-    constexpr Matrix<T, NewR, NewC> submatrix(const std::array<int, NewR>& rows_to_keep, const std::array<int, NewC>& cols_to_keep) const {
-        Matrix<T, NewR, NewC> result{};
-        for (int i = 0; i < NewR; ++i) {
-            for (int j = 0; j < NewC; ++j) {
-                // The underlying operator() will perform bounds checking.
-                result(i, j) = (*this)(rows_to_keep[i], cols_to_keep[j]);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * @brief Extracts a contiguous submatrix of size NewR x NewC. Returns a copy.
-     * @tparam NewR The number of rows in the new submatrix.
-     * @tparam NewC The number of columns in the new submatrix.
-     * @param row_start The starting row index of the submatrix block.
-     * @param col_start The starting column index of the submatrix block.
-     * @return A new Matrix<T, NewR, NewC> containing the specified block.
-     */
-    template <int NewR, int NewC>
-    constexpr Matrix<T, NewR, NewC> submatrix(int row_start, int col_start) const {
-        Matrix<T, NewR, NewC> result{};
-        for (int i = 0; i < NewR; ++i) {
-            for (int j = 0; j < NewC; ++j) {
-                // The underlying operator() will perform bounds checking for (row_start + i) and (col_start + j).
-                result(i, j) = (*this)(row_start + i, col_start + j);
-            }
-        }
-        return result;
-    }
-    
-private:
     /**
      * @brief Creates a submatrix by removing a specified row and column.
      * @note Helper for determinant and inverse calculations.
      */
-    constexpr Matrix<T, R - 1, C - 1> submatrix(int row_to_remove, int col_to_remove) const {
+    constexpr auto submatrix(int row_to_remove, int col_to_remove) const requires(R == C) {
         Matrix<T, R - 1, C - 1> sub{};
         int sub_r = 0;
         for (int r = 0; r < R; ++r) {
@@ -652,7 +612,7 @@ private:
             int sub_c = 0;
             for (int c = 0; c < C; ++c) {
                 if (c == col_to_remove) continue;
-                sub(sub_r, sub_c) = (*this)(r, c);
+                sub[sub_r][sub_c] = (*this)[r][c];
                 sub_c++;
             }
             sub_r++;
@@ -763,7 +723,7 @@ constexpr Matrix<T, R1, C2> operator*(const Matrix<T, R1, C1>& lhs, const Matrix
     Matrix<T, R1, C2> result{};
     for (int r = 0; r < R1; ++r) {
         for (int c = 0; c < C2; ++c) {
-            result(r, c) = lhs.row(r).dot(rhs.col(c));
+            result[r][c] = lhs.row(r).dot(rhs.col(c));
         }
     }
     return result;
@@ -785,7 +745,7 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
     for (int i = 0; i < R; ++i) {
         os << "  ";
         for (int j = 0; j < C; ++j) {
-            os << mat(i, j) << (j == C - 1 ? "" : ",\t");
+            os << mat.at(i, j) << (j == C - 1 ? "" : ",\t");
         }
         os << "\n";
     }

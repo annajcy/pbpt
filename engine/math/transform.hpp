@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cmath> // For sin, cos, tan
 #include "matrix.hpp" // Assumes this includes vector.hpp and point.hpp
 
 /**
@@ -157,17 +156,12 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
         const Vec3 s = f.cross(up).normalized();    // Right vector
         const Vec3 u = s.cross(f);                  // Recalculated Up vector
 
-        Mat4 result = Mat4::identity();
-        result(0, 0) = s.x(); result(0, 1) = s.y(); result(0, 2) = s.z();
-        result(1, 0) = u.x(); result(1, 1) = u.y(); result(1, 2) = u.z();
-        result(2, 0) = -f.x(); result(2, 1) = -f.y(); result(2, 2) = -f.z();
-
-        // The translation part moves the world origin to the camera's position.
-        result(0, 3) = -s.dot(static_cast<Vec3>(eye));
-        result(1, 3) = -u.dot(static_cast<Vec3>(eye));
-        result(2, 3) = f.dot(static_cast<Vec3>(eye));
-
-        return result;
+        return Mat4(
+            s.x(), s.y(), s.z(), -s.dot(eye.to_vector()),
+            u.x(), u.y(), u.z(), -u.dot(eye.to_vector()),
+            -f.x(), -f.y(), -f.z(), f.dot(eye.to_vector()),
+            0, 0, 0, 1
+        );
     }
 
 
@@ -185,15 +179,12 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     */
     static constexpr Mat4 perspective(Float fov_y_rad, Float aspect_ratio, Float z_near, Float z_far) noexcept {
         const Float tan_half_fovy = tan(fov_y_rad / 2.0);
-        Mat4 result = Mat4::zeros();
-
-        result(0, 0) = 1.0 / (aspect_ratio * tan_half_fovy);
-        result(1, 1) = 1.0 / (tan_half_fovy);
-        result(2, 2) = z_far / (z_far - z_near);
-        result(2, 3) = -(z_far * z_near) / (z_far - z_near);
-        result(3, 2) = 1.0;
-
-        return result;
+        return Mat4(
+            1.0 / (aspect_ratio * tan_half_fovy), 0, 0, 0,
+            0, 1.0 / (tan_half_fovy), 0, 0,
+            0, 0, z_far / (z_far - z_near), -z_far * z_near / (z_far - z_near),
+            0, 0, 1.0, 0
+        );
     }
 
     /**
@@ -210,17 +201,23 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     * @return A Mat4 representing the orthographic projection.
     */
     static constexpr Mat4 orthographic(Float left, Float right, Float bottom, Float top, Float z_near, Float z_far) noexcept {
-        Mat4 result = Mat4::identity();
-
-        result(0, 0) = 2.0 / (right - left);
-        result(1, 1) = 2.0 / (top - bottom);
-        result(2, 2) = 1.0 / (z_far - z_near);
-        result(0, 3) = -(right + left) / (right - left);
-        result(1, 3) = -(top + bottom) / (top - bottom);
-        result(2, 3) = -z_near / (z_far - z_near);
-
-        return result;
+  
+        return Mat4(
+            2.0 / (right - left), 0, 0, -(right + left) / (right - left),
+            0, 2.0 / (top - bottom), 0, -(top + bottom) / (top - bottom),
+            0, 0, 1.0 / (z_far - z_near), -z_near / (z_far - z_near),
+            0, 0, 0, 1
+        );
     }
+
+private:
+    Mat4 m_mat{};
+    Mat4 m_inv_mat{};
+
+public:
+    // 构造函数
+    Transform() = default;
+    Transform(const Mat4& mat) : m_mat(mat), m_inv_mat(mat.inversed()) {}
 
 };
 

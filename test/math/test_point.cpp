@@ -115,7 +115,7 @@ TEST(PointTest, ExplicitConversion) {
     Pt3 p(1, 2, 3);
 
     // 显式转换
-    Vec3 v = static_cast<Vec3>(p);
+    Vec3 v = p.to_vector();
     EXPECT_FLOAT_EQ(v.x(), 1.0);
     EXPECT_FLOAT_EQ(v.y(), 2.0);
     EXPECT_FLOAT_EQ(v.z(), 3.0);

@@ -3,7 +3,6 @@
 #include "math/function.hpp"
 #include "math/transform.hpp"
 #include "math/homogeneous.hpp" 
-#include "math/type_alias.hpp"
 
 namespace pbpt::math::testing {
 
@@ -102,7 +101,7 @@ TEST_F(TransformTest, RotateAxisAngle) {
 
     for (int r=0; r<4; ++r) {
         for (int c=0; c<4; ++c) {
-            EXPECT_NEAR(r_axis_angle(r,c), r_z(r,c), kEpsilon);
+            EXPECT_NEAR(r_axis_angle.at(r,c), r_z.at(r,c), kEpsilon);
         }
     }
 }

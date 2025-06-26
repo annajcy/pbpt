@@ -15,8 +15,7 @@
  * is to represent an N-dimensional concept using an (N+1)-dimensional vector.
  */
 
-namespace pbpt {
-namespace math {
+namespace pbpt::math {
 
 /**
  * @class Homogeneous
@@ -97,6 +96,25 @@ public:
      * @param data The raw `Vec<T, N + 1>` of homogeneous coordinates.
      */
     constexpr explicit Homogeneous(const Vector<T, N + 1>& data) noexcept : m_data(data) {}
+
+    /**
+     * @brief Returns the w-component of the homogeneous coordinate.
+     * @return The w-component, which is 1 for points and 0 for vectors.
+     */
+    constexpr T w() const { return m_data[N]; }
+
+    /**
+     * @brief Returns a reference to the w-component of the homogeneous coordinate.
+     * @return A reference to the w-component, which can be used to modify it.
+     */
+    constexpr T& w() { return m_data[N]; }
+
+    // 访问运算符
+    constexpr T operator[](int index) const { return m_data[index]; }
+    constexpr T& operator[](int index) { return m_data[index]; }
+    constexpr T at(int index) const { return m_data.at(index); }
+    constexpr T& at(int index) { return m_data.at(index); }
+
 
     // --- 状态检查 (State Checks) ---
 
@@ -192,5 +210,4 @@ public:
  */
 using Homo3 = Homogeneous<Float, 3>;
 
-} // namespace math
-} // namespace pbpt
+} // namespace homogeneous

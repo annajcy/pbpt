@@ -112,9 +112,11 @@ public:
     // --- 下标访问 (Subscript Access) ---
 
     /** @brief Provides const access to the point's coordinates by index. */
-    constexpr T operator[](int index) const { return m_coords[index]; }
+    constexpr const T& operator[](int index) const { return m_coords[index]; }
     /** @brief Provides mutable access to the point's coordinates by index. */
     constexpr T& operator[](int index) { return m_coords[index]; }
+
+    constexpr const T& at(int index) const { return m_coords.at(index); }
 
     // --- 显式转换 (Explicit Conversion) ---
 
@@ -124,7 +126,7 @@ public:
      * when an explicit cast is used.
      * @return The `Vec<T, N>` representing the point's coordinates.
      */
-    constexpr explicit operator Vector<T, N>() const noexcept { return m_coords; }
+    constexpr Vector<T, N> to_vector() const noexcept { return m_coords; }
 
     // --- 复合赋值运算符 (Compound Assignment Operators) ---
 
@@ -177,7 +179,7 @@ public:
  */
 template<typename T, int N>
 constexpr Vector<T, N> operator-(const Point<T, N>& lhs, const Point<T, N>& rhs) noexcept {
-    return static_cast<Vector<T, N>>(lhs) - static_cast<Vector<T, N>>(rhs);
+    return lhs.to_vector() - rhs.to_vector();
 }
 
 /**
@@ -216,7 +218,7 @@ template<typename T, int N>
 constexpr Point<T, N> mid_point(const Point<T, N>& lhs, const Point<T, N>& rhs) noexcept {
     // Conceptually: start at lhs, and move halfway towards rhs.
     // (lhs + (rhs - lhs) * 0.5) which simplifies to (lhs + rhs) * 0.5
-    return Point<T, N>((static_cast<Vector<T, N>>(lhs) + static_cast<Vector<T, N>>(rhs)) * 0.5);
+    return Point<T, N>(lhs.to_vector() + rhs.to_vector() * 0.5);
 }
 
 // --- 类型别名 (Type Aliases) ---

@@ -29,4 +29,16 @@ using Float = double;
 using Float = float;
 #endif
 
+/**
+ * @brief The epsilon value used for floating-point comparisons.
+ * @details This value is used to determine the precision of floating-point
+ * comparisons. It is set to a small value (e.g., 1e-6) to account for floating-point
+ * precision issues.
+ */
+#ifdef FLOAT_64BIT
+#define EPSILON 1e-12
+#else
+#define EPSILON 1e-6
+#endif
+
 } // namespace math

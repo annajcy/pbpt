@@ -1,7 +1,7 @@
 #pragma once
 
 #include "point.hpp"
-#include "type_alias.hpp"
+#include "global.hpp"
 #include "vector.hpp"
 
 /**
@@ -100,6 +100,16 @@ public:
     constexpr Point<T, N> at(T t) const noexcept {
         return m_origin + m_direction * t;
     }
+};
+
+template <typename T, int N>
+class RayDifferential : public Ray<T, N> {
+public:
+    RayDifferential() = default;
+    RayDifferential(const Point<T, N>& origin, const Vector<T, N>& direction)
+        : Ray<T, N>(origin, direction) {}
+    RayDifferential(const Point<T, N>& origin, const Point<T, N>& target)
+        : Ray<T, N>(origin, target) {}
 };
 
 // --- 类型别名 (Type Aliases) ---
