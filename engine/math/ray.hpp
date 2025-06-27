@@ -3,6 +3,7 @@
 #include "point.hpp"
 #include "global.hpp"
 #include "vector.hpp"
+#include <array>
 
 /**
  * @file ray.hpp
@@ -109,5 +110,41 @@ using Ray3 = Ray<Float, 3>;
 
 /** @brief A 2-dimensional ray of type `Float`. */
 using Ray2 = Ray<Float, 2>;
+
+template <typename T, int N>
+class RayDifferential {
+private:
+    Ray<T, N> m_ray{};
+    std::array<Ray<T, N>, N - 1> m_differential_rays{};
+
+public:
+    // --- 构造函数 (Constructors) ---
+    constexpr RayDifferential() = default;
+    constexpr RayDifferential(const Ray<T, N>& ray)
+        : m_ray(ray) {}
+    constexpr RayDifferential(const Point<T, N>& origin, const Vector<T, N>& direction)
+        : m_ray(origin, direction) {}
+    constexpr RayDifferential(const Point<T, N>& origin, const Point<T, N>& target)
+        : m_ray(origin, target) {}
+
+    // --- 访问器 (Accessors) ---
+    constexpr const Ray<T, N>& get_differential_ray(int i) const {
+        return m_differential_rays[i];
+    }
+
+    constexpr Ray<T, N>& get_differential_ray(int i) {
+        return m_differential_rays[i];
+    }
+    
+    constexpr const Ray<T, N>& ray() const {
+        return m_ray;
+    }
+
+    constexpr Ray<T, N>& ray() {
+        return m_ray;
+    }
+};
+
+using RayDiff3 = RayDifferential<Float, 3>;
 
 } // namespace math

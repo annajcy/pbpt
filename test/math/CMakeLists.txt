@@ -22,5 +22,9 @@ add_executable(test_transform test_transform.cpp)
 target_link_libraries(test_transform PRIVATE pbpt_engine gtest_main )
 gtest_discover_tests(test_transform)
 
+add_executable(test_bounding_box test_bounding_box.cpp)
+target_link_libraries(test_bounding_box PRIVATE pbpt_engine gtest_main)
+gtest_discover_tests(test_bounding_box)
+
 
 

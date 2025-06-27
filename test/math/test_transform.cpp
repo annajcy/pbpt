@@ -23,7 +23,7 @@ protected:
 
 TEST_F(TransformTest, Translate) {
     const Vec3 translation_vec(5, -2, 100);
-    const Mat4 t = Transform::translate(translation_vec);
+    const Mat4 t = Transform::translate(translation_vec).mat();
 
     
     const Pt3 p_transformed = (t * Homo3(origin)).to_point();
@@ -40,7 +40,7 @@ TEST_F(TransformTest, Translate) {
 
 TEST_F(TransformTest, Scale) {
     const Vec3 scale_vec(2, 3, 0.5);
-    const Mat4 s = Transform::scale(scale_vec);
+    const Mat4 s = Transform::scale(scale_vec).mat();
 
    
     const Pt3 p_start(1, 1, 10);
@@ -58,7 +58,7 @@ TEST_F(TransformTest, Scale) {
 }
 
 TEST_F(TransformTest, RotateZ90Degrees) {
-    const Mat4 rz = Transform::rotate_z(deg2rad(90.0));
+    const Mat4 rz = Transform::rotate_z(deg2rad(90.0)).mat();
     const Pt3 p_transformed = (rz * Homo3(p_x)).to_point();
 
     // It should end up on the Y-axis
@@ -68,7 +68,7 @@ TEST_F(TransformTest, RotateZ90Degrees) {
 }
 
 TEST_F(TransformTest, RotateY90Degrees) {
-    const Mat4 ry = Transform::rotate_y(deg2rad(90.0));
+    const Mat4 ry = Transform::rotate_y(deg2rad(90.0)).mat();
 
     // Rotate a point on the X-axis around Y
     const Pt3 p_transformed = (ry * Homo3(p_x)).to_point();
@@ -80,7 +80,7 @@ TEST_F(TransformTest, RotateY90Degrees) {
 }
 
 TEST_F(TransformTest, RotateX90Degrees) {
-    const Mat4 rx = Transform::rotate_x(deg2rad(90.0));
+    const Mat4 rx = Transform::rotate_x(deg2rad(90.0)).mat();
 
     // Rotate a point on the Y-axis around X
     const Pt3 p_transformed = (rx * Homo3(p_y)).to_point();
@@ -96,8 +96,8 @@ TEST_F(TransformTest, RotateAxisAngle) {
     const Vec3 z_axis(0, 0, 1);
     
     // An arbitrary axis-angle rotation should be identical to the specific-axis version
-    const Mat4 r_axis_angle = Transform::rotate(angle, z_axis);
-    const Mat4 r_z = Transform::rotate_z(angle);
+    const Mat4 r_axis_angle = Transform::rotate(angle, z_axis).mat();
+    const Mat4 r_z = Transform::rotate_z(angle).mat();
 
     for (int r=0; r<4; ++r) {
         for (int c=0; c<4; ++c) {
@@ -110,7 +110,7 @@ TEST_F(TransformTest, LookAt) {
     const Pt3 eye(0, 0, 10);
     const Pt3 target(0, 0, 0);
     const Vec3 up(0, 1, 0);
-    const Mat4 view_matrix = Transform::look_at(eye, target, up);
+    const Mat4 view_matrix = Transform::look_at(eye, target, up).mat();
 
     // A point in the world at (5, 0, 0)
     const Pt3 world_point(5, 0, 0);
@@ -127,7 +127,7 @@ TEST_F(TransformTest, LookAt) {
 }
 
 TEST_F(TransformTest, Orthographic) {
-    const Mat4 ortho_matrix = Transform::orthographic(-10.0, 10.0, -5.0, 5.0, 1.0, 101.0);
+    const Mat4 ortho_matrix = Transform::orthographic(-10.0, 10.0, -5.0, 5.0, 1.0, 101.0).mat();
 
     // A point at the top-right-far corner of the view volume
     const Pt3 top_right_far(10, 5, 101);
@@ -151,7 +151,7 @@ TEST_F(TransformTest, Perspective) {
     const Float aspect = 1.0;
     const Float z_near = 1.0;
     const Float z_far = 100.0;
-    const Mat4 persp_matrix = Transform::perspective(fov_rad, aspect, z_near, z_far);
+    const Mat4 persp_matrix = Transform::perspective(fov_rad, aspect, z_near, z_far).mat();
 
     // Test a point on the near plane. Its Z should map to 0 in NDC.
     const Pt3 near_plane_point(0, 0, z_near);

@@ -208,7 +208,7 @@ TEST_F(MatrixTest, MatrixMatrixMultiplication) {
 TEST_F(MatrixTest, Transpose) {
     Matrix<Float, 2, 3> m(1.f, 2.f, 3.f, 4.f, 5.f, 6.f);
     
-    Matrix<Float, 3, 2> mt = m.transpose();
+    Matrix<Float, 3, 2> mt = m.transposed();
     
     EXPECT_EQ(mt.row_dims(), 3);
     EXPECT_EQ(mt.col_dims(), 2);

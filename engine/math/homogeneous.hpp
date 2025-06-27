@@ -103,7 +103,7 @@ public:
      * @brief Returns the w-component of the homogeneous coordinate.
      * @return The w-component, which is 1 for points and 0 for vectors.
      */
-    constexpr T w() const { return m_data[N]; }
+    constexpr const T& w() const { return m_data[N]; }
 
     /**
      * @brief Returns a reference to the w-component of the homogeneous coordinate.
@@ -222,11 +222,9 @@ public:
 
 // --- 类型别名 (Type Aliases) ---
 
-/**
- * @brief A 3-dimensional homogeneous coordinate using the library's default `Float` type.
- * @details This is a convenient alias for `Homo<Float, 3>`, which internally uses a `Vec4`.
- */
+/** @brief A 3-dimensional homogeneous coordinate using the library's default `Float` type.*/
 using Homo3 = Homogeneous<Float, 3>;
+/*** @brief A 2-dimensional homogeneous coordinate using the library's default `Float` type.*/
 using Homo2 = Homogeneous<Float, 2>;
 
 } // namespace homogeneous

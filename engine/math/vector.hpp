@@ -1,15 +1,16 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <concepts>
 #include <stdexcept>
 #include <type_traits>
 #include <iostream>
 #include <functional>
+#include <vector>
 
-
-#include "global.hpp" // Presumed to contain 'using Float = double;' or similar.
-#include "function.hpp"   // Presumed to contain 'pbpt::math::sqrt'.
+#include "global.hpp" 
+#include "function.hpp"  
 
 /**
  * @file vector.hpp
@@ -30,10 +31,8 @@ namespace pbpt::math {
  * @tparam N The number of dimensions of the vector.
  */
 template<typename T, int N>
+requires (N > 0) && std::is_floating_point_v<T>
 class Vector {
-    static_assert(N > 0, "Vector dimensions must be positive");
-    static_assert(std::is_floating_point_v<T>, "Vector type must be floating point");
-
 private:
     std::array<T, N> m_data{};
 
@@ -78,7 +77,8 @@ public:
      * @note The number of arguments `sizeof...(args)` must be equal to `N`.
      */
     template<std::convertible_to<T>... Args>
-    constexpr explicit Vector(Args&&... args) noexcept requires(sizeof...(args) == N) {
+    requires(sizeof...(Args) == N)
+    constexpr explicit Vector(Args&&... args) noexcept  {
         m_data = {static_cast<T>(args)...};
     }
 
@@ -201,12 +201,34 @@ public:
         return true;
     }
 
-    /**
-     * @brief operator!= 
-     */
+    /** @brief operator!= */
     constexpr bool operator!=(const Vector& rhs) const noexcept {
         return !(*this == rhs);
     }
+
+    /**
+     * @brief Check if the vector is normalized.
+     * @details A normalized vector has a length of 1.0.
+     * @return true If the vector is normalized.
+     * @return false If the vector is not normalized.
+     */
+    constexpr bool is_normalized() const {
+        return is_equal(length(), 1.0);
+    }
+
+    /**
+     * @brief Check if all components of the vector are zero.
+     * 
+     * @return true If all components are zero.
+     * @return false If any component is non-zero.
+     */
+    constexpr bool is_zero() const {
+        for (int i = 0; i < N; i++) {
+            if (!is_equal(m_data[i], 0.0)) return false;
+        }
+        return true;
+    }
+
 
     /**
      * @brief Check if any component of the vector is NaN (Not a Number).
@@ -325,6 +347,12 @@ public:
         );
     }
 
+    constexpr T product() const noexcept {
+        T result = 1;
+        for (int i = 0; i < N; i++) result *= m_data[i];
+        return result;
+    }
+
     /**
      * @brief Applies a function to each element of the vector.
      * @param func The function to apply.
@@ -395,7 +423,139 @@ public:
         os << ')';
         return os;
     }
+
+    /**
+     * @brief Returns the dimension with the maximum value.
+     * @return The dimension index with the maximum value.
+     */
+    constexpr int max_dim() const {
+        return std::max_element(m_data.begin(), m_data.end()) - m_data.begin();
+    }
+
+    /**
+     * @brief Returns the maximum value in the vector.
+     * @return The maximum value.
+     */
+    constexpr T max() const {
+        return *std::max_element(m_data.begin(), m_data.end());
+    }
+
+    /**
+     * @brief Returns the dimension with the minimum value.
+     * @return The dimension index with the minimum value.
+     */
+    constexpr int min_dim() const {
+        return std::min_element(m_data.begin(), m_data.end()) - m_data.begin();
+    }
+
+    /**
+     * @brief Returns the minimum value in the vector.
+     * @return The minimum value.
+     */
+    constexpr T min() const {
+        return *std::min_element(m_data.begin(), m_data.end());
+    }
+
+    /**
+     * @brief Returns a new vector with the specified dimensions permuted.
+     * @details The dimensions are specified by their indices, starting from 0.
+     * @tparam Args The dimension indices to permute.
+     * @return A new vector with the specified dimensions permuted.
+     */
+    template<typename ...Args>
+    requires (sizeof...(Args) == N)
+    constexpr Vector permuted(Args ...args) const {
+        Vector result;
+        int i = 0;
+        ((result[i++] = (*this)[args]), ...);
+        return result;
+    }
+
+    /**
+     * @brief Permutes the dimensions of the vector.
+     * @details The dimensions are specified by their indices, starting from 0.
+     * @tparam Args The dimension indices to permute.
+     * @return A reference to this vector with the dimensions permuted.
+     */
+    template<typename ...Args>
+    requires (sizeof...(Args) == N)
+    constexpr Vector& permute(Args ...args) {
+        *this = permuted(args...);
+        return *this;
+    }
+    
+    
 };
+
+/**
+* @brief Returns orthogonal bases for a given vector.
+* @tparam Args The types of the orthogonal vectors.
+* @param base The input vector.
+* @return A vector of orthogonal vectors.
+*/
+
+template<typename T, int N>
+constexpr inline std::vector<Vector<T, N>> get_orthogonal_bases(const Vector<T, N>& base) {
+     if constexpr (base.is_zero()) {
+        if (std::is_constant_evaluated()) {
+            throw "Base vector is zero, orthogonal bases are undefined.";
+        } else {
+            throw std::invalid_argument("Base vector is zero, orthogonal bases are undefined.");
+        }
+    }
+    //TODO
+    return {};
+}
+
+/**
+* @brief Returns orthogonal bases for a given vector when N == 2.
+* @tparam Args The types of the orthogonal vectors.
+* @param u The input vector.
+* @return A vector of orthogonal vectors.
+*/
+template<typename T>
+constexpr inline std::vector<Vector<T, 2>> get_orthogonal_bases(const Vector<T, 2>& base) {
+    if (base.is_zero()) {
+        if (std::is_constant_evaluated()) {
+            throw "Base vector is zero, orthogonal bases are undefined.";
+        } else {
+            throw std::invalid_argument("Base vector is zero, orthogonal bases are undefined.");
+        }
+    }
+    Vector<T, 2> u, v;
+    u = base.normalized();
+    v = Vector<T, 2>(-u.y(), u.x());
+    return {u, v};
+}
+
+/**
+* @brief Returns orthogonal bases for a given vector when N == 3.
+* @tparam Args The types of the orthogonal vectors.
+* @param base The input vector.
+* @return A vector of orthogonal vectors.
+*/
+template<typename T>
+constexpr inline std::vector<Vector<T, 3>> get_orthogonal_bases(const Vector<T, 3>& base) {
+    if (base.is_zero()) {
+        if (std::is_constant_evaluated()) {
+            throw "Base vector is zero, orthogonal bases are undefined.";
+        } else {
+            throw std::invalid_argument("Base vector is zero, orthogonal bases are undefined.");
+        }
+    }
+    
+    Vector<T, 3> u, v, w;
+    u = base.normalized();
+    if (std::abs(u.x()) > std::abs(u.y())) {
+        T inv_len = T(1) / std::sqrt(u.x() * u.x() + u.z() * u.z());
+        v = Vector<T, 3>(-u.z() * inv_len, T(0), u.x() * inv_len);
+    } else {
+        T inv_len = T(1) / std::sqrt(u.y() * u.y() + u.z() * u.z());
+        v = Vector<T, 3>(T(0), u.z() * inv_len, -u.y() * inv_len);
+    }
+    w = u.cross(v);
+    return {u, v, w};
+}
 
 // --- 类型别名 (Type Aliases) ---
 
@@ -405,5 +565,20 @@ using Vec2 = Vector<Float, 2>;
 using Vec3 = Vector<Float, 3>;
 /** @brief A 4-dimensional vector of type `Float`. */
 using Vec4 = Vector<Float, 4>;
+
+template <typename T, int N>
+class Normal : public Vector<T, N> {
+public:
+    using Vector<T, N>::Vector;
+    constexpr Normal(const Vector<T, N>& vec) : Vector<T, N>(vec.normalized()) {}
+};
+
+/** @brief A 2-dimensional vector of type `Float`. */
+using Normal2 = Normal<Float, 2>;
+/** @brief A 3-dimensional vector of type `Float`. */
+using Normal3 = Normal<Float, 3>;
+/** @brief A 4-dimensional vector of type `Float`. */
+using Normal4 = Normal<Float, 4>;
+
 
 } // namespace math

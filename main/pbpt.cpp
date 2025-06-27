@@ -1,5 +1,6 @@
 #include <iostream>
 #include "assimp/Importer.hpp"
+#include "math/bounding_box.hpp"
 #include "math/point.hpp"
 
 #include "math/global.hpp"
@@ -141,6 +142,16 @@ int main() {
     }
         
     std::cout << std::endl;
+
+    Bound3 box;
+
+    box.unite(Pt3(1, 2, 3)).unite(Pt3(4, 5, 6)).unite(Pt3(7, 8, 9)).unite({Pt3(10, 11, 12), Pt3(13, 14, 15)});
+
+    std::cout << "box: " << box << std::endl;
+    std::cout << "is_contain: " << box.contains(Pt3(4, 5, 6)) << std::endl;
+
+    std::cout << (Pt3(4.0, 7.0, 6.0) <= Pt3(4.0, 5.0, 6.0))<< std::endl;
+    std::cout << box.center() << std::endl;
 
     return 0;
 }

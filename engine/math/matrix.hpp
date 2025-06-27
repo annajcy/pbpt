@@ -489,7 +489,7 @@ public:
      * @brief Computes the transpose of this matrix.
      * @return A new Matrix<T, C, R> that is the transpose.
      */
-    constexpr Matrix<T, C, R> transpose() const noexcept {
+    constexpr Matrix<T, C, R> transposed() const noexcept {
         Matrix<T, C, R> result{};
         for (int i = 0; i < R; ++i) {
             for (int j = 0; j < C; ++j) {
@@ -497,6 +497,21 @@ public:
             }
         }
         return result;
+    }
+
+    /**
+     * @brief Computes the transpose of this matrix.
+     * @return A new Matrix<T, C, R> that is the transpose.
+     */
+    constexpr Matrix<T, C, R>& transpose() noexcept requires(R == C) {
+        Matrix<T, C, R> result{};
+        for (int i = 0; i < R; ++i) {
+            for (int j = 0; j < C; ++j) {
+                result[j][i] = (*this)[i][j];
+            }
+        }
+        *this = result;
+        return *this;
     }
 
     /**
@@ -546,8 +561,36 @@ public:
             }
         }
 
-        Matrix adjugate_matrix = cofactor_matrix.transpose();
+        Matrix adjugate_matrix = cofactor_matrix.transposed();
         return adjugate_matrix * (static_cast<T>(1.0) / det);
+    }
+
+    /**
+     * @brief Computes the inverse of the matrix.
+     * @note Only available for square matrices.
+     * @throws std::runtime_error if the matrix is singular (determinant is zero).
+     */
+    constexpr Matrix& inverse() requires(R == C) {
+        T det = determinant();
+        if (det == 0) {
+            if (std::is_constant_evaluated()) {
+                throw "Compile-time error: Cannot invert a singular matrix";
+            } else {
+                throw std::runtime_error("Cannot invert a singular matrix");
+            }
+        }
+
+        Matrix cofactor_matrix{};
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                T sign = ((r + c) % 2 == 0) ? 1 : -1;
+                cofactor_matrix[r][c] = sign * submatrix(r, c).determinant();
+            }
+        }
+
+        Matrix adjugate_matrix = cofactor_matrix.transposed();
+        *this = adjugate_matrix * (static_cast<T>(1.0) / det);
+        return *this;
     }
     
     /**
@@ -710,6 +753,49 @@ public:
         }
         os << "]";
         return os;
+    }
+
+    /**
+    * @brief Checks if the matrix is zero.
+    * @return true If all elements are zero.
+    * @return false Otherwise.
+    */
+    constexpr bool is_zero() const {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                if ((*this)[r][c] != 0) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+    * @brief Checks if the matrix is identity.
+    * @return true If the matrix is an identity matrix.
+    * @return false Otherwise.
+    */
+    constexpr bool is_identity() const {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                if (r == c && (*this)[r][c] != 1) return false;
+                if (r != c && (*this)[r][c] != 0) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+    * @brief Checks if the matrix has NaN values.
+    * @return true If any element is NaN.
+    * @return false Otherwise.
+    */
+    constexpr bool has_nan() const {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                if (std::isnan((*this)[r][c])) return true;
+            }
+        }
+        return false;
     }
 };
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/function.hpp"
 #include "vector.hpp" // Presumed to define Vec, Vec2, Vec3, Vec4, Float
 
 /**
@@ -83,7 +84,8 @@ public:
      * @note The number of arguments `sizeof...(args)` must be equal to `N`.
      */
     template<std::convertible_to<T>... Args>
-    constexpr explicit Point(Args&&... args) noexcept requires(sizeof...(args) == N)
+    requires(sizeof...(Args) == N)
+    constexpr explicit Point(Args&&... args) noexcept 
         : m_coords(std::forward<Args>(args)...) {}
 
     // --- 访问器 (Accessors) ---
@@ -138,6 +140,61 @@ public:
     constexpr Point& operator+=(const Vector<T, N>& rhs) noexcept {
         m_coords += rhs;
         return *this;
+    }
+
+    /*** @brief less than */
+    constexpr bool operator<(const Point& rhs) const {
+        for (int i = 0; i < N; i ++) {
+            if (!is_less(m_coords[i], rhs.m_coords[i]))
+                return false;
+        }
+        return true;
+    }
+
+    /*** @brief less than or equal*/
+    constexpr bool operator<=(const Point& rhs) const {
+        for (int i = 0; i < N; i ++) {
+            if (is_greater(m_coords[i], rhs.m_coords[i]))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief greater than
+     */
+    constexpr bool operator>(const Point& rhs) const {
+        for (int i = 0; i < N; i ++) {
+            if (!is_greater(m_coords[i], rhs.m_coords[i]))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief greater than or equal
+     */
+    constexpr bool operator>=(const Point& rhs) const {
+        for (int i = 0; i < N; i ++) {
+            if (is_less(m_coords[i], rhs.m_coords[i]))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief equal
+     * 
+     * @param rhs 
+     * @return true 
+     * @return false 
+     */
+    constexpr bool operator==(const Point& rhs) const {
+        for (int i = 0; i < N; i ++) {
+            if (!is_equal(m_coords[i], rhs.m_coords[i]))
+                return false;
+        }
+        return true;
     }
 
     /**
@@ -206,7 +263,7 @@ public:
     constexpr Point mid(const Point<T, N>& rhs) const noexcept {
         // Conceptually: start at lhs, and move halfway towards rhs.
         // (lhs + (rhs - lhs) * 0.5) which simplifies to (lhs + rhs) * 0.5
-        return Point<T, N>(this->to_vector() + rhs.to_vector() * 0.5);
+        return Point<T, N>((this->to_vector() + rhs.to_vector()) * 0.5);
     }
 };
 

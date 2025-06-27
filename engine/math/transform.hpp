@@ -1,5 +1,9 @@
 #pragma once
 
+#include "homogeneous.hpp"
+#include "math/bounding_box.hpp"
+#include "ray.hpp"
+#include "vector.hpp"
 #include "matrix.hpp" // Assumes this includes vector.hpp and point.hpp
 #include "point.hpp"
 
@@ -31,13 +35,13 @@ public:
     * @param t A Vec3 representing the translation amounts (tx, ty, tz).
     * @return A Mat4 that translates a point by the given vector.
     */
-    static constexpr Mat4 translate(const Vec3& t) noexcept {
-        return Mat4(
+    static constexpr Transform translate(const Vec3& t) noexcept {
+        return Transform(Mat4(
             1, 0, 0, t.x(),
             0, 1, 0, t.y(),
             0, 0, 1, t.z(),
             0, 0, 0, 1
-        );
+        ));
     }
 
     /**
@@ -45,13 +49,13 @@ public:
     * @param s The scalar factor to scale by on all axes.
     * @return A Mat4 that scales a point or vector uniformly.
     */
-    static constexpr Mat4 scale(Float s) noexcept {
-        return Mat4(
+    static constexpr Transform scale(Float s) noexcept {
+        return Transform(Mat4(
             s, 0, 0, 0,
             0, s, 0, 0,
             0, 0, s, 0,
             0, 0, 0, 1
-        );
+        ));
     }
 
     /**
@@ -59,13 +63,13 @@ public:
     * @param s A Vec3 containing the scaling factors for the x, y, and z axes.
     * @return A Mat4 that scales a point or vector non-uniformly.
     */
-    static constexpr Mat4 scale(const Vec3& s) noexcept {
-        return Mat4(
-            s.x(), 0, 0, 0,
-            0, s.y(), 0, 0,
-            0, 0, s.z(), 0,
-            0, 0, 0, 1
-        );
+    static constexpr Transform scale(const Vec3& s) noexcept {
+        return Transform(Mat4(
+            s.x(), 0,     0,     0,
+            0,     s.y(), 0,     0,
+            0,     0,     s.z(), 0,
+            0,     0,     0,     1
+        ));
     }
 
     /**
@@ -73,15 +77,15 @@ public:
     * @param angle_rad The rotation angle in radians.
     * @return A Mat4 that rotates points/vectors around the world's X-axis.
     */
-    static constexpr Mat4 rotate_x(Float angle_rad) noexcept {
+    static constexpr Transform rotate_x(Float angle_rad) noexcept {
         const Float s = sin(angle_rad);
         const Float c = cos(angle_rad);
-        return Mat4(
-            1, 0, 0, 0,
+        return Transform(Mat4(
+            1, 0, 0,  0,
             0, c, -s, 0,
-            0, s, c, 0,
-            0, 0, 0, 1
-        );
+            0, s, c,  0,
+            0, 0, 0,  1
+        ));
     }
 
     /**
@@ -89,15 +93,15 @@ public:
     * @param angle_rad The rotation angle in radians.
     * @return A Mat4 that rotates points/vectors around the world's Y-axis.
     */
-    static constexpr Mat4 rotate_y(Float angle_rad) noexcept {
+    static constexpr Transform rotate_y(Float angle_rad) noexcept {
         const Float s = sin(angle_rad);
         const Float c = cos(angle_rad);
-        return Mat4(
-            c, 0, s, 0,
-            0, 1, 0, 0,
+        return Transform(Mat4(
+            c,  0, s, 0,
+            0,  1, 0, 0,
             -s, 0, c, 0,
-            0, 0, 0, 1
-        );
+            0,  0, 0, 1
+        ));
     }
 
     /**
@@ -105,15 +109,15 @@ public:
     * @param angle_rad The rotation angle in radians.
     * @return A Mat4 that rotates points/vectors around the world's Z-axis.
     */
-    static constexpr Mat4 rotate_z(Float angle_rad) noexcept {
+    static constexpr Transform rotate_z(Float angle_rad) noexcept {
         const Float s = sin(angle_rad);
         const Float c = cos(angle_rad);
-        return Mat4(
+        return Transform(Mat4(
             c, -s, 0, 0,
-            s, c, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        );
+            s, c,  0, 0,
+            0, 0,  1, 0,
+            0, 0,  0, 1
+        ));
     }
 
     /**
@@ -122,7 +126,7 @@ public:
 * @param axis The axis of rotation. Should be a unit vector for correct results.
 * @return A Mat4 that performs the specified rotation.
 */
-static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
+static constexpr Transform rotate(Float angle_rad, const Vec3& axis) noexcept {
     // 确保旋转轴是单位向量，这对于公式的正确性至关重要
     const Vec3 a = axis.normalized();
     const Float s = sin(angle_rad);
@@ -134,12 +138,12 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     const Float az = a.z();
 
     // 罗德里格斯旋转公式的矩阵形式
-    return Mat4(
+    return Transform(Mat4(
         c + ax * ax * omc,       ax * ay * omc - az * s,  ax * az * omc + ay * s,  0,
         ay * ax * omc + az * s,  c + ay * ay * omc,       ay * az * omc - ax * s,  0,
         az * ax * omc - ay * s,  az * ay * omc + ax * s,  c + az * az * omc,       0,
         0,                       0,                       0,                       1
-    );
+    ));
 }
 
     // --- 视图/摄像机变换 (View/Camera Transformations) ---
@@ -152,17 +156,17 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     * @param up A vector indicating the "up" direction of the world (usually (0, 1, 0)).
     * @return A Mat4 representing the view transformation.
     */
-    static constexpr Mat4 look_at(const Pt3& eye, const Pt3& target, const Vec3& up) noexcept {
+    static constexpr Transform look_at(const Pt3& eye, const Pt3& target, const Vec3& up) noexcept {
         const Vec3 f = (target - eye).normalized(); // Forward vector
         const Vec3 s = f.cross(up).normalized();    // Right vector
         const Vec3 u = s.cross(f);                  // Recalculated Up vector
 
-        return Mat4(
+        return Transform(Mat4(
             s.x(),  s.y(),  s.z(),  -s.dot(eye.to_vector()),
             u.x(),  u.y(),  u.z(),  -u.dot(eye.to_vector()),
             -f.x(), -f.y(), -f.z(), f.dot(eye.to_vector()),
             0,      0,      0,      1
-        );
+        ));
     }
 
 
@@ -178,14 +182,15 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     * @param z_far Distance to the far clipping plane (must be positive and > z_near).
     * @return A Mat4 representing the perspective projection.
     */
-    static constexpr Mat4 perspective(Float fov_y_rad, Float aspect_ratio, Float z_near, Float z_far) noexcept {
+    static constexpr Transform perspective(Float fov_y_rad, Float aspect_ratio, Float z_near, Float z_far) noexcept {
         const Float tan_half_fovy = tan(fov_y_rad / 2.0);
-        return Mat4(
+        return Transform(Mat4(
             1.0 / (aspect_ratio * tan_half_fovy), 0,                     0,                        0,
             0,                                    1.0 / (tan_half_fovy), 0,                        0,
             0,                                    0,                     z_far / (z_far - z_near), -z_far * z_near / (z_far - z_near),
             0,                                    0,                     1.0,                      0
-        );
+        ));
+       
     }
 
     /**
@@ -201,23 +206,73 @@ static constexpr Mat4 rotate(Float angle_rad, const Vec3& axis) noexcept {
     * @param z_far The z-coordinate of the far clipping plane.
     * @return A Mat4 representing the orthographic projection.
     */
-    static constexpr Mat4 orthographic(Float left, Float right, Float bottom, Float top, Float z_near, Float z_far) noexcept {
+    static constexpr Transform orthographic(Float left, Float right, Float bottom, Float top, Float z_near, Float z_far) noexcept {
   
-        return Mat4(
+        return Transform(Mat4(
             2.0 / (right - left), 0,                    0,                      -(right + left) / (right - left),
             0,                    2.0 / (top - bottom), 0,                      -(top + bottom) / (top - bottom),
             0,                    0,                    1.0 / (z_far - z_near), -z_near / (z_far - z_near),
             0,                    0,                    0,                      1
-        );
+        ));
     }
 
 private:
     Mat4 m_mat{};
-    Mat4 m_inv_mat{};
 
 public:
     constexpr Transform() noexcept = default;
-    constexpr Transform(const Mat4& mat) : m_mat(mat), m_inv_mat(mat.inversed()) {}
+    constexpr Transform(const Mat4& mat) : m_mat(mat) {}
+
+    constexpr const Mat4& mat() const { return m_mat; }
+
+    constexpr Transform& operator*=(const Transform& rhs) noexcept {
+        m_mat = m_mat * rhs.m_mat;
+        return *this;
+    }
+
+    constexpr Transform operator*(const Transform& rhs) const noexcept {
+        return Transform(m_mat * rhs.m_mat);
+    }
+
+    /**
+    * @brief Transforms a point using the transform matrix.
+    * @param point The point to transform.
+    * @return The transformed point.
+    */
+    constexpr Pt3 operator*(const Pt3& point) const noexcept {
+        return (m_mat * Homo3(point)).to_point();
+    }
+
+    /**
+    * @brief Transforms a vector using the transform matrix.
+    * @param vec The vector to transform.
+    * @return The transformed vector.
+    */
+    constexpr Vec3 operator*(const Vec3& vec) const noexcept {
+        return (m_mat * Homo3(vec)).to_vector();
+    }
+
+    /**
+    * @brief Transforms a normal using the transform matrix.
+    * @param normal The normal to transform.
+    * @return The transformed normal.
+    */
+    constexpr Normal3 operator*(const Normal3& normal) const noexcept {
+        auto result = (m_mat.inversed().transposed() * Homo3(normal)).to_vector();
+        return Normal3(result);
+    }
+
+    constexpr Ray3 operator*(const Ray3& ray) const noexcept {
+        return Ray3(
+            *this * ray.origin(), 
+            *this * ray.direction()
+        );
+    }
+
+    constexpr Bound3 operator*(const Bound3& bound) const noexcept {
+        return Bound3 {*this * bound.min(), *this * bound.max()};;
+    }
+    
 };
 
 
