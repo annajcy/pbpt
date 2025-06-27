@@ -48,20 +48,6 @@ public:
         return *this;
     }
 
-    constexpr BoundingBox& unite(const std::vector<Point<T, N>>& points) noexcept {
-        for (const auto& p : points) {
-            unite(p);
-        }
-        return *this;
-    }
-
-    constexpr BoundingBox& unite(const std::vector<BoundingBox>& boxes) noexcept {
-        for (const auto& box : boxes) {
-            unite(box);
-        }
-        return *this;
-    }
-
     constexpr BoundingBox united(const Point<T, N>& point) const noexcept {
         BoundingBox<T, N> box(*this);
         box.unite(point);
@@ -73,19 +59,6 @@ public:
         box_united.unite(box.min());
         box_united.unite(box.max());
         return box_united;
-    }
-
-    constexpr BoundingBox united(const std::vector<Point<T, N>>& points) const noexcept {
-        BoundingBox<T, N> box(*this);
-        box.unite(points);
-        return box;
-    }
-
-    
-    constexpr BoundingBox united(const std::vector<BoundingBox>& boxes) const noexcept {
-        BoundingBox<T, N> box(*this);
-        box.unite(boxes);
-        return box;
     }
 
     /**

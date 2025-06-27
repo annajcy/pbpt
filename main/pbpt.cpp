@@ -145,7 +145,7 @@ int main() {
 
     Bound3 box;
 
-    box.unite(Pt3(1, 2, 3)).unite(Pt3(4, 5, 6)).unite(Pt3(7, 8, 9)).unite({Pt3(10, 11, 12), Pt3(13, 14, 15)});
+    box.unite(Pt3(1, 2, 3)).unite(Pt3(4, 5, 6)).unite(Pt3(7, 8, 9)).unite(Bound3{Pt3(10, 11, 12), Pt3(13, 14, 15)});
 
     std::cout << "box: " << box << std::endl;
     std::cout << "is_contain: " << box.contains(Pt3(4, 5, 6)) << std::endl;
