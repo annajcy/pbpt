@@ -18,6 +18,10 @@ add_executable(test_homo test_homo.cpp)
 target_link_libraries(test_homo PRIVATE pbpt_engine gtest_main )
 gtest_discover_tests(test_homo)
 
+add_executable(test_integration test_integration.cpp)
+target_link_libraries(test_integration PRIVATE pbpt_engine gtest_main)
+gtest_discover_tests(test_integration)
+
 add_executable(test_transform test_transform.cpp)
 target_link_libraries(test_transform PRIVATE pbpt_engine gtest_main )
 gtest_discover_tests(test_transform)

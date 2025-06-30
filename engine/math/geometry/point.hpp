@@ -66,7 +66,6 @@ public:
     constexpr T& operator[](int index) { return m_data[index]; }
     constexpr const T& at(int index) const { return m_data.at(index); }
 
-
     constexpr Vector<T, N> to_vector() const noexcept { return m_data; }
 
     constexpr Point& operator+=(const Vector<T, N>& rhs) noexcept {
@@ -157,7 +156,7 @@ public:
     }
 };
 
-
+using Pt1 = Point<Float, 1>;
 using Pt2 = Point<Float, 2>;
 using Pt3 = Point<Float, 3>;
 using Pt4 = Point<Float, 4>;
