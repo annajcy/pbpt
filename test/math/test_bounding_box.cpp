@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "math/bounding_box.hpp"
+#include "math/geometry/bounding_box.hpp"
 
 namespace pbpt::math::testing {
 

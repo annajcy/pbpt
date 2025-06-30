@@ -1,8 +1,7 @@
 #include "gtest/gtest.h"
-#include "math/homogeneous.hpp"
-#include "math/matrix.hpp" // The header file for the Matrix class to be tested.
-#include "math/global.hpp"
-#include "math/vector.hpp"
+#include "math/geometry/homogeneous.hpp"
+#include "math/geometry/matrix.hpp" // The header file for the Matrix class to be tested.
+#include "math/geometry/vector.hpp"
 
 namespace pbpt::math::testing {
 

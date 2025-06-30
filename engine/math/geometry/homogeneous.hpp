@@ -2,6 +2,7 @@
 
 #include "point.hpp"
 #include "matrix.hpp"
+
 #include <concepts>
 #include <stdexcept>
 #include <type_traits>
@@ -43,47 +44,22 @@ namespace pbpt::math {
 template<typename T, int N>
 class Homogeneous {
 private:
-    /**
-     * @brief Internal storage for the N+1 homogeneous coordinates.
-     */
     Vector<T, N + 1> m_data{};
 
 public:
 
-    // --- 构造函数 (Constructors) ---
-
-    /**
-     * @brief Default constructor.
-     * @details Initializes a homogeneous coordinate representing the origin POINT (0, ..., 0, 1).
-     */
     constexpr Homogeneous() noexcept { m_data[N] = 1; }
+    constexpr explicit Homogeneous(const Vector<T, N + 1>& data) noexcept : m_data(data) {}
 
-    /**
-     * @brief Constructs a homogeneous coordinate from a Point.
-     * @details Copies the point's coordinates and sets the w-component to 1.
-     * @param p The point to convert.
-     */
     constexpr explicit Homogeneous(const Point<T, N>& p) noexcept {
         for (int i = 0; i < N; ++i) m_data[i] = p[i];
         m_data[N] = 1;
     }
 
-    /**
-     * @brief Constructs a homogeneous coordinate from a Vec (vector).
-     * @details Copies the vector's components and sets the w-component to 0.
-     * @param v The vector to convert.
-     */
     constexpr explicit Homogeneous(const Vector<T, N>& v) noexcept {
         for (int i = 0; i < N; ++i) m_data[i] = v[i];
         m_data[N] = 0;
     }
-
-    /**
-     * @brief Constructs a homogeneous coordinate from a list of values.
-     * @details The number of values must match the number of dimensions (N + 1).
-     * @tparam Vals The types of the values, must be convertible to `T`.
-     * @param vals The values to initialize the homogeneous coordinate.
-     */
 
     template<std::convertible_to<T>... Vals>
     constexpr explicit Homogeneous(Vals... vals) noexcept requires(sizeof...(Vals) == N + 1) {
@@ -91,34 +67,11 @@ public:
         ((m_data[i++] = vals), ...);
     }
 
-    /**
-     * @brief Explicitly constructs from a raw (N+1)-dimensional vector.
-     * @details This is an advanced constructor, primarily used internally after a
-     * matrix transformation has produced a new raw homogeneous coordinate vector.
-     * @param data The raw `Vec<T, N + 1>` of homogeneous coordinates.
-     */
-    constexpr explicit Homogeneous(const Vector<T, N + 1>& data) noexcept : m_data(data) {}
-
-    /**
-     * @brief Returns the w-component of the homogeneous coordinate.
-     * @return The w-component, which is 1 for points and 0 for vectors.
-     */
     constexpr const T& w() const { return m_data[N]; }
-
-    /**
-     * @brief Returns a reference to the w-component of the homogeneous coordinate.
-     * @return A reference to the w-component, which can be used to modify it.
-     */
     constexpr T& w() { return m_data[N]; }
 
-    // 访问运算符
-    /** @brief Returns the value of the homogeneous coordinate at the specified index.*/
     constexpr const T& operator[](int index) const { return m_data[index]; }
-
-    /** @brief Returns the value of the homogeneous coordinate at the specified index.*/
     constexpr T& operator[](int index) { return m_data[index]; }
-
-    /** @brief Returns the value of the homogeneous coordinate at the specified index.*/
     constexpr const T& at(int index) const { return m_data.at(index); }
 
 
@@ -178,53 +131,20 @@ public:
         return result_coords;
     }
 
-    // --- 访问器 (Accessors) ---
-
-    /**
-     * @brief Provides read-only access to the underlying raw (N+1)-dimensional vector.
-     * @return A const reference to the internal `Vec<T, N + 1>`.
-     */
     constexpr const Vector<T, N + 1>& raw() const noexcept { return m_data; }
-
-    /**
-     * @brief Provides mutable access to the underlying raw (N+1)-dimensional vector.
-     * @return A mutable reference to the internal `Vec<T, N + 1>`.
-     */
     constexpr Vector<T, N + 1>& raw() noexcept { return m_data; }
-    
-    // --- 流输出 (Stream Output) ---
 
-    /**
-     * @brief Stream insertion operator for printing the homogeneous coordinate.
-     * @details Prints a `[P]` or `[V]` tag to distinguish points from vectors,
-     * followed by the raw underlying vector data.
-     * @param os The output stream.
-     * @param h The `Homo` object to print.
-     * @return A reference to the output stream.
-     */
     friend std::ostream& operator<<(std::ostream& os, const Homogeneous& h) {
         os << "HCoord" << N << (h.is_point() ? "[P] " : "[V] ") << h.raw();
         return os;
     }
 
-    /**
-     * @brief Multiplication operator for a matrix and a homogeneous coordinate.
-     * @details This operator performs matrix-vector multiplication, where the matrix
-     * is of size (N+1)x(N+1) and the homogeneous coordinate is of size (N+1).
-     * @param mat The matrix to multiply.
-     * @param h The homogeneous coordinate to multiply.
-     * @return The result of the matrix-vector multiplication.
-     */
     friend Homogeneous operator*(const Matrix<T, N + 1, N + 1>& mat, const Homogeneous& h) {
         return Homogeneous(mat * h.raw());
     }
 };
 
-// --- 类型别名 (Type Aliases) ---
-
-/** @brief A 3-dimensional homogeneous coordinate using the library's default `Float` type.*/
 using Homo3 = Homogeneous<Float, 3>;
-/*** @brief A 2-dimensional homogeneous coordinate using the library's default `Float` type.*/
 using Homo2 = Homogeneous<Float, 2>;
 
 } // namespace homogeneous

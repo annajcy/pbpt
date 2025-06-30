@@ -2,7 +2,7 @@
 #include <sstream> 
 #include <type_traits> 
 
-#include "math/point.hpp"
+#include "math/geometry/point.hpp"
 
 namespace pbpt::math::testing {
 

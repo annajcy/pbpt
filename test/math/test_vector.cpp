@@ -4,7 +4,7 @@
 #include <type_traits>
 
 // 包含被测试的头文件和其依赖
-#include "math/vector.hpp"
+#include "math/geometry/vector.hpp"
 // 假设 type_alias.hpp 和 function.hpp 已被 vector.hpp 包含
 
 namespace pbpt::math::testing {

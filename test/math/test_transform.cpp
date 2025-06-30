@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "math/function.hpp"
-#include "math/transform.hpp"
-#include "math/homogeneous.hpp" 
+#include "math/geometry/transform.hpp"
+#include "math/geometry/homogeneous.hpp" 
 
 namespace pbpt::math::testing {
 

@@ -1,15 +1,15 @@
 #include <iostream>
 #include "assimp/Importer.hpp"
-#include "math/bounding_box.hpp"
-#include "math/point.hpp"
+#include "math/geometry/bounding_box.hpp"
+#include "math/global/operator.hpp"
+#include "math/geometry/point.hpp"
 
-#include "math/global.hpp"
-#include "math/vector.hpp"
+#include "math/geometry/vector.hpp"
 #include "slang.h"
 #include "imgui.h"
 #include <vector>
 
-#include "math/matrix.hpp"
+#include "math/geometry/matrix.hpp"
 
 
 #if defined (RENDER_BACKEND_VULKAN)
@@ -150,8 +150,11 @@ int main() {
     std::cout << "box: " << box << std::endl;
     std::cout << "is_contain: " << box.contains(Pt3(4, 5, 6)) << std::endl;
 
-    std::cout << (Pt3(4.0, 7.0, 6.0) <= Pt3(4.0, 5.0, 6.0))<< std::endl;
+    std::cout << (Pt3(4.0, 5.0, 6.0) <= Pt3(4.0, 5.0, 6.0))<< std::endl;
     std::cout << box.center() << std::endl;
+
+    std::cout << math::is_not_equal(1.0, 2.0) << std::endl;
+    std::cout << math::is_equal(1.0, 2.0) << std::endl;
 
     return 0;
 }
