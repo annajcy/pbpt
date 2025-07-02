@@ -28,8 +28,9 @@ public:
         int sample_count
     ) const override {
         Float sum = 0.0;
+        auto samples = sampler->generate(sample_count);
         for (int i = 0; i < sample_count; ++i) {
-            auto u = sampler->generate();
+            auto u = samples[i];
             const Point<Float, 1> p = distribution->sample(u);
             sum += f(p) / distribution->pdf(p);
         }

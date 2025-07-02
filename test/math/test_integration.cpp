@@ -74,9 +74,10 @@ TEST_F(IntegrationTest, UniformSampler_Generate) {
     // 测试采样器生成的随机数范围
     const int num_samples = 1000;
     int valid_samples = 0;
+    auto samples = uniform_sampler->generate(num_samples);
     
     for (int i = 0; i < num_samples; ++i) {
-        Pt1 sample = uniform_sampler->generate();
+        Pt1 sample = samples[i];
         if (sample.x() >= 0.0f && sample.x() <= 1.0f) {
             valid_samples++;
         }
@@ -90,10 +91,12 @@ TEST_F(IntegrationTest, UniformSampler_Randomness) {
     // 测试采样器的随机性（简单统计测试）
     const int num_samples = 10000;
     Float sum = 0.0f;
+
+    auto samples = uniform_sampler->generate(num_samples);
     
     for (int i = 0; i < num_samples; ++i) {
-        Pt1 sample = uniform_sampler->generate();
-        sum += sample.x();
+        auto u = samples[i];
+        sum += u.x();
     }
     
     Float mean = sum / num_samples;
@@ -178,8 +181,10 @@ TEST(IntegrationMultiDimTest, UniformSampler2D) {
     const int num_samples = 1000;
     int valid_samples = 0;
     
+    auto samples = sampler_2d.generate(num_samples);
+    
     for (int i = 0; i < num_samples; ++i) {
-        Point<Float, 2> sample = sampler_2d.generate();
+        Point<Float, 2> sample = samples[i];
         if (sample[0] >= 0.0f && sample[0] <= 1.0f &&
             sample[1] >= 0.0f && sample[1] <= 1.0f) {
             valid_samples++;
@@ -195,8 +200,10 @@ TEST(IntegrationMultiDimTest, UniformSampler3D) {
     const int num_samples = 1000;
     int valid_samples = 0;
     
+    auto samples = sampler_3d.generate(num_samples);
+    
     for (int i = 0; i < num_samples; ++i) {
-        Point<Float, 3> sample = sampler_3d.generate();
+        Point<Float, 3> sample = samples[i];
         if (sample[0] >= 0.0f && sample[0] <= 1.0f &&
             sample[1] >= 0.0f && sample[1] <= 1.0f &&
             sample[2] >= 0.0f && sample[2] <= 1.0f) {

@@ -123,6 +123,22 @@ public:
         return *this;
     }
 
+    template <typename U>
+    requires std::convertible_to<U, T>
+    constexpr Vector& operator/=(const U& rhs) {
+        T rhs_t = static_cast<T>(rhs);
+        if (is_equal(rhs_t, T(0.0))) {
+            if (std::is_constant_evaluated()) {
+                throw "Compile-time error: Division by zero";
+            } else {
+                throw std::runtime_error("Division by zero");
+            }
+        }
+        T inv = 1 / rhs_t;
+        for (int i = 0; i < N; i++) m_data[i] *= inv;
+        return *this;
+    }
+
     constexpr bool operator==(const Vector& rhs) const noexcept {
         for (int i = 0; i < N; i++) {
             if (is_not_equal(m_data[i], rhs[i])) return false;

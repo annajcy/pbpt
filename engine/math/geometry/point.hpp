@@ -154,6 +154,15 @@ public:
     constexpr Point mid(const Point<T, N>& rhs) const noexcept {
         return Point<T, N>((this->to_vector() + rhs.to_vector()) * 0.5);
     }
+
+    static constexpr Point mid(const std::vector<Point<T, N>>& points) noexcept {
+        Vector<T, N> mean = Vector<T, N>::zeros();
+        for (const auto& p : points) {
+            mean += p.to_vector();
+        }
+        mean /= points.size();
+        return Point<T, N>(mean);
+    }
 };
 
 using Pt1 = Point<Float, 1>;

@@ -9,7 +9,7 @@ class Distribution {
 public:
     virtual ~Distribution() = default;
     virtual Point<Float, N> sample(const Point<Float, N>& u) const = 0;
-    virtual Float pdf(const Point<Float, N>&) const = 0;
+    virtual Float pdf(const Point<Float, N>& p) const = 0;
 };
 
 class UniformDistribution1D : public Distribution<1> {
