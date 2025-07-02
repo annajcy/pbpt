@@ -1,7 +1,7 @@
 #include "math/geometry/point.hpp"
 #include "math/global/type_alias.hpp"
 #include "math/integration/distribution.hpp"
-#include "math/integration/intergrator.hpp"
+#include "math/integration/integrator.hpp"
 #include "math/integration/sampler.hpp"
 #include <iostream>
 #include <memory>

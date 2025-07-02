@@ -2,7 +2,7 @@
 #include "math/geometry/point.hpp"
 #include "math/global/type_alias.hpp"
 #include "math/integration/distribution.hpp"
-#include "math/integration/intergrator.hpp"
+#include "math/integration/integrator.hpp"
 #include "math/integration/sampler.hpp"
 #include <iostream>
 #include <memory>
@@ -52,6 +52,7 @@ TEST_F(SamplerTest, SamplerEvaluator_UniformSampler) {
     EXPECT_GE(uni_result.mean.x(), 0.0f);
     EXPECT_LE(uni_result.mean.x(), 1.0f);
     EXPECT_GE(uni_result.variance, 0.0f);
+    EXPECT_GE(uni_result.sample_variance, 0.0f);
     
     // 对于均匀分布，期望值应该接近0.5
     EXPECT_NEAR(uni_result.mean.x(), 0.5f, 0.2f);
@@ -69,6 +70,7 @@ TEST_F(SamplerTest, SamplerEvaluator_StratifiedSampler) {
     EXPECT_GE(strat_result.mean.x(), 0.0f);
     EXPECT_LE(strat_result.mean.x(), 1.0f);
     EXPECT_GE(strat_result.variance, 0.0f);
+    EXPECT_GE(strat_result.sample_variance, 0.0f);
     
     // 对于分层采样，期望值也应该接近0.5
     EXPECT_NEAR(strat_result.mean.x(), 0.5f, 0.2f);
@@ -92,6 +94,7 @@ TEST_F(SamplerTest, Point_Mid_UniformSampler) {
     EXPECT_GE(eval.mean.x(), 0.0f);
     EXPECT_LE(eval.mean.x(), 1.0f);
     EXPECT_GE(eval.variance, 0.0f);
+    EXPECT_GE(eval.sample_variance, 0.0f);
     
     // 均值的均值应该接近0.5
     EXPECT_NEAR(eval.mean.x(), 0.5f, 0.3f);
@@ -115,6 +118,7 @@ TEST_F(SamplerTest, Point_Mid_StratifiedSampler) {
     EXPECT_GE(eval_.mean.x(), 0.0f);
     EXPECT_LE(eval_.mean.x(), 1.0f);
     EXPECT_GE(eval_.variance, 0.0f);
+    EXPECT_GE(eval_.sample_variance, 0.0f);
     
     // 均值的均值应该接近0.5
     EXPECT_NEAR(eval_.mean.x(), 0.5f, 0.3f);
@@ -136,7 +140,9 @@ TEST_F(SamplerTest, Compare_Uniform_vs_Stratified_Variance) {
     
     // 两种采样器都应该产生合理的结果
     EXPECT_GE(uniform_result.variance, 0.0f);
+    EXPECT_GE(uniform_result.sample_variance, 0.0f);
     EXPECT_GE(stratified_result.variance, 0.0f);
+    EXPECT_GE(stratified_result.sample_variance, 0.0f);
     
     // 期望值都应该接近0.5
     EXPECT_NEAR(uniform_result.mean.x(), 0.5f, 0.1f);
@@ -144,7 +150,9 @@ TEST_F(SamplerTest, Compare_Uniform_vs_Stratified_Variance) {
     
     // 理论上分层采样的方差应该更小，但由于随机性，我们只检查它们都是有限值
     EXPECT_TRUE(std::isfinite(uniform_result.variance));
+    EXPECT_TRUE(std::isfinite(uniform_result.sample_variance));
     EXPECT_TRUE(std::isfinite(stratified_result.variance));
+    EXPECT_TRUE(std::isfinite(stratified_result.sample_variance));
 }
 
 // 测试StratifiedSampler的不同层数
@@ -162,6 +170,7 @@ TEST_F(SamplerTest, StratifiedSampler_DifferentLayers) {
         EXPECT_GE(result.mean.x(), 0.0f);
         EXPECT_LE(result.mean.x(), 1.0f);
         EXPECT_GE(result.variance, 0.0f);
+        EXPECT_GE(result.sample_variance, 0.0f);
         EXPECT_NEAR(result.mean.x(), 0.5f, 0.2f);
     }
 }
@@ -221,8 +230,10 @@ TEST_F(SamplerTest, FullWorkflow_Performance) {
     EXPECT_TRUE(std::isfinite(res));
     EXPECT_TRUE(std::isfinite(uni_result.mean.x()));
     EXPECT_TRUE(std::isfinite(uni_result.variance));
+    EXPECT_TRUE(std::isfinite(uni_result.sample_variance));
     EXPECT_TRUE(std::isfinite(strat_result.mean.x()));
     EXPECT_TRUE(std::isfinite(strat_result.variance));
+    EXPECT_TRUE(std::isfinite(strat_result.sample_variance));
     
     // 性能检查：应该在合理时间内完成
     EXPECT_LT(duration.count(), 1000); // 应该在1秒内完成
