@@ -59,7 +59,6 @@ public:
     }
 };
 
-
 using Ray3 = Ray<Float, 3>;
 using Ray2 = Ray<Float, 2>;
 

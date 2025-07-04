@@ -34,5 +34,13 @@ add_executable(test_sampler test_sampler.cpp)
 target_link_libraries(test_sampler PRIVATE pbpt_engine gtest_main)
 gtest_discover_tests(test_sampler)
 
+add_executable(test_spherical test_spherical.cpp)
+target_link_libraries(test_spherical PRIVATE pbpt_engine gtest_main)
+gtest_discover_tests(test_spherical)
+
+add_executable(test_quaternion test_quaternion.cpp)
+target_link_libraries(test_quaternion PRIVATE pbpt_engine gtest_main)
+gtest_discover_tests(test_quaternion)
+
 
 

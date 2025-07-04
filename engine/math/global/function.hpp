@@ -188,4 +188,57 @@ constexpr T tan(T x) {
     return sin(x) / cos(x);
 }
 
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr T atan2(T y, T x) {
+    if (std::is_constant_evaluated()) {
+        // 简化的constexpr实现
+        if (x > 0) {
+            return std::atan(y / x);
+        } else if (x < 0) {
+            if (y >= 0) {
+                return std::atan(y / x) + T(M_PI);
+            } else {
+                return std::atan(y / x) - T(M_PI);
+            }
+        } else { // x == 0
+            if (y > 0) {
+                return T(M_PI) / 2;
+            } else if (y < 0) {
+                return -T(M_PI) / 2;
+            } else {
+                return 0; // undefined, but return 0
+            }
+        }
+    } else {
+        return std::atan2(y, x);
+    }
+}
+
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr T acos(T x) {
+    if (std::is_constant_evaluated()) {
+        // 使用恒等式 acos(x) = π/2 - asin(x)
+        // 这里简化处理，实际应该实现asin
+        if (x >= -1 && x <= 1) {
+            return T(M_PI) / 2 - std::asin(x);
+        } else {
+            throw "acos: input out of range [-1, 1]";
+        }
+    } else {
+        return std::acos(x);
+    }
+}
+
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr T atan(T x) {
+    if (std::is_constant_evaluated()) {
+        return std::atan(x); // 简化处理
+    } else {
+        return std::atan(x);
+    }
+}
+
 } // namespace math
