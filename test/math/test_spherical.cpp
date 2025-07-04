@@ -77,13 +77,13 @@ TEST(SphericalPointTest, RoundTrip2D) {
 // --- 3D 球坐标测试 ---
 TEST(SphericalPointTest, Construction3D) {
     // 测试从角度和半径构造
-    Vector<Float, 2> angles(M_PI / 4, M_PI / 3);  // 方位角45度，极角60度
+    Vector<Float, 2> angles(M_PI / 3, M_PI / 4);  // 极角60度，方位角45度
     Float radius = 10.0f;
     SphericalPoint<Float, 3> sphere(angles, radius);
     
     EXPECT_FLOAT_EQ(sphere.radius(), 10.0f);
-    EXPECT_FLOAT_EQ(sphere.angle(0), M_PI / 4);
-    EXPECT_FLOAT_EQ(sphere.angle(1), M_PI / 3);
+    EXPECT_FLOAT_EQ(sphere.angle(0), M_PI / 3);  // 极角
+    EXPECT_FLOAT_EQ(sphere.angle(1), M_PI / 4);  // 方位角
 }
 
 TEST(SphericalPointTest, CartesianToSpherical3D) {
@@ -94,16 +94,16 @@ TEST(SphericalPointTest, CartesianToSpherical3D) {
     // 验证半径: sqrt(1^2 + 1^2 + (sqrt(2))^2) = 2
     EXPECT_TRUE(are_almost_equal(sphere.radius(), 2.0f));
     
-    // 验证方位角: atan2(1, 1) = π/4
+    // 验证极角: acos(sqrt(2)/2) = π/4
     EXPECT_TRUE(are_almost_equal(sphere.angle(0), M_PI / 4));
     
-    // 验证极角: acos(sqrt(2)/2) = π/4
+    // 验证方位角: atan2(1, 1) = π/4
     EXPECT_TRUE(are_almost_equal(sphere.angle(1), M_PI / 4));
 }
 
 TEST(SphericalPointTest, SphericalToCartesian3D) {
     // 测试球坐标转换为笛卡尔坐标
-    Vector<Float, 2> angles(0.0f, M_PI / 2);  // 方位角0度，极角90度
+    Vector<Float, 2> angles(M_PI / 2, 0.0f);  // 极角90度，方位角0度
     Float radius = 3.0f;
     SphericalPoint<Float, 3> sphere(angles, radius);
     
@@ -168,14 +168,14 @@ TEST(SphericalPointTest, AxisAlignedPoints) {
     Point<Float, 3> x_axis(5.0f, 0.0f, 0.0f);
     SphericalPoint<Float, 3> sphere_x(x_axis);
     EXPECT_TRUE(are_almost_equal(sphere_x.radius(), 5.0f));
-    EXPECT_TRUE(are_almost_equal(sphere_x.angle(0), 0.0f));  // 方位角0
-    EXPECT_TRUE(are_almost_equal(sphere_x.angle(1), M_PI / 2));  // 极角π/2
+    EXPECT_TRUE(are_almost_equal(sphere_x.angle(0), M_PI / 2));  // 极角π/2
+    EXPECT_TRUE(are_almost_equal(sphere_x.angle(1), 0.0f));  // 方位角0
     
     // Z轴正方向
     Point<Float, 3> z_axis(0.0f, 0.0f, 3.0f);
     SphericalPoint<Float, 3> sphere_z(z_axis);
     EXPECT_TRUE(are_almost_equal(sphere_z.radius(), 3.0f));
-    EXPECT_TRUE(are_almost_equal(sphere_z.angle(1), 0.0f));  // 极角0
+    EXPECT_TRUE(are_almost_equal(sphere_z.angle(0), 0.0f));  // 极角0
 }
 
 TEST(SphericalPointTest, NegativeCoordinates) {
@@ -196,21 +196,33 @@ TEST(SphericalPointTest, NegativeCoordinates) {
 
 // --- 访问器方法测试 ---
 TEST(SphericalPointTest, AccessorMethods) {
-    Vector<Float, 2> angles(1.0f, 2.0f);
+    // 测试3D情况
+    Vector<Float, 2> angles_3d(1.0f, 2.0f);  // 极角1.0，方位角2.0
     Float radius = 7.0f;
-    SphericalPoint<Float, 3> sphere(angles, radius);
+    SphericalPoint<Float, 3> sphere_3d(angles_3d, radius);
     
     // 测试radius()方法
-    EXPECT_FLOAT_EQ(sphere.radius(), 7.0f);
+    EXPECT_FLOAT_EQ(sphere_3d.radius(), 7.0f);
     
     // 测试angle(i)方法
-    EXPECT_FLOAT_EQ(sphere.angle(0), 1.0f);
-    EXPECT_FLOAT_EQ(sphere.angle(1), 2.0f);
+    EXPECT_FLOAT_EQ(sphere_3d.angle(0), 1.0f);  // 极角
+    EXPECT_FLOAT_EQ(sphere_3d.angle(1), 2.0f);  // 方位角
     
     // 测试angles()方法
-    const auto& all_angles = sphere.angles();
-    EXPECT_FLOAT_EQ(all_angles[0], 1.0f);
-    EXPECT_FLOAT_EQ(all_angles[1], 2.0f);
+    const auto& all_angles_3d = sphere_3d.angles();
+    EXPECT_FLOAT_EQ(all_angles_3d[0], 1.0f);
+    EXPECT_FLOAT_EQ(all_angles_3d[1], 2.0f);
+    
+    // 测试新的azimuth()方法
+    EXPECT_FLOAT_EQ(sphere_3d.azimuth(), 2.0f);  // 方位角应该是最后一个角度
+    
+    // 测试2D情况
+    Vector<Float, 1> angles_2d(M_PI / 3);  // 方位角60度
+    SphericalPoint<Float, 2> sphere_2d(angles_2d, 5.0f);
+    
+    EXPECT_FLOAT_EQ(sphere_2d.radius(), 5.0f);
+    EXPECT_FLOAT_EQ(sphere_2d.angle(0), M_PI / 3);
+    EXPECT_FLOAT_EQ(sphere_2d.azimuth(), M_PI / 3);  // 2D情况下方位角就是唯一的角度
 }
 
 // --- 精度和数值稳定性测试 ---
@@ -244,23 +256,24 @@ TEST(SphericalPointTest, TypeAliases) {
 
 // --- main.cpp 测试用例 ---
 TEST(SphericalPointTest, MainCppExample) {
-    // 测试 main.cpp 中第12行的代码
+    // 测试 main.cpp 中第12行的代码（更新为新的角度约定）
     // math::Sphere3 sp(math::Vec2{math::deg2rad(45.0), math::deg2rad(45.0)}, 1.0);
-    Vec2 angles{deg2rad(45.0), deg2rad(45.0)};
+    Vec2 angles{deg2rad(45.0), deg2rad(45.0)};  // 极角45°，方位角45°
     Sphere3 sp(angles, 1.0);
     
     // 验证构造参数
     EXPECT_FLOAT_EQ(sp.radius(), 1.0f);
-    EXPECT_TRUE(are_almost_equal(sp.angle(0), deg2rad(45.0)));
-    EXPECT_TRUE(are_almost_equal(sp.angle(1), deg2rad(45.0)));
+    EXPECT_TRUE(are_almost_equal(sp.angle(0), deg2rad(45.0)));  // 极角
+    EXPECT_TRUE(are_almost_equal(sp.angle(1), deg2rad(45.0)));  // 方位角
+    EXPECT_TRUE(are_almost_equal(sp.azimuth(), deg2rad(45.0)));  // 测试azimuth()方法
     
     // 测试转换为笛卡尔坐标
     Point<Float, 3> cartesian = sp.to_cartesian();
     
-    // 计算期望值
-    // x = r * sin(polar) * cos(azimuth) = 1 * sin(45°) * cos(45°) = sin(π/4) * cos(π/4) = 0.5
-    // y = r * sin(polar) * sin(azimuth) = 1 * sin(45°) * sin(45°) = sin(π/4) * sin(π/4) = 0.5  
-    // z = r * cos(polar) = 1 * cos(45°) = cos(π/4) = √2/2
+    // 计算期望值（新的角度约定：极角在前，方位角在后）
+    // x = r * sin(theta) * cos(phi) = 1 * sin(45°) * cos(45°) = sin(π/4) * cos(π/4) = 0.5
+    // y = r * sin(theta) * sin(phi) = 1 * sin(45°) * sin(45°) = sin(π/4) * sin(π/4) = 0.5  
+    // z = r * cos(theta) = 1 * cos(45°) = cos(π/4) = √2/2
     Float expected_x = sin(deg2rad(45.0)) * cos(deg2rad(45.0));
     Float expected_y = sin(deg2rad(45.0)) * sin(deg2rad(45.0));
     Float expected_z = cos(deg2rad(45.0));

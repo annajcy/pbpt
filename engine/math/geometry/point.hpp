@@ -170,4 +170,10 @@ using Pt2 = Point<Float, 2>;
 using Pt3 = Point<Float, 3>;
 using Pt4 = Point<Float, 4>;
 
+using Pt1i = Point<Int, 1>;
+using Pt2i = Point<Int, 2>;
+using Pt3i = Point<Int, 3>;
+using Pt4i = Point<Int, 4>;
+
+
 } // namespace math

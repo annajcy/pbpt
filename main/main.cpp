@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "math/geometry/homogeneous.hpp"
 #include "math/geometry/spherical.hpp"
 #include "math/geometry/vector.hpp"
 #include "math/global/function.hpp"

@@ -386,10 +386,12 @@ constexpr inline std::vector<Vector<T, 3>> get_orthogonal_bases(const Vector<T, 
     return {u, v, w};
 }
 
+using Vec1 = Vector<Float, 1>;
 using Vec2 = Vector<Float, 2>;
 using Vec3 = Vector<Float, 3>;
 using Vec4 = Vector<Float, 4>;
 
+using Vec1i = Vector<Int, 1>;
 using Vec2i = Vector<Int, 2>;
 using Vec3i = Vector<Int, 3>;
 using Vec4i = Vector<Int, 4>;
