@@ -8,7 +8,19 @@ set(BUILD_SHARED_LIBS OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-add_compile_options("-Wno-error" "-Wno-nontrivial-memcall" "-Wno-deprecated-non-prototype")
+# 检查编译器是否为 GCC (GNU) 或 Clang
+if(CMAKE_COMPILER_IS_GNU_CXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # 为 GCC 和 Clang 添加 -Wno-error 来禁用 "warnings as errors"
+    add_compile_options("-Wno-error" "-Wno-nontrivial-memcall" "-Wno-deprecated-non-prototype")
+    message(STATUS "Compiler is GCC/Clang, disabling warnings as errors with -Wno-error")
+
+# 检查编译器是否为 MSVC (Visual Studio)
+elseif(MSVC)
+    # 为 MSVC 添加 /WX- 来禁用 "warnings as errors"
+    add_compile_options("/WX-")
+    message(STATUS "Compiler is MSVC, disabling warnings as errors with /WX-")
+
+endif()
 
 include(FetchContent)
 
