@@ -11,7 +11,12 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # 检查编译器是否为 GCC (GNU) 或 Clang
 if(CMAKE_COMPILER_IS_GNU_CXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # 为 GCC 和 Clang 添加 -Wno-error 来禁用 "warnings as errors"
-    add_compile_options("-Wno-error" "-Wno-nontrivial-memcall" "-Wno-deprecated-non-prototype")
+    if (APPLE)
+       add_compile_options("-Wno-error" "-Wno-deprecated-non-prototype")
+    else()
+      add_compile_options("-Wno-error" "-Wno-nontrivial-memcall" "-Wno-deprecated-non-prototype")
+    endif()
+   
     message(STATUS "Compiler is GCC/Clang, disabling warnings as errors with -Wno-error")
 
 # 检查编译器是否为 MSVC (Visual Studio)
