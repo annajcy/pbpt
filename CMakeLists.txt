@@ -2,8 +2,13 @@ cmake_minimum_required(VERSION 3.28)
 project(pbpt LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
+set(BUILD_SHARED_LIBS OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+add_compile_options("-Wno-error" "-Wno-nontrivial-memcall" "-Wno-deprecated-non-prototype")
 
 include(FetchContent)
 
