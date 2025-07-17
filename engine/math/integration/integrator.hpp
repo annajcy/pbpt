@@ -1,107 +1,40 @@
 #pragma once
 
 #include "math/global/type_alias.hpp"
-#include "math/integration/distribution.hpp"
-#include "math/integration/sampler.hpp"
-#include <functional>
+#include "math/geometry/point.hpp"
+#include "math/integration/function.hpp"
 #include <memory>
+#include <vector>
+#include <functional>
 #include <stdexcept>
+#include <algorithm>
+#include <numeric>
 #include <cmath>
 
 namespace pbpt::math {
 
 /**
- * @brief Base class for numerical integrators
- * @tparam N Dimension of the integration domain
+ * @brief 统一的估计器接口
+ * 这是采样流程的第四层：估计器层
+ * 负责使用采样器提供的样本来估计积分值
+ * @tparam N 积分空间的维度
  */
-template<int N>
+template<typename T, int N>
+requires std::floating_point<T> && (N > 0)
 class Integrator {
+private:
+    std::shared_ptr<Function<T, N>> m_integrand;
+    std::shared_ptr<Domain<T, N>> m_domain;
+
 public:
+    Integrator(
+        const std::shared_ptr<Function<T, N>>& integrand, 
+        const std::shared_ptr<Domain<T, N>>& domain) : 
+        m_integrand(integrand), m_domain(domain){}
+
     virtual ~Integrator() = default;
-    
-    virtual Float estimate(
-        const std::function<Float(const Point<Float, N>&)>& f, 
-        const std::shared_ptr<Distribution<N>>& distribution,
-        const std::shared_ptr<Sampler<N>>& sampler,
-        int sample_count
-    ) const = 0;
+    virtual T estimate() = 0;
 };
 
-class MonteCarloIntegrator1D : public Integrator<1> {
-public:
-    Float estimate(
-        const std::function<Float(const Point<Float, 1>&)>& f, 
-        const std::shared_ptr<Distribution<1>>& distribution,
-        const std::shared_ptr<Sampler<1>>& sampler,
-        int sample_count
-    ) const override {
-        // Parameter validation
-        if (sample_count <= 0) {
-            throw std::invalid_argument("Sample count must be positive");
-        }
-        if (!f || !distribution || !sampler) {
-            throw std::invalid_argument("Function, distribution, and sampler must not be null");
-        }
-        
-        Float sum = 0.0;
-        auto samples = sampler->generate(sample_count);
-        
-        for (int i = 0; i < sample_count; ++i) {
-            auto u = samples[i];
-            const Point<Float, 1> p = distribution->sample(u);
-            Float pdf_value = distribution->pdf(p);
-            
-            if (std::abs(pdf_value) < 1e-10) {
-                continue;
-            }
-            
-            Float function_value = f(p);
-            if (std::isfinite(function_value)) {
-                sum += function_value / pdf_value;
-            }
-        }
-        
-        return sum / sample_count;
-    }
-};
 
-template<int N>
-class MonteCarloIntegratorND : public Integrator<N> {
-public:
-    Float estimate(
-        const std::function<Float(const Point<Float, N>&)>& f, 
-        const std::shared_ptr<Distribution<N>>& distribution,
-        const std::shared_ptr<Sampler<N>>& sampler,
-        int sample_count
-    ) const override {
-
-        if (sample_count <= 0) {
-            throw std::invalid_argument("Sample count must be positive");
-        }
-        if (!f || !distribution || !sampler) {
-            throw std::invalid_argument("Function, distribution, and sampler must not be null");
-        }
-        
-        Float sum = 0.0;
-        auto samples = sampler->generate(sample_count);
-        
-        for (int i = 0; i < sample_count; ++i) {
-            auto u = samples[i];
-            const Point<Float, N> p = distribution->sample(u);
-            Float pdf_value = distribution->pdf(p);
-            
-            if (std::abs(pdf_value) < 1e-10) {
-                continue; 
-            }
-            
-            Float function_value = f(p);
-            if (std::isfinite(function_value)) {
-                sum += function_value / pdf_value;
-            }
-        }
-        
-        return sum / sample_count;
-    }
-};
-
-}
+} // namespace pbpt::math

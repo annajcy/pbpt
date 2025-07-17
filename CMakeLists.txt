@@ -34,6 +34,11 @@ include(utils)
 add_subdirectory(engine)
 add_subdirectory(main)
 
+# 添加integration模块示例
+if(PBPT_BUILD_EXAMPLES)
+  add_subdirectory(engine/math/integration)
+endif()
+
 # 测试构建选项
 if(PBPT_BUILD_TESTS)
   enable_testing()
