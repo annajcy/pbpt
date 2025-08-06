@@ -2,7 +2,6 @@
 
 #include "math/global/type_alias.hpp"
 #include "math/geometry/point.hpp"
-#include <memory>
 #include <random>
 #include <utility>
 #include <vector>
