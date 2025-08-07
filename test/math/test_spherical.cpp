@@ -11,12 +11,12 @@
 namespace pbpt::math::testing {
 
 
-bool are_almost_equal(Float a, Float b, Float epsilon = EPSILON) {
+bool are_almost_equal(Float a, Float b, Float epsilon = epsilon_v<Float>) {
     return pbpt::math::abs(a - b) < epsilon;
 }
 
 template<typename PointType>
-bool points_almost_equal(const PointType& p1, const PointType& p2, Float epsilon = EPSILON) {
+bool points_almost_equal(const PointType& p1, const PointType& p2, Float epsilon = epsilon_v<Float>) {
     for (int i = 0; i < p1.dims(); ++i) {
         if (!are_almost_equal(p1[i], p2[i], epsilon)) {
             return false;

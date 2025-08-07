@@ -6,6 +6,7 @@
 #include "vector.hpp"
 #include "matrix.hpp"
 #include "point.hpp"
+#include "normal.hpp"
 
 /**
  * @file transform.hpp
@@ -111,8 +112,8 @@ public:
 
     static constexpr Transform look_at(const Pt3& eye, const Pt3& target, const Vec3& up) noexcept {
         const Vec3 f = (target - eye).normalized(); // Forward vector
-        const Vec3 s = f.cross(up).normalized();    // Right vector
-        const Vec3 u = s.cross(f);                  // Recalculated Up vector
+        const Vec3 s = cross(f, up).normalized();    // Right vector
+        const Vec3 u = cross(s, f);                  // Recalculated Up vector
 
         return Transform(Mat4(
             s.x(),  s.y(),  s.z(),  -s.dot(eye.to_vector()),

@@ -1,14 +1,5 @@
 #pragma once
 
-/**
- * @file type_alias.hpp
- * @brief Defines the primary floating-point type alias for the math library.
- * @details This header centralizes the floating-point precision for the entire
- * pbpt::math namespace. By changing the definition here (or by defining
- * FLOAT_64BIT in the build system), the precision of all calculations
- * (in vectors, points, rays, etc.) can be switched between single and
- * double precision.
- */
 
 namespace pbpt::math {
 
@@ -26,10 +17,13 @@ using Int = int;
 using UInt = unsigned int;
 #endif
 
-#ifdef FLOAT_64BIT
-#define EPSILON 1e-12
-#else
-#define EPSILON 1e-6
-#endif
+template <typename T>
+inline constexpr T epsilon_v = static_cast<T>(1e-5);  // float 默认
+
+template <>
+inline constexpr double epsilon_v<double> = 1e-10;    // double 特化
+
+template <typename T>
+inline constexpr T pi_v = static_cast<T>(3.14159265358979323846);
 
 } // namespace math

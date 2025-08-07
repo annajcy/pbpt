@@ -10,14 +10,14 @@ namespace pbpt::math::testing {
 
 using namespace pbpt::math;
 
-bool quat_almost_equal(const Quat& a, const Quat& b, Float epsilon = EPSILON) {
+bool quat_almost_equal(const Quat& a, const Quat& b, Float epsilon = epsilon_v<Float>) {
     return abs(a.w() - b.w()) < epsilon &&
            abs(a.x() - b.x()) < epsilon &&
            abs(a.y() - b.y()) < epsilon &&
            abs(a.z() - b.z()) < epsilon;
 }
 
-bool vec_almost_equal(const Vec3& a, const Vec3& b, Float epsilon = EPSILON) {
+bool vec_almost_equal(const Vec3& a, const Vec3& b, Float epsilon = epsilon_v<Float>) {
     return abs(a.x() - b.x()) < epsilon &&
            abs(a.y() - b.y()) < epsilon &&
            abs(a.z() - b.z()) < epsilon;
@@ -60,10 +60,10 @@ TEST(QuaternionTest, AxisAngleConstruction) {
     Float expected_w = std::cos(angle / 2);
     Float expected_z = std::sin(angle / 2);
     
-    EXPECT_TRUE(abs(q.w() - expected_w) < EPSILON);
-    EXPECT_TRUE(abs(q.x()) < EPSILON);
-    EXPECT_TRUE(abs(q.y()) < EPSILON);
-    EXPECT_TRUE(abs(q.z() - expected_z) < EPSILON);
+    EXPECT_TRUE(abs(q.w() - expected_w) < epsilon_v<Float>);
+    EXPECT_TRUE(abs(q.x()) < epsilon_v<Float>);
+    EXPECT_TRUE(abs(q.y()) < epsilon_v<Float>);
+    EXPECT_TRUE(abs(q.z() - expected_z) < epsilon_v<Float>);
 }
 
 TEST(QuaternionTest, VectorToVectorConstruction) {
@@ -130,8 +130,8 @@ TEST(QuaternionTest, ArrayAccess) {
 TEST(QuaternionTest, Length) {
     Quat q(1.0f, 2.0f, 3.0f, 4.0f);
     Float expected_length = std::sqrt(1 + 4 + 9 + 16);
-    EXPECT_TRUE(abs(q.length() - expected_length) < EPSILON);
-    EXPECT_TRUE(abs(q.length_squared() - 30.0f) < EPSILON);
+    EXPECT_TRUE(abs(q.length() - expected_length) < epsilon_v<Float>);
+    EXPECT_TRUE(abs(q.length_squared() - 30.0f) < epsilon_v<Float>);
 }
 
 TEST(QuaternionTest, Normalization) {
@@ -139,7 +139,7 @@ TEST(QuaternionTest, Normalization) {
     Quat normalized = q.normalized();
     
     EXPECT_TRUE(normalized.is_normalized());
-    EXPECT_TRUE(abs(normalized.length() - 1.0f) < EPSILON);
+    EXPECT_TRUE(abs(normalized.length() - 1.0f) < epsilon_v<Float>);
     
     // Test in-place normalization
     q.normalize();

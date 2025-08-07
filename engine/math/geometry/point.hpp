@@ -40,16 +40,26 @@ private:
 
 public:
 
-    constexpr static Point filled(T value) noexcept { return Point(Vector<T, N>::filled(value)); }
-    constexpr static Point zeros() noexcept { return Point(Vector<T, N>::zeros()); }
-    constexpr static Point ones() noexcept { return Point(Vector<T, N>::ones()); }
+    template<std::convertible_to<T> U>
+    constexpr static Point<T, N> filled(U value) noexcept { 
+        Point<T, N> point;
+        for (int i = 0; i < N; ++i) {
+            point.m_data[i] = static_cast<T>(value);
+        }
+        return point;
+    }
 
-    constexpr Point() noexcept : m_data(Vector<T, N>::zeros()) {}
-    constexpr explicit Point(const Vector<T, N>& vec) noexcept : m_data(vec) {}
+    constexpr static Point<T, N> zeros() noexcept { return Point(Vector<T, N>::zeros()); }
+    constexpr static Point<T, N> ones() noexcept { return Point(Vector<T, N>::ones()); }
+
+    constexpr Point<T, N>() noexcept : m_data(Vector<T, N>::zeros()) {}
+
+    template<std::convertible_to<T> U>
+    constexpr explicit Point<T, N>(const Vector<U, N>& vec) noexcept : m_data(vec) {}
 
     template<std::convertible_to<T>... Args>
     requires(sizeof...(Args) == N)
-    constexpr explicit Point(Args&&... args) noexcept : m_data(std::forward<Args>(args)...) {}
+    constexpr explicit Point<T, N>(Args&&... args) noexcept : m_data(std::forward<Args>(args)...) {}
 
     constexpr T& x() noexcept requires(N > 0) { return m_data.x(); }
     constexpr T& y() noexcept requires(N > 1) { return m_data.y(); }
@@ -68,12 +78,12 @@ public:
 
     constexpr Vector<T, N> to_vector() const noexcept { return m_data; }
 
-    constexpr Point& operator+=(const Vector<T, N>& rhs) noexcept {
+    constexpr Point<T, N>& operator+=(const Vector<T, N>& rhs) noexcept {
         m_data += rhs;
         return *this;
     }
 
-    constexpr bool operator<(const Point& rhs) const {
+    constexpr bool operator<(const Point<T, N>& rhs) const {
         for (int i = 0; i < N; i ++) {
             if (is_greater_equal(m_data[i], rhs.m_data[i]))
                 return false;
@@ -81,7 +91,7 @@ public:
         return true;
     }
 
-    constexpr bool operator<=(const Point& rhs) const {
+    constexpr bool operator<=(const Point<T, N>& rhs) const {
         for (int i = 0; i < N; i ++) {
             if (is_greater(m_data[i], rhs.m_data[i]))
                 return false;
@@ -89,7 +99,7 @@ public:
         return true;
     }
 
-    constexpr bool operator>(const Point& rhs) const {
+    constexpr bool operator>(const Point<T, N>& rhs) const {
         for (int i = 0; i < N; i ++) {
             if (is_less_equal(m_data[i], rhs.m_data[i]))
                 return false;
@@ -97,7 +107,7 @@ public:
         return true;
     }
 
-    constexpr bool operator>=(const Point& rhs) const {
+    constexpr bool operator>=(const Point<T, N>& rhs) const {
         for (int i = 0; i < N; i ++) {
             if (is_less(m_data[i], rhs.m_data[i]))
                 return false;
@@ -105,7 +115,7 @@ public:
         return true;
     }
 
-    constexpr bool operator==(const Point& rhs) const {
+    constexpr bool operator==(const Point<T, N>& rhs) const {
         for (int i = 0; i < N; i ++) {
             if (is_not_equal(m_data[i], rhs.m_data[i]))
                 return false;
@@ -113,7 +123,7 @@ public:
         return true;
     }
 
-    constexpr bool operator!=(const Point& rhs) const {
+    constexpr bool operator!=(const Point<T, N>& rhs) const {
         for (int i = 0; i < N; i ++) {
             if (is_equal(m_data[i], rhs.m_data[i]))
                 return false;
@@ -121,31 +131,22 @@ public:
         return true;
     }
 
-    constexpr Point& operator-=(const Vector<T, N>& rhs) noexcept {
+    constexpr Point<T, N>& operator-=(const Vector<T, N>& rhs) noexcept {
         m_data -= rhs;
         return *this;
     }
-    
-    friend std::ostream& operator<<(std::ostream& os, const Point& point) {
-        os << "Point" << N << "(";
-        for (int i = 0; i < N; ++i) {
-            os << point[i] << (i == N - 1 ? "" : ", ");
-        }
-        os << ")";
-        return os;
-    }
 
-    constexpr Vector<T, N> operator-(const Point& rhs) const noexcept {
+    constexpr Vector<T, N> operator-(const Point<T, N>& rhs) const noexcept {
         return this->to_vector() - rhs.to_vector();
     }
 
-    constexpr Point operator+(const Vector<T, N>& rhs) const noexcept {
+    constexpr Point<T, N> operator+(const Vector<T, N>& rhs) const noexcept {
         auto result = *this;
         result += rhs;
         return result;
     }
 
-    constexpr Point operator-(const Vector<T, N>& rhs) const noexcept {
+    constexpr Point<T, N> operator-(const Vector<T, N>& rhs) const noexcept {
         auto result = *this;
         result -= rhs;
         return result;
@@ -160,8 +161,17 @@ public:
         for (const auto& p : points) {
             mean += p.to_vector();
         }
-        mean /= points.size();
-        return Point<T, N>(mean);
+        auto res = mean * (1.0 / points.size());
+        return Point<T, N>(res);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Point<T, N>& point) {
+        os << "Point" << N << "(";
+        for (int i = 0; i < N; ++i) {
+            os << point[i] << (i == N - 1 ? "" : ", ");
+        }
+        os << ")";
+        return os;
     }
 };
 

@@ -3,7 +3,7 @@
 #include "../global/type_alias.hpp"
 #include "../global/function.hpp"
 
-#include "math/geometry/vector.hpp"
+#include "vector.hpp"
 #include "point.hpp"
 
 namespace pbpt::math {

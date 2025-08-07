@@ -70,23 +70,23 @@ public:
         
         T dot_product = from_norm.dot(to_norm);
         
-        if (dot_product >= T(1) - EPSILON) {
+        if (dot_product >= T(1) - epsilon_v<T>) {
             // Vectors are the same
             *this = identity();
             return;
         }
         
-        if (dot_product <= T(-1) + EPSILON) {
+        if (dot_product <= T(-1) + epsilon_v<T>) {
             // Vectors are opposite - find any perpendicular axis
-            Vector<T, 3> axis = from_norm.cross(Vector<T, 3>(1, 0, 0));
-            if (axis.length_squared() < EPSILON) {
-                axis = from_norm.cross(Vector<T, 3>(0, 1, 0));
+            Vector<T, 3> axis = cross(from_norm, Vector<T, 3>(1, 0, 0));
+            if (axis.length_squared() < epsilon_v<T>) {
+                axis = cross(from_norm, Vector<T, 3>(0, 1, 0));
             }
             *this = Quaternion(axis.normalized(), T(M_PI));
             return;
         }
         
-        Vector<T, 3> cross_product = from_norm.cross(to_norm);
+        Vector<T, 3> cross_product = cross(from_norm, to_norm);
         m_w = T(1) + dot_product;
         m_x = cross_product.x();
         m_y = cross_product.y();
@@ -223,12 +223,12 @@ public:
     }
     
     /// Check if quaternion is normalized
-    constexpr bool is_normalized(T epsilon = EPSILON) const noexcept {
+    constexpr bool is_normalized(T epsilon = epsilon_v<T>) const noexcept {
         return abs(length_squared() - T(1)) < epsilon;
     }
     
     /// Check if quaternion is identity
-    constexpr bool is_identity(T epsilon = EPSILON) const noexcept {
+    constexpr bool is_identity(T epsilon = epsilon_v<T>) const noexcept {
         return abs(m_w - T(1)) < epsilon && 
                abs(m_x) < epsilon && 
                abs(m_y) < epsilon && 
@@ -240,7 +240,7 @@ public:
     /// Normalize quaternion
     constexpr Quaternion normalized() const noexcept {
         T len = length();
-        if (len < EPSILON) {
+        if (len < epsilon_v<T>) {
             return identity();
         }
         T inv_len = T(1) / len;
@@ -261,7 +261,7 @@ public:
     /// Inverse quaternion
     constexpr Quaternion inverse() const noexcept {
         T len_sq = length_squared();
-        if (len_sq < EPSILON) {
+        if (len_sq < epsilon_v<T>) {
             return identity();
         }
         T inv_len_sq = T(1) / len_sq;
@@ -279,8 +279,8 @@ public:
     constexpr Vector<T, 3> rotate(const Vector<T, 3>& v) const noexcept {
         // Optimized version: v' = v + 2 * cross(q.xyz, cross(q.xyz, v) + q.w * v)
         Vector<T, 3> qvec(m_x, m_y, m_z);
-        Vector<T, 3> cross1 = qvec.cross(v);
-        Vector<T, 3> cross2 = qvec.cross(cross1 + m_w * v);
+        Vector<T, 3> cross1 = cross(qvec, v);
+        Vector<T, 3> cross2 = cross(qvec, cross1 + m_w * v);
         return v + T(2) * cross2;
     }
     
@@ -289,7 +289,7 @@ public:
         Quaternion q = normalized();
         
         // Handle identity quaternion
-        if (abs(q.m_w) >= T(1) - EPSILON) {
+        if (abs(q.m_w) >= T(1) - epsilon_v<T>) {
             return {Vector<T, 3>(0, 0, 1), T(0)};
         }
         
@@ -297,7 +297,7 @@ public:
         T sin_half_angle = std::sqrt(T(1) - q.m_w * q.m_w);
         
         Vector<T, 3> axis;
-        if (sin_half_angle < EPSILON) {
+        if (sin_half_angle < epsilon_v<T>) {
             axis = Vector<T, 3>(1, 0, 0);
         } else {
             T inv_sin = T(1) / sin_half_angle;
@@ -368,7 +368,7 @@ public:
     
     /// Scalar division
     constexpr Quaternion operator/(T scalar) const {
-        if (abs(scalar) < EPSILON) {
+        if (abs(scalar) < epsilon_v<T>) {
             if (std::is_constant_evaluated()) {
                 throw "Compile-time error: Division by zero";
             } else {

@@ -34,6 +34,13 @@ int main() {
 
     math::Transform transform = math::Transform::translate(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Transform Matrix: " << transform.mat() << std::endl;
-    
+
+    math::Homo3 homo3(math::Vec3{1.0, 2.0, 3.0});
+    std::cout << "Homo3: " << homo3 << std::endl;
+
+    math::Vec3 vec(1.0, 2.0, 3.0);
+
+    auto vec_d = vec.type_cast<double>();
+
     return 0;
 }

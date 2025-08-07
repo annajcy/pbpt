@@ -3,34 +3,17 @@
 #include "../global/type_alias.hpp"
 #include "../global/function.hpp"  
 #include "../global/operator.hpp"
+#include "../global/utils.hpp"
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <concepts>
-#include <stdexcept>
 #include <type_traits>
 #include <iostream>
-#include <functional>
-#include <vector>
-
-/**
- * @file vector.hpp
- * @brief Defines a generic, N-dimensional, constexpr-friendly vector class.
- */
 
 namespace pbpt::math {
 
-/**
- * @class Vector
- * @brief A template class for N-dimensional mathematical vectors.
- * @details This class provides a generic, fixed-size vector implementation suitable for
- * various mathematical and geometric calculations. It is designed to be highly
- * performant and flexible, with extensive use of `constexpr` for compile-time
- * computations. The vector's underlying type is constrained to floating-point
- * types, and its dimension must be positive.
- * @tparam T The underlying floating-point type of the vector's components (e.g., float, double).
- * @tparam N The number of dimensions of the vector.
- */
 template<typename T, int N>
 requires (N > 0) && (std::is_floating_point_v<T> || std::is_integral_v<T>)
 class Vector {
@@ -38,24 +21,40 @@ private:
     std::array<T, N> m_data{};
 
 public:
-  
-    static constexpr Vector filled(T value) noexcept {
-        Vector vec;
-        vec.m_data.fill(value);
+
+    template<std::convertible_to<T> U>
+    static constexpr Vector<T, N> filled(U value) noexcept {
+        Vector<T, N> vec;
+        vec.m_data.fill(static_cast<T>(value));
         return vec;
     }
 
-    static constexpr Vector zeros() noexcept { return filled(0.0); }
-    static constexpr Vector ones() noexcept { return filled(1.0); }
+    static constexpr Vector<T, N> zeros() noexcept { return filled(0.0); }
+    static constexpr Vector<T, N> ones() noexcept { return filled(1.0); }
 
-    constexpr Vector() noexcept = default;
+    static constexpr Vector<T, N> from_array(const std::array<T, N>& arr) {
+        Vector<T, N> result;
+        for (int i = 0; i < N; ++i) result[i] = arr[i];
+        return result;
+    }
+
+    constexpr std::array<T, N> to_array() const {
+        return m_data;
+    }
+
+    constexpr Vector<T, N>() noexcept = default;
 
     template<std::convertible_to<T>... Args>
     requires(sizeof...(Args) == N)
-    constexpr explicit Vector(Args&&... args) noexcept  {
+    explicit constexpr Vector<T, N>(Args&&... args) noexcept  {
         m_data = {static_cast<T>(args)...};
     }
 
+    template<std::convertible_to<T> U, int M>
+    explicit constexpr Vector<T, N>(const Vector<U, M>& other) noexcept {
+        auto casted = other.template cast<T, N>();
+        m_data = casted.m_data;
+    }
     
     constexpr T& x() noexcept requires(N > 0) { return m_data[0]; }
     constexpr T& y() noexcept requires(N > 1) { return m_data[1]; }
@@ -70,91 +69,69 @@ public:
     constexpr int dims() const noexcept { return N; }
 
     constexpr const T& operator[](int index) const {
-        if (index < 0 || index >= N) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Index out of range";
-            } else {
-                throw std::out_of_range("Index out of range");
-            }
-        }
+        assert_if([&index]() { return index < 0 || index >= N; }, "Index out of range");
         return m_data[index];
     }
 
     constexpr T& operator[](int index) {
-        if (index < 0 || index >= N) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Index out of range";
-            } else {
-                throw std::runtime_error("Index out of range");
-            }
-        }
+        assert_if( [&index]() { return index < 0 || index >= N; }, "Index out of range");
         return m_data[index];
     }
 
     constexpr const T& at(int index) const {
-        if (index < 0 || index >= N) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Index out of range";
-            } else {
-                throw std::out_of_range("Index out of range");
-            }
-        }
+        assert_if([&index]() { return index < 0 || index >= N; }, "Index out of range");
         return m_data[index];
     }
 
-    constexpr Vector operator-() const noexcept {
-        Vector result{};
-        for (int i = 0; i < N; i++) result[i] = -m_data[i];
+    constexpr Vector<T, N> operator-() const noexcept {
+        Vector<T, N> result{};
+        for (int i = 0; i < N; i++) result[i] = -(*this)[i];
         return result;
     }
 
-    constexpr Vector& operator+=(const Vector& rhs) noexcept {
-        for (int i = 0; i < N; i++) m_data[i] += rhs[i];
+    constexpr Vector<T, N>& operator+=(const Vector<T, N>& rhs) noexcept {
+        for (int i = 0; i < N; i++) (*this)[i] += rhs[i];
         return *this;
     }
 
-    constexpr Vector& operator-=(const Vector& rhs) noexcept {
-        for (int i = 0; i < N; i++) m_data[i] -= rhs[i];
+    constexpr Vector<T, N>& operator-=(const Vector<T, N>& rhs) noexcept {
+        for (int i = 0; i < N; i++) (*this)[i] -= rhs[i];
         return *this;
     }
 
-    constexpr Vector& operator*=(const T& rhs) noexcept {
-        for (int i = 0; i < N; i++) m_data[i] *= rhs;
+    constexpr Vector<T, N>& operator*=(const T& rhs) noexcept {
+        for (int i = 0; i < N; i++) (*this)[i] *= rhs;
         return *this;
     }
 
-    template <typename U>
-    requires std::convertible_to<U, T>
-    constexpr Vector& operator/=(const U& rhs) {
-        T rhs_t = static_cast<T>(rhs);
-        if (is_equal(rhs_t, T(0.0))) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Division by zero";
-            } else {
-                throw std::runtime_error("Division by zero");
-            }
+    constexpr Vector<T, N>& operator*=(const Vector<T, N>& rhs) noexcept {
+        for (int i = 0; i < N; i++) (*this)[i] *= rhs[i];
+        return *this;
+    }
+
+    constexpr Vector<T, N>& operator/=(const Vector<T, N>& rhs) {
+        for (int i = 0; i < N; i++) {
+            assert_if([&rhs, i]() { return is_equal(rhs[i], 0.0); }, 
+            "Division by zero in vector division");
+            (*this)[i] /= rhs[i];
         }
-        T inv = 1 / rhs_t;
-        for (int i = 0; i < N; i++) m_data[i] *= inv;
         return *this;
     }
 
-    constexpr bool operator==(const Vector& rhs) const noexcept {
+    template<typename U>
+    constexpr bool operator==(const Vector<U, N>& rhs) const noexcept {
         for (int i = 0; i < N; i++) {
             if (is_not_equal(m_data[i], rhs[i])) return false;
         }
         return true;
     }
 
-    constexpr bool operator!=(const Vector& rhs) const noexcept {
+    template<typename U>
+    constexpr bool operator!=(const Vector<U, N>& rhs) const noexcept {
         for (int i = 0; i < N; i++) {
             if (is_equal(m_data[i], rhs[i])) return false;
         }
         return true;
-    }
-
-    constexpr bool is_normalized() const {
-        return is_equal(length(), 1.0);
     }
 
     constexpr bool is_zero() const {
@@ -165,8 +142,9 @@ public:
     }
 
     constexpr bool has_nan() const {
-        for (int i = 0; i < N; i++) {
-            if (std::isnan(m_data[i])) return true;
+        if constexpr (std::is_floating_point_v<T>) {
+            for (int i = 0; i < N; ++i)
+                if (std::isnan(m_data[i])) return true;
         }
         return false;
     }
@@ -178,97 +156,193 @@ public:
         return result;
     }
 
-    constexpr T length() const {
-        return pbpt::math::sqrt(length_squared());
+    constexpr auto length() const {
+        return std::sqrt(static_cast<promote_scalar_t<T>>(length_squared()));
     }
 
-    constexpr Vector normalized() const {
-        Vector result = *this;
-        T len = length();
-        if (len == 0) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Cannot normalize a zero vector";
-            } else {
-                throw std::runtime_error("Cannot normalize a zero vector");
-            }
-        }
-        return result * (1.0 / len);
-    }
-
-    constexpr Vector& normalize() {
-        T len = length();
-        if (len == 0) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Cannot normalize a zero vector";
-            } else {
-                throw std::runtime_error("Cannot normalize a zero vector");
-            }
-        }
-        return *this *= (1.0 / len);
-    }
-    
-    constexpr T dot(const Vector& rhs) const noexcept {
-        T result = 0;
-        for (int i = 0; i < N; i++) result += m_data[i] * rhs.m_data[i];
+    constexpr auto normalized() const {
+        using ResultType = promote_scalar_t<T>;
+        Vector<ResultType, N> result = *this;
+        auto len = length();
+        assert_if([&len]() { return is_equal(len, 0.0); }, "Cannot normalize a zero vector");
+        for (int i = 0; i < N; i++) result[i] /= static_cast<ResultType>(len);
         return result;
     }
 
-    constexpr auto cross(const Vector& rhs) const noexcept requires(N == 3) {
-        return Vector<T, 3>(
-            y() * rhs.z() - z() * rhs.y(),
-            z() * rhs.x() - x() * rhs.z(),
-            x() * rhs.y() - y() * rhs.x()
-        );
+    constexpr bool is_normalized() const {
+        return is_equal(length(), T(1.0));
+    }
+    
+    template<std::convertible_to<T> U>
+    constexpr T dot(const Vector<U, N>& rhs) const noexcept {
+        T result = 0;
+        for (int i = 0; i < N; i++) result += (*this)[i] * static_cast<T>(rhs[i]);
+        return result;
     }
 
     constexpr T product() const noexcept {
         T result = 1;
-        for (int i = 0; i < N; i++) result *= m_data[i];
+        for (int i = 0; i < N; i++) result *= (*this)[i];
         return result;
     }
 
-    void apply(const std::function<void(T&, int)>& func) {
-        for (int i = 0; i < N; ++i) func(m_data[i], i);
+    template <std::invocable<T&, int> F>
+    constexpr void apply(F&& f) {
+        for (int i = 0; i < N; ++i) f((*this)[i], i);
     }
 
-    constexpr Vector operator+(const Vector<T, N>& rhs) const noexcept {
-        auto result = *this;
-        result += rhs;
+    template<typename U>
+    constexpr auto operator+(const Vector<U, N>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            result[i] = static_cast<ResultType>((*this)[i]) + static_cast<ResultType>(rhs[i]);
+        }
         return result;
     }
 
-    constexpr Vector operator-(const Vector<T, N>& rhs) const noexcept {
-        auto result = *this;
-        result -= rhs;
+    template<typename U>
+    constexpr auto operator-(const Vector<U, N>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            result[i] = static_cast<ResultType>((*this)[i]) - static_cast<ResultType>(rhs[i]);
+        }
         return result;
     }
 
-    template<typename  U>
-    requires std::convertible_to<U, T>
-    constexpr Vector operator*(U value) const noexcept {
-        auto result = *this;
-        result *= static_cast<T>(value);
+    template<typename U>
+    requires std::is_arithmetic_v<U>
+    friend constexpr auto operator*(U value, const Vector<T, N>& rhs) noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            result[i] = static_cast<ResultType>(value) * static_cast<ResultType>(rhs.m_data[i]);
+        }
         return result;
     }
 
-    template<typename  U>
-    requires std::convertible_to<U, T>
-    friend constexpr Vector operator*(U lhs, const Vector<T, N>& rhs) noexcept {
-        return rhs * static_cast<T>(lhs);
+    template<typename U>
+    constexpr auto operator*(U value) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            result[i] = static_cast<ResultType>(this->m_data[i]) * static_cast<ResultType>(value);
+        }
+        return result;
     }
 
-    constexpr Vector operator*(const Vector<T, N>& rhs) const noexcept {
+    template<typename U>
+    constexpr auto operator/(U value) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            assert_if([&value]() { return is_equal(value, 0.0); }, "Division by zero in vector division");
+            result[i] = static_cast<ResultType>(this->m_data[i]) / static_cast<ResultType>(value);
+        }
+        return result;
+    }
+
+    template<typename U>
+    constexpr auto operator*(const Vector<U, N>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            result[i] = static_cast<ResultType>((*this)[i]) * static_cast<ResultType>(rhs[i]);
+        }
+        return result;
+    }
+
+    template<typename U>
+    constexpr auto operator/(const Vector<U, N>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            result[i] = static_cast<ResultType>((*this)[i]) / static_cast<ResultType>(rhs[i]);
+        }
+        return result;
+    }
+
+    constexpr auto inv() const {
+        using ResultType = promote_scalar_t<T>;
+        Vector<ResultType, N> result{};
+        for (int i = 0; i < N; i++) {
+            assert_if([&]() { return is_equal((*this)[i], 0.0); }, "Cannot invert zero component");
+            result[i] = static_cast<ResultType>(1) / (*this)[i];
+        }
+        return result;
+    }
+
+    constexpr auto abs() const noexcept { 
         Vector<T, N> result{};
-        for (int i = 0; i < N; i++) result[i] = (*this)[i] * rhs[i];
+        for (int i = 0; i < N; i++) {
+            result[i] = pbpt::math::abs((*this)[i]);
+        }
         return result;
     }
 
-    template <typename U>
-    requires std::convertible_to<U, T>
-    constexpr Vector operator/(U rhs) const {
-        Vector result = *this;
-        result /= static_cast<T>(rhs);
+    int max_dim() const {
+        int max_i = 0;
+        for (int i = 1; i < N; ++i)
+            if (is_greater((*this)[i], (*this)[max_i])) max_i = i;
+        return max_i;
+    }
+
+    T max() const {
+        T max_v = (*this)[0];
+        for (int i = 1; i < N; ++i)
+            if (is_greater((*this)[i], max_v)) max_v = (*this)[i];
+        return max_v;
+    }
+
+    int min_dim() const {
+        int min_i = 0;
+        for (int i = 1; i < N; ++i)
+            if (is_less((*this)[i], (*this)[min_i])) min_i = i;
+        return min_i;
+    }
+
+    T min() const {
+        T min_v = (*this)[0];
+        for (int i = 1; i < N; ++i)
+            if (is_less((*this)[i], min_v)) min_v = (*this)[i];
+        return min_v;
+    }
+
+    template<typename ...Args>
+    requires (sizeof...(Args) == N)
+    constexpr Vector<T, N> permuted(Args ...args) const {
+        Vector<T, N> result;
+        int i = 0;
+        ((result[i++] = (*this)[args]), ...);
         return result;
+    }
+
+    template<typename ...Args>
+    requires (sizeof...(Args) == N)
+    constexpr Vector<T, N>& permute(Args ...args) {
+        *this = permuted(args...);
+        return *this;
+    }
+
+    template<typename U, int M>
+    requires (M > 0) && (std::is_convertible_v<T, U>)
+    constexpr Vector<U, M> cast() const {
+        Vector<U, M> result;
+        for (int i = 0; i < std::min(N, M); i++) result[i] = static_cast<U>((*this)[i]);
+        return result;
+    }
+
+    template<typename U>
+    requires (std::is_convertible_v<T, U>)
+    constexpr Vector<U, N> type_cast() const {
+        return cast<U, N>();
+    }
+
+    template<int M>
+    requires (M > 0)
+    constexpr Vector<T, M> dim_cast() const {
+        return cast<T, M>();
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Vector& vec) {
@@ -279,111 +353,52 @@ public:
         os << ')';
         return os;
     }
-
-    constexpr int max_dim() const {
-        return std::max_element(m_data.begin(), m_data.end()) - m_data.begin();
-    }
-
-    constexpr T max() const {
-        return *std::max_element(m_data.begin(), m_data.end());
-    }
-
-    constexpr int min_dim() const {
-        return std::min_element(m_data.begin(), m_data.end()) - m_data.begin();
-    }
-
-    constexpr T min() const {
-        return *std::min_element(m_data.begin(), m_data.end());
-    }
-
-    template<typename ...Args>
-    requires (sizeof...(Args) == N)
-    constexpr Vector permuted(Args ...args) const {
-        Vector result;
-        int i = 0;
-        ((result[i++] = (*this)[args]), ...);
-        return result;
-    }
-
-    template<typename ...Args>
-    requires (sizeof...(Args) == N)
-    constexpr Vector& permute(Args ...args) {
-        *this = permuted(args...);
-        return *this;
-    }
-
-    template<typename U, int M>
-    requires std::convertible_to<U, T> && (M > 0)
-    constexpr Vector<U, M> cast() const {
-        Vector<U, M> result;
-        for (int i = 0; i < std::min(N, M); i++) result[i] = static_cast<U>(m_data[i]);
-        return result;
-    }
-
-    template<typename U>
-    requires std::convertible_to<U, T>
-    constexpr Vector<U, N> type_cast() const {
-        return cast<U, N>();
-    }
-
-    template<int M>
-    requires (M > 0)
-    constexpr Vector<T, M> dim_cast() const {
-        return cast<T, M>();
-    }
-    
 };
 
-
-template<typename T, int N>
-constexpr inline std::vector<Vector<T, N>> get_orthogonal_bases(const Vector<T, N>& base) {
-     if constexpr (base.is_zero()) {
-        if (std::is_constant_evaluated()) {
-            throw "Base vector is zero, orthogonal bases are undefined.";
-        } else {
-            throw std::invalid_argument("Base vector is zero, orthogonal bases are undefined.");
-        }
-    }
-    //TODO
-    return {};
+template<typename T>
+constexpr Vector<T, 3> cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) noexcept {
+    return Vector<T, 3>(
+        std::fma(lhs.y(), rhs.z(), -lhs.z() * rhs.y()),
+        std::fma(lhs.z(), rhs.x(), -lhs.x() * rhs.z()),
+        std::fma(lhs.x(), rhs.y(), -lhs.y() * rhs.x())
+    );
 }
 
 template<typename T>
-constexpr inline std::vector<Vector<T, 2>> get_orthogonal_bases(const Vector<T, 2>& base) {
-    if (base.is_zero()) {
-        if (std::is_constant_evaluated()) {
-            throw "Base vector is zero, orthogonal bases are undefined.";
-        } else {
-            throw std::invalid_argument("Base vector is zero, orthogonal bases are undefined.");
-        }
-    }
-    Vector<T, 2> u, v;
-    u = base.normalized();
-    v = Vector<T, 2>(-u.y(), u.x());
-    return {u, v};
-}
-
-template<typename T>
-constexpr inline std::vector<Vector<T, 3>> get_orthogonal_bases(const Vector<T, 3>& base) {
-    if (base.is_zero()) {
-        if (std::is_constant_evaluated()) {
-            throw "Base vector is zero, orthogonal bases are undefined.";
-        } else {
-            throw std::invalid_argument("Base vector is zero, orthogonal bases are undefined.");
-        }
-    }
-    
-    Vector<T, 3> u, v, w;
-    u = base.normalized();
-    if (std::abs(u.x()) > std::abs(u.y())) {
-        T inv_len = T(1) / std::sqrt(u.x() * u.x() + u.z() * u.z());
-        v = Vector<T, 3>(-u.z() * inv_len, T(0), u.x() * inv_len);
+constexpr promote_scalar_t<T> angle_between(const Vector<T, 3>& v1, const Vector<T, 3>& v2)  { 
+    assert_if([&v1, &v2]() { return v1.is_zero() || v2.is_zero(); }, 
+    "Cannot compute angle between zero vectors");
+    assert_if([&v1, &v2]() { return !v1.is_normalized() || !v2.is_normalized(); },
+    "Vectors must be normalized to compute angle between them");
+    if (v1.dot(v2) < 0) {
+        return pi_v<T> - 2 * safe_asin((v1 + v2).length() / 2);
     } else {
-        T inv_len = T(1) / std::sqrt(u.y() * u.y() + u.z() * u.z());
-        v = Vector<T, 3>(T(0), u.z() * inv_len, -u.y() * inv_len);
+        return 2 * safe_asin((v1 - v2).length() / 2);
     }
-    w = u.cross(v);
-    return {u, v, w};
+}
+
+template <std::floating_point T>
+constexpr std::pair<Vector<T, 3>, Vector<T, 3>> coordinate_system(const Vector<T, 3>& v1) {
+    assert_if([&v1]() { return !v1.is_normalized(); }, 
+    "Input vector to coordinate_system_stable() must be normalized");
+
+    const T sign = std::copysign(T(1), v1.z());
+    const T a = T(-1) / (sign + v1.z());
+    const T b = v1.x() * v1.y() * a;
+
+    Vector<T, 3> v2(
+        T(1) + sign * v1.x() * v1.x() * a,
+        sign * b,
+        -sign * v1.x()
+    );
+
+    Vector<T, 3> v3(
+        b,
+        sign + v1.y() * v1.y() * a,
+        -v1.y()
+    );
+
+    return {v2.normalized(), v3.normalized()};
 }
 
 using Vec1 = Vector<Float, 1>;
@@ -395,17 +410,5 @@ using Vec1i = Vector<Int, 1>;
 using Vec2i = Vector<Int, 2>;
 using Vec3i = Vector<Int, 3>;
 using Vec4i = Vector<Int, 4>;
-
-template <typename T, int N>
-requires (N > 0) && (std::is_floating_point_v<T>)
-class Normal : public Vector<T, N> {
-public:
-    using Vector<T, N>::Vector;
-    constexpr Normal(const Vector<T, N>& vec) : Vector<T, N>(vec.normalized()) {}
-};
-
-using Normal2 = Normal<Float, 2>;
-using Normal3 = Normal<Float, 3>;
-using Normal4 = Normal<Float, 4>;
 
 } // namespace math
