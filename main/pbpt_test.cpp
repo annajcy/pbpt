@@ -1,25 +1,23 @@
 #include <iostream>
-#include "assimp/Importer.hpp"
-#include "math/geometry/bounding_box.hpp"
-#include "math/global/operator.hpp"
-#include "math/geometry/point.hpp"
-
-#include "math/geometry/vector.hpp"
-#include "slang.h"
-#include "imgui.h"
 #include <vector>
 
+#include "assimp/Importer.hpp"
+#include "imgui.h"
+#include "math/geometry/bounding_box.hpp"
 #include "math/geometry/matrix.hpp"
+#include "math/geometry/point.hpp"
+#include "math/geometry/vector.hpp"
+#include "math/global/operator.hpp"
+#include "slang.h"
 
-
-#if defined (RENDER_BACKEND_VULKAN)
-    #include "vulkan/vulkan.h"
-    #include "vulkan/vulkan_core.h"
-    #include "vulkan/vulkan.hpp"
-    #include "imgui_impl_vulkan.h"
+#if defined(RENDER_BACKEND_VULKAN)
+#include "imgui_impl_vulkan.h"
+#include "vulkan/vulkan.h"
+#include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_core.h"
 #endif
 
-#if defined (RENDER_BACKEND_OPENGL)
+#if defined(RENDER_BACKEND_OPENGL)
 
 #endif
 
@@ -29,7 +27,6 @@
 using namespace pbpt;
 
 int main() {
-
     math::Pt3 p(1.0, 2.0, 3.0);
     std::cout << "p: " << p << std::endl;
     std::cout << static_cast<int>(slang::BindingType::BaseMask) << std::endl;
@@ -37,9 +34,9 @@ int main() {
     ImGui::CreateContext();
     std::cout << ImGui::GetVersion() << std::endl;
 
-    const int width_write = 100;
-    const int height_write = 100;
-    const int channels_write = 3; // RGB
+    const int width_write    = 100;
+    const int height_write   = 100;
+    const int channels_write = 3;  // RGB
 
     // 创建一个图像数据缓冲区
     // 使用 std::vector 来自动管理内存
@@ -51,9 +48,9 @@ int main() {
             // 计算像素在缓冲区中的索引
             size_t index = (y * width_write + x) * channels_write;
             // 设置像素颜色 (R=255, G=0, B=0)
-            image_data[index + 0] = 255; // R
-            image_data[index + 1] = 0;   // G
-            image_data[index + 2] = 0;   // B
+            image_data[index + 0] = 255;  // R
+            image_data[index + 1] = 0;    // G
+            image_data[index + 2] = 0;    // B
         }
     }
 
@@ -62,13 +59,14 @@ int main() {
 
     // 写入 PNG 文件
     // stbi_write_png(文件名, 宽, 高, 通道数, 数据指针, 每行字节数)
-    int success = stbi_write_png("test.png", width_write, height_write, channels_write, image_data.data(), stride_in_bytes);
+    int success =
+        stbi_write_png("test.png", width_write, height_write, channels_write, image_data.data(), stride_in_bytes);
 
     if (success) {
         std::cout << "成功写入图像到 test.png" << std::endl;
     } else {
         std::cerr << "错误: 写入图像失败" << std::endl;
-        return 1; // 返回错误码
+        return 1;  // 返回错误码
     }
 
     std::cout << "\n--- 开始读取 PNG 文件 ---\n" << std::endl;
@@ -92,7 +90,7 @@ int main() {
     // 打印加载后的图像信息
     // 注意：data 是一个指向像素数据的指针，直接打印它只会显示内存地址。
     // 只有当 data 为 nullptr 时，打印它才有助于调试。
-    std::cout << "data 指针: " << (void*)data << std::endl; // 将指针转换为 void* 以打印地址
+    std::cout << "data 指针: " << (void*)data << std::endl;  // 将指针转换为 void* 以打印地址
     std::cout << "宽度: " << width_read << std::endl;
     std::cout << "高度: " << height_read << std::endl;
     std::cout << "通道数: " << channels_read << std::endl;
@@ -101,12 +99,12 @@ int main() {
     stbi_image_free(data);
 
     Assimp::Importer importer{};
-    bool is_supported = importer.IsExtensionSupported("obj");
+    bool             is_supported = importer.IsExtensionSupported("obj");
     std::cout << "IsExtensionSupported: " << is_supported << std::endl;
 
     using namespace math;
 
-    Mat2 m(Vec2(4, 7), Vec2(2, 6)); // Determinant is 10
+    Mat2 m(Vec2(4, 7), Vec2(2, 6));  // Determinant is 10
     std::cout << "Determinant: " << m.determinant() << std::endl;
     Mat2 m_inv = m.inversed();
     std::cout << "Inverse: " << m_inv << std::endl;
@@ -115,29 +113,28 @@ int main() {
     // Test singular matrix exception
     Mat2 singular(Vec2(2, 4), Vec2(2, 4));
     std::cout << "Determinant: " << singular.determinant() << std::endl;
-    //singular.inverse();
+    // singular.inverse();
 
-    Mat4 m1 = Mat4::identity();
-    m1[0][1] = 5; m1[0][2] = 6;
-    m1[1][1] = 7; m1[1][2] = 8;
+    Mat4 m1  = Mat4::identity();
+    m1[0][1] = 5;
+    m1[0][2] = 6;
+    m1[1][1] = 7;
+    m1[1][2] = 8;
 
     std::cout << "m1: " << m1 << std::endl;
-    
+
     // Test contiguous submatrix
     Mat2 sub = m1.view<2, 2>(0, 1).to_matrix();
     std::cout << "Submatrix: " << sub << std::endl;
 
-    Mat2 d(
-        1, 2, 
-        3, 4
-    );
+    Mat2 d(1, 2, 3, 4);
 
-    for (int i = 0; i < 2; i ++) {
-        for (int j = 0; j < 2; j ++)
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++)
             std::cout << d[i][j] << " ";
         std::cout << std::endl;
     }
-        
+
     std::cout << std::endl;
 
     Bound3 box;
@@ -146,8 +143,7 @@ int main() {
 
     std::cout << "box: " << box << std::endl;
     std::cout << "is_contain: " << box.contains(Pt3(4, 5, 6)) << std::endl;
-
-    std::cout << (Pt3(4.0, 5.0, 6.0) <= Pt3(4.0, 5.0, 6.0))<< std::endl;
+    
     std::cout << box.center() << std::endl;
 
     std::cout << math::is_not_equal(1.0, 2.0) << std::endl;

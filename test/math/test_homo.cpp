@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
-#include <sstream> // 用于测试流输出
+
+#include <sstream>  // 用于测试流输出
 
 // 包含您要测试的类的头文件
 // 假设 homo.hpp 包含了 point.hpp 和 vector.hpp
-#include "math/geometry/homogeneous.hpp" 
+#include "math/geometry/homogeneous.hpp"
 
 // 将测试代码放在一个独立的命名空间中是一种好习惯
 namespace pbpt::math::testing {
@@ -31,7 +32,7 @@ TEST(HomoTest, DefaultConstructorIsOriginPoint) {
 }
 
 TEST(HomoTest, ConstructFromPoint) {
-    const Pt3 p(1.5, -2.5, 3.0);
+    const Pt3   p(1.5, -2.5, 3.0);
     const Homo3 h(p);
 
     EXPECT_TRUE(h.is_point());
@@ -51,7 +52,7 @@ TEST(HomoTest, ConstructFromPoint) {
 }
 
 TEST(HomoTest, ConstructFromVector) {
-    const Vec3 v(4.0, 5.0, -6.5);
+    const Vec3  v(4.0, 5.0, -6.5);
     const Homo3 h(v);
 
     EXPECT_FALSE(h.is_point());
@@ -111,7 +112,7 @@ TEST(HomoTest, ConversionSafetyCompileTime) {
     //
     // constexpr Point3 p = const_h_vector.to_point(); // COMPILE ERROR!
     // constexpr Vec3 v = const_h_point.to_vector();   // COMPILE ERROR!
-    
+
     // 因为我们不能提交一个无法编译的测试，所以上面的代码是注释掉的。
     // 这个测试的存在和成功编译，以及 static_assert 的通过，证明了其设计。
     SUCCEED();
@@ -119,7 +120,7 @@ TEST(HomoTest, ConversionSafetyCompileTime) {
 
 TEST(HomoTest, RawAccessor) {
     const Pt3 p_orig(1, 2, 3);
-    Homo3 h(p_orig);
+    Homo3     h(p_orig);
 
     // 测试 const 版本的 raw()
     const auto& const_raw_data = h.raw();
@@ -129,7 +130,7 @@ TEST(HomoTest, RawAccessor) {
     // 测试非 const 版本的 raw()，并修改数据
     h.raw().x() = 99.0;
     EXPECT_DOUBLE_EQ(h.raw().x(), 99.0);
-    
+
     // 验证原始的 m_data 确实被修改了
     const Pt3 p_modified = h.to_point();
     EXPECT_DOUBLE_EQ(p_modified.x(), 99.0);
@@ -138,21 +139,21 @@ TEST(HomoTest, RawAccessor) {
 TEST(HomoTest, StreamOutput) {
     const Homo3 h_point(Pt3(1, -2, 3.5));
     const Homo3 h_vector(Vec3(4, 5, 6));
-    
+
     std::stringstream ss;
 
     // 测试点的输出
     ss << h_point;
     // 注意：这里的输出格式依赖于 Vec 的 << 实现。我们假设它如您之前提供的那样。
     EXPECT_EQ(ss.str(), "HCoord3[P] Vec4(1, -2, 3.5, 1)");
-    
+
     // 清空 stringstream
     ss.str("");
     ss.clear();
-    
+
     // 测试向量的输出
     ss << h_vector;
     EXPECT_EQ(ss.str(), "HCoord3[V] Vec4(4, 5, 6, 0)");
 }
 
-} 
+}  // namespace pbpt::math::testing

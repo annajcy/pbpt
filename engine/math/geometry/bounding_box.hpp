@@ -1,32 +1,31 @@
 #pragma once
 
-#include "vector.hpp"
-#include "point.hpp"
-
 #include <type_traits>
+
+#include "point.hpp"
+#include "vector.hpp"
 
 namespace pbpt::math {
 
-template<typename T, int N>
-requires (N > 0) && (std::is_floating_point_v<T>)
+template <typename T, int N>
+    requires(N > 0) && (std::is_floating_point_v<T>)
 class BoundingBox {
 private:
     Point<T, N> m_min;
     Point<T, N> m_max;
 
 public:
+    constexpr BoundingBox() noexcept
+        : m_min(Point<T, N>::filled(std::numeric_limits<T>::max())),
+          m_max(Point<T, N>::filled(std::numeric_limits<T>::lowest())) {}
 
-    constexpr BoundingBox() noexcept : 
-    m_min(Point<T, N>::filled(std::numeric_limits<T>::max())), 
-    m_max(Point<T, N>::filled(std::numeric_limits<T>::lowest())) {}
-
-    template<typename ...Args>
-    requires (std::is_same_v<Point<T, N>, Args> && ...) && (sizeof...(Args) > 0)
+    template <typename... Args>
+        requires(std::is_same_v<Point<T, N>, Args> && ...) && (sizeof...(Args) > 0)
     constexpr explicit BoundingBox(const Args&... args) noexcept {
         // 将点解包到数组中以访问第一个元素
         const Point<T, N> points[] = {args...};
-        m_min = points[0];
-        m_max = points[0];
+        m_min                      = points[0];
+        m_max                      = points[0];
         // 从第二个元素开始合并
         for (size_t i = 1; i < sizeof...(args); ++i) {
             unite(points[i]);
@@ -84,11 +83,11 @@ public:
 
     constexpr int max_extent() const noexcept {
         int max_extent = 0;
-        T max_diff = m_max[0] - m_min[0];
+        T   max_diff   = m_max[0] - m_min[0];
         for (int i = 1; i < N; ++i) {
             T diff = m_max[i] - m_min[i];
             if (diff > max_diff) {
-                max_diff = diff;
+                max_diff   = diff;
                 max_extent = i;
             }
         }
@@ -106,19 +105,15 @@ public:
     constexpr const Point<T, N>& min() const noexcept { return m_min; }
     constexpr const Point<T, N>& max() const noexcept { return m_max; }
 
-    constexpr Point<T, N> center() const noexcept {
-        return m_min.mid(m_max);
-    }
+    constexpr Point<T, N> center() const noexcept { return m_min.mid(m_max); }
 
-    constexpr Vector<T, N> diagonal() const noexcept {
-        return m_max - m_min;
-    }
+    constexpr Vector<T, N> diagonal() const noexcept { return m_max - m_min; }
 
-    constexpr T volume() const noexcept {
-        return diagonal().product();
-    }
+    constexpr T volume() const noexcept { return diagonal().product(); }
 
-    constexpr T surface_area() const noexcept requires (N == 3) {
+    constexpr T surface_area() const noexcept
+        requires(N == 3)
+    {
         auto diag = diagonal();
         return 2 * (diag.x() * diag.y() + diag.y() * diag.z() + diag.z() * diag.x());
     }
@@ -127,11 +122,9 @@ public:
         os << "BoundingBox(" << box.m_min << ", " << box.m_max << ")";
         return os;
     }
-    
 };
 
 using Bound3 = BoundingBox<Float, 3>;
 using Bound2 = BoundingBox<Float, 2>;
 
-}
-
+}  // namespace pbpt::math

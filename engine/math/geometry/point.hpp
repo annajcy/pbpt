@@ -1,189 +1,160 @@
 #pragma once
 
+#include "tuple.hpp"
 #include "vector.hpp"
-
-/**
- * @file point.hpp
- * @brief Defines a generic, N-dimensional Point class and its geometric operations.
- * @details This file provides a `Point` class that represents a location in N-dimensional
- * space. It is designed to work in tandem with the `Vec` class, enforcing a strict
- * conceptual separation between points (locations) and vectors (displacements).
- * The operators are overloaded to reflect valid affine geometry operations, such as
- * `Point - Point = Vector` and `Point + Vector = Point`.
- */
+#include "math/global/utils.hpp"
+#include <vector>
+#include <cmath>
+#include <iostream>
 
 namespace pbpt::math {
-/**
- * @class Point
- * @brief A template class for an N-dimensional point in space.
- * @details Represents a specific location in an N-dimensional affine space. Unlike a
- * `Vec`, which represents direction and magnitude (a displacement), a `Point`
- * represents a coordinate.
- *
- * The class's interface enforces these geometric distinctions through its
- * operator overloads:
- * - You can subtract two points to get the vector between them (`Point - Point = Vec`).
- * - You can add or subtract a vector to a point to get a new, translated point
- * (`Point +/- Vec = Point`).
- * - Operations like adding two points are deliberately not defined, as they are
- * geometrically meaningless in most contexts.
- *
- * @tparam T The underlying floating-point type of the point's coordinates.
- * @tparam N The number of dimensions.
- * @see Vec
- */
-template<typename T, int N>
-requires (N > 0) && (std::is_floating_point_v<T> || std::is_integral_v<T>)
-class Point {
+
+template <typename T, int N>
+    requires(N > 0) && (std::is_floating_point_v<T> || std::is_integral_v<T>)
+class Point : public Tuple<Point, T, N> {
 private:
-    Vector<T, N> m_data{};
+    using Base = Tuple<Point, T, N>;
+    using Base::Base;
+    using Base::m_data;
 
 public:
+    using Base::operator[];
+    using Base::at;
+    using Base::to_array;
+    using Base::from_array;
+    using Base::cast;
+    using Base::type_cast;
+    using Base::dim_cast;
+    using Base::x;
+    using Base::y;
+    using Base::z;
+    using Base::w;
 
-    template<std::convertible_to<T> U>
-    constexpr static Point<T, N> filled(U value) noexcept { 
-        Point<T, N> point;
-        for (int i = 0; i < N; ++i) {
-            point.m_data[i] = static_cast<T>(value);
-        }
-        return point;
+    static std::string name() { return std::format("Point<{}, {}>", typeid(T).name(), N); }
+
+    // 将 Vector 转换为 Point
+    static constexpr Point from_vector(const Vector<T, N>& vec) {
+        Point<T, N> p;
+        for (int i = 0; i < N; ++i)
+            p[i] = vec[i];
+        return p;
     }
 
-    constexpr static Point<T, N> zeros() noexcept { return Point(Vector<T, N>::zeros()); }
-    constexpr static Point<T, N> ones() noexcept { return Point(Vector<T, N>::ones()); }
+    constexpr Vector<T, N> to_vector() const {
+        return Vector<T, N>::from_array(this->to_array());
+    }
 
-    constexpr Point<T, N>() noexcept : m_data(Vector<T, N>::zeros()) {}
+    // Point + Vector = Point
+    template <typename U>
+    constexpr auto operator+(const Vector<U, N>& v) const {
+        using R = std::common_type_t<T, U>;
+        Point<R, N> out;
+        for (int i = 0; i < N; ++i)
+            out[i] = static_cast<R>(this->m_data[i]) + static_cast<R>(v[i]);
+        return out;
+    }
 
-    template<std::convertible_to<T> U>
-    constexpr explicit Point<T, N>(const Vector<U, N>& vec) noexcept : m_data(vec) {}
+    // Point - Vector = Point
+    template <typename U>
+    constexpr auto operator-(const Vector<U, N>& v) const {
+        using R = std::common_type_t<T, U>;
+        Point<R, N> out;
+        for (int i = 0; i < N; ++i)
+            out[i] = static_cast<R>(this->m_data[i]) - static_cast<R>(v[i]);
+        return out;
+    }
 
-    template<std::convertible_to<T>... Args>
-    requires(sizeof...(Args) == N)
-    constexpr explicit Point<T, N>(Args&&... args) noexcept : m_data(std::forward<Args>(args)...) {}
+    // Point - Point = Vector
+    template <typename U>
+    constexpr auto operator-(const Point<U, N>& p) const {
+        using R = std::common_type_t<T, U>;
+        Vector<R, N> v;
+        for (int i = 0; i < N; ++i)
+            v[i] = static_cast<R>(this->m_data[i]) - static_cast<R>(p[i]);
+        return v;
+    }
 
-    constexpr T& x() noexcept requires(N > 0) { return m_data.x(); }
-    constexpr T& y() noexcept requires(N > 1) { return m_data.y(); }
-    constexpr T& z() noexcept requires(N > 2) { return m_data.z(); }
-    constexpr T& w() noexcept requires(N > 3) { return m_data.w(); }
-
-    constexpr T x() const noexcept requires(N > 0) { return m_data.x(); }
-    constexpr T y() const noexcept requires(N > 1) { return m_data.y(); }
-    constexpr T z() const noexcept requires(N > 2) { return m_data.z(); }
-    constexpr T w() const noexcept requires(N > 3) { return m_data.w(); }
-    constexpr int dims() const noexcept { return N; }
-
-    constexpr const T& operator[](int index) const { return m_data[index]; }
-    constexpr T& operator[](int index) { return m_data[index]; }
-    constexpr const T& at(int index) const { return m_data.at(index); }
-
-    constexpr Vector<T, N> to_vector() const noexcept { return m_data; }
-
-    constexpr Point<T, N>& operator+=(const Vector<T, N>& rhs) noexcept {
-        m_data += rhs;
+    template <typename U>
+    constexpr auto& operator+=(const Vector<U, N>& v) {
+        for (int i = 0; i < N; ++i)
+            this->m_data[i] += static_cast<T>(v[i]);
         return *this;
     }
 
-    constexpr bool operator<(const Point<T, N>& rhs) const {
-        for (int i = 0; i < N; i ++) {
-            if (is_greater_equal(m_data[i], rhs.m_data[i]))
-                return false;
-        }
-        return true;
-    }
-
-    constexpr bool operator<=(const Point<T, N>& rhs) const {
-        for (int i = 0; i < N; i ++) {
-            if (is_greater(m_data[i], rhs.m_data[i]))
-                return false;
-        }
-        return true;
-    }
-
-    constexpr bool operator>(const Point<T, N>& rhs) const {
-        for (int i = 0; i < N; i ++) {
-            if (is_less_equal(m_data[i], rhs.m_data[i]))
-                return false;
-        }
-        return true;
-    }
-
-    constexpr bool operator>=(const Point<T, N>& rhs) const {
-        for (int i = 0; i < N; i ++) {
-            if (is_less(m_data[i], rhs.m_data[i]))
-                return false;
-        }
-        return true;
-    }
-
-    constexpr bool operator==(const Point<T, N>& rhs) const {
-        for (int i = 0; i < N; i ++) {
-            if (is_not_equal(m_data[i], rhs.m_data[i]))
-                return false;
-        }
-        return true;
-    }
-
-    constexpr bool operator!=(const Point<T, N>& rhs) const {
-        for (int i = 0; i < N; i ++) {
-            if (is_equal(m_data[i], rhs.m_data[i]))
-                return false;
-        }
-        return true;
-    }
-
-    constexpr Point<T, N>& operator-=(const Vector<T, N>& rhs) noexcept {
-        m_data -= rhs;
+    template <typename U>
+    constexpr auto& operator-=(const Vector<U, N>& v) {
+        for (int i = 0; i < N; ++i)
+            this->m_data[i] -= static_cast<T>(v[i]);
         return *this;
     }
 
-    constexpr Vector<T, N> operator-(const Point<T, N>& rhs) const noexcept {
-        return this->to_vector() - rhs.to_vector();
-    }
-
-    constexpr Point<T, N> operator+(const Vector<T, N>& rhs) const noexcept {
-        auto result = *this;
-        result += rhs;
-        return result;
-    }
-
-    constexpr Point<T, N> operator-(const Vector<T, N>& rhs) const noexcept {
-        auto result = *this;
-        result -= rhs;
-        return result;
-    }
-
-    constexpr Point mid(const Point<T, N>& rhs) const noexcept {
-        return Point<T, N>((this->to_vector() + rhs.to_vector()) * 0.5);
-    }
-
-    static constexpr Point mid(const std::vector<Point<T, N>>& points) noexcept {
-        Vector<T, N> mean = Vector<T, N>::zeros();
-        for (const auto& p : points) {
-            mean += p.to_vector();
-        }
-        auto res = mean * (1.0 / points.size());
-        return Point<T, N>(res);
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Point<T, N>& point) {
-        os << "Point" << N << "(";
+    template <typename U>
+    constexpr auto distance_squared(const Point<U, N>& other) const {
+        using R = std::common_type_t<T, U>;
+        R sum   = R(0);
         for (int i = 0; i < N; ++i) {
-            os << point[i] << (i == N - 1 ? "" : ", ");
+            R d = static_cast<R>(this->m_data[i]) - static_cast<R>(other[i]);
+            sum += d * d;
         }
-        os << ")";
-        return os;
+        return sum;
+    }
+
+    template <typename U>
+    constexpr auto distance(const Point<U, N>& other) const {
+        using R = std::common_type_t<T, U>;
+        return std::sqrt(static_cast<promote_int_to_float_t<R>>(distance_squared(other)));
+    }
+
+    template <typename U>
+    constexpr auto mid(const Point<U, N>& other) const {
+        using R = std::common_type_t<T, U>;
+        Point<R, N> out;
+        for (int i = 0; i < N; ++i)
+            out[i] = (static_cast<R>(this->m_data[i]) + static_cast<R>(other[i])) * R(0.5);
+        return out;
+    }
+
+    template<typename U>
+    static constexpr auto mid(const std::vector<Point<U, N>>& points) {
+        using R = std::common_type_t<T, U>;
+        assert_if([&points]() { return points.empty(); }, "Cannot compute midpoint of empty point array");
+        std::array<R, N> sum{};
+        for (const auto& p : points)
+            for (int i = 0; i < N; ++i)
+                sum[i] += static_cast<R>(p[i]);
+        for (int i = 0; i < N; ++i)
+            sum[i] /= static_cast<R>(points.size());
+        return Point<R, N>::from_array(sum);
+    }
+
+    template <typename U>
+    constexpr Point clamp(const Point<U, N>& low, const Point<U, N>& high) const {
+        Point out;
+        for (int i = 0; i < N; ++i) {
+            auto v = this->m_data[i];
+            auto l = static_cast<T>(low[i]);
+            auto h = static_cast<T>(high[i]);
+            out[i] = v < l ? l : (v > h ? h : v);
+        }
+        return out;
     }
 };
 
-using Pt1 = Point<Float, 1>;
-using Pt2 = Point<Float, 2>;
-using Pt3 = Point<Float, 3>;
-using Pt4 = Point<Float, 4>;
+// Vector + Point = Point
+template <typename U, typename T, int N>
+    requires(N > 0)
+constexpr auto operator+(const Vector<U, N>& v, const Point<T, N>& p) {
+    return p + v;
+}
 
+// Aliases
+using Pt1  = Point<Float, 1>;
+using Pt2  = Point<Float, 2>;
+using Pt3  = Point<Float, 3>;
+using Pt4  = Point<Float, 4>;
 using Pt1i = Point<Int, 1>;
 using Pt2i = Point<Int, 2>;
 using Pt3i = Point<Int, 3>;
 using Pt4i = Point<Int, 4>;
 
-
-} // namespace math
+} // namespace pbpt::math

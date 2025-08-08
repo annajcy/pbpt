@@ -1,19 +1,20 @@
 #include <iostream>
 
+#include "math/geometry/bounding_box.hpp"
 #include "math/geometry/homogeneous.hpp"
+#include "math/geometry/point.hpp"
 #include "math/geometry/quaternion.hpp"
+#include "math/geometry/ray.hpp"
 #include "math/geometry/spherical.hpp"
 #include "math/geometry/transform.hpp"
 #include "math/geometry/vector.hpp"
 #include "math/global/function.hpp"
-#include "math/geometry/ray.hpp"
-#include "math/geometry/bounding_box.hpp"
 
 using namespace pbpt;
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    
+
     math::Sphere3 sp(math::Vec2{math::deg2rad(45.0), math::deg2rad(45.0)}, 1.0);
     std::cout << sp.to_cartesian() << std::endl;
 
@@ -21,8 +22,8 @@ int main() {
     std::cout << "Ray Origin: " << ray.origin() << ", Direction: " << ray.direction() << std::endl;
 
     math::RayDiff3 ray_diff(ray);
-    std::cout << "Ray Differential Origin: " << ray_diff.ray().origin() 
-              << ", Direction: " << ray_diff.ray().direction() << std::endl;
+    std::cout << "Ray Differential Origin: " << ray_diff.ray().origin() << ", Direction: " << ray_diff.ray().direction()
+              << std::endl;
 
     math::Bound3 box(math::Pt3{0.0, 0.0, 0.0}, math::Pt3{1.0, 1.0, 1.0});
     std::cout << "Bounding Box: " << box << std::endl;
@@ -42,5 +43,6 @@ int main() {
 
     auto vec_d = vec.type_cast<double>();
 
+    constexpr math::Vec3 vec2(4.0, 5.0, 6.0);
     return 0;
 }

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
@@ -14,7 +15,7 @@ constexpr bool are_almost_equal(Float a, Float b, Float epsilon = 1e-6) {
 
 // --- 编译时测试 ---
 TEST(BoundingBoxConstexprTest, Construction) {
-    constexpr Pt3 p1(1.0, 2.0, 3.0);
+    constexpr Pt3                   p1(1.0, 2.0, 3.0);
     constexpr BoundingBox<Float, 3> box1(p1);
     static_assert(box1.min() == p1 && box1.max() == p1);
 
@@ -24,20 +25,20 @@ TEST(BoundingBoxConstexprTest, Construction) {
 }
 
 TEST(BoundingBoxConstexprTest, UnionOperations) {
-    constexpr Pt3 p1(1.0, 2.0, 3.0);
-    constexpr Pt3 p2(4.0, 5.0, 6.0);
+    constexpr Pt3                   p1(1.0, 2.0, 3.0);
+    constexpr Pt3                   p2(4.0, 5.0, 6.0);
     constexpr BoundingBox<Float, 3> box1(p1);
-    
+
     constexpr auto box2 = box1.united(p2);
     static_assert(box2.min() == p1);
     static_assert(box2.max() == p2);
 }
 
 TEST(BoundingBoxConstexprTest, GeometricProperties) {
-    constexpr Pt3 p1(1.0, 2.0, 3.0);
-    constexpr Pt3 p2(4.0, 6.0, 8.0);
+    constexpr Pt3                   p1(1.0, 2.0, 3.0);
+    constexpr Pt3                   p2(4.0, 6.0, 8.0);
     constexpr BoundingBox<Float, 3> box1(p1);
-    constexpr auto box2 = box1.united(p2);
+    constexpr auto                  box2 = box1.united(p2);
 
     constexpr auto center = box2.center();
     static_assert(are_almost_equal(center.x(), 2.5));
@@ -52,8 +53,8 @@ TEST(BoundingBoxConstexprTest, GeometricProperties) {
 
 // --- 运行时测试 ---
 TEST(BoundingBoxTest, ContainsPoint) {
-    Pt3 p1(1.0, 2.0, 3.0);
-    Pt3 p2(4.0, 5.0, 6.0);
+    Pt3                   p1(1.0, 2.0, 3.0);
+    Pt3                   p2(4.0, 5.0, 6.0);
     BoundingBox<Float, 3> box(p1);
     box.unite(p2);
 
@@ -96,7 +97,7 @@ TEST(BoundingBoxTest, MaxExtent) {
     box.unite(Pt3(0.0, 0.0, 0.0));
     box.unite(Pt3(2.0, 3.0, 4.0));
 
-    EXPECT_EQ(box.max_extent(), 2); // z轴最长
+    EXPECT_EQ(box.max_extent(), 2);  // z轴最长
 }
 
 TEST(BoundingBoxTest, Offset) {
@@ -104,7 +105,7 @@ TEST(BoundingBoxTest, Offset) {
     box.unite(Pt3(0.0, 0.0, 0.0));
     box.unite(Pt3(2.0, 4.0, 6.0));
 
-    Pt3 p(1.0, 2.0, 3.0);
+    Pt3  p(1.0, 2.0, 3.0);
     Vec3 offset = box.offset(p);
 
     EXPECT_FLOAT_EQ(offset.x(), 0.5);
@@ -122,4 +123,4 @@ TEST(BoundingBoxTest, StreamOutput) {
     EXPECT_EQ(ss.str(), "BoundingBox(Point3(1, 2, 3), Point3(4, 5, 6))");
 }
 
-} // namespace pbpt::math::testing
+}  // namespace pbpt::math::testing

@@ -5,7 +5,7 @@
 namespace pbpt::math::testing {
 
 #ifdef FLOAT_64BIT
-#define EXPECT_FLOAT_EQ EXPECT_DOUBLE_EQ 
+#define EXPECT_FLOAT_EQ EXPECT_DOUBLE_EQ
 #endif
 
-}
+}  // namespace pbpt::math::testing

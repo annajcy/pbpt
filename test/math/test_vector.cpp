@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
@@ -14,7 +15,7 @@ class VectorTest : public ::testing::Test {
 protected:
     Vector<Float, 3> v1{1.0, 2.0, 3.0};
     Vector<Float, 3> v2{4.0, 5.0, 6.0};
-    Vector<Int, 3> vi1{1, 2, 3};
+    Vector<Int, 3>   vi1{1, 2, 3};
 };
 
 TEST_F(VectorTest, DefaultConstruction) {
@@ -40,14 +41,14 @@ TEST_F(VectorTest, Filled) {
 
 TEST_F(VectorTest, ZerosAndOnes) {
     auto zeros = Vector<Float, 3>::zeros();
-    auto ones = Vector<Float, 3>::ones();
+    auto ones  = Vector<Float, 3>::ones();
     EXPECT_EQ(zeros, (Vector<Float, 3>(0.0, 0.0, 0.0)));
     EXPECT_EQ(ones, (Vector<Float, 3>(1.0, 1.0, 1.0)));
 }
 
 TEST_F(VectorTest, FromToArray) {
     std::array<Float, 3> arr = {1.0, 2.0, 3.0};
-    auto v = Vector<Float, 3>::from_array(arr);
+    auto                 v   = Vector<Float, 3>::from_array(arr);
     EXPECT_EQ(v, v1);
     auto new_arr = v.to_array();
     EXPECT_EQ(arr, new_arr);
@@ -68,7 +69,6 @@ TEST_F(VectorTest, CopyAndCastConstruction) {
     EXPECT_EQ(v_dim_cast.y(), 2.0);
 }
 
-
 TEST_F(VectorTest, Accessors) {
     EXPECT_EQ(v1.x(), 1.0);
     EXPECT_EQ(v1.y(), 2.0);
@@ -79,7 +79,7 @@ TEST_F(VectorTest, Accessors) {
     EXPECT_EQ(v1.at(0), 1.0);
 
     v1.x() = 10.0;
-    v1[1] = 20.0;
+    v1[1]  = 20.0;
     EXPECT_EQ(v1.x(), 10.0);
     EXPECT_EQ(v1.y(), 20.0);
 }
@@ -113,7 +113,7 @@ TEST_F(VectorTest, ScalarMultiplication) {
     auto scaled = v1 * 2.0;
     EXPECT_EQ(scaled, (Vector<Float, 3>(2.0, 4.0, 6.0)));
     auto scaled2 = 2.0 * v1;
-    EXPECT_EQ(scaled2,( Vector<Float, 3>(2.0, 4.0, 6.0)));
+    EXPECT_EQ(scaled2, (Vector<Float, 3>(2.0, 4.0, 6.0)));
     v1 *= 2.0;
     EXPECT_EQ(v1, (Vector<Float, 3>(2.0, 4.0, 6.0)));
 }
@@ -161,7 +161,7 @@ TEST_F(VectorTest, Length) {
 
 TEST_F(VectorTest, Normalization) {
     Vector<Float, 3> v(1.0, 1.0, 1.0);
-    auto norm_v = v.normalized();
+    auto             norm_v = v.normalized();
     EXPECT_FLOAT_EQ(norm_v.length(), 1.0);
     EXPECT_TRUE(norm_v.is_normalized());
     EXPECT_FALSE(v.is_normalized());
@@ -182,12 +182,12 @@ TEST_F(VectorTest, Apply) {
 
 TEST_F(VectorTest, Inverse) {
     auto inv_v = v1.inv();
-    EXPECT_EQ(inv_v,( Vector<Float, 3>(1.0/1.0, 1.0/2.0, 1.0/3.0)));
+    EXPECT_EQ(inv_v, (Vector<Float, 3>(1.0 / 1.0, 1.0 / 2.0, 1.0 / 3.0)));
 }
 
 TEST_F(VectorTest, Abs) {
     Vector<Float, 3> v(-1.0, 2.0, -3.0);
-    auto abs_v = v.abs();
+    auto             abs_v = v.abs();
     EXPECT_EQ(abs_v, (Vector<Float, 3>(1.0, 2.0, 3.0)));
 }
 
@@ -216,21 +216,21 @@ TEST_F(VectorTest, Cast) {
     EXPECT_EQ(v_dim.x(), 1.0);
     EXPECT_EQ(v_dim.y(), 2.0);
     EXPECT_EQ(v_dim.z(), 3.0);
-    EXPECT_EQ(v_dim.w(), 0.0); // Default initialized
+    EXPECT_EQ(v_dim.w(), 0.0);  // Default initialized
 
     auto v_cast_dim = v1.cast<int, 4>();
     EXPECT_EQ(v_cast_dim.dims(), 4);
     EXPECT_EQ(v_cast_dim.x(), 1);
     EXPECT_EQ(v_cast_dim.y(), 2);
     EXPECT_EQ(v_cast_dim.z(), 3);
-    EXPECT_EQ(v_cast_dim.w(), 0); 
+    EXPECT_EQ(v_cast_dim.w(), 0);
 
     auto v_cast_dim_2 = v1.cast<int, 2>();
     EXPECT_EQ(v_cast_dim_2.dims(), 2);
     EXPECT_EQ(v_cast_dim_2.x(), 1);
     EXPECT_EQ(v_cast_dim_2.y(), 2);
     // EXPECT_EQ(v_cast_dim_2.z(), 3);
-    // EXPECT_EQ(v_cast_dim_2.w(), 0); 
+    // EXPECT_EQ(v_cast_dim_2.w(), 0);
 
     auto mul_res = v_cast_dim * v_dim;
     EXPECT_EQ(mul_res, (Vector<int, 4>(1, 4, 9, 0)));
@@ -239,7 +239,7 @@ TEST_F(VectorTest, Cast) {
 TEST_F(VectorTest, OutputStream) {
     std::stringstream ss;
     ss << v1;
-    EXPECT_EQ(ss.str(), "Vec3(1, 2, 3)");
+    EXPECT_EQ(ss.str(), "Vector<f, 3>(1, 2, 3)");
 }
 
 // Tests for free functions
@@ -247,7 +247,7 @@ TEST(VectorFreeFunctionsTest, CrossProduct) {
     Vector<Float, 3> x_axis(1.0, 0.0, 0.0);
     Vector<Float, 3> y_axis(0.0, 1.0, 0.0);
     Vector<Float, 3> z_axis(0.0, 0.0, 1.0);
-    auto cross_prod = cross(x_axis, y_axis);
+    auto             cross_prod = cross(x_axis, y_axis);
     EXPECT_EQ(cross_prod, z_axis);
 }
 
@@ -275,4 +275,4 @@ TEST(VectorFreeFunctionsTest, CoordinateSystem) {
     EXPECT_NEAR(v2.dot(v3), 0.0, 1e-6);
 }
 
-} // namespace pbpt::math::testing
+}  // namespace pbpt::math::testing

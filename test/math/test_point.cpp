@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <sstream> 
-#include <type_traits> 
+
+#include <sstream>
+#include <type_traits>
 
 #include "math/geometry/point.hpp"
 
@@ -28,7 +29,7 @@ TEST(PointTest, ConstructionAndAccessors) {
 
     // 4. 从 Vec 构造
     Vec3 v_source(4.0, 5.0, 6.0);
-    Pt3 p_from_vec(v_source);
+    Pt3 p_from_vec = Pt3::from_vector(v_source);
     EXPECT_FLOAT_EQ(p_from_vec.x(), 4.0);
     EXPECT_FLOAT_EQ(p_from_vec.y(), 5.0);
     EXPECT_FLOAT_EQ(p_from_vec.z(), 6.0);
@@ -38,7 +39,7 @@ TEST(PointTest, ConstructionAndAccessors) {
     EXPECT_FLOAT_EQ(p_const[0], 1.0);
     EXPECT_FLOAT_EQ(p_const[1], 2.0);
     EXPECT_FLOAT_EQ(p_const[2], 3.0);
-    
+
     // 6. 下标访问器 (non-const)
     Pt3 p_mutable(0, 0, 0);
     p_mutable[0] = 7.0;
@@ -51,8 +52,8 @@ TEST(PointTest, ConstructionAndAccessors) {
 
 // 测试核心的代数运算规则
 TEST(PointTest, AlgebraicOperations) {
-    Pt3 p1(1.0, 2.0, 3.0);
-    Pt3 p2(5.0, 7.0, 9.0);
+    Pt3  p1(1.0, 2.0, 3.0);
+    Pt3  p2(5.0, 7.0, 9.0);
     Vec3 v(4.0, 5.0, 6.0);
 
     // 规则 1: Point - Point = Vector
@@ -81,7 +82,7 @@ TEST(PointTest, AlgebraicOperations) {
 
 // 测试复合赋值运算符
 TEST(PointTest, CompoundAssignment) {
-    Pt3 p(1.0, 2.0, 3.0);
+    Pt3        p(1.0, 2.0, 3.0);
     const Vec3 v(4.0, 5.0, 6.0);
 
     // 测试 +=
@@ -101,9 +102,9 @@ TEST(PointTest, CompoundAssignment) {
 TEST(PointTest, MidPointFunction) {
     Pt3 p1(0.0, 0.0, 0.0);
     Pt3 p2(10.0, -20.0, 30.0);
-    
+
     Pt3 mid = p1.mid(p2);
-    
+
     EXPECT_FLOAT_EQ(mid.x(), 5.0);
     EXPECT_FLOAT_EQ(mid.y(), -10.0);
     EXPECT_FLOAT_EQ(mid.z(), 15.0);
@@ -125,43 +126,42 @@ TEST(PointTest, ExplicitConversion) {
 
 // 测试流输出运算符
 TEST(PointTest, StreamOutput) {
-    Pt3 p(1.1, -2.2, 3.3);
+    Pt3               p(1.1, -2.2, 3.3);
     std::stringstream ss;
     ss << p;
 
     // Point 的流输出利用了 Vec 的流输出
     // 假设 Vec 的输出格式是 "(x, y, z)"
-    EXPECT_EQ(ss.str(), "Point3(1.1, -2.2, 3.3)");
+    EXPECT_EQ(ss.str(), "Point<f, 3>(1.1, -2.2, 3.3)");
 }
-
 
 // --- 编译时测试（文档性质） ---
 // 下面的代码块通过注释的形式展示了哪些操作会因为我们的设计而编译失败。
 // 这是对代数正确性设计的一种“文档化测试”。
 TEST(PointTest, CompileTimeAlgebraicChecks) {
-    Pt3 p1(1, 2, 3);
-    Pt3 p2(4, 5, 6);
+    Pt3  p1(1, 2, 3);
+    Pt3  p2(4, 5, 6);
     Vec3 v(1, 1, 1);
 
     // 以下操作是代数上非法的，并且应该会导致编译错误。
     // 将它们注释掉，以使测试能够通过编译。
 
-    
     // // 错误: 两个点不能相加
     // Point3 p_sum = p1 + p2;
-    
+
     // // 错误: 点不能与标量相乘
     // Point3 p_scaled = p1 * 2.0;
-    
+
     // // 错误: 点没有一元负号
     // Vec3 v_neg_p = -p1;
 
     // // 错误: 点没有长度
     // Float len = p1.length(); // .length() 是 Vec 的方法，Point 没有暴露
-    
+
     // // 错误: 点没有点积运算
     // Float d = p1.dot(p2);
 
-    SUCCEED() << "Compile-time checks are documented and expected to fail if uncommented.";
+    SUCCEED() << "Compile-time checks are documented and expected to fail if "
+                 "uncommented.";
 }
-}
+}  // namespace pbpt::math::testing

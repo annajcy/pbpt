@@ -1,20 +1,21 @@
 #pragma once
 
-#include "utils.hpp"
-
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <type_traits>
 
+#include "utils.hpp"
+
 /**
- * @brief Define _USE_MATH_DEFINES for M_PI on MSVC, or just define pi ourselves for portability.
+ * @brief Define _USE_MATH_DEFINES for M_PI on MSVC, or just define pi ourselves
+ * for portability.
  */
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-template<typename T>
+template <typename T>
 constexpr T pi_v = static_cast<T>(M_PI);
 
 namespace pbpt::math {
@@ -25,11 +26,11 @@ inline constexpr bool is_zero(T a) {
         return abs(static_cast<T>(a)) < epsilon_v<T>;
     } else {
         return a == 0;
-    }      
+    }
 }
 
 template <typename T>
-requires std::is_arithmetic_v<T>
+    requires std::is_arithmetic_v<T>
 constexpr T abs(T x) {
     if (x < 0) {
         return -x;
@@ -38,13 +39,13 @@ constexpr T abs(T x) {
 }
 
 template <typename T>
-requires std::is_floating_point_v<T>
+    requires std::is_floating_point_v<T>
 constexpr T rad2deg(T rad) {
     return rad * 180.0 / pi_v<T>;
 }
 
 template <typename T>
-requires std::is_floating_point_v<T>
+    requires std::is_floating_point_v<T>
 constexpr T deg2rad(T deg) {
     return deg * pi_v<T> / 180.0;
 }
@@ -54,4 +55,4 @@ constexpr T safe_asin(T x) {
     return std::asin(std::clamp(x, T(-1), T(1)));
 }
 
-} // namespace math
+}  // namespace pbpt::math

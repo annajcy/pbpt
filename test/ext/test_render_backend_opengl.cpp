@@ -1,10 +1,9 @@
-#include <iostream>
-#include <vector>
-#include <string>
+#include <gtest/gtest.h>
+
 #include <cmath>
 #include <iostream>
-
-#include <gtest/gtest.h>
+#include <string>
+#include <vector>
 
 // 宏定义和头文件包含顺序很重要
 #define GLFW_INCLUDE_NONE
@@ -15,16 +14,15 @@
 // 这个类封装了所有测试共享的资源和设置/清理逻辑
 class OpenGLTest : public ::testing::Test {
 protected:
-    GLFWwindow* window = nullptr;
-    GLuint shaderProgram = 0;
-    GLuint VAO = 0, VBO = 0;
+    GLFWwindow* window        = nullptr;
+    GLuint      shaderProgram = 0;
+    GLuint      VAO = 0, VBO = 0;
 
     // 在每个测试用例开始前运行
     void SetUp() override {
         // --- 1. 初始化 GLFW ---
-        glfwSetErrorCallback([](int error, const char* description) {
-            FAIL() << "GLFW Error " << error << ": " << description;
-        });
+        glfwSetErrorCallback(
+            [](int error, const char* description) { FAIL() << "GLFW Error " << error << ": " << description; });
         ASSERT_TRUE(glfwInit());
 
         // 设置 OpenGL 3.3 Core Profile
@@ -45,16 +43,16 @@ protected:
         // --- 3. 初始化 GLAD ---
         int gladInitResult = gladLoadGL();
         ASSERT_TRUE(gladInitResult) << "Failed to initialize GLAD";
-        
+
         // 输出OpenGL版本信息
-        const GLubyte* version = glGetString(GL_VERSION);
+        const GLubyte* version  = glGetString(GL_VERSION);
         const GLubyte* renderer = glGetString(GL_RENDERER);
-        const GLubyte* vendor = glGetString(GL_VENDOR);
-        
+        const GLubyte* vendor   = glGetString(GL_VENDOR);
+
         ASSERT_NE(version, nullptr);
         ASSERT_NE(renderer, nullptr);
         ASSERT_NE(vendor, nullptr);
-        
+
         std::cout << "OpenGL Version: " << version << std::endl;
         std::cout << "Renderer: " << renderer << std::endl;
         std::cout << "Vendor: " << vendor << std::endl;
@@ -72,17 +70,21 @@ protected:
     // 在每个测试用例结束后运行
     void TearDown() override {
         // --- 清理资源 ---
-        if (shaderProgram != 0) glDeleteProgram(shaderProgram);
-        if (VAO != 0) glDeleteVertexArrays(1, &VAO);
-        if (VBO != 0) glDeleteBuffers(1, &VBO);
-        
-        if (window != nullptr) glfwDestroyWindow(window);
+        if (shaderProgram != 0)
+            glDeleteProgram(shaderProgram);
+        if (VAO != 0)
+            glDeleteVertexArrays(1, &VAO);
+        if (VBO != 0)
+            glDeleteBuffers(1, &VBO);
+
+        if (window != nullptr)
+            glfwDestroyWindow(window);
         glfwTerminate();
     }
 
     // 辅助函数：检查着色器编译错误
     void CheckShaderCompileErrors(GLuint shader, const std::string& type) {
-        GLint success;
+        GLint  success;
         GLchar infoLog[1024];
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
         if (!success) {
@@ -93,7 +95,7 @@ protected:
 
     // 辅助函数：检查程序链接错误
     void CheckProgramLinkErrors(GLuint program) {
-        GLint success;
+        GLint  success;
         GLchar infoLog[1024];
         glGetProgramiv(program, GL_LINK_STATUS, &success);
         if (!success) {
@@ -108,11 +110,21 @@ protected:
         if (error != GL_NO_ERROR) {
             std::string message;
             switch (error) {
-                case GL_INVALID_ENUM: message = "GL_INVALID_ENUM"; break;
-                case GL_INVALID_VALUE: message = "GL_INVALID_VALUE"; break;
-                case GL_INVALID_OPERATION: message = "GL_INVALID_OPERATION"; break;
-                case GL_OUT_OF_MEMORY: message = "GL_OUT_OF_MEMORY"; break;
-                default: message = "Unknown error " + std::to_string(error); break;
+                case GL_INVALID_ENUM:
+                    message = "GL_INVALID_ENUM";
+                    break;
+                case GL_INVALID_VALUE:
+                    message = "GL_INVALID_VALUE";
+                    break;
+                case GL_INVALID_OPERATION:
+                    message = "GL_INVALID_OPERATION";
+                    break;
+                case GL_OUT_OF_MEMORY:
+                    message = "GL_OUT_OF_MEMORY";
+                    break;
+                default:
+                    message = "Unknown error " + std::to_string(error);
+                    break;
             }
             FAIL() << "OpenGL error during " << operation << ": " << message;
         }
@@ -127,7 +139,7 @@ void main() {
     gl_Position = vec4(aPos, 1.0);
 }
 )";
-        
+
         const char* fragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
@@ -164,25 +176,28 @@ void main() {
         // 定义一个简单的三角形顶点数据
         std::vector<float> vertices = {
             // 位置坐标 (x, y, z)
-             0.0f,  0.5f, 0.0f,  // 顶部顶点
-            -0.5f, -0.5f, 0.0f,  // 左下顶点
-             0.5f, -0.5f, 0.0f   // 右下顶点
+            0.0f,  0.5f,
+            0.0f,  // 顶部顶点
+            -0.5f, -0.5f,
+            0.0f,  // 左下顶点
+            0.5f,  -0.5f,
+            0.0f  // 右下顶点
         };
-        
+
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
-        
+
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-        
+
         // 设置顶点属性指针
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
-        
+
         // 解绑VAO
         glBindVertexArray(0);
-        
+
         CheckOpenGLError("CreateVertexBuffers");
     }
 };
@@ -201,14 +216,14 @@ TEST_F(OpenGLTest, ContextInformation) {
     // 检查OpenGL版本
     const GLubyte* version = glGetString(GL_VERSION);
     ASSERT_NE(version, nullptr);
-    
+
     // 检查着色器语言版本
     const GLubyte* glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
     ASSERT_NE(glslVersion, nullptr);
-    
+
     std::cout << "OpenGL Version: " << version << std::endl;
     std::cout << "GLSL Version: " << glslVersion << std::endl;
-    
+
     CheckOpenGLError("ContextInformation");
 }
 
@@ -228,7 +243,7 @@ TEST_F(OpenGLTest, RenderSingleFrameWithoutErrors) {
 
     // 使用着色器程序
     glUseProgram(shaderProgram);
-    
+
     // 绘制三角形
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -236,7 +251,7 @@ TEST_F(OpenGLTest, RenderSingleFrameWithoutErrors) {
 
     // 交换缓冲区
     glfwSwapBuffers(window);
-    
+
     // 处理事件
     glfwPollEvents();
 
@@ -256,28 +271,28 @@ TEST_F(OpenGLTest, RenderedPixelColorValidation) {
     // 确保我们有一个有效的绘图表面
     ASSERT_GT(width, 0) << "Framebuffer width is zero.";
     ASSERT_GT(height, 0) << "Framebuffer height is zero.";
-    
+
     // 设置视口
     glViewport(0, 0, width, height);
 
     // 渲染场景
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 黑色背景
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  // 黑色背景
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
-    
+
     // 指定从后台缓冲区读取
     glReadBuffer(GL_BACK);
-    
+
     // 确保所有命令在读取像素前完成
     glFinish();
 
     // 读取三角形中心附近的像素
-    int read_x = width / 2;
-    int read_y = height / 2;
+    int           read_x   = width / 2;
+    int           read_y   = height / 2;
     unsigned char pixel[4] = {0};
 
     glReadPixels(read_x, read_y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
@@ -287,7 +302,7 @@ TEST_F(OpenGLTest, RenderedPixelColorValidation) {
 
     // 验证像素颜色（洋红色：R=255, G=0, B=255, A=255）
     EXPECT_EQ(pixel[0], 255) << "Red channel should be 255";
-    EXPECT_EQ(pixel[1], 0)   << "Green channel should be 0";
+    EXPECT_EQ(pixel[1], 0) << "Green channel should be 0";
     EXPECT_EQ(pixel[2], 255) << "Blue channel should be 255";
     EXPECT_EQ(pixel[3], 255) << "Alpha channel should be 255";
 }
@@ -297,20 +312,20 @@ TEST_F(OpenGLTest, MultipleRenderStability) {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
-    
+
     // 进行多次渲染循环
     for (int i = 0; i < 10; ++i) {
         glClearColor(0.1f * i, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        
+
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
-        
+
         glfwSwapBuffers(window);
         glfwPollEvents();
-        
+
         // 每次渲染后检查错误
         CheckOpenGLError("MultipleRender_" + std::to_string(i));
     }

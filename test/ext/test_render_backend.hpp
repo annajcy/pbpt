@@ -6,16 +6,16 @@
 // Forward declare to avoid including heavy headers here
 struct GLFWwindow;
 
-// Define RENDER_BACKEND_VULKAN or RENDER_BACKEND_OPENGL before including this file.
+// Define RENDER_BACKEND_VULKAN or RENDER_BACKEND_OPENGL before including this
+// file.
 
 #if defined(RENDER_BACKEND_VULKAN)
-  #include "imgui_impl_vulkan.h"
+#include "imgui_impl_vulkan.h"
 #elif defined(RENDER_BACKEND_OPENGL)
-  #include "imgui_impl_opengl3.h"
+#include "imgui_impl_opengl3.h"
 #else
-  #error "No render backend macro defined for test!"
+#error "No render backend macro defined for test!"
 #endif
-
 
 // The functions to be tested
 inline void init_render_backend(GLFWwindow* window, void* vulkan_init_info = nullptr) {

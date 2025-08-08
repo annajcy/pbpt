@@ -1,7 +1,7 @@
 #pragma once
 
-#include "type_alias.hpp"
 #include "function.hpp"
+#include "type_alias.hpp"
 
 namespace pbpt::math {
 
@@ -12,7 +12,7 @@ inline constexpr bool is_equal(A a, B b) {
         return pbpt::math::abs(static_cast<T>(a) - static_cast<T>(b)) < epsilon_v<T>;
     } else {
         return a == b;
-    }      
+    }
 }
 
 template <typename A, typename B>
@@ -23,9 +23,9 @@ inline constexpr bool is_not_equal(A a, B b) {
 template <typename A, typename B>
 inline constexpr bool is_greater(A a, B b) {
     using T = std::common_type_t<A, B>;
-    if constexpr (std::is_floating_point_v<T>){
+    if constexpr (std::is_floating_point_v<T>) {
         return static_cast<T>(a) - static_cast<T>(b) > epsilon_v<T>;
-    } else {        
+    } else {
         return a > b;
     }
 }
@@ -45,4 +45,4 @@ inline constexpr bool is_greater_equal(A a, B b) {
     return !is_less(a, b);
 }
 
-} // namespace pbpt::math
+}  // namespace pbpt::math
