@@ -9,24 +9,12 @@
 
 #include "vector.hpp"
 
-/**
- * @file matrix.hpp
- * @brief Defines a generic, RxC-dimensional, constexpr-friendly matrix class
- * and its views.
- */
-
 namespace pbpt::math {
 // Forward declarations
 template <typename T, int R, int C>
     requires std::is_floating_point_v<T> && (R > 0) && (C > 0)
 class Matrix;
 
-/**
- * @class VectorView
- * @brief A non-owning, mutable view/proxy of vector-like data.
- * @details Extends ConstVectorView to allow modification of the underlying
- * data.
- */
 template <typename T, int N>
 class VectorView {
 protected:
@@ -82,10 +70,6 @@ public:
     }
 };
 
-/**
- * @class MatrixView
- * @brief A non-owning, mutable view/proxy into a sub-region of another Matrix.
- */
 template <typename T, int R, int C, int ViewR, int ViewC>
 class MatrixView {
 protected:
@@ -142,16 +126,6 @@ public:
     }
 };
 
-/**
- * @class Matrix
- * @brief A template class for RxC dimensional mathematical matrices.
- * @details This class provides a generic, fixed-size matrix implementation
- * using row-major memory layout. It's designed for high performance and
- * flexibility, with extensive use of `constexpr` for compile-time computations.
- * @tparam T The underlying floating-point type.
- * @tparam R The number of rows.
- * @tparam C The number of columns.
- */
 template <typename T, int R, int C>
     requires std::is_floating_point_v<T> && (R > 0) && (C > 0)
 class Matrix {

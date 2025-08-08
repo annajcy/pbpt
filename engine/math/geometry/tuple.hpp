@@ -1,12 +1,9 @@
 #pragma once
 
-#include "../global/function.hpp"
 #include "../global/operator.hpp"
-#include "../global/type_alias.hpp"
 #include "../global/utils.hpp"
 
 #include <array>
-#include <concepts>
 #include <type_traits>
 #include <iostream>
 

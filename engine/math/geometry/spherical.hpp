@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../global/function.hpp"
 #include "../global/type_alias.hpp"
 #include "point.hpp"
 #include "vector.hpp"

@@ -3,8 +3,6 @@
 #include <cmath>
 #include <iostream>
 
-#include "../global/function.hpp"
-#include "../global/type_alias.hpp"
 #include "vector.hpp"
 
 /**

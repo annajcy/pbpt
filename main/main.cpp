@@ -42,7 +42,6 @@ int main() {
     math::Vec3 vec(1.0, 2.0, 3.0);
 
     auto vec_d = vec.type_cast<double>();
-
     constexpr math::Vec3 vec2(4.0, 5.0, 6.0);
     return 0;
 }

@@ -8,42 +8,8 @@
 #include "matrix.hpp"
 #include "point.hpp"
 
-/**
- * @file homogeneous.hpp
- * @brief Defines a class for N-dimensional homogeneous coordinates.
- * @details This file provides the `Homo` class, which is essential for
- * performing 3D transformations in a unified manner. It allows points and
- * vectors to be treated consistently when multiplied by transformation
- * matrices. The key idea is to represent an N-dimensional concept using an
- * (N+1)-dimensional vector.
- */
-
 namespace pbpt::math {
 
-/**
- * @class Homogeneous
- * @brief A template class for an N-dimensional homogeneous coordinate.
- * @details This class unifies the mathematical treatment of points and vectors
- * for use in projective geometry, particularly for 3D transformations. It
- * internally stores an (N+1)-dimensional vector.
- *
- * The distinction between a point and a vector is encoded in the last
- * component, `w`:
- * - A **Point** `(x, y, z)` is represented in homogeneous coordinates as `(x,
- * y, z, 1)`.
- * - A **Vector** `(vx, vy, vz)` is represented as `(vx, vy, vz, 0)`.
- *
- * This class provides a type-safe way to create these coordinates from `Point`
- * and `Vec` objects, and to convert them back, including performing the
- * necessary perspective divide for points.
- *
- * @tparam T The underlying floating-point type of the coordinate's components.
- * @tparam N The original number of dimensions (e.g., 3 for 3D space). The
- * internal storage will have N+1 dimensions.
- * @see Point
- * @see Vec
- * @see Matrix
- */
 template <typename T, int N>
 class Homogeneous {
 private:

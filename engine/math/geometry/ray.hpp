@@ -5,32 +5,8 @@
 #include "point.hpp"
 #include "vector.hpp"
 
-/**
- * @file ray.hpp
- * @brief Defines a generic, N-dimensional geometric Ray class.
- * @details This file provides a `Ray` class, a fundamental component in ray
- * tracing and other computer graphics algorithms. A ray is defined by an origin
- * point and a direction vector.
- */
-
 namespace pbpt::math {
-/**
- * @class Ray
- * @brief A template class for an N-dimensional geometric ray.
- * @details This class represents a ray in N-dimensional space, defined by a
- * starting point (`origin`) and a direction vector. A key design feature of
- * this class is that the direction vector is **always stored as a normalized
- * (unit) vector**. This invariant is enforced by the constructors, simplifying
- * calculations and ensuring consistent behavior.
- *
- * The ray is described by the parametric equation `P(t) = origin + t *
- * direction`.
- *
- * @tparam T The underlying floating-point type of the ray's components.
- * @tparam N The number of dimensions.
- * @see Point
- * @see Vec
- */
+
 template <typename T, int N>
     requires(N > 0) && (std::is_floating_point_v<T>)
 class Ray {

@@ -1,19 +1,11 @@
 #pragma once
 
-#include <algorithm>
-#include <array>
+#include "tuple.hpp"
+
 #include <cmath>
 #include <concepts>
 #include <format>
-#include <iostream>
 #include <type_traits>
-
-#include "../global/function.hpp"
-#include "../global/operator.hpp"
-#include "../global/type_alias.hpp"
-#include "../global/utils.hpp"
-
-#include "tuple.hpp"
 
 namespace pbpt::math {
 

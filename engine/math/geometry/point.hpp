@@ -2,10 +2,9 @@
 
 #include "tuple.hpp"
 #include "vector.hpp"
-#include "math/global/utils.hpp"
+
 #include <vector>
 #include <cmath>
-#include <iostream>
 
 namespace pbpt::math {
 
