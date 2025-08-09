@@ -43,5 +43,7 @@ int main() {
 
     auto vec_d = vec.type_cast<double>();
     constexpr math::Vec3 vec2(4.0, 5.0, 6.0);
+    math::Vec3 vec3 = vec + vec2;
+    std::cout << "Vector Addition: " << vec3 << std::endl;
     return 0;
 }

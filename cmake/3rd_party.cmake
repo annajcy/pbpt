@@ -72,6 +72,17 @@ FetchContent_Declare(assimp GIT_REPOSITORY https://github.com/assimp/assimp.git 
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 set(ASSIMP_INSTALL OFF)
+# 禁用 Assimp 的严格警告检查，避免编译错误
+set(ASSIMP_WARNINGS_AS_ERRORS OFF)
+# 禁用一些导致编译失败的构建选项
+set(ASSIMP_BUILD_ASSIMP_VIEW OFF)
+set(ASSIMP_BUILD_SAMPLES OFF)
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
+# 只启用常用的导入格式
+set(ASSIMP_BUILD_OBJ_IMPORTER ON)
+set(ASSIMP_BUILD_FBX_IMPORTER ON)
+set(ASSIMP_BUILD_GLTF_IMPORTER ON)
 FetchContent_MakeAvailable(assimp)
 
 # --- ImGui ---
@@ -150,13 +161,6 @@ file(WRITE ${STB_IMPLEMENTATION_FILE} ${STB_IMPLEMENTATION_CONTENT})
 # 创建 STB 静态库
 add_library(stb STATIC ${STB_IMPLEMENTATION_FILE})
 target_include_directories(stb PUBLIC ${stb_SOURCE_DIR})
-
-# 设置编译选项以避免警告
-target_compile_options(stb PRIVATE
-  $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-unused-function>
-  $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-unused-variable>
-  $<$<CXX_COMPILER_ID:MSVC>:/wd4996>
-)
 
 message(STATUS "STB implementation file generated at: ${STB_IMPLEMENTATION_FILE}")
 

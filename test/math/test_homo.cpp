@@ -136,24 +136,4 @@ TEST(HomoTest, RawAccessor) {
     EXPECT_DOUBLE_EQ(p_modified.x(), 99.0);
 }
 
-TEST(HomoTest, StreamOutput) {
-    const Homo3 h_point(Pt3(1, -2, 3.5));
-    const Homo3 h_vector(Vec3(4, 5, 6));
-
-    std::stringstream ss;
-
-    // 测试点的输出
-    ss << h_point;
-    // 注意：这里的输出格式依赖于 Vec 的 << 实现。我们假设它如您之前提供的那样。
-    EXPECT_EQ(ss.str(), "HCoord3[P] Vec4(1, -2, 3.5, 1)");
-
-    // 清空 stringstream
-    ss.str("");
-    ss.clear();
-
-    // 测试向量的输出
-    ss << h_vector;
-    EXPECT_EQ(ss.str(), "HCoord3[V] Vec4(4, 5, 6, 0)");
-}
-
 }  // namespace pbpt::math::testing

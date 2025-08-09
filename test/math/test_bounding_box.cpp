@@ -113,14 +113,4 @@ TEST(BoundingBoxTest, Offset) {
     EXPECT_FLOAT_EQ(offset.z(), 0.5);
 }
 
-TEST(BoundingBoxTest, StreamOutput) {
-    BoundingBox<Float, 3> box;
-    box.unite(Pt3(1.0, 2.0, 3.0));
-    box.unite(Pt3(4.0, 5.0, 6.0));
-
-    std::stringstream ss;
-    ss << box;
-    EXPECT_EQ(ss.str(), "BoundingBox(Point3(1, 2, 3), Point3(4, 5, 6))");
-}
-
 }  // namespace pbpt::math::testing

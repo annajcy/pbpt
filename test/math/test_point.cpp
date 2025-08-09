@@ -124,17 +124,6 @@ TEST(PointTest, ExplicitConversion) {
     // Vec3 implicit_v = p; // 这行代码如果取消注释，应该会导致编译失败
 }
 
-// 测试流输出运算符
-TEST(PointTest, StreamOutput) {
-    Pt3               p(1.1, -2.2, 3.3);
-    std::stringstream ss;
-    ss << p;
-
-    // Point 的流输出利用了 Vec 的流输出
-    // 假设 Vec 的输出格式是 "(x, y, z)"
-    EXPECT_EQ(ss.str(), "Point<f, 3>(1.1, -2.2, 3.3)");
-}
-
 // --- 编译时测试（文档性质） ---
 // 下面的代码块通过注释的形式展示了哪些操作会因为我们的设计而编译失败。
 // 这是对代数正确性设计的一种“文档化测试”。

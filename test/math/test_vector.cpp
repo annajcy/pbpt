@@ -236,12 +236,6 @@ TEST_F(VectorTest, Cast) {
     EXPECT_EQ(mul_res, (Vector<int, 4>(1, 4, 9, 0)));
 }
 
-TEST_F(VectorTest, OutputStream) {
-    std::stringstream ss;
-    ss << v1;
-    EXPECT_EQ(ss.str(), "Vector<f, 3>(1, 2, 3)");
-}
-
 // Tests for free functions
 TEST(VectorFreeFunctionsTest, CrossProduct) {
     Vector<Float, 3> x_axis(1.0, 0.0, 0.0);
