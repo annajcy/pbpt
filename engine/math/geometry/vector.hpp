@@ -14,10 +14,10 @@ template <typename T, int N>
 class Vector : public Tuple<Vector, T, N> {
 private:
     using Base = Tuple<Vector, T, N>;
-    using Base::Base;
     using Base::m_data;
 
 public:
+    using Base::Base;
     using Base::operator[];
     using Base::at;
     using Base::to_array;

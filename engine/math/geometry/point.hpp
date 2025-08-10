@@ -13,10 +13,10 @@ template <typename T, int N>
 class Point : public Tuple<Point, T, N> {
 private:
     using Base = Tuple<Point, T, N>;
-    using Base::Base;
     using Base::m_data;
 
 public:
+    using Base::Base;
     using Base::operator[];
     using Base::at;
     using Base::to_array;

@@ -24,25 +24,25 @@ public:
         return Transform(Mat4(s.x(), 0, 0, 0, 0, s.y(), 0, 0, 0, 0, s.z(), 0, 0, 0, 0, 1));
     }
 
-    static constexpr Transform rotate_x(Float angle_rad) noexcept {
+    static Transform rotate_x(Float angle_rad) noexcept {
         const Float s = sin(angle_rad);
         const Float c = cos(angle_rad);
         return Transform(Mat4(1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1));
     }
 
-    static constexpr Transform rotate_y(Float angle_rad) noexcept {
+    static Transform rotate_y(Float angle_rad) noexcept {
         const Float s = sin(angle_rad);
         const Float c = cos(angle_rad);
         return Transform(Mat4(c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1));
     }
 
-    static constexpr Transform rotate_z(Float angle_rad) noexcept {
+    static Transform rotate_z(Float angle_rad) noexcept {
         const Float s = sin(angle_rad);
         const Float c = cos(angle_rad);
         return Transform(Mat4(c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
     }
 
-    static constexpr Transform rotate(Float angle_rad, const Vec3& axis) noexcept {
+    static Transform rotate(Float angle_rad, const Vec3& axis) noexcept {
         // 确保旋转轴是单位向量，这对于公式的正确性至关重要
         const Vec3  a   = axis.normalized();
         const Float s   = sin(angle_rad);
@@ -68,7 +68,7 @@ public:
                               -u.dot(eye.to_vector()), -f.x(), -f.y(), -f.z(), f.dot(eye.to_vector()), 0, 0, 0, 1));
     }
 
-    static constexpr Transform perspective(Float fov_y_rad, Float aspect_ratio, Float z_near, Float z_far) noexcept {
+    static Transform perspective(Float fov_y_rad, Float aspect_ratio, Float z_near, Float z_far) noexcept {
         const Float tan_half_fovy = tan(fov_y_rad / 2.0);
         return Transform(Mat4(1.0 / (aspect_ratio * tan_half_fovy), 0, 0, 0, 0, 1.0 / (tan_half_fovy), 0, 0, 0, 0,
                               z_far / (z_far - z_near), -z_far * z_near / (z_far - z_near), 0, 0, 1.0, 0));

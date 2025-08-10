@@ -7,6 +7,7 @@
 *.a
 *.lib
 
+
 # 忽略构建目录（如 CMake 的 build 目录）
 build/
 cmake-build-debug/
@@ -26,12 +27,13 @@ compile_commands.json
 *.vcxproj.user
 *.sln
 *.pdb
-ipch/
 *.idb
 *.opensdf
 *.VC.db
 *.VC.VC.opendb
 *.VSCodeCounter
+.vs/
+ipch/
 
 # CLion/JetBrains
 .idea/
