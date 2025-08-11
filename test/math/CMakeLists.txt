@@ -3,6 +3,10 @@ target_link_libraries(test_vector PRIVATE pbpt_engine gtest_main)
 # 使用 add_test 替代 gtest_discover_tests 以避免测试发现超时问题
 add_test(NAME test_vector COMMAND test_vector)
 
+add_executable(test_tuple test_tuple.cpp)
+target_link_libraries(test_tuple PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_tuple COMMAND test_tuple)
+
 add_executable(test_point test_point.cpp)
 target_link_libraries(test_point PRIVATE pbpt_engine gtest_main)
 add_test(NAME test_point COMMAND test_point)

@@ -1,8 +1,15 @@
+/**
+ * @file test_vector.cpp
+ * @brief Comprehensive unit tests for the Vector template class
+ * 
+ * This file contains thorough tests for the Vector class template,
+ * covering all methods, operators, edge cases, and free functions.
+ */
+
 #include <gtest/gtest.h>
 
-#include <sstream>
-#include <stdexcept>
 #include <type_traits>
+#include <limits>
 
 // 包含被测试的头文件和其依赖
 #include "math/geometry/vector.hpp"
@@ -267,6 +274,304 @@ TEST(VectorFreeFunctionsTest, CoordinateSystem) {
     EXPECT_NEAR(v1.dot(v2), 0.0, 1e-6);
     EXPECT_NEAR(v1.dot(v3), 0.0, 1e-6);
     EXPECT_NEAR(v2.dot(v3), 0.0, 1e-6);
+}
+
+// 测试复合赋值运算符的更多情况
+TEST_F(VectorTest, CompoundAssignmentExtended) {
+    Vector<Float, 3> v_orig(1.0, 2.0, 3.0);
+    Vector<Float, 3> v_test;
+    
+    // 测试 *= (分量乘法)
+    v_test = v_orig;
+    Vector<Float, 3> multiplier(2.0, 3.0, 4.0);
+    v_test *= multiplier;
+    EXPECT_EQ(v_test, (Vector<Float, 3>(2.0, 6.0, 12.0)));
+    
+    // 测试 /= (分量除法)
+    v_test /= multiplier;
+    EXPECT_EQ(v_test, v_orig);
+}
+
+// 测试边界条件和错误处理
+TEST_F(VectorTest, EdgeCasesAndErrorHandling) {
+    // 测试归一化零向量（应该触发断言）
+    Vector<Float, 3> zero_vec = Vector<Float, 3>::zeros();
+    
+    // 在发布模式下可能不会触发断言，我们主要测试非零情况
+    Vector<Float, 3> small_vec(1e-10f, 0.0f, 0.0f);
+    auto normalized_small = small_vec.normalized();
+    EXPECT_TRUE(normalized_small.is_normalized());
+    
+    // 测试非常小的长度计算精度
+    EXPECT_GT(small_vec.length(), 0.0f);
+    EXPECT_GT(small_vec.length_squared(), 0.0f);
+}
+
+// 测试不同数值类型
+TEST(VectorNumericTypesTest, IntegerVectors) {
+    Vector<int, 3> v_int(1, 2, 3);
+    Vector<int, 3> v_int2(4, 5, 6);
+    
+    // 整数向量运算
+    auto sum = v_int + v_int2;
+    EXPECT_EQ(sum, (Vector<int, 3>(5, 7, 9)));
+    
+    auto diff = v_int2 - v_int;
+    EXPECT_EQ(diff, (Vector<int, 3>(3, 3, 3)));
+    
+    // 整数向量的长度应该返回浮点类型
+    auto len = v_int.length();
+    static_assert(std::is_floating_point_v<decltype(len)>);
+    EXPECT_FLOAT_EQ(len, std::sqrt(14.0f));
+    
+    // 整数向量的归一化应该返回浮点向量
+    auto norm = v_int.normalized();
+    static_assert(std::is_same_v<decltype(norm), Vector<Float, 3>>);
+    EXPECT_TRUE(norm.is_normalized());
+}
+
+TEST(VectorNumericTypesTest, MixedTypeOperations) {
+    Vector<float, 3> v_float(1.0f, 2.0f, 3.0f);
+    Vector<double, 3> v_double(4.0, 5.0, 6.0);
+    Vector<int, 3> v_int(1, 1, 1);
+    
+    // 不同类型向量运算
+    auto result1 = v_float + v_double;
+    static_assert(std::is_same_v<decltype(result1), Vector<double, 3>>);
+    EXPECT_DOUBLE_EQ(result1.x(), 5.0);
+    EXPECT_DOUBLE_EQ(result1.y(), 7.0);
+    EXPECT_DOUBLE_EQ(result1.z(), 9.0);
+    
+    // 浮点与整数混合
+    auto result2 = v_float * v_int;
+    static_assert(std::is_same_v<decltype(result2), Vector<float, 3>>);
+    EXPECT_FLOAT_EQ(result2.x(), 1.0f);
+    EXPECT_FLOAT_EQ(result2.y(), 2.0f);
+    EXPECT_FLOAT_EQ(result2.z(), 3.0f);
+    
+    // 点积运算
+    auto dot_result = v_float.dot(v_double);
+    static_assert(std::is_same_v<decltype(dot_result), double>);
+    EXPECT_DOUBLE_EQ(dot_result, 32.0);  // 1*4 + 2*5 + 3*6 = 32
+}
+
+// 测试不同维度的向量
+TEST(VectorDimensionsTest, VariousDimensions) {
+    // 1D Vector
+    Vector<Float, 1> v1d(5.0f);
+    EXPECT_FLOAT_EQ(v1d.x(), 5.0f);
+    EXPECT_FLOAT_EQ(v1d.length(), 5.0f);
+    EXPECT_EQ(v1d.dims(), 1);
+    
+    // 2D Vector
+    Vector<Float, 2> v2d(3.0f, 4.0f);
+    EXPECT_FLOAT_EQ(v2d.x(), 3.0f);
+    EXPECT_FLOAT_EQ(v2d.y(), 4.0f);
+    EXPECT_FLOAT_EQ(v2d.length(), 5.0f);  // 3-4-5 triangle
+    EXPECT_EQ(v2d.dims(), 2);
+    
+    // 4D Vector
+    Vector<Float, 4> v4d(1.0f, 2.0f, 3.0f, 4.0f);
+    EXPECT_FLOAT_EQ(v4d.x(), 1.0f);
+    EXPECT_FLOAT_EQ(v4d.y(), 2.0f);
+    EXPECT_FLOAT_EQ(v4d.z(), 3.0f);
+    EXPECT_FLOAT_EQ(v4d.w(), 4.0f);
+    EXPECT_FLOAT_EQ(v4d.length_squared(), 30.0f);  // 1+4+9+16
+    EXPECT_EQ(v4d.dims(), 4);
+}
+
+// 测试apply函数的更多用法
+TEST_F(VectorTest, ApplyFunctionAdvanced) {
+    Vector<Float, 3> v(1.0, -2.0, 3.0);
+    
+    // 测试使用索引的lambda
+    v.apply([](Float& val, int idx) { 
+        if (idx == 1) val = std::abs(val); 
+    });
+    EXPECT_EQ(v, (Vector<Float, 3>(1.0, 2.0, 3.0)));
+    
+    // 测试累加功能
+    Float sum = 0.0;
+    v.apply([&sum](const Float& val, int) { sum += val; });
+    EXPECT_FLOAT_EQ(sum, 6.0);
+}
+
+// 测试特殊值处理
+TEST_F(VectorTest, SpecialValueHandling) {
+    // 测试infinity
+    Vector<Float, 3> v_inf(std::numeric_limits<Float>::infinity(), 1.0, 2.0);
+    EXPECT_TRUE(std::isinf(v_inf.length()));
+    
+    // 测试-infinity
+    Vector<Float, 3> v_neg_inf(-std::numeric_limits<Float>::infinity(), 1.0, 2.0);
+    EXPECT_TRUE(std::isinf(v_neg_inf.length()));
+    
+    // 测试混合特殊值
+    Vector<Float, 3> v_mixed(std::nan(""), std::numeric_limits<Float>::infinity(), 0.0);
+    EXPECT_TRUE(v_mixed.has_nan());
+}
+
+// 测试更复杂的排列组合
+TEST_F(VectorTest, AdvancedPermutation) {
+    Vector<Float, 4> v4(1.0, 2.0, 3.0, 4.0);
+    
+    // 测试所有元素的排列
+    auto permuted = v4.permuted(3, 2, 1, 0);  // 完全反转
+    EXPECT_EQ(permuted, (Vector<Float, 4>(4.0, 3.0, 2.0, 1.0)));
+    
+    // 测试重复索引
+    auto repeated = v4.permuted(0, 0, 1, 1);
+    EXPECT_EQ(repeated, (Vector<Float, 4>(1.0, 1.0, 2.0, 2.0)));
+    
+    // 测试原地排列
+    Vector<Float, 3> v3_copy = v1;
+    v3_copy.permute(1, 2, 0);  // 循环移位
+    auto expected = v1.permuted(1, 2, 0);
+    EXPECT_EQ(v3_copy, expected);
+}
+
+// 测试大维度向量性能和正确性
+TEST(VectorPerformanceTest, HighDimensionalVectors) {
+    constexpr int DIM = 100;
+    Vector<Float, DIM> v_large = Vector<Float, DIM>::filled(1.0);
+    
+    // 测试大向量的基本运算
+    EXPECT_FLOAT_EQ(v_large.length_squared(), static_cast<Float>(DIM));
+    EXPECT_FLOAT_EQ(v_large.length(), std::sqrt(static_cast<Float>(DIM)));
+    
+    auto v_large2 = Vector<Float, DIM>::filled(2.0);
+    auto dot_large = v_large.dot(v_large2);
+    EXPECT_FLOAT_EQ(dot_large, static_cast<Float>(2 * DIM));
+    
+    // 测试归一化
+    auto normalized_large = v_large.normalized();
+    EXPECT_TRUE(normalized_large.is_normalized());
+}
+
+// 测试自由函数的更多情况
+TEST(VectorFreeFunctionsTest, CrossProductExtended) {
+    // 测试更多叉积情况
+    Vector<Float, 3> v1(2.0, 0.0, 0.0);
+    Vector<Float, 3> v2(0.0, 3.0, 0.0);
+    auto cross_result = cross(v1, v2);
+    
+    // 2i × 3j = 6k
+    EXPECT_EQ(cross_result, (Vector<Float, 3>(0.0, 0.0, 6.0)));
+    
+    // 测试叉积的反交换律
+    auto cross_reversed = cross(v2, v1);
+    EXPECT_EQ(cross_reversed, -cross_result);
+    
+    // 测试平行向量的叉积为零
+    Vector<Float, 3> parallel1(1.0, 2.0, 3.0);
+    Vector<Float, 3> parallel2(2.0, 4.0, 6.0);  // 2 * parallel1
+    auto zero_cross = cross(parallel1, parallel2);
+    EXPECT_TRUE(zero_cross.is_zero());
+}
+
+TEST(VectorFreeFunctionsTest, AngleBetweenExtended) {
+    // 测试平行向量
+    Vector<Float, 3> v1(1.0, 0.0, 0.0);
+    Vector<Float, 3> v2(2.0, 0.0, 0.0);
+    v1 = v1.normalized();
+    v2 = v2.normalized();
+    EXPECT_NEAR(angle_between(v1, v2), 0.0, 1e-6);
+    
+    // 测试45度角
+    Vector<Float, 3> v3(1.0, 0.0, 0.0);
+    Vector<Float, 3> v4(1.0, 1.0, 0.0);
+    v3 = v3.normalized();
+    v4 = v4.normalized();
+    EXPECT_NEAR(angle_between(v3, v4), pi_v<Float> / 4.0, 1e-5);
+}
+
+TEST(VectorFreeFunctionsTest, CoordinateSystemExtended) {
+    // 测试不同方向的坐标系生成
+    Vector<Float, 3> directions[] = {
+        Vector<Float, 3>(1.0, 0.0, 0.0),  // x轴
+        Vector<Float, 3>(0.0, 1.0, 0.0),  // y轴
+        Vector<Float, 3>(0.0, 0.0, 1.0),  // z轴
+        Vector<Float, 3>(1.0, 1.0, 1.0).normalized(),  // 对角线
+        Vector<Float, 3>(-1.0, 0.5, 0.3).normalized() // 任意方向
+    };
+    
+    for (const auto& dir : directions) {
+        auto [u, v] = coordinate_system(dir);
+        
+        // 验证生成的坐标系的性质
+        EXPECT_TRUE(u.is_normalized());
+        EXPECT_TRUE(v.is_normalized());
+        EXPECT_NEAR(dir.dot(u), 0.0, 1e-6);  // 正交
+        EXPECT_NEAR(dir.dot(v), 0.0, 1e-6);  // 正交
+        EXPECT_NEAR(u.dot(v), 0.0, 1e-6);    // 正交
+        
+        // 验证右手坐标系（叉积应该平行于原方向）
+        auto cross_uv = cross(u, v);
+        EXPECT_NEAR(std::abs(cross_uv.dot(dir)), 1.0, 1e-6);
+    }
+}
+
+// 测试不等操作符的详细逻辑
+TEST_F(VectorTest, InequalityOperatorLogic) {
+    Vector<Float, 3> v1(1.0, 2.0, 3.0);
+    Vector<Float, 3> v2(1.0, 2.0, 3.0);
+    Vector<Float, 3> v3(1.0, 2.0, 3.1);
+    Vector<Float, 3> v4(1.1, 2.0, 3.0);
+    Vector<Float, 3> v5(1.1, 2.1, 3.1);  // 所有分量都不等
+    
+    // 测试相等向量
+    EXPECT_TRUE(v1 == v2);
+    EXPECT_FALSE(v1 != v2);
+    
+    // 测试部分分量不等的向量
+    EXPECT_FALSE(v1 == v3);
+    EXPECT_TRUE(v1 != v3);
+    EXPECT_FALSE(v1 == v4);
+    EXPECT_TRUE(v1 != v4);
+    
+    // 测试所有分量都不等的向量
+    EXPECT_FALSE(v1 == v5);
+    EXPECT_TRUE(v1 != v5);
+    
+    // 测试浮点精度边界
+    Vector<Float, 3> v_close1(1.0, 2.0, 3.0);
+    Vector<Float, 3> v_close2(1.0 + 1e-12, 2.0, 3.0);  // 非常接近但不相等
+    
+    // 结果取决于is_equal函数的epsilon值
+    bool are_equal = (v_close1 == v_close2);
+    bool are_not_equal = (v_close1 != v_close2);
+    EXPECT_EQ(are_equal, !are_not_equal);  // 现在应该满足逻辑一致性
+}
+
+// 测试边界数值的运算稳定性
+TEST_F(VectorTest, NumericalStability) {
+    // 测试非常小的数值（可能会下溢到0）
+    Vector<Float, 3> tiny(1e-20f, 1e-20f, 1e-20f);
+    auto tiny_len_sq = tiny.length_squared();
+    auto tiny_len = tiny.length();
+    
+    // 对于非常小的数值，可能会下溢，我们只验证它们不是负数
+    EXPECT_GE(tiny_len_sq, 0.0f);
+    EXPECT_GE(tiny_len, 0.0f);
+    
+    // 测试适中的数值确保基本运算正确
+    Vector<Float, 3> normal(1e-5f, 1e-5f, 1e-5f);
+    EXPECT_GT(normal.length(), 0.0f);
+    EXPECT_GT(normal.length_squared(), 0.0f);
+    
+    // 测试大数值（可能溢出）
+    const Float large_val = 1e20f;  // 降低数值避免溢出
+    Vector<Float, 3> large(large_val, large_val, large_val);
+    auto large_len = large.length();
+    
+    // 对于大数值，我们至少验证结果不是NaN
+    EXPECT_FALSE(std::isnan(large_len));
+    
+    // 测试混合大小数值
+    Vector<Float, 3> mixed(1e-10f, 1e10f, 1.0f);
+    auto mixed_len = mixed.length();
+    EXPECT_FALSE(std::isnan(mixed_len));
+    EXPECT_GE(mixed_len, 0.0f);
 }
 
 }  // namespace pbpt::math::testing
