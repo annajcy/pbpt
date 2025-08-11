@@ -304,4 +304,403 @@ TEST(SphericalPointTest, ConstexprSupport) {
     SUCCEED() << "Constexpr construction and access work correctly.";
 }
 
+// ==================== wrap_angle_2pi Function Tests ====================
+
+TEST(SphericalPointTest, WrapAngle2PiBasicTests) {
+    // Test wrap_angle_2pi function with basic cases only
+    
+    // Test positive angles within range
+    EXPECT_FLOAT_EQ(wrap_angle_2pi(Float(0)), Float(0));
+    EXPECT_FLOAT_EQ(wrap_angle_2pi(pi_v<Float>), pi_v<Float>);
+    EXPECT_FLOAT_EQ(wrap_angle_2pi(Float(1.5) * pi_v<Float>), Float(1.5) * pi_v<Float>);
+    
+    // Test simple negative angles
+    EXPECT_FLOAT_EQ(wrap_angle_2pi(-pi_v<Float>), pi_v<Float>);
+    EXPECT_FLOAT_EQ(wrap_angle_2pi(-pi_v<Float> / 2), Float(1.5) * pi_v<Float>);
+    
+    // Test simple large angles (with tolerance)
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(3) * pi_v<Float>), pi_v<Float>, Float(1e-5)));
+}
+
+// ==================== Enhanced Spherical Point Tests ====================
+
+TEST(SphericalPointTest, FromCartesianStaticMethod) {
+    // Test static factory method
+    Point<Float, 2> pt_2d(3.0f, 4.0f);
+    Point<Float, 3> pt_3d(1.0f, 2.0f, 3.0f);
+    
+    auto sphere_2d = SphericalPoint<Float, 2>::from_cartesian(pt_2d);
+    auto sphere_3d = SphericalPoint<Float, 3>::from_cartesian(pt_3d);
+    
+    EXPECT_FLOAT_EQ(sphere_2d.radius(), 5.0f);  // sqrt(3^2 + 4^2) = 5
+    EXPECT_FLOAT_EQ(sphere_3d.radius(), sqrt(14.0f));  // sqrt(1^2 + 2^2 + 3^2) = sqrt(14)
+}
+
+TEST(SphericalPointTest, HighDimensionalSupport) {
+    // Test 5D spherical coordinates
+    Point<Float, 5> pt_5d(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
+    SphericalPoint<Float, 5> sphere_5d(pt_5d);
+    Point<Float, 5> converted_5d = sphere_5d.to_cartesian();
+    
+    EXPECT_TRUE(points_almost_equal(pt_5d, converted_5d, Float(1e-5)));
+    
+    // Test 6D spherical coordinates
+    Point<Float, 6> pt_6d(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    SphericalPoint<Float, 6> sphere_6d(pt_6d);
+    Point<Float, 6> converted_6d = sphere_6d.to_cartesian();
+    
+    EXPECT_TRUE(points_almost_equal(pt_6d, converted_6d, Float(1e-5)));
+}
+
+TEST(SphericalPointTest, SpecialAngles3D) {
+    // Test specific known angles
+    
+    // South pole (0, 0, -1)
+    Point<Float, 3> south_pole(0.0f, 0.0f, -1.0f);
+    SphericalPoint<Float, 3> sphere_south(south_pole);
+    EXPECT_FLOAT_EQ(sphere_south.radius(), 1.0f);
+    EXPECT_TRUE(are_almost_equal(sphere_south.angle(0), pi_v<Float>));  // θ = π for south pole
+    
+    // Test 45-degree elevation
+    Point<Float, 3> pt_45deg(1.0f, 0.0f, 1.0f);  // Should have θ = π/4
+    SphericalPoint<Float, 3> sphere_45(pt_45deg);
+    Float expected_radius = sqrt(2.0f);
+    EXPECT_TRUE(are_almost_equal(sphere_45.radius(), expected_radius));
+    EXPECT_TRUE(are_almost_equal(sphere_45.angle(0), pi_v<Float> / 4));
+    EXPECT_TRUE(are_almost_equal(sphere_45.angle(1), 0.0f));
+}
+
+TEST(SphericalPointTest, VerySmallValues) {
+    // Test numerical stability with very small values
+    Float epsilon = Float(1e-10);
+    Point<Float, 2> small_2d(epsilon, epsilon);
+    Point<Float, 3> small_3d(epsilon, epsilon, epsilon);
+    
+    SphericalPoint<Float, 2> sphere_2d_small(small_2d);
+    SphericalPoint<Float, 3> sphere_3d_small(small_3d);
+    
+    // Should not crash and should have small but non-zero radius
+    EXPECT_GT(sphere_2d_small.radius(), 0);
+    EXPECT_GT(sphere_3d_small.radius(), 0);
+    
+    // Round trip should work
+    Point<Float, 2> converted_2d = sphere_2d_small.to_cartesian();
+    Point<Float, 3> converted_3d = sphere_3d_small.to_cartesian();
+    
+    EXPECT_TRUE(points_almost_equal(small_2d, converted_2d, Float(1e-8)));
+    EXPECT_TRUE(points_almost_equal(small_3d, converted_3d, Float(1e-8)));
+}
+
+TEST(SphericalPointTest, ExtensiveRoundTripTests) {
+    // Test more comprehensive round-trip conversions
+    
+    // 2D test cases
+    std::vector<Point<Float, 2>> test_points_2d = {
+        Point<Float, 2>(1, 0), Point<Float, 2>(0, 1), 
+        Point<Float, 2>(-1, 0), Point<Float, 2>(0, -1),
+        Point<Float, 2>(1, 1), Point<Float, 2>(-1, -1), 
+        Point<Float, 2>(2, 3), Point<Float, 2>(-1.5f, 2.5f),
+        Point<Float, 2>(100, 0.01f), Point<Float, 2>(0.01f, 100)
+    };
+    
+    for (const auto& pt : test_points_2d) {
+        SphericalPoint<Float, 2> sphere(pt);
+        Point<Float, 2> converted_back = sphere.to_cartesian();
+        EXPECT_TRUE(points_almost_equal(pt, converted_back, Float(1e-5)))
+            << "Failed for 2D point: (" << pt.x() << ", " << pt.y() << ")";
+    }
+    
+    // 3D test cases
+    std::vector<Point<Float, 3>> test_points_3d = {
+        Point<Float, 3>(1, 0, 0), Point<Float, 3>(0, 1, 0), Point<Float, 3>(0, 0, 1),
+        Point<Float, 3>(-1, 0, 0), Point<Float, 3>(0, -1, 0), Point<Float, 3>(0, 0, -1),
+        Point<Float, 3>(1, 1, 1), Point<Float, 3>(-1, -1, -1),
+        Point<Float, 3>(2, 3, 4), Point<Float, 3>(-1.5f, 2.5f, -3.2f),
+        Point<Float, 3>(std::sqrt(3)/2, 0.5f, 0), // 30-60-90 triangle
+        Point<Float, 3>(0.5f, std::sqrt(3)/2, 1)
+    };
+    
+    for (const auto& pt : test_points_3d) {
+        SphericalPoint<Float, 3> sphere(pt);
+        Point<Float, 3> converted_back = sphere.to_cartesian();
+        EXPECT_TRUE(points_almost_equal(pt, converted_back, Float(1e-5)))
+            << "Failed for 3D point: (" << pt.x() << ", " << pt.y() << ", " << pt.z() << ")";
+    }
+}
+
+// ==================== Spherical Geometry Function Tests ====================
+
+TEST(SphericalGeometryTest, SphericalTriangleAreaBasic) {
+    // Simple triangle on unit sphere
+    Vector<Float, 3> a(1, 0, 0);  // Point on x-axis
+    Vector<Float, 3> b(0, 1, 0);  // Point on y-axis  
+    Vector<Float, 3> c(0, 0, 1);  // North pole
+    
+    // Normalize the vectors
+    a = a.normalized();
+    b = b.normalized();
+    c = c.normalized();
+    
+    Float area = spherical_triangle_area(a, b, c);
+    EXPECT_GT(area, 0);
+    EXPECT_LT(area, Float(4) * pi_v<Float>);  // Area should be reasonable
+    
+    // This specific triangle should have area π/2 (1/8 of sphere surface)
+    EXPECT_TRUE(are_almost_equal(area, pi_v<Float> / 2, Float(1e-5)));
+}
+
+TEST(SphericalGeometryTest, SphericalPolygonAreaBasic) {
+    // Test with a simple triangle first
+    std::vector<Vector<Float, 3>> triangle_vertices = {
+        Vector<Float, 3>(1, 0, 0).normalized(),
+        Vector<Float, 3>(0, 1, 0).normalized(),
+        Vector<Float, 3>(0, 0, 1).normalized()
+    };
+    
+    Float triangle_area = spherical_polygon_area(triangle_vertices);
+    EXPECT_GT(std::abs(triangle_area), Float(0));
+    EXPECT_LT(std::abs(triangle_area), Float(4) * pi_v<Float>);
+}
+
+TEST(SphericalGeometryTest, ErrorHandling) {
+    // Test error handling for invalid inputs
+    
+    // Test with degenerate triangle (collinear points)
+    Vector<Float, 3> a(1, 0, 0);
+    Vector<Float, 3> b(2, 0, 0);  // Same direction as a
+    Vector<Float, 3> c(3, 0, 0);  // Same direction as a and b
+    
+    Float degenerate_area = spherical_triangle_area(a, b, c);
+    // Degenerate triangle should have zero area
+    EXPECT_TRUE(are_almost_equal(degenerate_area, Float(0), Float(1e-5)));
+    
+    // Test polygon with minimum vertices
+    std::vector<Vector<Float, 3>> min_vertices = {
+        Vector<Float, 3>(1, 0, 0).normalized(),
+        Vector<Float, 3>(0, 1, 0).normalized(),
+        Vector<Float, 3>(0, 0, 1).normalized()
+    };
+    
+    Float min_area = spherical_polygon_area(min_vertices);
+    EXPECT_GT(std::abs(min_area), Float(0));
+}
+
+// ==================== Enhanced Spherical Geometry Tests ====================
+
+TEST(SphericalGeometryTest, SphericalTriangleAreaKnownValues) {
+    // Test with known mathematical results
+    
+    // 1. Right spherical triangle with known area
+    Vector<Float, 3> north_pole(0, 0, 1);
+    Vector<Float, 3> equator_0(1, 0, 0);    // 0° longitude on equator
+    Vector<Float, 3> equator_90(0, 1, 0);   // 90° longitude on equator
+    
+    Float right_triangle_area = spherical_triangle_area(north_pole, equator_0, equator_90);
+    EXPECT_TRUE(are_almost_equal(right_triangle_area, pi_v<Float> / 2, Float(1e-4)));
+    
+    // 2. Small spherical triangle (should approximate planar area)
+    Vector<Float, 3> small_a(1, 0, 0);
+    Vector<Float, 3> small_b(Float(0.999), Float(0.01), Float(0.01));  // Very close to small_a
+    Vector<Float, 3> small_c(Float(0.999), Float(0.01), Float(-0.01)); // Very close to small_a
+    
+    small_a = small_a.normalized();
+    small_b = small_b.normalized();
+    small_c = small_c.normalized();
+    
+    Float small_area = spherical_triangle_area(small_a, small_b, small_c);
+    EXPECT_GT(small_area, Float(0));
+    EXPECT_LT(small_area, Float(0.001));  // Should be very small
+}
+
+TEST(SphericalGeometryTest, SphericalTriangleAreaSymmetry) {
+    // Test symmetry properties
+    Vector<Float, 3> a(1, 0, 0);
+    Vector<Float, 3> b(0, 1, 0);
+    Vector<Float, 3> c(0, 0, 1);
+    
+    Float area_abc = spherical_triangle_area(a, b, c);
+    Float area_acb = spherical_triangle_area(a, c, b);
+    Float area_bac = spherical_triangle_area(b, a, c);
+    Float area_bca = spherical_triangle_area(b, c, a);
+    Float area_cab = spherical_triangle_area(c, a, b);
+    Float area_cba = spherical_triangle_area(c, b, a);
+    
+    // All permutations should give the same absolute area
+    EXPECT_TRUE(are_almost_equal(std::abs(area_abc), std::abs(area_acb), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(std::abs(area_abc), std::abs(area_bac), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(std::abs(area_abc), std::abs(area_bca), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(std::abs(area_abc), std::abs(area_cab), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(std::abs(area_abc), std::abs(area_cba), Float(1e-6)));
+}
+
+TEST(SphericalGeometryTest, SphericalTriangleAreaDegenerate) {
+    // Test degenerate cases
+    
+    // 1. Collinear points (zero area)
+    Vector<Float, 3> collinear_a(1, 0, 0);
+    Vector<Float, 3> collinear_b(Float(0.7071), Float(0.7071), 0);  // 45° from a
+    Vector<Float, 3> collinear_c(0, 1, 0);  // 90° from a, collinear with a and b
+    
+    // Make them actually collinear on the sphere (great circle)
+    Vector<Float, 3> gc_a(1, 0, 0);
+    Vector<Float, 3> gc_b(Float(0.7071), Float(0.7071), 0);
+    Vector<Float, 3> gc_c(0, 1, 0);
+    
+    Float collinear_area = spherical_triangle_area(gc_a, gc_b, gc_c);
+    EXPECT_TRUE(are_almost_equal(collinear_area, Float(0), Float(1e-5)));
+    
+    // 2. Identical points (zero area)
+    Vector<Float, 3> same_point(1, 0, 0);
+    Float identical_area = spherical_triangle_area(same_point, same_point, same_point);
+    EXPECT_TRUE(are_almost_equal(identical_area, Float(0), Float(1e-10)));
+    
+    // 3. Two identical points, one different (zero area)
+    Vector<Float, 3> diff_point(0, 1, 0);
+    Float two_same_area = spherical_triangle_area(same_point, same_point, diff_point);
+    EXPECT_TRUE(are_almost_equal(two_same_area, Float(0), Float(1e-10)));
+}
+
+TEST(SphericalGeometryTest, SphericalTriangleAreaNumericalStability) {
+    // Test numerical stability with various vector magnitudes
+    
+    // 1. Very large vectors (should be normalized internally by dot products)
+    Vector<Float, 3> large_a(Float(1e6), 0, 0);
+    Vector<Float, 3> large_b(0, Float(1e6), 0);
+    Vector<Float, 3> large_c(0, 0, Float(1e6));
+    
+    // Normalize them first
+    large_a = large_a.normalized();
+    large_b = large_b.normalized();
+    large_c = large_c.normalized();
+    
+    Float large_area = spherical_triangle_area(large_a, large_b, large_c);
+    EXPECT_GT(large_area, Float(0));
+    EXPECT_LT(large_area, Float(4) * pi_v<Float>);
+    
+    // 2. Very small vectors
+    Vector<Float, 3> small_a(Float(1e-6), 0, 0);
+    Vector<Float, 3> small_b(0, Float(1e-6), 0);
+    Vector<Float, 3> small_c(0, 0, Float(1e-6));
+    
+    small_a = small_a.normalized();
+    small_b = small_b.normalized();
+    small_c = small_c.normalized();
+    
+    Float small_area = spherical_triangle_area(small_a, small_b, small_c);
+    EXPECT_GT(small_area, Float(0));
+    EXPECT_LT(small_area, Float(4) * pi_v<Float>);
+    
+    // Results should be the same regardless of input vector magnitude
+    EXPECT_TRUE(are_almost_equal(large_area, small_area, Float(1e-5)));
+}
+
+TEST(SphericalGeometryTest, SphericalPolygonAreaPentagon) {
+    // Test with a regular pentagon on the sphere
+    std::vector<Vector<Float, 3>> pentagon_vertices;
+    const int n_sides = 5;
+    
+    for (int i = 0; i < n_sides; ++i) {
+        Float angle = Float(2 * i) * pi_v<Float> / Float(n_sides);
+        pentagon_vertices.push_back(Vector<Float, 3>(cos(angle), sin(angle), 0).normalized());
+    }
+    
+    Float pentagon_area = spherical_polygon_area(pentagon_vertices);
+    EXPECT_GT(std::abs(pentagon_area), Float(0));
+    EXPECT_LT(std::abs(pentagon_area), Float(4) * pi_v<Float>);
+    
+    // Pentagon should have larger area than triangle but smaller than square
+    std::vector<Vector<Float, 3>> triangle_vertices = {
+        Vector<Float, 3>(1, 0, 0).normalized(),
+        Vector<Float, 3>(0, 1, 0).normalized(),
+        Vector<Float, 3>(0, 0, 1).normalized()
+    };
+    Float triangle_area = std::abs(spherical_polygon_area(triangle_vertices));
+    
+    EXPECT_GT(std::abs(pentagon_area), triangle_area);
+}
+
+TEST(SphericalGeometryTest, SphericalPolygonAreaConsistency) {
+    // Test that polygon area is consistent with triangulation
+    std::vector<Vector<Float, 3>> quad_vertices = {
+        Vector<Float, 3>(1, 0, 0).normalized(),
+        Vector<Float, 3>(Float(0.7071), Float(0.7071), 0).normalized(),
+        Vector<Float, 3>(0, 1, 0).normalized(),
+        Vector<Float, 3>(Float(-0.7071), Float(0.7071), 0).normalized()
+    };
+    
+    Float polygon_area = spherical_polygon_area(quad_vertices);
+    
+    // Manual triangulation: split into two triangles
+    Float triangle1_area = spherical_triangle_area(
+        quad_vertices[0], quad_vertices[1], quad_vertices[2]
+    );
+    Float triangle2_area = spherical_triangle_area(
+        quad_vertices[0], quad_vertices[2], quad_vertices[3]
+    );
+    
+    Float manual_area = triangle1_area + triangle2_area;
+    
+    // They should be approximately equal
+    EXPECT_TRUE(are_almost_equal(std::abs(polygon_area), std::abs(manual_area), Float(1e-4)));
+}
+
+TEST(SphericalGeometryTest, SphericalPolygonAreaVertexOrder) {
+    // Test that vertex order affects sign but not magnitude
+    std::vector<Vector<Float, 3>> vertices_ccw = {
+        Vector<Float, 3>(1, 0, 0).normalized(),
+        Vector<Float, 3>(0, 1, 0).normalized(),
+        Vector<Float, 3>(0, 0, 1).normalized()
+    };
+    
+    std::vector<Vector<Float, 3>> vertices_cw = {
+        Vector<Float, 3>(1, 0, 0).normalized(),
+        Vector<Float, 3>(0, 0, 1).normalized(),
+        Vector<Float, 3>(0, 1, 0).normalized()
+    };
+    
+    Float area_ccw = spherical_polygon_area(vertices_ccw);
+    Float area_cw = spherical_polygon_area(vertices_cw);
+    
+    // Magnitudes should be equal
+    EXPECT_TRUE(are_almost_equal(std::abs(area_ccw), std::abs(area_cw), Float(1e-6)));
+    
+    // Signs might be different (depending on implementation)
+    // But at least one should be positive
+    EXPECT_TRUE(area_ccw > Float(0) || area_cw > Float(0));
+}
+
+TEST(SphericalGeometryTest, SphericalTriangleAreaEdgeCases) {
+    // 2. Very close points (should have small area)
+    Vector<Float, 3> close_a(1, 0, 0);
+    Vector<Float, 3> close_b(Float(0.999999), Float(0.000001), 0);
+    Vector<Float, 3> close_c(Float(0.999999), 0, Float(0.000001));
+    
+    close_a = close_a.normalized();
+    close_b = close_b.normalized();
+    close_c = close_c.normalized();
+    
+    Float close_area = spherical_triangle_area(close_a, close_b, close_c);
+    EXPECT_GT(close_area, Float(0));
+    EXPECT_LT(close_area, Float(1e-10));  // Should be very small
+}
+
+// ==================== Performance and Precision Tests ====================
+
+TEST(SphericalPointTest, HighPrecisionMath) {
+    // Test with mathematical constants for high precision
+    Float e_const = Float(2.718281828459045);
+    Float pi_const = pi_v<Float>;
+    Float sqrt2_const = Float(1.4142135623730951);
+    
+    Point<Float, 3> math_pt(e_const, pi_const, sqrt2_const);
+    
+    SphericalPoint<Float, 3> sphere(math_pt);
+    Point<Float, 3> converted = sphere.to_cartesian();
+    
+    // Use more reasonable tolerance for floating point precision
+    EXPECT_TRUE(are_almost_equal(converted.x(), math_pt.x(), Float(1e-5)));
+    EXPECT_TRUE(are_almost_equal(converted.y(), math_pt.y(), Float(1e-5)));
+    EXPECT_TRUE(are_almost_equal(converted.z(), math_pt.z(), Float(1e-5)));
+}
+
 }  // namespace pbpt::math::testing

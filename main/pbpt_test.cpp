@@ -3,7 +3,7 @@
 
 #include "assimp/Importer.hpp"
 #include "imgui.h"
-#include "math/geometry/bounding_box.hpp"
+#include "math/geometry/bounds.hpp"
 #include "math/geometry/matrix.hpp"
 #include "math/geometry/point.hpp"
 #include "math/geometry/vector.hpp"
@@ -137,9 +137,9 @@ int main() {
 
     std::cout << std::endl;
 
-    Bound3 box;
+    Bounds3 box;
 
-    box.unite(Pt3(1, 2, 3)).unite(Pt3(4, 5, 6)).unite(Pt3(7, 8, 9)).unite(Bound3{Pt3(10, 11, 12), Pt3(13, 14, 15)});
+    box.unite(Pt3(1, 2, 3)).unite(Pt3(4, 5, 6)).unite(Pt3(7, 8, 9)).unite(Bounds3{Pt3(10, 11, 12), Pt3(13, 14, 15)});
 
     std::cout << "box: " << box << std::endl;
     std::cout << "is_contain: " << box.contains(Pt3(4, 5, 6)) << std::endl;

@@ -17,29 +17,18 @@ private:
 
 public:
     using Base::Base;
-    using Base::operator[];
-    using Base::at;
-    using Base::to_array;
-    using Base::from_array;
-    using Base::cast;
-    using Base::type_cast;
-    using Base::dim_cast;
-    using Base::x;
-    using Base::y;
-    using Base::z;
-    using Base::w;
 
     static std::string name() { return std::format("Point<{}, {}>", typeid(T).name(), N); }
 
     // 将 Vector 转换为 Point
-    static constexpr Point from_vector(const Vector<T, N>& vec) {
+    static constexpr auto from_vector(const Vector<T, N>& vec) {
         Point<T, N> p;
         for (int i = 0; i < N; ++i)
             p[i] = vec[i];
         return p;
     }
 
-    constexpr Vector<T, N> to_vector() const {
+    constexpr auto to_vector() const {
         return Vector<T, N>::from_array(this->to_array());
     }
 

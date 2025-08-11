@@ -2,10 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
-#include <stdexcept>
 #include <type_traits>
 
-#include "utils.hpp"
+#include "type_alias.hpp"
 
 /**
  * @brief Define _USE_MATH_DEFINES for M_PI on MSVC, or just define pi ourselves

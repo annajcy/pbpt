@@ -2,6 +2,7 @@
 
 #include "math/geometry/homogeneous.hpp"
 #include "math/geometry/transform.hpp"
+#include "math/global/function.hpp"
 
 namespace pbpt::math::testing {
 

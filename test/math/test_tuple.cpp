@@ -58,6 +58,12 @@ TEST_F(TupleTest, VariadicConstruction) {
     EXPECT_EQ(t1.z(), 3.0);
 }
 
+TEST_F(TupleTest, HasNaN) {
+    TestTuple<Float, 3> v_nan(1.0, std::nan(""), 3.0);
+    EXPECT_TRUE(v_nan.has_nan());
+    EXPECT_FALSE(t1.has_nan());
+}
+
 TEST_F(TupleTest, StaticFactoryMethods) {
     // Test filled
     auto filled = TestTuple<Float, 4>::filled(5.0);

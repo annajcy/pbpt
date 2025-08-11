@@ -150,14 +150,8 @@ TEST_F(VectorTest, Comparison) {
 
 TEST_F(VectorTest, IsZero) {
     Vector<Float, 3> z = Vector<Float, 3>::zeros();
-    EXPECT_TRUE(z.is_zero());
-    EXPECT_FALSE(v1.is_zero());
-}
-
-TEST_F(VectorTest, HasNaN) {
-    Vector<Float, 3> v_nan(1.0, std::nan(""), 3.0);
-    EXPECT_TRUE(v_nan.has_nan());
-    EXPECT_FALSE(v1.has_nan());
+    EXPECT_TRUE(z.is_zero_vec());
+    EXPECT_FALSE(v1.is_zero_vec());
 }
 
 TEST_F(VectorTest, Length) {
@@ -466,7 +460,7 @@ TEST(VectorFreeFunctionsTest, CrossProductExtended) {
     Vector<Float, 3> parallel1(1.0, 2.0, 3.0);
     Vector<Float, 3> parallel2(2.0, 4.0, 6.0);  // 2 * parallel1
     auto zero_cross = cross(parallel1, parallel2);
-    EXPECT_TRUE(zero_cross.is_zero());
+    EXPECT_TRUE(zero_cross.is_zero_vec());
 }
 
 TEST(VectorFreeFunctionsTest, AngleBetweenExtended) {

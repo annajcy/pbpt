@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bounding_box.hpp"
+#include "bounds.hpp"
 #include "homogeneous.hpp"
 #include "matrix.hpp"
 #include "normal.hpp"
@@ -102,16 +102,18 @@ public:
     constexpr Vec3 operator*(const Vec3& vec) const noexcept { return (m_mat * Homo3(vec)).to_vector(); }
 
     constexpr Normal3 operator*(const Normal3& normal) const noexcept {
-        auto result = (m_mat.inversed().transposed() * Homo3(normal)).to_vector();
+        auto result = (m_mat.inversed().transposed() * Homo3(normal.to_vector())).to_vector();
         return Normal3(result);
     }
 
     constexpr Ray3 operator*(const Ray3& ray) const noexcept {
-        return Ray3(*this * ray.origin(), *this * ray.direction());
+        const Pt3& origin = ray.origin();
+        const Vec3& direction = ray.direction();
+        return Ray3((*this) * origin, (*this) * direction);
     }
 
-    constexpr Bound3 operator*(const Bound3& bound) const noexcept {
-        return Bound3{*this * bound.min(), *this * bound.max()};
+    constexpr Bounds3 operator*(const Bounds3& bound) const noexcept {
+        return Bounds3{*this * bound.min(), *this * bound.max()};
         ;
     }
 };

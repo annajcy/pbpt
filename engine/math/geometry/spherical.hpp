@@ -1,10 +1,20 @@
 #pragma once
 
 #include "../global/type_alias.hpp"
+#include "math/global/function.hpp"
+#include "math/global/operator.hpp"
 #include "point.hpp"
 #include "vector.hpp"
 
 namespace pbpt::math {
+
+template<typename T>
+inline constexpr T wrap_angle_2pi(T phi) {
+    if (is_less(phi, T(0))) phi += T(2) * pi_v<T>;
+    else if (is_greater_equal(phi, T(2) * pi_v<T>)) phi -= T(2) * pi_v<T>;
+    else return phi;
+    return wrap_angle_2pi(phi);
+}
 
 /**
  * @class SphericalPoint
@@ -24,41 +34,32 @@ public:
     Vector<T, N - 1> m_spherical;  // N-1个角度
     T                m_radius;     // 半径
 
-    constexpr SphericalPoint(const Vector<T, N - 1>& spherical, T radius) : m_spherical(spherical), m_radius(radius) {}
+    static constexpr auto from_cartesian(const Point<T, N>& cartesian) {
+        return SphericalPoint(cartesian);
+    }
 
-    /**
-     * @brief 从笛卡尔坐标构造球坐标
-     */
+    constexpr SphericalPoint(const Vector<T, N - 1>& spherical, T radius) : m_spherical(spherical), m_radius(radius) {}
     constexpr SphericalPoint(const Point<T, N>& cartesian) {
         m_radius = cartesian.to_vector().length();
 
-        if (m_radius == 0) {
+        if (is_zero(m_radius)) {
             m_spherical = Vector<T, N - 1>::zeros();
             return;
         }
 
         if constexpr (N == 2) {
             // 2D情况: φ = atan2(y, x) (方位角)
-            m_spherical[0] = atan2(cartesian.y(), cartesian.x());
-            if (m_spherical[0] < 0) {
-                m_spherical[0] += T(2 * M_PI);
-            }
+            m_spherical[0] = wrap_angle_2pi(atan2(cartesian.y(), cartesian.x()));
         } else if constexpr (N == 3) {
             // 3D情况: θ = acos(z/r), φ = atan2(y, x)
-            m_spherical[0] = acos(cartesian.z() / m_radius);       // 极角
-            m_spherical[1] = atan2(cartesian.y(), cartesian.x());  // 方位角
-            if (m_spherical[1] < 0) {
-                m_spherical[1] += T(2 * M_PI);
-            }
+            m_spherical[0] = wrap_angle_2pi(acos(cartesian.z() / m_radius));  // 极角
+            m_spherical[1] = wrap_angle_2pi(atan2(cartesian.y(), cartesian.x()));  // 方位角
         } else {
             // N维情况的递归计算
             cartesian_to_spherical_nd(cartesian);
         }
     }
 
-    /**
-     * @brief 转换为笛卡尔坐标
-     */
     constexpr Point<T, N> to_cartesian() const {
         if (m_radius == 0) {
             return Point<T, N>::zeros();
@@ -84,33 +85,17 @@ public:
         return Point<T, N>::from_vector(result);
     }
 
-    /**
-     * @brief 获取半径
-     */
     constexpr T radius() const { return m_radius; }
-
-    /**
-     * @brief 获取第i个角度
-     */
     constexpr T angle(int i) const { return m_spherical[i]; }
-
-    /**
-     * @brief 获取所有角度
-     */
     constexpr const Vector<T, N - 1>& angles() const { return m_spherical; }
 
-    /**
-     * @brief 获取方位角（角度向量的最后一个元素）
-     */
     constexpr T azimuth() const {
         static_assert(N >= 2, "Azimuth angle only exists for N >= 2");
         return m_spherical[N - 2];
     }
 
 private:
-    /**
-     * @brief N维笛卡尔到球坐标的转换
-     */
+
     constexpr void cartesian_to_spherical_nd(const Point<T, N>& cartesian) {
         // N维球坐标的一般公式（方位角在最后）
         // θᵢ = acos(xᵢ₊₂ / sqrt(x₁² + x₂² + ... + xᵢ₊₂²)) for i = 0, ..., N-3
@@ -124,7 +109,7 @@ private:
             }
             T partial_radius = sqrt(sum_squares);
 
-            if (partial_radius == 0) {
+            if (is_zero(partial_radius)) {
                 m_spherical[i] = 0;
             } else {
                 m_spherical[i] = acos(cartesian[i + 2] / partial_radius);
@@ -132,15 +117,9 @@ private:
         }
 
         // 最后一个角度 (方位角)
-        m_spherical[N - 2] = atan2(cartesian[1], cartesian[0]);
-        if (m_spherical[N - 2] < 0) {
-            m_spherical[N - 2] += T(2 * M_PI);
-        }
+        m_spherical[N - 2] = wrap_angle_2pi(atan2(cartesian[1], cartesian[0]));
     }
 
-    /**
-     * @brief N维球坐标到笛卡尔的转换
-     */
     constexpr void spherical_to_cartesian_nd(Vector<T, N>& result) const {
         // N维球坐标到笛卡尔的一般公式（方位角在最后）
         // x₁ = r * cos(φ) * ∏ᵢ₌₀ᴺ⁻³ sin(θᵢ)
@@ -171,6 +150,31 @@ private:
         }
     }
 };
+
+template<std::floating_point T>
+constexpr T spherical_triangle_area(
+    const Vector<T, 3>& a,
+    const Vector<T, 3>& b,
+    const Vector<T, 3>& c
+) {
+    return std::abs(T(2) * std::atan2(
+        a.dot(cross(b, c)),
+        T(1) + a.dot(b) + b.dot(c) + c.dot(a)
+    ));
+}
+
+template<std::floating_point T>
+constexpr T spherical_polygon_area(
+    const std::vector<Vector<T, 3>>& vertices
+) {
+    assert_if([&vertices]() { return vertices.size() < 3; }, "At least 3 vertices are required for a polygon");
+    const auto& a = vertices[0];
+    T area = T(0);
+    for (int i = 2; i < vertices.size(); ++i) {
+        area += spherical_triangle_area(a, vertices[i - 1], vertices[i]);
+    }
+    return area;
+}
 
 using Sphere2 = SphericalPoint<Float, 2>;
 using Sphere3 = SphericalPoint<Float, 3>;

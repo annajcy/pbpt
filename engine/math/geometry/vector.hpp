@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/global/function.hpp"
 #include "tuple.hpp"
 
 #include <cmath>
@@ -18,17 +19,6 @@ private:
 
 public:
     using Base::Base;
-    using Base::operator[];
-    using Base::at;
-    using Base::to_array;
-    using Base::from_array;
-    using Base::cast;
-    using Base::type_cast;
-    using Base::dim_cast;
-    using Base::x;
-    using Base::y;
-    using Base::z;
-    using Base::w;
 
     static std::string name() { return std::format("Vector<{}, {}>", typeid(T).name(), N); }
 
@@ -76,21 +66,12 @@ public:
         return *this;
     }
     
-    constexpr bool is_zero() const {
+    constexpr bool is_zero_vec() const {
         for (int i = 0; i < N; i++) {
-            if (!is_equal(m_data[i], 0.0))
+            if (!is_zero(m_data[i]))
                 return false;
         }
         return true;
-    }
-
-    constexpr bool has_nan() const {
-        if constexpr (std::is_floating_point_v<T>) {
-            for (int i = 0; i < N; ++i)
-                if (std::isnan(m_data[i]))
-                    return true;
-        }
-        return false;
     }
 
     constexpr auto length_squared() const {
@@ -286,7 +267,7 @@ constexpr auto cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
 
 template <typename T>
 constexpr promote_int_to_float_t<T> angle_between(const Vector<T, 3>& v1, const Vector<T, 3>& v2) {
-    assert_if([&v1, &v2]() { return v1.is_zero() || v2.is_zero(); }, "Cannot compute angle between zero vectors");
+    assert_if([&v1, &v2]() { return v1.is_zero_vec() || v2.is_zero_vec(); }, "Cannot compute angle between zero vectors");
     assert_if([&v1, &v2]() { return !v1.is_normalized() || !v2.is_normalized(); },
               "Vectors must be normalized to compute angle between them");
     if (v1.dot(v2) < 0) {

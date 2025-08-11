@@ -55,6 +55,15 @@ public:
     constexpr std::array<T, N> to_array() const { return m_data; }
     constexpr int dims() const { return N; }
 
+    constexpr bool has_nan() const {
+        if constexpr (std::is_floating_point_v<T>) {
+            for (int i = 0; i < N; ++i)
+                if (std::isnan(m_data[i]))
+                    return true;
+        }
+        return false;
+    }
+
     // -- Accessors --
     constexpr T& operator[](int i) {
         assert_if([&]() { return i < 0 || i >= N; }, "Tuple::operator[] index out of range");

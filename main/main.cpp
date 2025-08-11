@@ -1,7 +1,9 @@
 #include <iostream>
 
-#include "math/geometry/bounding_box.hpp"
+#include "math/geometry/bounds.hpp"
 #include "math/geometry/homogeneous.hpp"
+#include "math/geometry/normal.hpp"
+#include "math/geometry/octahedral.hpp"
 #include "math/geometry/point.hpp"
 #include "math/geometry/quaternion.hpp"
 #include "math/geometry/ray.hpp"
@@ -21,11 +23,21 @@ int main() {
     math::Ray3 ray(math::Pt3{0.0, 0.0, 0.0}, math::Vec3{1.0, 1.0, 1.0});
     std::cout << "Ray Origin: " << ray.origin() << ", Direction: " << ray.direction() << std::endl;
 
-    math::RayDiff3 ray_diff(ray);
-    std::cout << "Ray Differential Origin: " << ray_diff.ray().origin() << ", Direction: " << ray_diff.ray().direction()
+    std::array<math::Ray3, 2> rds = {
+        math::Ray3(math::Pt3{0.1, 0.0, 0.0}, math::Vec3{1.0, 0.1, 0.0}),
+        math::Ray3(math::Pt3{0.0, 0.1, 0.0}, math::Vec3{1.0, 0.0, 0.1})
+    };
+
+    math::RayDiff3 ray_diff(ray, rds);
+    ray_diff.scale(2.0);
+    std::cout << "Ray Differential Origin: " << ray_diff.main_ray().origin() << ", Direction: " << ray_diff.main_ray().direction()
+              << std::endl;
+    std::cout << "Ray Differential Origin: " << ray_diff.x().origin() << ", Direction: " << ray_diff.x().direction()
+              << std::endl;
+    std::cout << "Ray Differential Origin: " << ray_diff.y().origin() << ", Direction: " << ray_diff.y().direction()
               << std::endl;
 
-    math::Bound3 box(math::Pt3{0.0, 0.0, 0.0}, math::Pt3{1.0, 1.0, 1.0});
+    math::Bounds3 box(math::Pt3{0.0, 0.0, 0.0}, math::Pt3{1.0, 1.0, 1.0});
     std::cout << "Bounding Box: " << box << std::endl;
 
     math::Quat quaternion(1.0, math::Vec3{0.0, 1.0, 0.0});
@@ -45,5 +57,15 @@ int main() {
     constexpr math::Vec3 vec2(4.0, 5.0, 6.0);
     math::Vec3 vec3 = vec + vec2;
     std::cout << "Vector Addition: " << vec3 << std::endl;
+
+    math::Normal3 normal(vec);
+    std::cout << "Normal3 from Vector: " << normal << std::endl;
+    math::Normal3 normal3 = math::Normal3::from_vector(vec);
+    std::cout << "Normal3: " << normal3 << std::endl;
+
+
+    math::OctahedralVector<float> octahedral_vec(vec);
+    std::cout << "Octahedral Vector: " << octahedral_vec.decode() << std::endl;
+
     return 0;
 }
