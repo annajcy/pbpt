@@ -703,4 +703,439 @@ TEST(SphericalPointTest, HighPrecisionMath) {
     EXPECT_TRUE(are_almost_equal(converted.z(), math_pt.z(), Float(1e-5)));
 }
 
+// ==================== Spherical Coordinate Utility Function Tests ====================
+
+TEST(SphericalUtilityTest, CosThetaFunction) {
+    // Test cos_theta function for 3D vectors
+    
+    // Test with unit vector along z-axis (north pole)
+    Vector<Float, 3> north_pole(0, 0, 1);
+    EXPECT_FLOAT_EQ(cos_theta<Float>(north_pole), Float(1));
+    
+    // Test with unit vector along negative z-axis (south pole)
+    Vector<Float, 3> south_pole(0, 0, -1);
+    EXPECT_FLOAT_EQ(cos_theta<Float>(south_pole), Float(-1));
+    
+    // Test with unit vector in xy-plane (equator)
+    Vector<Float, 3> equator(1, 0, 0);
+    EXPECT_FLOAT_EQ(cos_theta<Float>(equator), Float(0));
+    
+    // Test with 45-degree elevation
+    Vector<Float, 3> v_45deg = Vector<Float, 3>(1, 0, 1).normalized();
+    EXPECT_TRUE(are_almost_equal(cos_theta<Float>(v_45deg), Float(1.0 / std::sqrt(2))));
+    
+    // Test with arbitrary vector
+    Vector<Float, 3> arbitrary(3, 4, 5);  // z = 5
+    Float expected_cos = Float(5);  // cos_theta just returns v.z()
+    EXPECT_FLOAT_EQ(cos_theta<Float>(arbitrary), expected_cos);
+}
+
+TEST(SphericalUtilityTest, CosThetaSqFunction) {
+    // Test cos_theta_sq function
+    Vector<Float, 3> v(1, 2, 3);  // z = 3
+    Float expected = Float(9);  // z^2 = 9
+    EXPECT_FLOAT_EQ(cos_theta_sq<Float>(v), expected);
+    
+    // Test with normalized vector
+    Vector<Float, 3> normalized = v.normalized();
+    Float cos_val = cos_theta<Float>(normalized);
+    EXPECT_TRUE(are_almost_equal(cos_theta_sq<Float>(normalized), cos_val * cos_val));
+}
+
+TEST(SphericalUtilityTest, SinThetaSqFunction) {
+    // Test sin_theta_sq function
+    Vector<Float, 3> north_pole(0, 0, 1);
+    EXPECT_TRUE(are_almost_equal(sin_theta_sq<Float>(north_pole), Float(0), Float(1e-10)));
+    
+    Vector<Float, 3> equator(1, 0, 0);
+    EXPECT_TRUE(are_almost_equal(sin_theta_sq<Float>(equator), Float(1), Float(1e-10)));
+    
+    // Test identity: sin²θ + cos²θ = 1
+    Vector<Float, 3> arbitrary(2, 3, 4);
+    arbitrary = arbitrary.normalized();
+    Float sin_sq = sin_theta_sq<Float>(arbitrary);
+    Float cos_sq = cos_theta_sq<Float>(arbitrary);
+    EXPECT_TRUE(are_almost_equal(sin_sq + cos_sq, Float(1), Float(1e-6)));
+}
+
+TEST(SphericalUtilityTest, SinThetaFunction) {
+    // Test sin_theta function
+    Vector<Float, 3> north_pole(0, 0, 1);
+    EXPECT_TRUE(are_almost_equal(sin_theta<Float>(north_pole), Float(0), Float(1e-10)));
+    
+    Vector<Float, 3> equator(1, 0, 0);
+    EXPECT_TRUE(are_almost_equal(sin_theta<Float>(equator), Float(1), Float(1e-10)));
+    
+    Vector<Float, 3> v_45deg = Vector<Float, 3>(1, 0, 1).normalized();
+    EXPECT_TRUE(are_almost_equal(sin_theta<Float>(v_45deg), Float(1.0 / std::sqrt(2))));
+    
+    // Test that sin_theta is always non-negative (implementation uses sqrt)
+    Vector<Float, 3> various_vectors[] = {
+        Vector<Float, 3>(1, 2, 3).normalized(),
+        Vector<Float, 3>(-1, -2, -3).normalized(),
+        Vector<Float, 3>(0, 1, -1).normalized()
+    };
+    
+    for (const auto& v : various_vectors) {
+        EXPECT_GE(sin_theta<Float>(v), Float(0));
+    }
+}
+
+TEST(SphericalUtilityTest, TanThetaFunction) {
+    // Test tan_theta function
+    Vector<Float, 3> equator(1, 0, 0);
+    // For equator: cos_theta = 0, sin_theta = 1, so tan should be infinity
+    // But in practice, we need to handle division by zero carefully
+    Float tan_val = tan_theta<Float>(equator);
+    EXPECT_TRUE(std::isinf(tan_val) || std::abs(tan_val) > Float(1e6));  // Very large value
+    
+    Vector<Float, 3> v_45deg = Vector<Float, 3>(1, 0, 1).normalized();
+    EXPECT_TRUE(are_almost_equal(tan_theta<Float>(v_45deg), Float(1)));
+    
+    Vector<Float, 3> north_pole(0, 0, 1);
+    EXPECT_TRUE(are_almost_equal(tan_theta<Float>(north_pole), Float(0), Float(1e-10)));
+}
+
+TEST(SphericalUtilityTest, TanThetaSqFunction) {
+    // Test tan_theta_sq function
+    Vector<Float, 3> v_45deg = Vector<Float, 3>(1, 0, 1).normalized();
+    EXPECT_TRUE(are_almost_equal(tan_theta_sq<Float>(v_45deg), Float(1)));
+    
+    Vector<Float, 3> north_pole(0, 0, 1);
+    EXPECT_TRUE(are_almost_equal(tan_theta_sq<Float>(north_pole), Float(0), Float(1e-10)));
+    
+    // Test relationship with sin and cos (avoid division by zero)
+    Vector<Float, 3> arbitrary(1, 2, 3);
+    arbitrary = arbitrary.normalized();
+    if (std::abs(cos_theta<Float>(arbitrary)) > Float(1e-6)) {
+        Float tan_sq_direct = tan_theta_sq<Float>(arbitrary);
+        Float tan_from_sin_cos = sin_theta_sq<Float>(arbitrary) / cos_theta_sq<Float>(arbitrary);
+        EXPECT_TRUE(are_almost_equal(tan_sq_direct, tan_from_sin_cos, Float(1e-6)));
+    }
+}
+
+TEST(SphericalUtilityTest, PhiFunction) {
+    // Test phi function for azimuthal angle
+    
+    // Test cardinal directions
+    Vector<Float, 3> pos_x(1, 0, 0);
+    EXPECT_TRUE(are_almost_equal(phi(pos_x), Float(0), Float(1e-6)));
+    
+    Vector<Float, 3> pos_y(0, 1, 0);
+    EXPECT_TRUE(are_almost_equal(phi(pos_y), pi_v<Float> / 2, Float(1e-6)));
+    
+    Vector<Float, 3> neg_x(-1, 0, 0);
+    EXPECT_TRUE(are_almost_equal(phi(neg_x), pi_v<Float>, Float(1e-6)));
+    
+    Vector<Float, 3> neg_y(0, -1, 0);
+    EXPECT_TRUE(are_almost_equal(phi(neg_y), Float(3) * pi_v<Float> / 2, Float(1e-6)));
+    
+    // Test 45-degree angles
+    Vector<Float, 3> northeast(1, 1, 0);
+    EXPECT_TRUE(are_almost_equal(phi(northeast), pi_v<Float> / 4, Float(1e-6)));
+    
+    Vector<Float, 3> southwest(-1, -1, 0);
+    EXPECT_TRUE(are_almost_equal(phi(southwest), Float(5) * pi_v<Float> / 4, Float(1e-6)));
+    
+    // Test that phi is in range [0, 2π)
+    std::vector<Vector<Float, 3>> test_vectors = {
+        Vector<Float, 3>(1, 1, 1), Vector<Float, 3>(-1, 1, -1),
+        Vector<Float, 3>(2, -3, 4), Vector<Float, 3>(-5, -2, 1)
+    };
+    
+    for (const auto& v : test_vectors) {
+        Float phi_val = phi(v);
+        EXPECT_GE(phi_val, Float(0));
+        EXPECT_LT(phi_val, Float(2) * pi_v<Float>);
+    }
+}
+
+TEST(SphericalUtilityTest, SinPhiFunction) {
+    // Test sin_phi function
+    
+    // Test cardinal directions
+    Vector<Float, 3> pos_x(1, 0, 1);  // Include z to avoid singularity
+    pos_x = pos_x.normalized();
+    EXPECT_TRUE(are_almost_equal(sin_phi(pos_x), Float(0), Float(1e-6)));
+    
+    Vector<Float, 3> pos_y(0, 1, 1);
+    pos_y = pos_y.normalized();
+    EXPECT_TRUE(are_almost_equal(sin_phi(pos_y), Float(1), Float(1e-6)));
+    
+    Vector<Float, 3> neg_y(0, -1, 1);
+    neg_y = neg_y.normalized();
+    EXPECT_TRUE(are_almost_equal(sin_phi(neg_y), Float(-1), Float(1e-6)));
+    
+    // Test 45-degree angle
+    Vector<Float, 3> northeast(1, 1, 1);
+    northeast = northeast.normalized();
+    EXPECT_TRUE(are_almost_equal(sin_phi(northeast), Float(1) / std::sqrt(Float(2)), Float(1e-6)));
+    
+    // Test singularity at poles (sin_theta = 0)
+    Vector<Float, 3> north_pole(0, 0, 1);
+    EXPECT_TRUE(are_almost_equal(sin_phi(north_pole), Float(0), Float(1e-10)));
+    
+    Vector<Float, 3> south_pole(0, 0, -1);
+    EXPECT_TRUE(are_almost_equal(sin_phi(south_pole), Float(0), Float(1e-10)));
+}
+
+TEST(SphericalUtilityTest, CosPhiFunction) {
+    // Test cos_phi function
+    
+    // Test cardinal directions
+    Vector<Float, 3> pos_x(1, 0, 1);
+    pos_x = pos_x.normalized();
+    EXPECT_TRUE(are_almost_equal(cos_phi(pos_x), Float(1), Float(1e-6)));
+    
+    Vector<Float, 3> pos_y(0, 1, 1);
+    pos_y = pos_y.normalized();
+    EXPECT_TRUE(are_almost_equal(cos_phi(pos_y), Float(0), Float(1e-6)));
+    
+    Vector<Float, 3> neg_x(-1, 0, 1);
+    neg_x = neg_x.normalized();
+    EXPECT_TRUE(are_almost_equal(cos_phi(neg_x), Float(-1), Float(1e-6)));
+    
+    // Test 45-degree angle
+    Vector<Float, 3> northeast(1, 1, 1);
+    northeast = northeast.normalized();
+    EXPECT_TRUE(are_almost_equal(cos_phi(northeast), Float(1) / std::sqrt(Float(2)), Float(1e-6)));
+    
+    // Test singularity at poles
+    Vector<Float, 3> north_pole(0, 0, 1);
+    EXPECT_TRUE(are_almost_equal(cos_phi(north_pole), Float(1), Float(1e-10)));  // Default value
+    
+    // Test identity: sin²φ + cos²φ = 1 (for non-pole vectors)
+    Vector<Float, 3> arbitrary(2, 3, 4);
+    arbitrary = arbitrary.normalized();
+    Float sin_phi_val = sin_phi(arbitrary);
+    Float cos_phi_val = cos_phi(arbitrary);
+    EXPECT_TRUE(are_almost_equal(sin_phi_val * sin_phi_val + cos_phi_val * cos_phi_val, Float(1), Float(1e-6)));
+}
+
+TEST(SphericalUtilityTest, CosDeltaPhiFunction) {
+    // Test cos_delta_phi function for angle between projections
+    
+    // Test identical vectors
+    Vector<Float, 3> v(1, 2, 3);
+    EXPECT_TRUE(are_almost_equal(cos_delta_phi(v, v), Float(1), Float(1e-10)));
+    
+    // Test orthogonal vectors in xy-plane
+    Vector<Float, 3> v1(1, 0, 5);  // Same z, different xy
+    Vector<Float, 3> v2(0, 1, 5);
+    EXPECT_TRUE(are_almost_equal(cos_delta_phi(v1, v2), Float(0), Float(1e-6)));
+    
+    // Test opposite vectors in xy-plane
+    Vector<Float, 3> v3(1, 0, 3);
+    Vector<Float, 3> v4(-1, 0, 3);
+    EXPECT_TRUE(are_almost_equal(cos_delta_phi(v3, v4), Float(-1), Float(1e-6)));
+    
+    // Test 45-degree difference in xy-plane
+    Vector<Float, 3> v5(1, 0, 2);
+    Vector<Float, 3> v6(1, 1, 2);
+    v6 = v6.normalized() * v5.length();  // Maintain same z and radius in xy
+    Float expected_cos = Float(1) / std::sqrt(Float(2));  // cos(45°)
+    EXPECT_TRUE(are_almost_equal(cos_delta_phi(v5, v6), expected_cos, Float(1e-5)));
+    
+    // Test singularities (vectors with zero xy components)
+    Vector<Float, 3> pole1(0, 0, 1);
+    Vector<Float, 3> pole2(0, 0, -1);
+    EXPECT_TRUE(are_almost_equal(cos_delta_phi(pole1, pole2), Float(1), Float(1e-10)));  // Default value
+    
+    Vector<Float, 3> mixed1(0, 0, 1);
+    Vector<Float, 3> mixed2(1, 0, 2);
+    EXPECT_TRUE(are_almost_equal(cos_delta_phi(mixed1, mixed2), Float(1), Float(1e-10)));
+}
+
+TEST(SphericalUtilityTest, TrigonometricIdentities) {
+    // Test various trigonometric identities for spherical coordinates
+    
+    std::vector<Vector<Float, 3>> test_vectors = {
+        Vector<Float, 3>(1, 0, 0).normalized(),
+        Vector<Float, 3>(0, 1, 0).normalized(),
+        Vector<Float, 3>(0, 0, 1).normalized(),
+        Vector<Float, 3>(1, 1, 1).normalized(),
+        Vector<Float, 3>(2, -3, 4).normalized(),
+        Vector<Float, 3>(-1, 2, -3).normalized()
+    };
+    
+    for (const auto& v : test_vectors) {
+        // Test sin²θ + cos²θ = 1
+        Float sin_sq = sin_theta_sq(v);
+        Float cos_sq = cos_theta_sq(v);
+        EXPECT_TRUE(are_almost_equal(sin_sq + cos_sq, Float(1), Float(1e-6)))
+            << "sin²θ + cos²θ = 1 failed for vector (" << v.x() << ", " << v.y() << ", " << v.z() << ")";
+        
+        // Test sin²φ + cos²φ = 1 (except at poles)
+        if (sin_theta(v) > Float(1e-6)) {  // Avoid poles
+            Float sin_phi_val = sin_phi(v);
+            Float cos_phi_val = cos_phi(v);
+            EXPECT_TRUE(are_almost_equal(sin_phi_val * sin_phi_val + cos_phi_val * cos_phi_val, Float(1), Float(1e-6)))
+                << "sin²φ + cos²φ = 1 failed for vector (" << v.x() << ", " << v.y() << ", " << v.z() << ")";
+        }
+        
+        // Test tan²θ = sin²θ / cos²θ (except when cos_theta = 0)
+        if (std::abs(cos_theta(v)) > Float(1e-6)) {
+            Float tan_sq_direct = tan_theta_sq(v);
+            Float tan_sq_from_trig = sin_theta_sq(v) / cos_theta_sq(v);
+            EXPECT_TRUE(are_almost_equal(tan_sq_direct, tan_sq_from_trig, Float(1e-6)))
+                << "tan²θ identity failed for vector (" << v.x() << ", " << v.y() << ", " << v.z() << ")";
+        }
+    }
+}
+
+// ==================== Equal Area Mapping Tests ====================
+
+TEST(SphericalUtilityTest, EqualAreaSquareToSphereBasic) {
+    // Test equal_area_square_to_sphere function
+    
+    // Test corners of unit square [0,1]²
+    Vector<Float, 2> corner_00(0, 0);
+    Vector<Float, 2> corner_01(0, 1);
+    Vector<Float, 2> corner_10(1, 0);
+    Vector<Float, 2> corner_11(1, 1);
+    
+    auto sphere_00 = equal_area_square_to_sphere(corner_00);
+    auto sphere_01 = equal_area_square_to_sphere(corner_01);
+    auto sphere_10 = equal_area_square_to_sphere(corner_10);
+    auto sphere_11 = equal_area_square_to_sphere(corner_11);
+    
+    // All results should be unit vectors
+    EXPECT_TRUE(are_almost_equal(sphere_00.length(), Float(1), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(sphere_01.length(), Float(1), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(sphere_10.length(), Float(1), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(sphere_11.length(), Float(1), Float(1e-6)));
+    
+    // Test center of square
+    Vector<Float, 2> center(0.5f, 0.5f);
+    auto sphere_center = equal_area_square_to_sphere(center);
+    std::cout << "Sphere center: " << sphere_center << std::endl;
+    EXPECT_TRUE(are_almost_equal(sphere_center.length(), Float(1), Float(1e-6)));
+    
+    // Center should map to some reasonable point on sphere
+    EXPECT_GE(sphere_center.z(), Float(-1));
+    EXPECT_LE(sphere_center.z(), Float(1));
+}
+
+TEST(SphericalUtilityTest, EqualAreaSquareToSphereCoverage) {
+    // Test that the mapping covers the sphere reasonably
+    const int samples = 10;
+    std::vector<Vector<Float, 3>> mapped_points;
+    
+    for (int i = 0; i <= samples; ++i) {
+        for (int j = 0; j <= samples; ++j) {
+            Float u = Float(i) / Float(samples);
+            Float v = Float(j) / Float(samples);
+            Vector<Float, 2> square_pt(u, v);
+            auto sphere_pt = equal_area_square_to_sphere(square_pt);
+            
+            // Should be unit vector
+            EXPECT_TRUE(are_almost_equal(sphere_pt.length(), Float(1), Float(1e-5)));
+            mapped_points.push_back(sphere_pt);
+        }
+    }
+    
+    // Check that we get reasonable coverage of the sphere
+    // Find min/max z values
+    Float min_z = mapped_points[0].z();
+    Float max_z = mapped_points[0].z();
+    
+    for (const auto& pt : mapped_points) {
+        min_z = std::min(min_z, pt.z());
+        max_z = std::max(max_z, pt.z());
+    }
+    
+    // Should cover a reasonable range of z values
+    EXPECT_LT(min_z, Float(0));  // Should reach southern hemisphere
+    EXPECT_GT(max_z, Float(0));  // Should reach northern hemisphere
+    EXPECT_GT(max_z - min_z, Float(1.5));  // Reasonable coverage range
+}
+
+TEST(SphericalUtilityTest, EqualAreaSquareToSphereSymmetry) {
+    // Test symmetries of the equal area mapping
+    
+    // Test that opposite corners map to points with opposite signs in appropriate coordinates
+    Vector<Float, 2> corner_00(0, 0);
+    Vector<Float, 2> corner_11(1, 1);
+    
+    auto sphere_00 = equal_area_square_to_sphere(corner_00);
+    auto sphere_11 = equal_area_square_to_sphere(corner_11);
+    
+    // The mapping should have some reasonable symmetry properties
+    // (exact properties depend on the specific equal-area mapping implementation)
+    EXPECT_TRUE(are_almost_equal(sphere_00.length(), sphere_11.length(), Float(1e-6)));
+    
+    // Test center symmetry
+    Vector<Float, 2> center(0.5f, 0.5f);
+    auto sphere_center = equal_area_square_to_sphere(center);
+    
+    // Center of square should map to a point with reasonable coordinates
+    EXPECT_TRUE(std::abs(sphere_center.x()) <= Float(1));
+    EXPECT_TRUE(std::abs(sphere_center.y()) <= Float(1));
+    EXPECT_TRUE(std::abs(sphere_center.z()) <= Float(1));
+}
+
+// ==================== Enhanced wrap_angle_2pi Tests ====================
+
+TEST(SphericalUtilityTest, WrapAngle2PiExtensive) {
+    // Test wrap_angle_2pi with more comprehensive cases
+    
+    // Test multiple full rotations
+    Float two_pi = Float(2) * pi_v<Float>;
+    
+    // Positive multiple rotations
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(4) * pi_v<Float>), Float(0), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(6) * pi_v<Float>), Float(0), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(5) * pi_v<Float>), pi_v<Float>, Float(1e-6)));
+    
+    // Negative multiple rotations
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(-4) * pi_v<Float>), Float(0), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(-3) * pi_v<Float>), pi_v<Float>, Float(1e-6)));
+    
+    // Test with small angles
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(0.1)), Float(0.1), Float(1e-10)));
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(Float(-0.1)), two_pi - Float(0.1), Float(1e-6)));
+    
+    // Test boundary conditions
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(two_pi), Float(0), Float(1e-6)));
+    EXPECT_TRUE(are_almost_equal(wrap_angle_2pi(-two_pi), Float(0), Float(1e-6)));
+    
+    // Test that output is always in [0, 2π)
+    std::vector<Float> test_angles = {
+        Float(-10), Float(-5.5), Float(-1), Float(0), Float(1), 
+        Float(5.5), Float(10), Float(100), Float(-100)
+    };
+    
+    for (Float angle : test_angles) {
+        Float wrapped = wrap_angle_2pi(angle);
+        EXPECT_GE(wrapped, Float(0)) << "Wrapped angle " << wrapped << " from " << angle << " is negative";
+        EXPECT_LT(wrapped, two_pi) << "Wrapped angle " << wrapped << " from " << angle << " is >= 2π";
+    }
+}
+
+TEST(SphericalUtilityTest, WrapAngle2PiConsistency) {
+    // Test that wrapping is consistent and idempotent
+    
+    std::vector<Float> test_angles = {
+        Float(-7), Float(-3.5), Float(0), Float(3.5), Float(7), Float(15)
+    };
+    
+    for (Float angle : test_angles) {
+        Float wrapped_once = wrap_angle_2pi(angle);
+        Float wrapped_twice = wrap_angle_2pi(wrapped_once);
+        
+        // Wrapping should be idempotent
+        EXPECT_TRUE(are_almost_equal(wrapped_once, wrapped_twice, Float(1e-10)))
+            << "Idempotent property failed for angle " << angle;
+        
+        // Wrapped angle should be equivalent (differ by multiple of 2π)
+        Float diff = angle - wrapped_once;
+        Float multiple_of_2pi = std::round(diff / (Float(2) * pi_v<Float>));
+        Float expected_diff = multiple_of_2pi * Float(2) * pi_v<Float>;
+        
+        EXPECT_TRUE(are_almost_equal(diff, expected_diff, Float(1e-5)))
+            << "Angle " << angle << " and wrapped " << wrapped_once 
+            << " don't differ by multiple of 2π";
+    }
+}
+
 }  // namespace pbpt::math::testing

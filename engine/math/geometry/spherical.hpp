@@ -1,5 +1,10 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
+#include <concepts>
+#include <cstdlib>
+
 #include "../global/type_alias.hpp"
 #include "math/global/function.hpp"
 #include "math/global/operator.hpp"
@@ -152,7 +157,91 @@ private:
 };
 
 template<std::floating_point T>
-constexpr T spherical_triangle_area(
+inline constexpr auto cos_theta(const Vector<T, 3>& v) {
+    return v.z();
+} 
+
+template <std::floating_point T>
+inline constexpr auto cos_theta_sq(const Vector<T, 3>& v) {
+    return v.z() * v.z();
+}
+
+template<std::floating_point T>
+inline constexpr auto sin_theta_sq(const Vector<T, 3>& v) {
+    return std::max(T(0), T(1) - cos_theta_sq(v));
+}
+
+template<std::floating_point T>
+inline constexpr auto sin_theta(const Vector<T, 3>& v) {
+    return std::sqrt(sin_theta_sq(v));
+}
+
+template <std::floating_point T>
+inline constexpr auto tan_theta(const Vector<T, 3>& v) {
+    return sin_theta(v) / cos_theta(v);
+}
+
+template <std::floating_point T>
+inline constexpr auto tan_theta_sq(const Vector<T, 3>& v) {
+    return sin_theta_sq(v) / cos_theta_sq(v);
+}
+
+template<std::floating_point T>
+inline constexpr auto phi(const Vector<T, 3>& v) {
+    auto p = std::atan2(v.y(), v.x());
+    return wrap_angle_2pi(p);
+}
+
+template<std::floating_point T>
+inline constexpr auto sin_phi(const Vector<T, 3>& v) {
+    auto s_th = sin_theta(v);
+    return is_zero(s_th) ? T(0) : std::clamp(v.y() / s_th, T(-1), T(1));
+}
+
+template<std::floating_point T>
+inline constexpr auto cos_phi(const Vector<T, 3>& v) {
+    auto s_th = sin_theta(v);
+    return is_zero(s_th) ? T(1) : std::clamp(v.x() / s_th, T(-1), T(1));
+}
+
+template<std::floating_point T>
+inline constexpr auto cos_delta_phi(const Vector<T, 3>& a, const Vector<T, 3>& b) {
+    auto axy = a.x() * a.x() + a.y() * a.y();
+    auto bxy = b.x() * b.x() + b.y() * b.y();
+    return (is_zero(axy) || is_zero(bxy)) ? T(1) : std::clamp(
+        (a.x() * b.x() + a.y() * b.y()) / std::sqrt(axy * bxy), 
+        T(-1), T(1)
+    );
+}
+
+template<std::floating_point T>
+inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p) {
+    T u = 2 * p.x() - 1, v = 2 * p.y() - 1;
+    T up = std::abs(u), vp = std::abs(v);
+    T signed_distance = 1 - (up + vp);
+    T d = std::abs(signed_distance);
+    T r = 1 - d;
+
+    T phi = (r == 0 ? 1 : (vp - up) / (r + 1)) * (pi_v<T> / 4);
+    T z = std::copysign(1 - r * r, signed_distance);
+
+    T cos_phi = std::copysign(std::cos(phi), u);
+    T sin_phi = std::copysign(std::sin(phi), v);
+
+    return Vector<T, 3>(
+        cos_phi * r * std::sqrt(2 - r * r), 
+        sin_phi * r * std::sqrt(2 - r * r), 
+        z
+    );
+}
+
+template<std::floating_point T>
+inline constexpr Vector<T, 2> equal_area_sphere_to_square(const Vector<T, 3>& w) {
+// TODO
+}
+
+template<std::floating_point T>
+inline constexpr T spherical_triangle_area(
     const Vector<T, 3>& a,
     const Vector<T, 3>& b,
     const Vector<T, 3>& c
