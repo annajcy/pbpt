@@ -17,7 +17,6 @@ private:
     std::uint16_t m_y_encoded{};
 
 public:
-    OctahedralVector() = default;
 
     explicit OctahedralVector(const Vector<T, 3>& v) {
         Vector<T, 2> p = encode_direction(v);
@@ -61,11 +60,10 @@ private:
         T z = T(1) - std::abs(x) - std::abs(y);
 
         if (z < 0) {
-            T ox = (1 - std::abs(y)) * (x >= 0 ? 1 : -1);
-            T oy = (1 - std::abs(x)) * (y >= 0 ? 1 : -1);
+            T ox = (T(1) - std::abs(y)) * (x >= 0 ? T(1) : T(-1));
+            T oy = (T(1) - std::abs(x)) * (y >= 0 ? T(1) : T(-1));
             x = ox;
             y = oy;
-            z = -z;
         }
 
         Vector<T, 3> v{x, y, z};

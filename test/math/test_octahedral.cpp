@@ -51,17 +51,6 @@ protected:
     }
 };
 
-// Test default construction
-TEST_F(OctahedralVectorTest, DefaultConstruction) {
-    OctahedralVector<Float> ov;
-    Vector<Float, 3> decoded = ov.decode();
-    
-    // Default constructed should have some valid decoded value
-    EXPECT_FALSE(std::isnan(decoded.x()));
-    EXPECT_FALSE(std::isnan(decoded.y()));
-    EXPECT_FALSE(std::isnan(decoded.z()));
-    EXPECT_TRUE(decoded.is_normalized());
-}
 
 // Test basic encoding/decoding works
 TEST_F(OctahedralVectorTest, BasicEncodeDecode) {
@@ -79,12 +68,12 @@ TEST_F(OctahedralVectorTest, BasicEncodeDecode) {
         EXPECT_TRUE(reconstructed.is_normalized()) 
             << "Reconstructed vector should be normalized for input: " 
             << original;
-        
-        // The vectors should not be completely different 
-        // (allowing for significant compression artifacts)
-        Float dot_product = original.dot(reconstructed);
-        EXPECT_GT(std::abs(dot_product), 0.3f) 
-            << "Reconstructed vector should be at least somewhat similar to original";
+
+        std::cout << "Original: " << original << ", Reconstructed: " << reconstructed << std::endl;
+
+        EXPECT_NEAR(reconstructed.x(), original.x(), 1e-4) << "Reconstructed x should match original x for input: " << original;
+        EXPECT_NEAR(reconstructed.y(), original.y(), 1e-4) << "Reconstructed y should match original y for input: " << original;
+        EXPECT_NEAR(reconstructed.z(), original.z(), 1e-4) << "Reconstructed z should match original z for input: " << original;
     }
 }
 
@@ -114,9 +103,9 @@ TEST_F(OctahedralVectorTest, NonUnitVectorHandling) {
     
     EXPECT_TRUE(reconstructed.is_normalized());
     
-    // Should be roughly in the same direction
-    Float dot_product = expected_direction.dot(reconstructed);
-    EXPECT_GT(dot_product, 0.3f);
+    EXPECT_NEAR(reconstructed.x(), expected_direction.x(), 1e-4);
+    EXPECT_NEAR(reconstructed.y(), expected_direction.y(), 1e-4);
+    EXPECT_NEAR(reconstructed.z(), expected_direction.z(), 1e-4);
 }
 
 // Test storage size - this is a key feature of octahedral vectors
@@ -143,14 +132,9 @@ TEST_F(OctahedralVectorTest, BasicProperties) {
         
         // Should always be normalized
         EXPECT_TRUE(reconstructed.is_normalized());
-        
-        // Should not contain NaN or infinite values
-        EXPECT_FALSE(std::isnan(reconstructed.x()));
-        EXPECT_FALSE(std::isnan(reconstructed.y()));
-        EXPECT_FALSE(std::isnan(reconstructed.z()));
-        EXPECT_FALSE(std::isinf(reconstructed.x()));
-        EXPECT_FALSE(std::isinf(reconstructed.y()));
-        EXPECT_FALSE(std::isinf(reconstructed.z()));
+        EXPECT_NEAR(reconstructed.x(), original.x(), 1e-4);
+        EXPECT_NEAR(reconstructed.y(), original.y(), 1e-4);
+        EXPECT_NEAR(reconstructed.z(), original.z(), 1e-4);
     }
 }
 
@@ -165,11 +149,11 @@ TEST_F(OctahedralVectorTest, RandomVectorSanityCheck) {
         OctahedralVector<Float> ov(original);
         Vector<Float, 3> reconstructed = ov.decode();
         
-        // Basic sanity checks
-        EXPECT_TRUE(reconstructed.is_normalized()) << "Test " << i;
-        EXPECT_FALSE(std::isnan(reconstructed.x())) << "Test " << i;
-        EXPECT_FALSE(std::isnan(reconstructed.y())) << "Test " << i;
-        EXPECT_FALSE(std::isnan(reconstructed.z())) << "Test " << i;
+        // Check that the reconstructed vector is normalized
+        EXPECT_TRUE(reconstructed.is_normalized());
+        EXPECT_NEAR(reconstructed.x(), original.x(), 1e-4);
+        EXPECT_NEAR(reconstructed.y(), original.y(), 1e-4);
+        EXPECT_NEAR(reconstructed.z(), original.z(), 1e-4);
     }
 }
 
@@ -224,6 +208,10 @@ TEST_F(OctahedralVectorTest, EdgeCasesNoCrash) {
         OctahedralVector<Float> ov(test_vec);
         Vector<Float, 3> decoded = ov.decode();
         EXPECT_TRUE(decoded.is_normalized()) << "Edge case " << i;
+
+        EXPECT_NEAR(decoded.x(), test_vec.x(), 1e-4) << "Edge case " << i;
+        EXPECT_NEAR(decoded.y(), test_vec.y(), 1e-4) << "Edge case " << i;
+        EXPECT_NEAR(decoded.z(), test_vec.z(), 1e-4) << "Edge case " << i;
     }
 }
 
