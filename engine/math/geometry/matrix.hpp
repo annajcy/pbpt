@@ -5,6 +5,8 @@
 #include <format>
 #include <functional>
 #include <iostream>
+#include <ranges>
+#include <algorithm>
 #include <type_traits>
 #include <utility>
 
@@ -25,10 +27,19 @@ protected:
     int      m_stride;
 
 public:
-    constexpr VectorView(const T* start, int stride) : m_start_ptr(start), m_stride(stride) {}
+    /// @brief Creates a non-owning view of data elements with specified stride.
+    /// @warning The caller must ensure that the referenced data remains valid for the lifetime of this view.
+    /// @param start Pointer to the first element (must not be nullptr)
+    /// @param stride Distance between consecutive elements in the view
+    [[nodiscard]] constexpr VectorView(const T* start, int stride) 
+        : m_start_ptr(start), m_stride(stride) {
+        assert_if_ex<std::invalid_argument>([&]() { return start == nullptr; }, 
+                                           "VectorView requires non-null data pointer");
+    }
 
     constexpr const T& operator[](int i) const { return m_start_ptr[i * m_stride]; }
     constexpr T&       operator[](int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
+
     constexpr const T& at(int i) const { return m_start_ptr[i * m_stride]; }
     constexpr T&       at(int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
 
@@ -235,16 +246,24 @@ public:
     // Unified comparison operators
     template <typename U>
     constexpr bool operator==(const Matrix<U, R, C>& rhs) const noexcept {
-        for (int i = 0; i < R * C; ++i) {
-            if (!is_equal(m_data[i], static_cast<T>(rhs.data()[i])))
-                return false;
-        }
-        return true;
+        // Use std::ranges::equal with custom comparator for floating-point comparison
+        return std::ranges::equal(m_data, rhs.to_array(), 
+                                 [](const T& a, const U& b) { 
+                                     return is_equal(a, static_cast<T>(b)); 
+                                 });
     }
 
     template <typename U>
     constexpr bool operator!=(const Matrix<U, R, C>& rhs) const noexcept { 
         return !(*this == rhs); 
+    }
+
+    /// @brief Check if any element in the matrix is NaN
+    /// @return true if any element is NaN, false otherwise
+    [[nodiscard]] constexpr bool has_nan() const noexcept 
+        requires std::is_floating_point_v<T>
+    {
+        return std::ranges::any_of(m_data, [](T val) { return std::isnan(val); });
     }
 
     // Assignment operators with type safety
@@ -290,16 +309,15 @@ public:
         return result;
     }
 
-    constexpr Matrix<T, C, R>& transpose() noexcept
+    constexpr Matrix& transpose() noexcept
         requires(R == C)
     {
-        Matrix<T, C, R> result{};
+        // True in-place transpose using symmetric swapping
         for (int i = 0; i < R; ++i) {
-            for (int j = 0; j < C; ++j) {
-                result[j][i] = (*this)[i][j];
+            for (int j = i + 1; j < C; ++j) {
+                std::swap((*this)[i][j], (*this)[j][i]);
             }
         }
-        *this = result;
         return *this;
     }
 
@@ -320,7 +338,7 @@ public:
             T det = 0;
             for (int c = 0; c < C; ++c) {
                 T sign = (c % 2 == 0) ? 1 : -1;
-                det += sign * (*this).at(0, c) * submatrix(0, c).determinant();
+                det += sign * (*this).at(0, c) * minor_matrix(0, c).determinant();
             }
             return det;
         }
@@ -333,16 +351,26 @@ public:
         assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, 
                                        "Cannot invert a singular matrix");
 
-        Matrix cofactor_matrix{};
-        for (int r = 0; r < R; ++r) {
-            for (int c = 0; c < C; ++c) {
-                T sign                = ((r + c) % 2 == 0) ? T(1) : T(-1);
-                cofactor_matrix[r][c] = sign * submatrix(r, c).determinant();
+        // Optimized hardcoded versions for small matrices
+        if constexpr (R == 2) {
+            return inverse_2x2_optimized(det);
+        } else if constexpr (R == 3) {
+            return inverse_3x3_optimized(det);
+        } else if constexpr (R == 4) {
+            return inverse_4x4_optimized();
+        } else {
+            // General cofactor method for larger matrices
+            Matrix cofactor_matrix{};
+            for (int r = 0; r < R; ++r) {
+                for (int c = 0; c < C; ++c) {
+                    T sign                = ((r + c) % 2 == 0) ? T(1) : T(-1);
+                    cofactor_matrix[r][c] = sign * minor_matrix(r, c).determinant();
+                }
             }
-        }
 
-        Matrix adjugate_matrix = cofactor_matrix.transposed();
-        return adjugate_matrix * (T(1) / det);
+            Matrix adjugate_matrix = cofactor_matrix.transposed();
+            return adjugate_matrix * (T(1) / det);
+        }
     }
 
     constexpr Matrix& inverse()
@@ -356,7 +384,7 @@ public:
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
                 T sign                = ((r + c) % 2 == 0) ? T(1) : T(-1);
-                cofactor_matrix[r][c] = sign * submatrix(r, c).determinant();
+                cofactor_matrix[r][c] = sign * minor_matrix(r, c).determinant();
             }
         }
 
@@ -379,25 +407,148 @@ public:
         return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
 
-    constexpr auto submatrix(int row_to_remove, int col_to_remove) const
+    /// @brief Creates a minor matrix by removing specified row and column.
+    /// @param row_to_remove The row index to remove (0-based)
+    /// @param col_to_remove The column index to remove (0-based) 
+    /// @return A (R-1)×(C-1) matrix with the specified row and column removed
+    constexpr auto minor_matrix(int row_to_remove, int col_to_remove) const
         requires(R == C)
     {
-        Matrix<T, R - 1, C - 1> sub{};
-        int                     sub_r = 0;
+        Matrix<T, R - 1, C - 1> minor{};
+        int                     minor_r = 0;
         for (int r = 0; r < R; ++r) {
             if (r == row_to_remove)
                 continue;
-            int sub_c = 0;
+            int minor_c = 0;
             for (int c = 0; c < C; ++c) {
                 if (c == col_to_remove)
                     continue;
-                sub[sub_r][sub_c] = (*this)[r][c];
-                sub_c++;
+                minor[minor_r][minor_c] = (*this)[r][c];
+                minor_c++;
             }
-            sub_r++;
+            minor_r++;
         }
-        return sub;
+        return minor;
     }
+
+private:
+    /// @brief Optimized 2x2 matrix inversion using analytical formula
+    /// @param det Pre-computed determinant value
+    /// @return Inverted 2x2 matrix
+    constexpr Matrix inverse_2x2_optimized(T det) const
+        requires(R == 2 && C == 2)
+    {
+        T inv_det = T(1) / det;
+        Matrix result{};
+        
+        // For 2x2 matrix [[a, b], [c, d]], inverse is (1/det) * [[d, -b], [-c, a]]
+        result.at(0, 0) =  (*this).at(1, 1) * inv_det;  // d
+        result.at(0, 1) = -(*this).at(0, 1) * inv_det;  // -b
+        result.at(1, 0) = -(*this).at(1, 0) * inv_det;  // -c
+        result.at(1, 1) =  (*this).at(0, 0) * inv_det;  // a
+        
+        return result;
+    }
+
+    /// @brief Optimized 3x3 matrix inversion using analytical formula
+    /// @param det Pre-computed determinant value
+    /// @return Inverted 3x3 matrix
+    constexpr Matrix inverse_3x3_optimized(T det) const
+        requires(R == 3 && C == 3)
+    {
+        T inv_det = T(1) / det;
+        Matrix result{};
+        
+        // Compute cofactor matrix elements directly
+        // Row 0
+        result.at(0, 0) = ((*this).at(1, 1) * (*this).at(2, 2) - (*this).at(1, 2) * (*this).at(2, 1)) * inv_det;
+        result.at(0, 1) = ((*this).at(0, 2) * (*this).at(2, 1) - (*this).at(0, 1) * (*this).at(2, 2)) * inv_det;
+        result.at(0, 2) = ((*this).at(0, 1) * (*this).at(1, 2) - (*this).at(0, 2) * (*this).at(1, 1)) * inv_det;
+        
+        // Row 1
+        result.at(1, 0) = ((*this).at(1, 2) * (*this).at(2, 0) - (*this).at(1, 0) * (*this).at(2, 2)) * inv_det;
+        result.at(1, 1) = ((*this).at(0, 0) * (*this).at(2, 2) - (*this).at(0, 2) * (*this).at(2, 0)) * inv_det;
+        result.at(1, 2) = ((*this).at(0, 2) * (*this).at(1, 0) - (*this).at(0, 0) * (*this).at(1, 2)) * inv_det;
+        
+        // Row 2
+        result.at(2, 0) = ((*this).at(1, 0) * (*this).at(2, 1) - (*this).at(1, 1) * (*this).at(2, 0)) * inv_det;
+        result.at(2, 1) = ((*this).at(0, 1) * (*this).at(2, 0) - (*this).at(0, 0) * (*this).at(2, 1)) * inv_det;
+        result.at(2, 2) = ((*this).at(0, 0) * (*this).at(1, 1) - (*this).at(0, 1) * (*this).at(1, 0)) * inv_det;
+        
+        return result;
+    }
+
+    /// @brief Optimized 4x4 matrix inversion using direct formula
+    /// @return Inverted 4x4 matrix  
+    constexpr Matrix inverse_4x4_optimized() const
+        requires(R == 4 && C == 4)
+    {
+        // Use direct analytical formula for 4x4 matrix inversion
+        // More efficient than cofactor expansion
+        const T a00 = (*this).at(0, 0), a01 = (*this).at(0, 1), a02 = (*this).at(0, 2), a03 = (*this).at(0, 3);
+        const T a10 = (*this).at(1, 0), a11 = (*this).at(1, 1), a12 = (*this).at(1, 2), a13 = (*this).at(1, 3);
+        const T a20 = (*this).at(2, 0), a21 = (*this).at(2, 1), a22 = (*this).at(2, 2), a23 = (*this).at(2, 3);
+        const T a30 = (*this).at(3, 0), a31 = (*this).at(3, 1), a32 = (*this).at(3, 2), a33 = (*this).at(3, 3);
+
+        // Calculate 2x2 determinants for cofactor computation
+        const T det2_01_01 = a00 * a11 - a01 * a10;
+        const T det2_01_02 = a00 * a12 - a02 * a10;
+        const T det2_01_03 = a00 * a13 - a03 * a10;
+        const T det2_01_12 = a01 * a12 - a02 * a11;
+        const T det2_01_13 = a01 * a13 - a03 * a11;
+        const T det2_01_23 = a02 * a13 - a03 * a12;
+
+        const T det2_23_01 = a20 * a31 - a21 * a30;
+        const T det2_23_02 = a20 * a32 - a22 * a30;
+        const T det2_23_03 = a20 * a33 - a23 * a30;
+        const T det2_23_12 = a21 * a32 - a22 * a31;
+        const T det2_23_13 = a21 * a33 - a23 * a31;
+        const T det2_23_23 = a22 * a33 - a23 * a32;
+
+        // Calculate 3x3 cofactors for adjugate matrix
+        const T cof00 = +(a11 * det2_23_23 - a12 * det2_23_13 + a13 * det2_23_12);
+        const T cof01 = -(a10 * det2_23_23 - a12 * det2_23_03 + a13 * det2_23_02);
+        const T cof02 = +(a10 * det2_23_13 - a11 * det2_23_03 + a13 * det2_23_01);
+        const T cof03 = -(a10 * det2_23_12 - a11 * det2_23_02 + a12 * det2_23_01);
+
+        const T cof10 = -(a01 * det2_23_23 - a02 * det2_23_13 + a03 * det2_23_12);
+        const T cof11 = +(a00 * det2_23_23 - a02 * det2_23_03 + a03 * det2_23_02);
+        const T cof12 = -(a00 * det2_23_13 - a01 * det2_23_03 + a03 * det2_23_01);
+        const T cof13 = +(a00 * det2_23_12 - a01 * det2_23_02 + a02 * det2_23_01);
+
+        const T cof20 = +(a31 * det2_01_23 - a32 * det2_01_13 + a33 * det2_01_12);
+        const T cof21 = -(a30 * det2_01_23 - a32 * det2_01_03 + a33 * det2_01_02);
+        const T cof22 = +(a30 * det2_01_13 - a31 * det2_01_03 + a33 * det2_01_01);
+        const T cof23 = -(a30 * det2_01_12 - a31 * det2_01_02 + a32 * det2_01_01);
+
+        const T cof30 = -(a21 * det2_01_23 - a22 * det2_01_13 + a23 * det2_01_12);
+        const T cof31 = +(a20 * det2_01_23 - a22 * det2_01_03 + a23 * det2_01_02);
+        const T cof32 = -(a20 * det2_01_13 - a21 * det2_01_03 + a23 * det2_01_01);
+        const T cof33 = +(a20 * det2_01_12 - a21 * det2_01_02 + a22 * det2_01_01);
+
+        // Calculate determinant using first row
+        const T det = a00 * cof00 + a01 * cof01 + a02 * cof02 + a03 * cof03;
+        
+        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, 
+                                       "Cannot invert a singular 4x4 matrix");
+        
+        const T inv_det = T(1) / det;
+
+        // Build result matrix (transposed cofactor matrix / determinant)
+        Matrix result{};
+        result.at(0, 0) = cof00 * inv_det; result.at(0, 1) = cof10 * inv_det; 
+        result.at(0, 2) = cof20 * inv_det; result.at(0, 3) = cof30 * inv_det;
+        result.at(1, 0) = cof01 * inv_det; result.at(1, 1) = cof11 * inv_det;
+        result.at(1, 2) = cof21 * inv_det; result.at(1, 3) = cof31 * inv_det;
+        result.at(2, 0) = cof02 * inv_det; result.at(2, 1) = cof12 * inv_det;
+        result.at(2, 2) = cof22 * inv_det; result.at(2, 3) = cof32 * inv_det;
+        result.at(3, 0) = cof03 * inv_det; result.at(3, 1) = cof13 * inv_det;
+        result.at(3, 2) = cof23 * inv_det; result.at(3, 3) = cof33 * inv_det;
+
+        return result;
+    }
+
+public:
 
     // Arithmetic operators with type promotion
     template <typename U>
@@ -485,7 +636,7 @@ public:
 
     // Stream output operator
     friend std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
-        os << "Matrix<" << R << "x" << C << ">[\n";
+        os << "Matrix" << R << "x" << C << "<" << typeid(T).name() << ">[\n";
         for (int i = 0; i < R; ++i) {
             os << "  [";
             for (int j = 0; j < C; ++j) {

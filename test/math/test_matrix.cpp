@@ -479,4 +479,59 @@ TEST_F(MatrixTest, ValueConstructorWithWrongNumberOfValues) {
 }
 */
 
+// Additional tests based on optimization suggestions
+TEST_F(MatrixTest, InverseValidation) {
+    // Test A * A.inversed() == identity for various matrix sizes
+    Mat2 m2(Vec2(2, 1), Vec2(1, 1));
+    auto inv2 = m2.inversed();
+    auto result2 = m2 * inv2;
+    ExpectMatricesNear(result2, Mat2::identity());
+    
+    Mat3 m3(Vec3(2, 1, 0), Vec3(1, 2, 1), Vec3(0, 1, 2));
+    auto inv3 = m3.inversed();
+    auto result3 = m3 * inv3;
+    ExpectMatricesNear(result3, Mat3::identity());
+}
+
+TEST_F(MatrixTest, ViewModificationReflection) {
+    // Ensure modifying view reflects to original matrix
+    Mat3 original = Mat3::filled(1.0);
+    auto view = original.template view<2, 2>(0, 0);
+    
+    // Modify through view
+    view.at(0, 0) = 5.0;
+    view.at(1, 1) = 7.0;
+    
+    // Check original matrix is modified
+    EXPECT_DOUBLE_EQ(original.at(0, 0), 5.0);
+    EXPECT_DOUBLE_EQ(original.at(1, 1), 7.0);
+}
+
+TEST_F(MatrixTest, HasNanDetection) {
+    // Test construction with NAN elements
+    Mat2 normal_mat = Mat2::identity();
+    EXPECT_FALSE(normal_mat.has_nan());
+    
+    Mat2 nan_mat(Vec2(1.0, std::numeric_limits<Float>::quiet_NaN()), 
+                 Vec2(3.0, 4.0));
+    EXPECT_TRUE(nan_mat.has_nan());
+}
+
+TEST_F(MatrixTest, TypeConversionConstructor) {
+    // Test conversion between different floating-point types
+    Matrix<float, 2, 2> float_mat(Vector<float, 2>(1.5f, 2.5f), 
+                                  Vector<float, 2>(3.5f, 4.5f));
+    
+    // Manual conversion to double matrix (create from float matrix elements)
+    Matrix<double, 2, 2> double_mat(
+        Vector<double, 2>(static_cast<double>(float_mat.at(0,0)), static_cast<double>(float_mat.at(0,1))), 
+        Vector<double, 2>(static_cast<double>(float_mat.at(1,0)), static_cast<double>(float_mat.at(1,1)))
+    );
+    
+    EXPECT_DOUBLE_EQ(double_mat.at(0, 0), 1.5);
+    EXPECT_DOUBLE_EQ(double_mat.at(0, 1), 2.5);
+    EXPECT_DOUBLE_EQ(double_mat.at(1, 0), 3.5);  
+    EXPECT_DOUBLE_EQ(double_mat.at(1, 1), 4.5);
+}
+
 }  // namespace pbpt::math::testing

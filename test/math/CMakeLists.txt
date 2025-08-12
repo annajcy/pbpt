@@ -22,6 +22,14 @@ add_executable(test_matrix test_matrix.cpp)
 target_link_libraries(test_matrix PRIVATE pbpt_engine gtest_main )
 add_test(NAME test_matrix COMMAND test_matrix)
 
+add_executable(test_matrix_enhanced test_matrix_enhanced.cpp)
+target_link_libraries(test_matrix_enhanced PRIVATE pbpt_engine gtest_main )
+add_test(NAME test_matrix_enhanced COMMAND test_matrix_enhanced)
+
+add_executable(test_matrix_performance test_matrix_performance.cpp)
+target_link_libraries(test_matrix_performance PRIVATE pbpt_engine gtest_main )
+add_test(NAME test_matrix_performance COMMAND test_matrix_performance)
+
 add_executable(test_homo test_homo.cpp)
 target_link_libraries(test_homo PRIVATE pbpt_engine gtest_main )
 add_test(NAME test_homo COMMAND test_homo)

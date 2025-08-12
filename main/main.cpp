@@ -2,6 +2,7 @@
 
 #include "math/geometry/bounds.hpp"
 #include "math/geometry/homogeneous.hpp"
+#include "math/geometry/matrix.hpp"
 #include "math/geometry/normal.hpp"
 #include "math/geometry/octahedral.hpp"
 #include "math/geometry/point.hpp"
@@ -82,6 +83,12 @@ int main() {
 
     bool contains = dc.contains(math::Vector<math::Float, 3>(0.5, 0.5, 0.5));
     std::cout << "Contains Point? " << contains << std::endl;
+
+    math::Mat4 mat4 = math::Mat4::identity();
+    std::cout << "4x4 Identity Matrix:\n" << mat4 << std::endl;
+
+    auto m = mat4 + math::Matrix<double, 4, 4>::identity();
+    std::cout << "4x4 Matrix Addition:\n" << m << std::endl;
 
     return 0;
 }
