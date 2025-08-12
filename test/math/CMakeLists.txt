@@ -54,5 +54,9 @@ add_executable(test_octahedral test_octahedral.cpp)
 target_link_libraries(test_octahedral PRIVATE pbpt_engine gtest_main)
 add_test(NAME test_octahedral COMMAND test_octahedral)
 
+add_executable(test_directional_cone test_directional_cone.cpp)
+target_link_libraries(test_directional_cone PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_directional_cone COMMAND test_directional_cone)
+
 
 

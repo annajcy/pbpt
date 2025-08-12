@@ -11,6 +11,8 @@
 #include "math/geometry/transform.hpp"
 #include "math/geometry/vector.hpp"
 #include "math/global/function.hpp"
+#include "math/geometry/directional_cone.hpp"
+#include "math/global/type_alias.hpp"
 
 using namespace pbpt;
 
@@ -63,9 +65,23 @@ int main() {
     math::Normal3 normal3 = math::Normal3::from_vector(vec);
     std::cout << "Normal3: " << normal3 << std::endl;
 
-
-    math::OctahedralVector<float> octahedral_vec(vec);
+    std::cout << "Vector (float): " << vec.normalized() << std::endl;
+    math::OctahedralVector<float> octahedral_vec(vec.normalized());
     std::cout << "Octahedral Vector: " << octahedral_vec.decode() << std::endl;
+
+    std::cout << "Vector (double): " << vec_d.normalized().type_cast<double>() << std::endl;
+    math::OctahedralVector<double> octahedral_vec_d(vec_d.normalized());
+    std::cout << "Octahedral Vector (double): " << octahedral_vec_d.decode() << std::endl;
+
+    math::DirectionalCone<math::Float> dc(
+        math::Vector<math::Float, 3>(0, 0, 1), math::deg2rad(80.0)
+    );
+
+    std::cout << "Directional Cone Direction: " << dc.direction() << std::endl;
+    std::cout << "Directional Cone Angle: " << math::rad2deg(dc.angle()) << std::endl;
+
+    bool contains = dc.contains(math::Vector<math::Float, 3>(0.5, 0.5, 0.5));
+    std::cout << "Contains Point? " << contains << std::endl;
 
     return 0;
 }

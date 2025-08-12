@@ -46,7 +46,7 @@ private:
         y *= invL1;
         z *= invL1;
 
-        if (z < 0) {
+        if (is_less(z, 0)) {
             T ox = (T(1) - std::abs(y)) * (x >= 0 ? 1 : -1);
             T oy = (T(1) - std::abs(x)) * (y >= 0 ? 1 : -1);
             return Vector<T, 2>{ox, oy};
@@ -59,7 +59,7 @@ private:
         T y = e[1];
         T z = T(1) - std::abs(x) - std::abs(y);
 
-        if (z < 0) {
+        if (is_less(z, 0)) {
             T ox = (T(1) - std::abs(y)) * (x >= 0 ? T(1) : T(-1));
             T oy = (T(1) - std::abs(x)) * (y >= 0 ? T(1) : T(-1));
             x = ox;
