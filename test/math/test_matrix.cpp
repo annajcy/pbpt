@@ -246,7 +246,7 @@ TEST_F(MatrixTest, Inverse) {
 
     // Test singular matrix exception
     Mat2 singular(Vec2(2, 4), Vec2(2, 4));
-    EXPECT_THROW(singular.inversed(), std::runtime_error);
+    EXPECT_THROW(singular.inversed(), std::domain_error);
 }
 
 // --- View and Submatrix Tests ---

@@ -2,11 +2,14 @@
 
 #include <array>
 #include <concepts>
+#include <format>
 #include <functional>
-#include <stdexcept>
+#include <iostream>
 #include <type_traits>
 #include <utility>
 
+#include "math/global/operator.hpp"
+#include "math/global/utils.hpp"
 #include "vector.hpp"
 
 namespace pbpt::math {
@@ -138,17 +141,35 @@ public:
     using RowView = VectorView<T, C>;
     using ColView = VectorView<T, R>;
 
-    static constexpr Matrix zeros() noexcept { return Matrix(); }
+    // Static factory methods (unified with Vector design)
+    static constexpr Matrix zeros() noexcept { return Matrix{}; }
+    
+    static constexpr Matrix filled(T value) noexcept {
+        Matrix result{};
+        for (int i = 0; i < R * C; ++i)
+            result.m_data[i] = value;
+        return result;
+    }
+    
+    static constexpr Matrix ones() noexcept { return filled(T(1)); }
+    
     static constexpr Matrix identity() noexcept
         requires(R == C)
     {
         Matrix result{};
         for (int i = 0; i < R; ++i) {
-            result[i][i] = 1.0;
+            result[i][i] = T(1);
         }
         return result;
     }
 
+    static constexpr Matrix from_array(const std::array<T, R * C>& arr) noexcept {
+        Matrix result{};
+        result.m_data = arr;
+        return result;
+    }
+
+    // Constructors
     constexpr Matrix() noexcept = default;
 
     template <typename... Vecs>
@@ -168,14 +189,25 @@ public:
         requires(sizeof...(Vals) == R * C && (std::is_arithmetic_v<std::remove_cvref_t<Vals>> && ...))
     constexpr Matrix(Vals&&... vals) noexcept : m_data{static_cast<T>(std::forward<Vals>(vals))...} {}
 
-    constexpr const T& at(int r, int c) const {
-        if (r < 0 || r >= R || c < 0 || c >= C) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Matrix index out of range";
-            } else {
-                throw std::out_of_range("Matrix index out of range");
-            }
+    // Copy/conversion constructor from different matrix types
+    template <typename U>
+        requires std::convertible_to<U, T>
+    constexpr Matrix(const Matrix<U, R, C>& other) noexcept {
+        for (int i = 0; i < R * C; ++i) {
+            m_data[i] = static_cast<T>(other.data()[i]);
         }
+    }
+
+    // Accessors with improved error handling
+    constexpr const T& at(int r, int c) const {
+        assert_if_ex<std::out_of_range>([&]() { return r < 0 || r >= R || c < 0 || c >= C; }, 
+                                       "Matrix index out of range");
+        return m_data[r * C + c];
+    }
+
+    constexpr T& at(int r, int c) {
+        assert_if_ex<std::out_of_range>([&]() { return r < 0 || r >= R || c < 0 || c >= C; }, 
+                                       "Matrix index out of range");
         return m_data[r * C + c];
     }
 
@@ -193,35 +225,58 @@ public:
 
     constexpr int row_dims() const noexcept { return R; }
     constexpr int col_dims() const noexcept { return C; }
+    constexpr int dims() const noexcept { return R * C; }  // Total elements (unified with Vector)
 
     const T* data() const noexcept { return m_data.data(); }
     T*       data() noexcept { return m_data.data(); }
+    
+    constexpr std::array<T, R * C> to_array() const noexcept { return m_data; }
 
-    constexpr bool operator==(const Matrix& rhs) const noexcept {
+    // Unified comparison operators
+    template <typename U>
+    constexpr bool operator==(const Matrix<U, R, C>& rhs) const noexcept {
         for (int i = 0; i < R * C; ++i) {
-            if (!m_data[i] == rhs.m_data[i])
+            if (!is_equal(m_data[i], static_cast<T>(rhs.data()[i])))
                 return false;
         }
         return true;
     }
 
-    constexpr bool operator!=(const Matrix& rhs) const noexcept { return !(*this == rhs); }
+    template <typename U>
+    constexpr bool operator!=(const Matrix<U, R, C>& rhs) const noexcept { 
+        return !(*this == rhs); 
+    }
 
-    constexpr Matrix& operator+=(const Matrix& rhs) noexcept {
+    // Assignment operators with type safety
+    template <typename U>
+    constexpr Matrix& operator+=(const Matrix<U, R, C>& rhs) noexcept {
         for (int i = 0; i < R * C; ++i)
-            m_data[i] += rhs.m_data[i];
+            m_data[i] += static_cast<T>(rhs.data()[i]);
         return *this;
     }
 
-    constexpr Matrix& operator-=(const Matrix& rhs) noexcept {
+    template <typename U>
+    constexpr Matrix& operator-=(const Matrix<U, R, C>& rhs) noexcept {
         for (int i = 0; i < R * C; ++i)
-            m_data[i] -= rhs.m_data[i];
+            m_data[i] -= static_cast<T>(rhs.data()[i]);
         return *this;
     }
 
-    constexpr Matrix& operator*=(T scalar) noexcept {
+    template <typename U>
+        requires std::is_arithmetic_v<U>
+    constexpr Matrix& operator*=(const U& scalar) noexcept {
         for (int i = 0; i < R * C; ++i)
-            m_data[i] *= scalar;
+            m_data[i] *= static_cast<T>(scalar);
+        return *this;
+    }
+
+    template <typename U>
+        requires std::is_arithmetic_v<U>
+    constexpr Matrix& operator/=(const U& scalar) noexcept {
+        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
+                                       "Division by zero in matrix division");
+        for (int i = 0; i < R * C; ++i)
+            m_data[i] /= static_cast<T>(scalar);
         return *this;
     }
 
@@ -275,74 +330,52 @@ public:
         requires(R == C)
     {
         T det = determinant();
-        if (det == 0) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Cannot invert a singular matrix";
-            } else {
-                throw std::runtime_error("Cannot invert a singular matrix");
-            }
-        }
+        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, 
+                                       "Cannot invert a singular matrix");
 
         Matrix cofactor_matrix{};
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
-                T sign                = ((r + c) % 2 == 0) ? 1 : -1;
+                T sign                = ((r + c) % 2 == 0) ? T(1) : T(-1);
                 cofactor_matrix[r][c] = sign * submatrix(r, c).determinant();
             }
         }
 
         Matrix adjugate_matrix = cofactor_matrix.transposed();
-        return adjugate_matrix * (static_cast<T>(1.0) / det);
+        return adjugate_matrix * (T(1) / det);
     }
 
     constexpr Matrix& inverse()
         requires(R == C)
     {
         T det = determinant();
-        if (det == 0) {
-            if (std::is_constant_evaluated()) {
-                throw "Compile-time error: Cannot invert a singular matrix";
-            } else {
-                throw std::runtime_error("Cannot invert a singular matrix");
-            }
-        }
+        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, 
+                                       "Cannot invert a singular matrix");
 
         Matrix cofactor_matrix{};
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
-                T sign                = ((r + c) % 2 == 0) ? 1 : -1;
+                T sign                = ((r + c) % 2 == 0) ? T(1) : T(-1);
                 cofactor_matrix[r][c] = sign * submatrix(r, c).determinant();
             }
         }
 
         Matrix adjugate_matrix = cofactor_matrix.transposed();
-        *this                  = adjugate_matrix * (static_cast<T>(1.0) / det);
+        *this                  = adjugate_matrix * (T(1) / det);
         return *this;
     }
 
     template <int ViewR, int ViewC>
     constexpr Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) {
-        // Basic bounds check to ensure the view doesn't immediately go out of
-        // bounds
-        if (std::is_constant_evaluated()) {
-            if (row_start + ViewR > R || col_start + ViewC > C) {
-                throw "Compile-time error: View dimensions exceed original "
-                      "matrix bounds";
-            }
-        }
+        assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; }, 
+                                       "View dimensions exceed matrix bounds");
         return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
 
     template <int ViewR, int ViewC>
     constexpr const Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) const {
-        // Basic bounds check to ensure the view doesn't immediately go out of
-        // bounds
-        if (std::is_constant_evaluated()) {
-            if (row_start + ViewR > R || col_start + ViewC > C) {
-                throw "Compile-time error: View dimensions exceed original "
-                      "matrix bounds";
-            }
-        }
+        assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; }, 
+                                       "View dimensions exceed matrix bounds");
         return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
 
@@ -366,41 +399,82 @@ public:
         return sub;
     }
 
-    constexpr Matrix operator+(const Matrix& rhs) const noexcept {
-        auto result = *this;
-        return result += rhs;
-    }
-
-    constexpr Matrix operator-(const Matrix& rhs) const noexcept {
-        auto result = *this;
-        return result -= rhs;
+    // Arithmetic operators with type promotion
+    template <typename U>
+    constexpr auto operator+(const Matrix<U, R, C>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Matrix<ResultType, R, C> result{};
+        for (int i = 0; i < R * C; ++i) {
+            result.data()[i] = static_cast<ResultType>(m_data[i]) + 
+                              static_cast<ResultType>(rhs.data()[i]);
+        }
+        return result;
     }
 
     template <typename U>
-        requires std::convertible_to<U, T>
-    constexpr Matrix operator*(U scalar) const noexcept {
-        Matrix result = *this;
-        return result *= static_cast<T>(scalar);
+    constexpr auto operator-(const Matrix<U, R, C>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Matrix<ResultType, R, C> result{};
+        for (int i = 0; i < R * C; ++i) {
+            result.data()[i] = static_cast<ResultType>(m_data[i]) - 
+                              static_cast<ResultType>(rhs.data()[i]);
+        }
+        return result;
+    }
+
+    constexpr Matrix operator-() const noexcept {
+        Matrix result{};
+        for (int i = 0; i < R * C; ++i)
+            result.m_data[i] = -m_data[i];
+        return result;
     }
 
     template <typename U>
-        requires std::convertible_to<U, T>
-    friend constexpr Matrix operator*(U scalar, const Matrix<T, R, C>& mat) noexcept {
-        auto result = mat;
-        return result *= static_cast<T>(scalar);
+        requires std::is_arithmetic_v<U>
+    constexpr auto operator*(const U& scalar) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Matrix<ResultType, R, C> result{};
+        for (int i = 0; i < R * C; ++i) {
+            result.data()[i] = static_cast<ResultType>(m_data[i]) * 
+                              static_cast<ResultType>(scalar);
+        }
+        return result;
     }
 
-    constexpr Vector<T, R> operator*(const Vector<T, R>& rhs) const noexcept {
-        Vector<T, R> result{};
+    template <typename U>
+        requires std::is_arithmetic_v<U>
+    friend constexpr auto operator*(const U& scalar, const Matrix<T, R, C>& mat) noexcept {
+        return mat * scalar;
+    }
+
+    template <typename U>
+        requires std::is_arithmetic_v<U>
+    constexpr auto operator/(const U& scalar) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
+                                       "Division by zero in matrix division");
+        Matrix<ResultType, R, C> result{};
+        for (int i = 0; i < R * C; ++i) {
+            result.data()[i] = static_cast<ResultType>(m_data[i]) / 
+                              static_cast<ResultType>(scalar);
+        }
+        return result;
+    }
+
+    template <typename U>
+    constexpr auto operator*(const Vector<U, C>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Vector<ResultType, R> result{};
         for (int r = 0; r < R; ++r) {
             result[r] = row(r).dot(rhs);
         }
         return result;
     }
 
-    template <int M>
-    constexpr Matrix<T, R, M> operator*(const Matrix<T, C, M>& rhs) const noexcept {
-        Matrix<T, R, M> result{};
+    template <typename U, int M>
+    constexpr auto operator*(const Matrix<U, C, M>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Matrix<ResultType, R, M> result{};
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < M; ++c) {
                 result[r][c] = row(r).dot(rhs.col(c));
@@ -409,35 +483,45 @@ public:
         return result;
     }
 
+    // Stream output operator
     friend std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
-        os << "Matrix " << R << "x" << C << "[\n";
+        os << "Matrix<" << R << "x" << C << ">[\n";
         for (int i = 0; i < R; ++i) {
-            os << "  ";
+            os << "  [";
             for (int j = 0; j < C; ++j) {
-                os << mat.at(i, j) << (j == C - 1 ? "" : ",\t");
+                os << mat.at(i, j);
+                if (j < C - 1) os << ", ";
             }
-            os << "\n";
+            os << "]\n";
         }
         os << "]";
         return os;
     }
 
+    // Name method for consistency with Vector
+    static std::string name() { 
+        return std::format("Matrix<{}, {}, {}>", typeid(T).name(), R, C); 
+    }
+
+    // Utility methods (unified with Vector design)
     constexpr bool is_zero() const {
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
-                if ((*this)[r][c] != 0)
+                if (!pbpt::math::is_zero((*this).at(r, c)))
                     return false;
             }
         }
         return true;
     }
 
-    constexpr bool is_identity() const {
+    constexpr bool is_identity() const
+        requires(R == C)
+    {
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
-                if (r == c && (*this)[r][c] != 1)
+                if (r == c && !is_equal((*this).at(r, c), T(1)))
                     return false;
-                if (r != c && (*this)[r][c] != 0)
+                if (r != c && !pbpt::math::is_zero((*this).at(r, c)))
                     return false;
             }
         }
@@ -445,13 +529,34 @@ public:
     }
 
     constexpr bool has_nan() const {
-        for (int r = 0; r < R; ++r) {
-            for (int c = 0; c < C; ++c) {
-                if (std::isnan((*this)[r][c]))
-                    return true;
+        if constexpr (std::is_floating_point_v<T>) {
+            for (int r = 0; r < R; ++r) {
+                for (int c = 0; c < C; ++c) {
+                    if (std::isnan((*this).at(r, c)))
+                        return true;
+                }
             }
         }
         return false;
+    }
+
+    // Apply function to each element (unified with Vector design)
+    template <std::invocable<T&, int, int> F>
+    constexpr void apply(F&& f) {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                f((*this).at(r, c), r, c);
+            }
+        }
+    }
+
+    template <std::invocable<const T&, int, int> F>
+    constexpr void apply(F&& f) const {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                f((*this).at(r, c), r, c);
+            }
+        }
     }
 };
 
