@@ -90,5 +90,14 @@ int main() {
     auto m = mat4 + math::Matrix<double, 4, 4>::identity();
     std::cout << "4x4 Matrix Addition:\n" << m << std::endl;
 
+    auto ho = math::Homo3::from_vector(math::Vec3(1.0, 2.0, 3.0));
+    auto ho2 = math::Homo3::from_point(math::Pt3(4.0, 5.0, 6.0));
+    std::cout << "Homo3 from Vector: " << ho << std::endl;
+    std::cout << "Homo3 from Point: " << ho2 << std::endl;
+
+    auto ho3 = ho + ho2;
+    std::cout << "Homo3 Sum: " << ho3 << std::endl;
+    std::cout << "Homo3 Vector: " << ho3.to_point() << std::endl;
+
     return 0;
 }

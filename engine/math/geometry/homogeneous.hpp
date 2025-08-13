@@ -153,12 +153,6 @@ public:
         }
     }
 
-    /// @brief Check if any element in the homogeneous coordinate is NaN
-    /// @return true if any element is NaN, false otherwise
-    [[nodiscard]] constexpr bool has_nan() const noexcept {
-        return Base::has_nan();
-    }
-
     // Conversion methods with improved error handling
     constexpr Point<T, N> to_point() const {
         assert_if_ex<std::domain_error>([&]() { return is_vector(); }, 

@@ -110,8 +110,8 @@ TEST(HomoTest, ConversionSafetyCompileTime) {
     // 下面的代码行如果取消注释，将导致编译失败，这正是我们期望的行为。
     // 这证明了编译期错误检查正在工作。
     //
-    // constexpr Point3 p = const_h_vector.to_point(); // COMPILE ERROR!
-    // constexpr Vec3 v = const_h_point.to_vector();   // COMPILE ERROR!
+    // constexpr Pt3 p = const_h_vector.to_point(); // COMPILE ERROR!
+    //constexpr Vec3 v = const_h_point.to_vector();   // COMPILE ERROR!
 
     // 因为我们不能提交一个无法编译的测试，所以上面的代码是注释掉的。
     // 这个测试的存在和成功编译，以及 static_assert 的通过，证明了其设计。
