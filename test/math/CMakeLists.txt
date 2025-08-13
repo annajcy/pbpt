@@ -34,6 +34,10 @@ add_executable(test_homo test_homo.cpp)
 target_link_libraries(test_homo PRIVATE pbpt_engine gtest_main )
 add_test(NAME test_homo COMMAND test_homo)
 
+add_executable(test_homo_enhanced test_homo_enhanced.cpp)
+target_link_libraries(test_homo_enhanced PRIVATE pbpt_engine gtest_main )
+add_test(NAME test_homo_enhanced COMMAND test_homo_enhanced)
+
 add_executable(test_integration test_integration.cpp)
 target_link_libraries(test_integration PRIVATE pbpt_engine gtest_main)
 add_test(NAME test_integration COMMAND test_integration)

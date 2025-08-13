@@ -92,9 +92,9 @@ TEST(HomoTest, ConversionSafetyRuntime) {
     ASSERT_NO_THROW(h_point.to_point());
     ASSERT_NO_THROW(h_vector.to_vector());
 
-    // 非法的转换应该抛出 std::runtime_error
-    ASSERT_THROW(h_point.to_vector(), std::runtime_error);
-    ASSERT_THROW(h_vector.to_point(), std::runtime_error);
+    // 非法的转换应该抛出 std::domain_error
+    ASSERT_THROW(h_point.to_vector(), std::domain_error);
+    ASSERT_THROW(h_vector.to_point(), std::domain_error);
 }
 
 TEST(HomoTest, ConversionSafetyCompileTime) {
