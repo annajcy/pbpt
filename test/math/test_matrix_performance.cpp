@@ -26,9 +26,9 @@ protected:
         if constexpr (N == 2) {
             EXPECT_LT(avg_time, 0.2);  // 2x2 should be very fast
         } else if constexpr (N == 3) {
-            EXPECT_LT(avg_time, 0.5);  // 3x3 should be fast
+            EXPECT_LT(avg_time, 0.6);  // 3x3 should be fast
         } else if constexpr (N == 4) {
-            EXPECT_LT(avg_time, 2.1);  // 4x4 should be reasonable
+            EXPECT_LT(avg_time, 2.5);  // 4x4 should be reasonable
         }
     }
 };

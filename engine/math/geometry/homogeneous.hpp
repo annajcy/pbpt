@@ -6,9 +6,9 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include "math/global/function.hpp"
 #include "math/global/operator.hpp"
 #include "math/global/utils.hpp"
-#include "matrix.hpp"
 #include "point.hpp"
 #include "vector.hpp"
 #include "tuple.hpp"
@@ -17,137 +17,76 @@ namespace pbpt::math {
 
 template <typename T, int N>
     requires std::is_floating_point_v<T> && (N > 0)
-class Homogeneous : public Tuple<Vector, T, N + 1> {
+class Homogeneous : public Tuple<Homogeneous, T, N + 1> {
 private:
-    using Base = Tuple<Vector, T, N + 1>;
+    using Base = Tuple<Homogeneous, T, N + 1>;
     using Base::m_data;
-
-    // Private constexpr helper for zero checking
-    static constexpr bool is_zero_constexpr(const T& value) noexcept {
-        if constexpr (std::is_floating_point_v<T>) {
-            return (value >= -epsilon_v<T>) && (value <= epsilon_v<T>);
-        } else {
-            return value == 0;
-        }
-    }
 
 public:
     using Base::Base;
+
     static std::string name() { 
         return std::format("Homogeneous<{}, {}>", typeid(T).name(), N); 
     }
-
-    // Static factory methods (unified with Vector design)
-    static constexpr Homogeneous zeros() noexcept { 
-        Homogeneous result;
-        for (int i = 0; i < N + 1; ++i)
-            result[i] = T(0);
-        return result;
-    }
     
-    static constexpr Homogeneous filled(T value) noexcept {
-        Homogeneous result;
-        for (int i = 0; i < N + 1; ++i)
-            result[i] = value;
-        return result;
-    }
-    
-    static constexpr Homogeneous point_at_origin() noexcept { 
-        Homogeneous result;
+    static constexpr auto point_at_origin() { 
+        Homogeneous<T, N> result;
         for (int i = 0; i < N; ++i)
             result[i] = T(0);
         result[N] = T(1);  // w = 1 for point
         return result;
     }
     
-    static constexpr Homogeneous zero_vector() noexcept {
-        Homogeneous result;
+    static constexpr auto zero_vector() {
+        Homogeneous<T, N> result;
         for (int i = 0; i < N + 1; ++i)
             result[i] = T(0);  // w = 0 for vector
         return result;
     }
 
-    static constexpr Homogeneous from_point(const Point<T, N>& p) noexcept {
-        Homogeneous result;
+    static constexpr auto from_point(const Point<T, N>& p) {
+        Homogeneous<T, N> result;
         for (int i = 0; i < N; ++i)
             result[i] = p[i];
         result[N] = T(1);
         return result;
     }
 
-    static constexpr Homogeneous from_vector(const Vector<T, N>& v) noexcept {
-        Homogeneous result;
+    static constexpr auto from_vector(const Vector<T, N>& v) {
+        Homogeneous<T, N> result;
         for (int i = 0; i < N; ++i)
             result[i] = v[i];
         result[N] = T(0);
         return result;
     }
 
-    static constexpr Homogeneous from_raw(const Vector<T, N + 1>& raw_data) noexcept {
-        Homogeneous result;
-        for (int i = 0; i < N + 1; ++i)
-            result[i] = raw_data[i];
+    static constexpr auto from_vector_raw(const Vector<T, N + 1>& v) {
+        Homogeneous<T, N> result;
+        for (int i = 0; i < N; ++i)
+            result[i] = v[i];
+        result[N] = v[N];
         return result;
     }
 
-    // Constructors
-    constexpr Homogeneous() noexcept { 
-        for (int i = 0; i < N; ++i)
-            (*this)[i] = T(0);
-        (*this)[N] = T(1);  // Default to point
-    }
-    
-    constexpr explicit Homogeneous(const Vector<T, N + 1>& data) noexcept {
-        for (int i = 0; i < N + 1; ++i)
-            (*this)[i] = data[i];
-    }
-
-    constexpr explicit Homogeneous(const Point<T, N>& p) noexcept {
-        for (int i = 0; i < N; ++i)
-            (*this)[i] = p[i];
-        (*this)[N] = T(1);
-    }
-
-    constexpr explicit Homogeneous(const Vector<T, N>& v) noexcept {
-        for (int i = 0; i < N; ++i)
-            (*this)[i] = v[i];
-        (*this)[N] = T(0);
-    }
-
-    template <std::convertible_to<T>... Vals>
-        requires(sizeof...(Vals) == N + 1)
-    constexpr explicit Homogeneous(Vals... vals) noexcept {
-        int i = 0;
-        (((*this)[i++] = static_cast<T>(vals)), ...);
-    }
-
-    // Copy/conversion constructor from different types
-    template <typename U>
-        requires std::convertible_to<U, T>
-    constexpr Homogeneous(const Homogeneous<U, N>& other) noexcept {
-        for (int i = 0; i < N + 1; ++i) {
-            (*this)[i] = static_cast<T>(other[i]);
-        }
-    }
-
     // Accessors with improved error handling
-    constexpr const T& w() const noexcept { return (*this)[N]; }
-    constexpr T& w() noexcept { return (*this)[N]; }
+    constexpr const T& w() const { return (*this)[N]; }
+    constexpr T& w() { return (*this)[N]; }
 
-    constexpr int dims() const noexcept { return N + 1; }
-    constexpr int spatial_dims() const noexcept { return N; }
+    constexpr int dims() const { return N + 1; }
+    constexpr int spatial_dims() const { return N; }
 
     // Type checking methods
-    constexpr bool is_point() const noexcept { 
+    constexpr bool is_point() const { 
         if constexpr (std::is_floating_point_v<T>) {
-            return ((*this)[N] < -epsilon_v<T>) || ((*this)[N] > epsilon_v<T>);
+            return !is_zero((*this)[N]);
         } else {
             return (*this)[N] != 0;
         }
     }
-    constexpr bool is_vector() const noexcept { 
+
+    constexpr bool is_vector() const { 
         if constexpr (std::is_floating_point_v<T>) {
-            return ((*this)[N] >= -epsilon_v<T>) && ((*this)[N] <= epsilon_v<T>);
+            return is_zero((*this)[N]);
         } else {
             return (*this)[N] == 0;
         }
@@ -175,18 +114,21 @@ public:
         return result_coords;
     }
 
-    constexpr const Vector<T, N + 1> raw() const noexcept { 
-        return Vector<T, N + 1>::from_array(m_data);
+    constexpr Vector<T, N + 1> to_vector_raw() const {
+        Vector<T, N + 1> result_coords;
+        for (int i = 0; i < N; ++i)
+            result_coords[i] = (*this)[i];
+        result_coords[N] = (*this)[N];
+        return result_coords;
     }
 
-    constexpr Vector<T, N + 1>& raw() noexcept {
-        // 直接将内部数据包装为 Vector
-        return reinterpret_cast<Vector<T, N + 1>&>(m_data);
+    constexpr Vector<T, N + 1>& to_vector_raw() {
+        return reinterpret_cast<Vector<T, N + 1>&>(*this);
     }
 
     // Unified comparison operators
     template <typename U>
-    constexpr bool operator==(const Homogeneous<U, N>& rhs) const noexcept {
+    constexpr bool operator==(const Homogeneous<U, N>& rhs) const {
         for (int i = 0; i < N + 1; ++i) {
             if (!is_equal((*this)[i], static_cast<T>(rhs[i]))) {
                 return false;
@@ -196,20 +138,20 @@ public:
     }
 
     template <typename U>
-    constexpr bool operator!=(const Homogeneous<U, N>& rhs) const noexcept { 
+    constexpr bool operator!=(const Homogeneous<U, N>& rhs) const { 
         return !(*this == rhs); 
     }
 
     // Assignment operators with type safety
     template <typename U>
-    constexpr Homogeneous& operator+=(const Homogeneous<U, N>& rhs) noexcept {
+    constexpr auto& operator+=(const Homogeneous<U, N>& rhs) {
         for (int i = 0; i < N + 1; ++i)
             (*this)[i] += static_cast<T>(rhs[i]);
         return *this;
     }
 
     template <typename U>
-    constexpr Homogeneous& operator-=(const Homogeneous<U, N>& rhs) noexcept {
+    constexpr auto& operator-=(const Homogeneous<U, N>& rhs) {
         for (int i = 0; i < N + 1; ++i)
             (*this)[i] -= static_cast<T>(rhs[i]);
         return *this;
@@ -217,7 +159,7 @@ public:
 
     template <typename U>
         requires std::is_arithmetic_v<U>
-    constexpr Homogeneous& operator*=(const U& scalar) noexcept {
+    constexpr auto& operator*=(const U& scalar) {
         for (int i = 0; i < N + 1; ++i)
             (*this)[i] *= static_cast<T>(scalar);
         return *this;
@@ -225,7 +167,7 @@ public:
 
     template <typename U>
         requires std::is_arithmetic_v<U>
-    constexpr Homogeneous& operator/=(const U& scalar) noexcept {
+    constexpr auto& operator/=(const U& scalar) {
         assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
                                        "Division by zero in homogeneous coordinate division");
         for (int i = 0; i < N + 1; ++i)
@@ -234,15 +176,15 @@ public:
     }
 
     // Arithmetic operators with type promotion
-    constexpr Homogeneous operator-() const noexcept {
-        Homogeneous result{};
+    constexpr auto operator-() const {
+        Homogeneous<T, N> result{};
         for (int i = 0; i < N + 1; ++i)
             result[i] = -(*this)[i];
         return result;
     }
 
     template <typename U>
-    constexpr auto operator+(const Homogeneous<U, N>& rhs) const noexcept {
+    constexpr auto operator+(const Homogeneous<U, N>& rhs) const {
         using ResultType = std::common_type_t<T, U>;
         Homogeneous<ResultType, N> result{};
         for (int i = 0; i < N + 1; ++i) {
@@ -253,7 +195,7 @@ public:
     }
 
     template <typename U>
-    constexpr auto operator-(const Homogeneous<U, N>& rhs) const noexcept {
+    constexpr auto operator-(const Homogeneous<U, N>& rhs) const {
         using ResultType = std::common_type_t<T, U>;
         Homogeneous<ResultType, N> result{};
         for (int i = 0; i < N + 1; ++i) {
@@ -265,7 +207,7 @@ public:
 
     template <typename U>
         requires std::is_arithmetic_v<U>
-    constexpr auto operator*(const U& scalar) const noexcept {
+    constexpr auto operator*(const U& scalar) const {
         using ResultType = std::common_type_t<T, U>;
         Homogeneous<ResultType, N> result{};
         for (int i = 0; i < N + 1; ++i) {
@@ -277,13 +219,13 @@ public:
 
     template <typename U>
         requires std::is_arithmetic_v<U>
-    friend constexpr auto operator*(const U& scalar, const Homogeneous<T, N>& homo) noexcept {
+    friend constexpr auto operator*(const U& scalar, const Homogeneous<T, N>& homo) {
         return homo * scalar;
     }
 
     template <typename U>
         requires std::is_arithmetic_v<U>
-    constexpr auto operator/(const U& scalar) const noexcept {
+    constexpr auto operator/(const U& scalar) const {
         using ResultType = std::common_type_t<T, U>;
         assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
                                        "Division by zero in homogeneous coordinate division");
@@ -295,45 +237,14 @@ public:
         return result;
     }
 
-    // Matrix transformation
-    template <typename U>
-    friend constexpr auto operator*(const Matrix<U, N + 1, N + 1>& mat, const Homogeneous<T, N>& homo) noexcept {
-        using ResultType = std::common_type_t<T, U>;
-        return Homogeneous<ResultType, N>::from_raw(mat * homo.raw());
-    }
-
-    // Apply function to each element (unified with Vector design)
-    template <std::invocable<T&, int> F>
-    constexpr void apply(F&& f) {
-        for (int i = 0; i < N + 1; ++i) {
-            f((*this)[i], i);
-        }
-    }
-
-    template <std::invocable<const T&, int> F>
-    constexpr void apply(F&& f) const {
-        for (int i = 0; i < N + 1; ++i) {
-            f((*this)[i], i);
-        }
-    }
-
-    // Utility methods (unified with Vector design)  
-    constexpr bool is_zero_homo() const {
-        for (int i = 0; i < N + 1; ++i) {
-            if (!is_zero_constexpr((*this)[i]))
-                return false;
-        }
-        return true;
-    }
-
     /// @brief Normalize the homogeneous coordinate (make w = 1 if it's a point)
     /// @return Normalized homogeneous coordinate
-    constexpr Homogeneous normalized() const {
-        if (is_vector() || is_zero_constexpr((*this)[N])) {
+    constexpr auto standardized() const {
+        if (is_vector()) {
             return *this;  // Cannot normalize a vector or w=0
         }
         
-        Homogeneous result{};
+        Homogeneous<T, N> result{};
         const T inv_w = T(1) / (*this)[N];
         for (int i = 0; i < N; ++i) {
             result[i] = (*this)[i] * inv_w;
@@ -342,19 +253,28 @@ public:
         return result;
     }
 
-    /// @brief Check if the homogeneous coordinate is normalized (w = 1 for points, w = 0 for vectors)
-    constexpr bool is_normalized() const noexcept {
+    /// @brief Normalize the homogeneous coordinate (make w = 1 if it's a point)
+    /// @return Normalized homogeneous coordinate
+    constexpr auto& standardize() {
         if (is_vector()) {
-            return is_zero_constexpr((*this)[N]);
+            return *this;  // Cannot normalize a vector or w=0
+        }
+
+        const T inv_w = T(1) / (*this)[N];
+        for (int i = 0; i < N; ++i) {
+            (*this)[i] *= inv_w;
+        }
+        (*this)[N] = T(1);
+        return *this;
+    }
+
+    /// @brief Check if the homogeneous coordinate is normalized (w = 1 for points, w = 0 for vectors)
+    constexpr bool is_standardized() const {
+        if (is_vector()) {
+            return true;  // Vectors are always standardized (w = 0)
         } else {
             return is_equal((*this)[N], T(1));
         }
-    }
-
-    // Stream output operator
-    friend std::ostream& operator<<(std::ostream& os, const Homogeneous& h) {
-        os << "Homogeneous<" << N << ">" << (h.is_point() ? "[Point] " : "[Vector] ") << h.raw();
-        return os;
     }
 };
 

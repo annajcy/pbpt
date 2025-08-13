@@ -48,10 +48,10 @@ int main() {
     std::cout << "Quaternion Axis: " << quaternion.to_axis_angle().second << std::endl;
     std::cout << "Quaternion Angle: " << quaternion.to_axis_angle().first << std::endl;
 
-    math::Transform transform = math::Transform::translate(math::Vec3{1.0, 2.0, 3.0});
+    auto transform = math::Transform<float>::translate(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Transform Matrix: " << transform.mat() << std::endl;
 
-    math::Homo3 homo3(math::Vec3{1.0, 2.0, 3.0});
+    math::Homo3 homo3 = math::Homo3::from_vector(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Homo3: " << homo3 << std::endl;
 
     math::Vec3 vec(1.0, 2.0, 3.0);
@@ -88,6 +88,19 @@ int main() {
     std::cout << "4x4 Identity Matrix:\n" << mat4 << std::endl;
 
     auto m = mat4 + math::Matrix<double, 4, 4>::identity();
+    
+    std::cout << (m.at(0, 1) = 5) << std::endl;
+
+    auto row = m[0][1];
+    std::cout << row << std::endl;
+
+    auto subm = math::Mat4::MatView<2, 2>(m, 1, 1);
+    subm.visit([](auto& val, int row, int col) {
+        std::cout << "Submatrix Element [" << row << "][" << col << "]: " << val << std::endl;
+    });
+
+    std::cout << "4x4 Submatrix:\n" << subm.to_matrix() << std::endl;
+
     std::cout << "4x4 Matrix Addition:\n" << m << std::endl;
 
     auto ho = math::Homo3::from_vector(math::Vec3(1.0, 2.0, 3.0));
@@ -98,6 +111,12 @@ int main() {
     auto ho3 = ho + ho2;
     std::cout << "Homo3 Sum: " << ho3 << std::endl;
     std::cout << "Homo3 Vector: " << ho3.to_point() << std::endl;
+
+    auto pp = math::Homo3::from_point(math::Pt3(1.0, 2.0, 3.0));
+    std::cout << "Homo3 from Point: " << pp << std::endl;
+
+    math::Trans tr = math::Trans::translate(math::Vec3(1.0, 2.0, 3.0));
+    std::cout << "Translation Transform: " << tr.mat() << std::endl;
 
     return 0;
 }

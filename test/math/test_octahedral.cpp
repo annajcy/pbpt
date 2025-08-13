@@ -46,7 +46,7 @@ protected:
         Vector<Float, 3> v;
         do {
             v = Vector<Float, 3>{dist(gen), dist(gen), dist(gen)};
-        } while (v.is_zero_vec() || v.length_squared() > 1.0);
+        } while (v.is_all_zero() || v.length_squared() > 1.0);
         return v.normalized();
     }
 };
@@ -88,9 +88,9 @@ TEST_F(OctahedralVectorTest, DifferentInputsProduceDifferentEncodings) {
     Vector<Float, 3> decoded_z = ov_z.decode();
     
     // These should not be the same (basic sanity check)
-    EXPECT_FALSE((decoded_x - decoded_y).is_zero_vec());
-    EXPECT_FALSE((decoded_x - decoded_z).is_zero_vec());
-    EXPECT_FALSE((decoded_y - decoded_z).is_zero_vec());
+    EXPECT_FALSE((decoded_x - decoded_y).is_all_zero());
+    EXPECT_FALSE((decoded_x - decoded_z).is_all_zero());
+    EXPECT_FALSE((decoded_y - decoded_z).is_all_zero());
 }
 
 // Test with non-unit vectors (should be normalized internally)

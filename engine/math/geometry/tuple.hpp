@@ -41,17 +41,14 @@ public:
         requires(sizeof...(Args) == N)
     explicit constexpr Tuple(Args&&... args) : m_data{ static_cast<T>(args)... } {}
 
-    template<template <typename, int> typename OtherDerived, typename U, int M>
-    constexpr Tuple(const Tuple<OtherDerived, U, M>& other) {
-        constexpr int min_size = (N < M) ? N : M;
-        for (int i = 0; i < min_size; ++i) {
+    template<template <typename, int> typename OtherDerived, typename U>
+    constexpr Tuple(const Tuple<OtherDerived, U, N>& other) {
+        for (int i = 0; i < N; ++i) {
             m_data[i] = static_cast<T>(other[i]);
-        }
-        for (int i = min_size; i < N; ++i) {
-            m_data[i] = T{};
         }
     }
 
+    constexpr std::array<T, N>& to_array() { return m_data; }
     constexpr std::array<T, N> to_array() const { return m_data; }
     constexpr int dims() const { return N; }
 
@@ -103,7 +100,8 @@ public:
     constexpr bool operator!=(const Tuple<Derived, U, N>& rhs) const {
         return !(*this == rhs);
     }
-    
+
+   
     // -- Type Conversion --
     template <typename U, int M>
         requires(M > 0) && std::is_convertible_v<T, U>
@@ -127,6 +125,82 @@ public:
         requires(M > 0)
     constexpr auto dim_cast() const {
         return cast<T, M>();
+    }
+
+    template <std::invocable<T&, int> F>
+    constexpr void visit(F&& f) {
+        for (int i = 0; i < N; ++i)
+            f((*this)[i], i);
+    }
+
+    template <std::invocable<const T&, int> F>
+    constexpr void visit(F&& f) const {
+        for (int i = 0; i < N; ++i)
+            f((*this)[i], i);
+    }
+
+    int max_dim() const {
+        int max_i = 0;
+        for (int i = 1; i < N; ++i)
+            if (is_greater((*this)[i], (*this)[max_i]))
+                max_i = i;
+        return max_i;
+    }
+
+    T max() const {
+        T max_v = (*this)[0];
+        for (int i = 1; i < N; ++i)
+            if (is_greater((*this)[i], max_v))
+                max_v = (*this)[i];
+        return max_v;
+    }
+
+    int min_dim() const {
+        int min_i = 0;
+        for (int i = 1; i < N; ++i)
+            if (is_less((*this)[i], (*this)[min_i]))
+                min_i = i;
+        return min_i;
+    }
+
+    T min() const {
+        T min_v = (*this)[0];
+        for (int i = 1; i < N; ++i)
+            if (is_less((*this)[i], min_v))
+                min_v = (*this)[i];
+        return min_v;
+    }
+
+    template <typename... Args>
+        requires(sizeof...(Args) == N)
+    constexpr auto permuted(Args... args) const {
+        Derived<T, N> result;
+        int          i = 0;
+        ((result[i++] = (*this)[args]), ...);
+        return result;
+    }
+
+    template <typename... Args>
+        requires(sizeof...(Args) == N)
+    constexpr auto& permute(Args... args) {
+        *this = permuted(args...);
+        return *this;
+    }
+
+    constexpr bool is_all_zero() const {
+        for (int i = 0; i < N; i++) {
+            if (!is_zero(m_data[i]))
+                return false;
+        }
+        return true;
+    }
+
+    constexpr auto abs() const {
+        Derived<T, N> result{};
+        for (int i = 0; i < N; i++) {
+            result[i] = pbpt::math::abs((*this)[i]);
+        }
+        return result;
     }
 
     // -- Output --

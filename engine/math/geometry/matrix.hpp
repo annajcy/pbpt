@@ -9,12 +9,12 @@
 #include <type_traits>
 #include <utility>
 
+#include "math/geometry/homogeneous.hpp"
 #include "math/global/operator.hpp"
 #include "math/global/utils.hpp"
 #include "vector.hpp"
 
 namespace pbpt::math {
-// Forward declarations
 template <typename T, int R, int C>
     requires std::is_floating_point_v<T> && (R > 0) && (C > 0)
 class Matrix;
@@ -77,7 +77,14 @@ public:
         return *this;
     }
 
-    void apply(const std::function<void(T&, int)>& func) {
+    template <std::invocable<const T&, int> F>
+    void visit(F func) const {
+        for (int i = 0; i < N; ++i)
+            func((*this)[i], i);
+    }
+
+    template <std::invocable<T&, int> F>
+    void visit(F func) {
         for (int i = 0; i < N; ++i)
             func((*this)[i], i);
     }
@@ -130,7 +137,17 @@ public:
         return *this;
     }
 
-    void apply(const std::function<void(T&, int, int)>& func) {
+    template<std::invocable<T&, int, int> F>
+    void visit(F func) {
+        for (int i = 0; i < ViewR; ++i) {
+            for (int j = 0; j < ViewC; ++j) {
+                func((*this).at(i, j), i, j);
+            }
+        }
+    }
+
+    template<std::invocable<const T&, int, int> F>
+    void visit(F func) const {
         for (int i = 0; i < ViewR; ++i) {
             for (int j = 0; j < ViewC; ++j) {
                 func((*this).at(i, j), i, j);
@@ -209,16 +226,16 @@ public:
     }
 
     // Accessors with improved error handling
-    constexpr const T& at(int r, int c) const {
-        assert_if_ex<std::out_of_range>([&]() { return r < 0 || r >= R || c < 0 || c >= C; }, 
+    constexpr const T& at(int x, int y) const {
+        assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; }, 
                                        "Matrix index out of range");
-        return m_data[r * C + c];
+        return m_data[x * C + y];
     }
 
-    constexpr T& at(int r, int c) {
-        assert_if_ex<std::out_of_range>([&]() { return r < 0 || r >= R || c < 0 || c >= C; }, 
+    constexpr T& at(int x, int y) {
+        assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; }, 
                                        "Matrix index out of range");
-        return m_data[r * C + c];
+        return m_data[x * C + y];
     }
 
     constexpr RowView operator[](int r) { return RowView(&(*this).at(r, 0), 1); }
@@ -331,6 +348,12 @@ public:
             return (*this).at(0, 0) * ((*this).at(1, 1) * (*this).at(2, 2) - (*this).at(1, 2) * (*this).at(2, 1)) -
                    (*this).at(0, 1) * ((*this).at(1, 0) * (*this).at(2, 2) - (*this).at(1, 2) * (*this).at(2, 0)) +
                    (*this).at(0, 2) * ((*this).at(1, 0) * (*this).at(2, 1) - (*this).at(1, 1) * (*this).at(2, 0));
+        } else if constexpr (R == 4) {
+            // Optimized 4x4 determinant using cofactor expansion along first row
+            return (*this).at(0, 0) * minor_matrix(0, 0).determinant() -
+                   (*this).at(0, 1) * minor_matrix(0, 1).determinant() +
+                   (*this).at(0, 2) * minor_matrix(0, 2).determinant() -
+                   (*this).at(0, 3) * minor_matrix(0, 3).determinant();
         } else {
             // General case: Laplace expansion (less efficient, but works for
             // any size)
@@ -352,9 +375,9 @@ public:
 
         // Optimized hardcoded versions for small matrices
         if constexpr (R == 2) {
-            return inverse_2x2_optimized(det);
+            return inverse_2x2_optimized();
         } else if constexpr (R == 3) {
-            return inverse_3x3_optimized(det);
+            return inverse_3x3_optimized();
         } else if constexpr (R == 4) {
             return inverse_4x4_optimized();
         } else {
@@ -434,9 +457,10 @@ private:
     /// @brief Optimized 2x2 matrix inversion using analytical formula
     /// @param det Pre-computed determinant value
     /// @return Inverted 2x2 matrix
-    constexpr Matrix inverse_2x2_optimized(T det) const
+    constexpr Matrix inverse_2x2_optimized() const
         requires(R == 2 && C == 2)
     {
+        T det = (*this).determinant();
         T inv_det = T(1) / det;
         Matrix result{};
         
@@ -452,9 +476,10 @@ private:
     /// @brief Optimized 3x3 matrix inversion using analytical formula
     /// @param det Pre-computed determinant value
     /// @return Inverted 3x3 matrix
-    constexpr Matrix inverse_3x3_optimized(T det) const
+    constexpr Matrix inverse_3x3_optimized() const
         requires(R == 3 && C == 3)
     {
+        T det = (*this).determinant();
         T inv_det = T(1) / det;
         Matrix result{};
         
@@ -478,7 +503,7 @@ private:
     }
 
     /// @brief Optimized 4x4 matrix inversion using direct formula
-    /// @return Inverted 4x4 matrix  
+    /// @return Inverted 4x4 matrix
     constexpr Matrix inverse_4x4_optimized() const
         requires(R == 4 && C == 4)
     {
@@ -621,6 +646,16 @@ public:
         return result;
     }
 
+    template <typename U>
+    constexpr auto operator*(const Homogeneous<U, C - 1>& rhs) const noexcept {
+        using ResultType = std::common_type_t<T, U>;
+        Homogeneous<ResultType, R - 1> result{};
+        for (int r = 0; r < R; ++r) {
+            result[r] = row(r).dot(rhs.to_vector_raw());
+        }
+        return result;
+    }
+
     template <typename U, int M>
     constexpr auto operator*(const Matrix<U, C, M>& rhs) const noexcept {
         using ResultType = std::common_type_t<T, U>;
@@ -635,7 +670,7 @@ public:
 
     // Stream output operator
     friend std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
-        os << "Matrix" << R << "x" << C << "<" << typeid(T).name() << ">[\n";
+        os << name() << " [\n";
         for (int i = 0; i < R; ++i) {
             os << "  [";
             for (int j = 0; j < C; ++j) {
@@ -648,13 +683,11 @@ public:
         return os;
     }
 
-    // Name method for consistency with Vector
     static std::string name() { 
         return std::format("Matrix<{}, {}, {}>", typeid(T).name(), R, C); 
     }
 
-    // Utility methods (unified with Vector design)
-    constexpr bool is_zero() const {
+    constexpr bool is_all_zero() const {
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
                 if (!pbpt::math::is_zero((*this).at(r, c)))
@@ -692,7 +725,7 @@ public:
 
     // Apply function to each element (unified with Vector design)
     template <std::invocable<T&, int, int> F>
-    constexpr void apply(F&& f) {
+    constexpr void visit(F&& f) {
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
                 f((*this).at(r, c), r, c);
@@ -701,7 +734,7 @@ public:
     }
 
     template <std::invocable<const T&, int, int> F>
-    constexpr void apply(F&& f) const {
+    constexpr void visit(F&& f) const {
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
                 f((*this).at(r, c), r, c);

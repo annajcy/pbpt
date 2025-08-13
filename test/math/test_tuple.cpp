@@ -107,13 +107,13 @@ TEST_F(TupleTest, ConversionConstructor) {
     EXPECT_EQ(t_double.z(), 3.0);
     
     // Dimension conversion (smaller)
-    TestTuple<Float, 2> t_smaller(t1);
+    TestTuple<Float, 2> t_smaller(t1.dim_cast<2>());
     EXPECT_EQ(t_smaller.x(), 1.0);
     EXPECT_EQ(t_smaller.y(), 2.0);
     EXPECT_EQ(t_smaller.dims(), 2);
     
     // Dimension conversion (larger)
-    TestTuple<Float, 5> t_larger(t1);
+    TestTuple<Float, 5> t_larger(t1.dim_cast<5>());
     EXPECT_EQ(t_larger.x(), 1.0);
     EXPECT_EQ(t_larger.y(), 2.0);
     EXPECT_EQ(t_larger.z(), 3.0);

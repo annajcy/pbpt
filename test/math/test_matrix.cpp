@@ -365,7 +365,7 @@ TEST_F(MatrixTest, ViewApplyWithStdFunction) {
 
     std::function<void(Float&, int)> multiply_by_index_plus_one = [](Float& elem, int index) { elem *= (index + 1); };
 
-    row1_view.apply(multiply_by_index_plus_one);
+    row1_view.visit(multiply_by_index_plus_one);
 
     // Expected new row: [4*1, 5*2, 6*3] = [4, 10, 18]
     EXPECT_EQ(m.at(1, 0), 4);
@@ -379,7 +379,7 @@ TEST_F(MatrixTest, ViewApplyWithStdFunction) {
 
     std::function<void(Float&, int, int)> add_row_and_col = [](Float& elem, int r, int c) { elem += (r * 10 + c); };
 
-    full_view.apply(add_row_and_col);
+    full_view.visit(add_row_and_col);
 
     // Expected new matrix:
     // [1 + (0*10+0), 2 + (0*10+1)] = [1, 3]
@@ -400,12 +400,12 @@ TEST_F(MatrixHomoTransformTest, PointTranslation) {
     translation_matrix[1][3] = -2.0;
 
     const Pt3   p_original(10, 20, 30);
-    const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
+    const Homo3 h_original = Homo3::from_point(p_original);
 
-    const Homo3 h_transformed = Homo3(translation_matrix * h_original.raw());
+    const Homo3 h_transformed = Homo3::from_vector_raw(translation_matrix * h_original.to_vector_raw());
     const Pt3   p_final       = h_transformed.to_point();
 
-    EXPECT_DOUBLE_EQ(h_transformed.raw().w(), 1.0);  // Check it's still a point
+    EXPECT_DOUBLE_EQ(h_transformed.to_vector_raw().w(), 1.0);  // Check it's still a point
     EXPECT_DOUBLE_EQ(p_final.x(), 10.0 + 5.0);
     EXPECT_DOUBLE_EQ(p_final.y(), 20.0 - 2.0);
     EXPECT_DOUBLE_EQ(p_final.z(), 30.0);
@@ -419,10 +419,10 @@ TEST_F(MatrixHomoTransformTest, VectorTranslation) {
     const Vec3  v_original(1, 1, 1);
     const Homo3 h_original(v_original.x(), v_original.y(), v_original.z(), 0.0);
 
-    const Homo3 h_transformed = Homo3(translation_matrix * h_original.raw());
+    const Homo3 h_transformed = Homo3(translation_matrix * h_original.to_vector_raw());
     const Vec3  v_final       = h_transformed.to_vector();
 
-    EXPECT_DOUBLE_EQ(h_transformed.raw().w(), 0.0);  // Check it's still a vector
+    EXPECT_DOUBLE_EQ(h_transformed.to_vector_raw().w(), 0.0);  // Check it's still a vector
     EXPECT_DOUBLE_EQ(v_final.x(), v_original.x());
     EXPECT_DOUBLE_EQ(v_final.y(), v_original.y());
     EXPECT_DOUBLE_EQ(v_final.z(), v_original.z());
@@ -438,9 +438,9 @@ TEST_F(MatrixHomoTransformTest, PointRotation) {
     rotation_matrix[3][3] = 1.0;
 
     const Pt3   p_original(10, 0, 0);
-    const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
+    const Homo3 h_original = Homo3::from_point(p_original);
 
-    const Homo3 h_transformed = Homo3(rotation_matrix * h_original.raw());
+    const Homo3 h_transformed = Homo3::from_vector_raw(rotation_matrix * h_original.to_vector_raw());
     const Pt3   p_final       = h_transformed.to_point();
 
     EXPECT_NEAR(p_final.x(), 0.0, 1e-9);
@@ -460,9 +460,9 @@ TEST_F(MatrixHomoTransformTest, CombinedScaleAndTranslate) {
     const Mat4 combined_matrix = translate_matrix * scale_matrix;
 
     const Pt3   p_original(10, 10, 10);
-    const Homo3 h_original(p_original.x(), p_original.y(), p_original.z(), 1.0);
+    const Homo3 h_original = Homo3::from_point(p_original);
 
-    const Homo3 h_transformed = Homo3(combined_matrix * h_original.raw());
+    const Homo3 h_transformed = Homo3::from_vector_raw(combined_matrix * h_original.to_vector_raw());
     const Pt3   p_final       = h_transformed.to_point();
 
     EXPECT_DOUBLE_EQ(p_final.x(), 25.0);

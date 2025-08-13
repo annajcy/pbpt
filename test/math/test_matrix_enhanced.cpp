@@ -398,7 +398,7 @@ TEST_F(EnhancedMatrixTest, MatrixChainMultiplication) {
 
 TEST_F(EnhancedMatrixTest, UtilityMethods) {
     Matrix<double, 3, 3> zero_mat = Matrix<double, 3, 3>::zeros();
-    EXPECT_TRUE(zero_mat.is_zero());
+    EXPECT_TRUE(zero_mat.is_all_zero());
     
     Matrix<double, 3, 3> identity = Matrix<double, 3, 3>::identity();
     EXPECT_TRUE(identity.is_identity());
@@ -409,14 +409,14 @@ TEST_F(EnhancedMatrixTest, UtilityMethods) {
         Vector<double, 3>(0, 0, 1)
     );
     EXPECT_FALSE(non_identity.is_identity());
-    EXPECT_FALSE(non_identity.is_zero());
+    EXPECT_FALSE(non_identity.is_all_zero());
 }
 
 TEST_F(EnhancedMatrixTest, ApplyFunctions) {
     Matrix<double, 2, 2> m(1, 2, 3, 4);
     
     // Test apply with modification
-    m.apply([](double& val, int r, int c) {
+    m.visit([](double& val, int r, int c) {
         val += r * 10 + c;
     });
     
@@ -428,7 +428,7 @@ TEST_F(EnhancedMatrixTest, ApplyFunctions) {
     // Test const apply
     const auto& const_m = m;
     double sum = 0;
-    const_m.apply([&sum](const double& val, int r, int c) {
+    const_m.visit([&sum](const double& val, int r, int c) {
         sum += val;
     });
     EXPECT_DOUBLE_EQ(sum, 1.0 + 3.0 + 13.0 + 15.0);

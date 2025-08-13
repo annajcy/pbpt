@@ -70,7 +70,7 @@ TEST_F(VectorTest, CopyAndCastConstruction) {
     EXPECT_EQ(v_double.y(), 2.0);
     EXPECT_EQ(v_double.z(), 3.0);
 
-    Vector<Float, 2> v_dim_cast(v1);
+    Vector<Float, 2> v_dim_cast(v1.dim_cast<2>());
     EXPECT_EQ(v_dim_cast.dims(), 2);
     EXPECT_EQ(v_dim_cast.x(), 1.0);
     EXPECT_EQ(v_dim_cast.y(), 2.0);
@@ -150,8 +150,8 @@ TEST_F(VectorTest, Comparison) {
 
 TEST_F(VectorTest, IsZero) {
     Vector<Float, 3> z = Vector<Float, 3>::zeros();
-    EXPECT_TRUE(z.is_zero_vec());
-    EXPECT_FALSE(v1.is_zero_vec());
+    EXPECT_TRUE(z.is_all_zero());
+    EXPECT_FALSE(v1.is_all_zero());
 }
 
 TEST_F(VectorTest, Length) {
@@ -176,8 +176,8 @@ TEST_F(VectorTest, Product) {
     EXPECT_FLOAT_EQ(v1.product(), 1.0 * 2.0 * 3.0);
 }
 
-TEST_F(VectorTest, Apply) {
-    v1.apply([](Float& val, int) { val *= 2; });
+TEST_F(VectorTest, Visit) {
+    v1.visit([](Float& val, int) { val *= 2; });
     EXPECT_EQ(v1, (Vector<Float, 3>(2.0, 4.0, 6.0)));
 }
 
@@ -379,14 +379,14 @@ TEST_F(VectorTest, ApplyFunctionAdvanced) {
     Vector<Float, 3> v(1.0, -2.0, 3.0);
     
     // 测试使用索引的lambda
-    v.apply([](Float& val, int idx) { 
+    v.visit([](Float& val, int idx) { 
         if (idx == 1) val = std::abs(val); 
     });
     EXPECT_EQ(v, (Vector<Float, 3>(1.0, 2.0, 3.0)));
     
     // 测试累加功能
     Float sum = 0.0;
-    v.apply([&sum](const Float& val, int) { sum += val; });
+    v.visit([&sum](const Float& val, int) { sum += val; });
     EXPECT_FLOAT_EQ(sum, 6.0);
 }
 
@@ -460,7 +460,7 @@ TEST(VectorFreeFunctionsTest, CrossProductExtended) {
     Vector<Float, 3> parallel1(1.0, 2.0, 3.0);
     Vector<Float, 3> parallel2(2.0, 4.0, 6.0);  // 2 * parallel1
     auto zero_cross = cross(parallel1, parallel2);
-    EXPECT_TRUE(zero_cross.is_zero_vec());
+    EXPECT_TRUE(zero_cross.is_all_zero());
 }
 
 TEST(VectorFreeFunctionsTest, AngleBetweenExtended) {

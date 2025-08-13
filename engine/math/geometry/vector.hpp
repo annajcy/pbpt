@@ -65,14 +65,6 @@ public:
         }
         return *this;
     }
-    
-    constexpr bool is_zero_vec() const {
-        for (int i = 0; i < N; i++) {
-            if (!is_zero(m_data[i]))
-                return false;
-        }
-        return true;
-    }
 
     constexpr auto length_squared() const {
         auto result = T(0);
@@ -109,12 +101,6 @@ public:
         for (int i = 0; i < N; i++)
             result *= (*this)[i];
         return result;
-    }
-
-    template <std::invocable<T&, int> F>
-    constexpr void apply(F&& f) {
-        for (int i = 0; i < N; ++i)
-            f((*this)[i], i);
     }
 
     template <typename U>
@@ -198,62 +184,7 @@ public:
         }
         return result;
     }
-
-    constexpr auto abs() const {
-        Vector<T, N> result{};
-        for (int i = 0; i < N; i++) {
-            result[i] = pbpt::math::abs((*this)[i]);
-        }
-        return result;
-    }
-
-    int max_dim() const {
-        int max_i = 0;
-        for (int i = 1; i < N; ++i)
-            if (is_greater((*this)[i], (*this)[max_i]))
-                max_i = i;
-        return max_i;
-    }
-
-    T max() const {
-        T max_v = (*this)[0];
-        for (int i = 1; i < N; ++i)
-            if (is_greater((*this)[i], max_v))
-                max_v = (*this)[i];
-        return max_v;
-    }
-
-    int min_dim() const {
-        int min_i = 0;
-        for (int i = 1; i < N; ++i)
-            if (is_less((*this)[i], (*this)[min_i]))
-                min_i = i;
-        return min_i;
-    }
-
-    T min() const {
-        T min_v = (*this)[0];
-        for (int i = 1; i < N; ++i)
-            if (is_less((*this)[i], min_v))
-                min_v = (*this)[i];
-        return min_v;
-    }
-
-    template <typename... Args>
-        requires(sizeof...(Args) == N)
-    constexpr auto permuted(Args... args) const {
-        Vector<T, N> result;
-        int          i = 0;
-        ((result[i++] = (*this)[args]), ...);
-        return result;
-    }
-
-    template <typename... Args>
-        requires(sizeof...(Args) == N)
-    constexpr auto& permute(Args... args) {
-        *this = permuted(args...);
-        return *this;
-    }
+    
 };
 
 template <typename T>
@@ -267,7 +198,7 @@ constexpr auto cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
 
 template <typename T>
 constexpr promote_int_to_float_t<T> angle_between(const Vector<T, 3>& v1, const Vector<T, 3>& v2) {
-    assert_if([&v1, &v2]() { return v1.is_zero_vec() || v2.is_zero_vec(); }, "Cannot compute angle between zero vectors");
+    assert_if([&v1, &v2]() { return v1.is_all_zero() || v2.is_all_zero(); }, "Cannot compute angle between zero vectors");
     assert_if([&v1, &v2]() { return !v1.is_normalized() || !v2.is_normalized(); },
               "Vectors must be normalized to compute angle between them");
     if (v1.dot(v2) < 0) {

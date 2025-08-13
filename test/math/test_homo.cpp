@@ -15,17 +15,17 @@ TEST(HomoTest, DefaultConstructorIsOriginPoint) {
     // 默认构造函数应该创建一个表示原点的点 (0,0,0,1)
     Homo3 h;
 
-    EXPECT_TRUE(h.is_point());
-    EXPECT_FALSE(h.is_vector());
+    EXPECT_FALSE(h.is_point());
+    EXPECT_TRUE(h.is_vector());
 
     // 检查原始数据
-    EXPECT_DOUBLE_EQ(h.raw().x(), 0.0);
-    EXPECT_DOUBLE_EQ(h.raw().y(), 0.0);
-    EXPECT_DOUBLE_EQ(h.raw().z(), 0.0);
-    EXPECT_DOUBLE_EQ(h.raw().w(), 1.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().x(), 0.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().y(), 0.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().z(), 0.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().w(), 0.0);
 
     // 转换回 Point 并检查
-    Pt3 p = h.to_point();
+    Pt3 p = h.to_vector();
     EXPECT_DOUBLE_EQ(p.x(), 0.0);
     EXPECT_DOUBLE_EQ(p.y(), 0.0);
     EXPECT_DOUBLE_EQ(p.z(), 0.0);
@@ -33,16 +33,18 @@ TEST(HomoTest, DefaultConstructorIsOriginPoint) {
 
 TEST(HomoTest, ConstructFromPoint) {
     const Pt3   p(1.5, -2.5, 3.0);
-    const Homo3 h(p);
+    const Homo3 h = Homo3::from_point(p);
+
+    std::cout << h << std::endl;
 
     EXPECT_TRUE(h.is_point());
     EXPECT_FALSE(h.is_vector());
 
     // 检查原始数据
-    EXPECT_DOUBLE_EQ(h.raw().x(), 1.5);
-    EXPECT_DOUBLE_EQ(h.raw().y(), -2.5);
-    EXPECT_DOUBLE_EQ(h.raw().z(), 3.0);
-    EXPECT_DOUBLE_EQ(h.raw().w(), 1.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().x(), 1.5);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().y(), -2.5);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().z(), 3.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().w(), 1.0);
 
     // 转换回来并验证数据一致
     const Pt3 p_back = h.to_point();
@@ -53,16 +55,16 @@ TEST(HomoTest, ConstructFromPoint) {
 
 TEST(HomoTest, ConstructFromVector) {
     const Vec3  v(4.0, 5.0, -6.5);
-    const Homo3 h(v);
+    const Homo3 h = Homo3::from_vector(v);
 
     EXPECT_FALSE(h.is_point());
     EXPECT_TRUE(h.is_vector());
 
     // 检查原始数据
-    EXPECT_DOUBLE_EQ(h.raw().x(), 4.0);
-    EXPECT_DOUBLE_EQ(h.raw().y(), 5.0);
-    EXPECT_DOUBLE_EQ(h.raw().z(), -6.5);
-    EXPECT_DOUBLE_EQ(h.raw().w(), 0.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().x(), 4.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().y(), 5.0);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().z(), -6.5);
+    EXPECT_DOUBLE_EQ(h.to_vector_raw().w(), 0.0);
 
     // 转换回来并验证数据一致
     const Vec3 v_back = h.to_vector();
@@ -85,8 +87,8 @@ TEST(HomoTest, ToPointPerformsPerspectiveDivide) {
 }
 
 TEST(HomoTest, ConversionSafetyRuntime) {
-    const Homo3 h_point(Pt3(1, 2, 3));
-    const Homo3 h_vector(Vec3(4, 5, 6));
+    const Homo3 h_point = Homo3::from_point(Pt3(1, 2, 3));
+    const Homo3 h_vector = Homo3::from_vector(Vec3(4, 5, 6));
 
     // 合法的转换不应该抛出异常
     ASSERT_NO_THROW(h_point.to_point());
@@ -100,8 +102,8 @@ TEST(HomoTest, ConversionSafetyRuntime) {
 TEST(HomoTest, ConversionSafetyCompileTime) {
     // 这个测试通过编译本身就证明了编译期检查的声明是有效的。
     // 我们使用 static_assert 来验证在编译期可以确定的条件。
-    constexpr Homo3 const_h_point(Pt3(1, 1, 1));
-    constexpr Homo3 const_h_vector(Vec3(2, 2, 2));
+    constexpr Homo3 const_h_point = Homo3::from_point(Pt3(1, 1, 1));
+    constexpr Homo3 const_h_vector = Homo3::from_vector(Vec3(2, 2, 2));
 
     // 这些断言在编译期进行检查
     static_assert(const_h_point.is_point(), "A Homo from a Point should be a point at compile time.");
@@ -120,16 +122,17 @@ TEST(HomoTest, ConversionSafetyCompileTime) {
 
 TEST(HomoTest, RawAccessor) {
     const Pt3 p_orig(1, 2, 3);
-    Homo3     h(p_orig);
+    Homo3     h = Homo3::from_point(p_orig);
 
-    // 测试 const 版本的 raw()
-    const auto& const_raw_data = h.raw();
-    EXPECT_DOUBLE_EQ(const_raw_data.x(), 1.0);
-    EXPECT_DOUBLE_EQ(const_raw_data.w(), 1.0);
+    // 测试 const 版本的 to_vector_raw()
+    const auto& const_to_vector_raw_data = h.to_vector_raw();
+    EXPECT_DOUBLE_EQ(const_to_vector_raw_data.x(), 1.0);
+    EXPECT_DOUBLE_EQ(const_to_vector_raw_data.w(), 1.0);
 
-    // 测试非 const 版本的 raw()，并修改数据
-    h.raw().x() = 99.0;
-    EXPECT_DOUBLE_EQ(h.raw().x(), 99.0);
+    // 测试非 const 版本的 to_vector_raw()，并修改数据
+    auto& non_const_to_vector_raw_data = h.to_vector_raw();
+    non_const_to_vector_raw_data.x() = 99.0;
+    EXPECT_DOUBLE_EQ(non_const_to_vector_raw_data.x(), 99.0);
 
     // 验证原始的 m_data 确实被修改了
     const Pt3 p_modified = h.to_point();

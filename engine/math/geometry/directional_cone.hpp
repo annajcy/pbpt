@@ -33,8 +33,8 @@ public:
     constexpr bool is_overlapping(const DirectionalCone<T>& other) const {
         if (other.is_degenerate() || this->is_degenerate()) return false;
 
-        T theta_this = std::acos(m_cosine_theta);
-        T theta_other = std::acos(other.m_cosine_theta);
+        T theta_this = safe_acos(m_cosine_theta);
+        T theta_other = safe_acos(other.m_cosine_theta);
         T theta_delta = angle_between(m_direction, other.m_direction);
 
         return is_less_equal(theta_delta, std::min(theta_this + theta_other, pi_v<T>));
@@ -45,8 +45,8 @@ public:
         if (this->is_degenerate()) return other;
 
         T theta_delta = angle_between(m_direction, other.m_direction);
-        T theta_this = std::acos(m_cosine_theta);
-        T theta_other = std::acos(other.m_cosine_theta);
+        T theta_this = safe_acos(m_cosine_theta);
+        T theta_other = safe_acos(other.m_cosine_theta);
 
         if (is_less_equal(std::min(theta_delta + theta_other, pi_v<T>), theta_this)) {
             return *this;
@@ -67,7 +67,7 @@ public:
                 }
             }
             auto theta_r = theta_o - theta_this;
-            auto res = math::Transform::rotate(theta_r, rotate.normalized()) * this->m_direction;
+            auto res = math::Transform<T>::rotate(theta_r, rotate.normalized()) * this->m_direction;
             return DirectionalCone<T>(res, theta_o);
         }
     }
@@ -77,7 +77,7 @@ public:
     }
 
     constexpr T angle() const {
-        return std::acos(m_cosine_theta);
+        return safe_acos(m_cosine_theta);
     }
 
     constexpr const T& cosine_theta() const {
