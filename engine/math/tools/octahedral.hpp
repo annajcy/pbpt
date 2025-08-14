@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
-#include "vector.hpp" // 你自己的 Vector<T,3> 类型头文件
+#include "../geometry/vector.hpp" 
 
 namespace pbpt::math {
 

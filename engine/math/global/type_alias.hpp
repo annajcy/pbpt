@@ -16,13 +16,11 @@ using Int  = int;
 using UInt = unsigned int;
 #endif
 
-template <typename T>
-inline constexpr T epsilon_v = static_cast<T>(1e-5);  // float 默认
+#define DOUBLE_EPS 1e-10
+#define FLOAT_EPS 1e-5
 
-template <>
-inline constexpr double epsilon_v<double> = 1e-10;  // double 特化
-
-template <typename T>
-inline constexpr T pi_v = static_cast<T>(3.14159265358979323846);
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 }  // namespace pbpt::math

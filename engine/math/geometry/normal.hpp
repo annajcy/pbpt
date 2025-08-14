@@ -41,6 +41,23 @@ public:
             return (*this);
         }
     }
+
+    Normal<T, N> flipped() const {
+        Normal<T, N> result = (*this);
+        for (int i = 0; i < N; ++i) {
+            result[i] = static_cast<T>(this->m_data[i]) * static_cast<T>(-1);
+        }
+        return result;
+    }
+
+    Normal<T, N>& flip() {
+        for (int i = 0; i < N; ++i) {
+            this->m_data[i] = static_cast<T>(this->m_data[i]) * static_cast<T>(-1);
+        }
+        return *this;
+    }
+
+
 };
 
 template <typename T, int N>

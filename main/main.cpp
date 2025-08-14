@@ -1,10 +1,12 @@
 #include <iostream>
 
 #include "math/geometry/bounds.hpp"
+#include "math/geometry/frame.hpp"
 #include "math/geometry/homogeneous.hpp"
+#include "math/geometry/interval.hpp"
 #include "math/geometry/matrix.hpp"
 #include "math/geometry/normal.hpp"
-#include "math/geometry/octahedral.hpp"
+#include "math/tools/octahedral.hpp"
 #include "math/geometry/point.hpp"
 #include "math/geometry/quaternion.hpp"
 #include "math/geometry/ray.hpp"
@@ -117,6 +119,14 @@ int main() {
 
     math::Trans tr = math::Trans::translate(math::Vec3(1.0, 2.0, 3.0));
     std::cout << "Translation Transform: " << tr.matrix() << std::endl;
+
+    math::Frame<double> frame(math::Vec3(0.0, 1.0, 0.0));
+    std::cout << "Frame t: " << frame.t() << std::endl;
+    std::cout << "Frame b: " << frame.b() << std::endl;
+    std::cout << "Frame n: " << frame.n() << std::endl;
+
+    math::Interval<double> interval(0.0, 1.0);
+    std::cout << "Interval low: " << interval.low << ", high: " << interval.high << std::endl;
 
     return 0;
 }

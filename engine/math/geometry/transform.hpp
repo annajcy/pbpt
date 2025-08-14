@@ -28,6 +28,10 @@ public:
     constexpr Transform<T>(const Matrix<T, 4, 4>& m, const Matrix<T, 4, 4>& inv)
         : m_mat(m), m_inv(inv) {}
 
+    static constexpr Transform<T> identity() {
+        return Transform<T>(Matrix<T, 4, 4>::identity());
+    }
+
     static constexpr Transform<T> translate(const Vector<T, 3>& t) {
         Matrix<T, 4, 4> m(
             T(1), T(0), T(0), t.x(),
@@ -111,6 +115,16 @@ public:
         return Transform<T>(m, m.transposed());
     }
 
+    static Transform<T> from_mat3x3(Matrix<T, 3, 3> m) {
+        Matrix<T, 4, 4> mat(
+            m.at(0, 0), m.at(0, 1), m.at(0, 2), T(0),
+            m.at(1, 0), m.at(1, 1), m.at(1, 2), T(0),
+            m.at(2, 0), m.at(2, 1), m.at(2, 2), T(0),
+            T(0), T(0), T(0), T(1)
+        );
+        return Transform<T>(mat, mat.inversed());
+    }
+
     static constexpr Transform<T> look_at(const Point<T, 3>& eye, const Point<T, 3>& target, const Vector<T, 3>& up) {
         Vector<T, 3> f = (target - eye).normalized();
         Vector<T, 3> s = cross(f, up).normalized();
@@ -145,19 +159,27 @@ public:
         return Transform<T>(m, m.inversed());
     }
 
+    constexpr bool operator==(const Transform<T>& rhs) const {
+        return m_mat == rhs.m_mat;
+    }
+
+    constexpr bool operator!=(const Transform<T>& rhs) const {
+        return !(*this == rhs);
+    }
+
     constexpr const Matrix<T, 4, 4>& matrix() const { return m_mat; }
     constexpr const Matrix<T, 4, 4>& inverse_matrix() const { return m_inv; }
 
-    constexpr Matrix<T, 4, 4>& set_matrix(const Matrix<T, 4, 4>& m) { 
+    constexpr Transform<T>& set_matrix(const Matrix<T, 4, 4>& m) { 
         m_mat = m;
         m_inv = m.inversed();
-        return m_mat;
+        return *this;
     }
 
-    constexpr Matrix<T, 4, 4>& set_matrix(const Matrix<T, 4, 4>& m, const Matrix<T, 4, 4>& inv) { 
+    constexpr Transform<T>& set_matrix(const Matrix<T, 4, 4>& m, const Matrix<T, 4, 4>& inv) { 
         m_mat = m;
         m_inv = inv;
-        return m_mat;
+        return *this;
     }
 
     constexpr bool is_identity() const { return m_mat.is_identity(); }
@@ -181,6 +203,11 @@ public:
         m_mat.transpose();
         m_inv.transpose();
         return *this;
+    }
+
+    constexpr bool swaps_handedness() const {
+        Matrix<T, 3, 3> upper3x3 = m_mat.template view<3, 3>(0, 0).to_matrix();
+        return upper3x3.determinant() < T(0);
     }
 
     constexpr Transform<T> transposed() const {
@@ -221,7 +248,11 @@ public:
     template<typename U>
     constexpr auto operator*(const Bounds<U, 3>& b) const {
         using R = std::common_type_t<T, U>;
-        return Bounds<R, 3>((*this) * b.min(), (*this) * b.max());
+        Bounds<R, 3> result;
+        for (int i = 0; i < 8; i ++) {
+            result.unite((*this) * b.corner(i));
+        }
+        return result;
     }
 };
 

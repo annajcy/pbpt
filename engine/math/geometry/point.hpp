@@ -1,8 +1,10 @@
 #pragma once
 
+#include "math/geometry/interval.hpp"
 #include "tuple.hpp"
 #include "vector.hpp"
 
+#include <array>
 #include <vector>
 #include <cmath>
 

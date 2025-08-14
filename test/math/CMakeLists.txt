@@ -70,5 +70,10 @@ add_executable(test_directional_cone test_directional_cone.cpp)
 target_link_libraries(test_directional_cone PRIVATE pbpt_engine gtest_main)
 add_test(NAME test_directional_cone COMMAND test_directional_cone)
 
+add_executable(test_frame test_frame.cpp)
+target_link_libraries(test_frame PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_frame COMMAND test_frame)
+
+
 
 

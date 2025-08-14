@@ -6,16 +6,14 @@
 
 #include "type_alias.hpp"
 
-/**
- * @brief Define _USE_MATH_DEFINES for M_PI on MSVC, or just define pi ourselves
- * for portability.
- */
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+template <typename T>
+inline constexpr T epsilon_v = static_cast<T>(FLOAT_EPS);  // float 默认
+
+template <>
+inline constexpr double epsilon_v<double> = DOUBLE_EPS;  // double 特化
 
 template <typename T>
-constexpr T pi_v = static_cast<T>(M_PI);
+inline constexpr T pi_v = static_cast<T>(M_PI);
 
 namespace pbpt::math {
 
