@@ -49,7 +49,7 @@ int main() {
     std::cout << "Quaternion Angle: " << quaternion.to_axis_angle().first << std::endl;
 
     auto transform = math::Transform<float>::translate(math::Vec3{1.0, 2.0, 3.0});
-    std::cout << "Transform Matrix: " << transform.mat() << std::endl;
+    std::cout << "Transform Matrix: " << transform.matrix() << std::endl;
 
     math::Homo3 homo3 = math::Homo3::from_vector(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Homo3: " << homo3 << std::endl;
@@ -116,7 +116,7 @@ int main() {
     std::cout << "Homo3 from Point: " << pp << std::endl;
 
     math::Trans tr = math::Trans::translate(math::Vec3(1.0, 2.0, 3.0));
-    std::cout << "Translation Transform: " << tr.mat() << std::endl;
+    std::cout << "Translation Transform: " << tr.matrix() << std::endl;
 
     return 0;
 }
