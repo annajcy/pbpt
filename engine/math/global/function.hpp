@@ -17,6 +17,12 @@ inline constexpr T pi_v = static_cast<T>(M_PI);
 
 namespace pbpt::math {
 
+template<typename T>
+constexpr inline T gamma(int n) {
+    T ε = std::numeric_limits<T>::epsilon();
+    return (n * ε) / (1 - n * ε);
+}
+
 template <typename T>
     requires std::is_arithmetic_v<T>
 constexpr T abs(T x) {

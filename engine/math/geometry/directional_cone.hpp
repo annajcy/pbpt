@@ -19,7 +19,7 @@ private:
 public:
 
     constexpr static DirectionalCone<T> hemisphere(const Vector<T, 3>& direction) {
-        return DirectionalCone<T>(direction, T(-1));
+        return DirectionalCone<T>(direction, pi_v<T> / T(2));
     }
 
     constexpr DirectionalCone(const Vector<T, 3>& direction, T angle)

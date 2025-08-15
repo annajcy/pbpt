@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "core/interaction.hpp"
+#include "core/shape.hpp"
 #include "math/geometry/bounds.hpp"
 #include "math/geometry/frame.hpp"
 #include "math/geometry/homogeneous.hpp"
@@ -126,7 +128,35 @@ int main() {
     std::cout << "Frame n: " << frame.n() << std::endl;
 
     math::Interval<double> interval(0.0, 1.0);
-    std::cout << "Interval low: " << interval.low << ", high: " << interval.high << std::endl;
+    std::cout << "Interval low: " << interval.m_low << ", high: " << interval.m_high << std::endl;
 
+    using I = pbpt::math::Interval<float>;
+
+    static_assert(I(0,1) <  I(2,3));
+    static_assert(I(0,1) <= I(2,3));
+    static_assert(!(I(0,2) <  I(1,3)));  // 重叠不成立
+    static_assert(!(I(0,2) <= I(1,3)));
+
+    static_assert(I(2,3) >  I(0,1));
+    static_assert(I(2,3) >= I(0,2));
+
+    static_assert(I(0,1) <  2.0f);
+    static_assert(I(0,2) <= 2.0f);
+    static_assert(!(I(1,3) <= 2.0f));
+
+    static_assert(I(2,3) >  2.0f == false);
+    static_assert(I(2,3) >= 2.0f);
+
+    math::Pt3Interv p(
+        math::Interval<float>::from_value_with_error(0.0f, 0.1f),
+        math::Interval<float>::from_value_with_error(1.0f, 0.1f),
+        math::Interval<float>::from_value_with_error(2.0f, 0.1f)
+    );
+
+    std::cout << "Point3Eps: " << p << std::endl;
+
+    std::cout << "Point3Eps + vec1: " << p + math::Vector<float, 3>(1.0f, 1.0f, 1.0f) << std::endl;
+    std::cout << "Point3Eps - vec1: " << p - math::Vector<float, 3>(1.0f, 1.0f, 1.0f) << std::endl;
+    
     return 0;
 }

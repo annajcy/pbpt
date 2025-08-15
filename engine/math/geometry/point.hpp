@@ -1,17 +1,19 @@
 #pragma once
 
 #include "math/geometry/interval.hpp"
+#include "math/global/type_alias.hpp"
 #include "tuple.hpp"
 #include "vector.hpp"
 
 #include <array>
+#include <type_traits>
+#include <utility>
 #include <vector>
 #include <cmath>
 
 namespace pbpt::math {
 
 template <typename T, int N>
-    requires(N > 0) && (std::is_floating_point_v<T> || std::is_integral_v<T>)
 class Point : public Tuple<Point, T, N> {
 private:
     using Base = Tuple<Point, T, N>;
@@ -146,5 +148,20 @@ using Pt1i = Point<Int, 1>;
 using Pt2i = Point<Int, 2>;
 using Pt3i = Point<Int, 3>;
 using Pt4i = Point<Int, 4>;
+
+template <std::floating_point T, int N>
+using PointInterval = Point<Interval<T>, N>;
+
+using Pt3Interv = PointInterval<float, 3>;
+
+template <std::floating_point T, int N>
+inline constexpr Point<T, N> to_point(const PointInterval<T, N>& pi) {
+    Point<T, N> p;
+    for (int i = 0; i < N; ++i) {
+        auto& interv = pi[i];
+        p[i] = interv.midpoint();
+    }
+    return p;
+}
 
 } // namespace pbpt::math

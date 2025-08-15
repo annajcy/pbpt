@@ -5,34 +5,8 @@
 
 #include "vector.hpp"
 
-/**
- * @file quaternion.hpp
- * @brief Defines a high-performance Quaternion class for 3D rotations.
- * @details This file provides a `Quaternion` class that represents rotations in
- * 3D space using quaternions. It is designed to integrate seamlessly with the
- * existing math library ecosystem, providing efficient rotation operations,
- * interpolation, and conversion utilities.
- */
-
 namespace pbpt::math {
 
-/**
- * @class Quaternion
- * @brief A template class for quaternions representing 3D rotations.
- * @details Quaternions provide a compact and efficient way to represent
- * rotations in 3D space. They avoid gimbal lock issues and provide smooth
- * interpolation. The quaternion is stored as (w, x, y, z) where w is the scalar
- * part and (x, y, z) is the vector part.
- *
- * Key features:
- * - Efficient rotation operations
- * - Smooth interpolation (SLERP)
- * - Conversion to/from rotation matrices and axis-angle representation
- * - Integration with existing Vector and Point classes
- * - constexpr support for compile-time operations
- *
- * @tparam T The underlying floating-point type (Float by default)
- */
 template <typename T = Float>
     requires std::is_floating_point_v<T>
 class Quaternion {

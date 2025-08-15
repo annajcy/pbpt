@@ -44,9 +44,9 @@ TEST_F(DirectionalConeTest, HemisphereCreation) {
     auto hemisphere = DirectionalCone<Float>::hemisphere(up);
     
     EXPECT_EQ(hemisphere.direction(), up);
-    // hemisphere() creates cone with cosine_theta = cos(-1) ≈ 0.540
-    EXPECT_NEAR(hemisphere.angle(), 1.0f, epsilon_v<Float>);
-    EXPECT_NEAR(hemisphere.cosine_theta(), std::cos(-1.0f), epsilon_v<Float>);
+    // hemisphere() creates cone with angle = π/2 (90 degrees)
+    EXPECT_NEAR(hemisphere.angle(), half_pi, epsilon_v<Float>);
+    EXPECT_NEAR(hemisphere.cosine_theta(), std::cos(half_pi), epsilon_v<Float>);
 }
 
 TEST_F(DirectionalConeTest, ContainsBasic) {
@@ -67,20 +67,23 @@ TEST_F(DirectionalConeTest, ContainsBasic) {
 TEST_F(DirectionalConeTest, ContainsHemisphere) {
     auto hemisphere = DirectionalCone<Float>::hemisphere(up);
     
-    // hemisphere() creates a cone with angle = 1 radian (about 57.3 degrees)
+    // hemisphere() creates a cone with angle = π/2 (90 degrees)
     // Should contain the up direction
     EXPECT_TRUE(hemisphere.contains(up));
     
-    // Should contain directions within about 57.3 degrees of up
+    // Should contain directions within 90 degrees of up
     Vector<Float, 3> within = Vector<Float, 3>(0.3f, 0.3f, 0.9f).normalized();
     EXPECT_TRUE(hemisphere.contains(within));
     
-    // Should not contain directions that are too far from up
-    EXPECT_FALSE(hemisphere.contains(right)); // 90 degrees from up
+    // Should contain directions at 90 degrees from up (on the boundary)
+    EXPECT_TRUE(hemisphere.contains(right)); // 90 degrees from up - should be on boundary
+    EXPECT_TRUE(hemisphere.contains(forward)); // 90 degrees from up - should be on boundary
+    
+    // Should not contain directions beyond 90 degrees from up
     EXPECT_FALSE(hemisphere.contains(down));  // 180 degrees from up
     
-    // Test boundary case - vector at approximately 1 radian from up
-    Vector<Float, 3> boundary = Vector<Float, 3>(std::sin(1.0f), 0, std::cos(1.0f));
+    // Test boundary case - vector at approximately π/2 radians (90 degrees) from up
+    Vector<Float, 3> boundary = Vector<Float, 3>(1.0f, 0, 0);
     EXPECT_TRUE(hemisphere.contains(boundary.normalized()));
 }
 

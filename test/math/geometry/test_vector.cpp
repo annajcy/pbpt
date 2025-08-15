@@ -262,6 +262,7 @@ TEST(VectorFreeFunctionsTest, AngleBetween) {
 
 TEST(VectorFreeFunctionsTest, CoordinateSystem) {
     Vector<Float, 3> v1(0.0, 0.0, 1.0);
+    v1 = v1.normalized();
     auto [v2, v3] = coordinate_system(v1);
     EXPECT_TRUE(v2.is_normalized());
     EXPECT_TRUE(v3.is_normalized());

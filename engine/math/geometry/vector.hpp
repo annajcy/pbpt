@@ -11,7 +11,6 @@
 namespace pbpt::math {
 
 template <typename T, int N>
-    requires(N > 0) && (std::is_floating_point_v<T> || std::is_integral_v<T>)
 class Vector : public Tuple<Vector, T, N> {
 private:
     using Base = Tuple<Vector, T, N>;
