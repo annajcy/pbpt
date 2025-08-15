@@ -132,8 +132,6 @@ public:
         return Interval<R>(m_low - scalar, m_high - scalar);
     }
 
-
-
     // —— 乘法 / 除法 ——
     template<typename U>
     constexpr auto operator*(const Interval<U>& other) const {
@@ -182,13 +180,13 @@ public:
         return *this;
     }
 
-    template<typename U>
+    template<std::floating_point U>
     constexpr Interval& operator+=(U scalar) {
         *this = *this + scalar;
         return *this;
     }
 
-    template<typename U>
+    template<std::floating_point U>
     constexpr Interval& operator-=(U scalar) {
         *this = *this - scalar;
         return *this;
@@ -231,25 +229,25 @@ public:
     }
 
     // 标量比较
-    template<typename U>
+    template<std::floating_point U>
     constexpr bool operator<(U scalar) const {
         if (is_empty()) return false;
         return is_less(m_high, scalar);
     }
 
-    template<typename U>
+    template<std::floating_point U>
     constexpr bool operator<=(U scalar) const {
         if (is_empty()) return false;
         return is_less_equal(m_high, scalar);
     }
 
-    template<typename U>
+    template<std::floating_point U>
     constexpr bool operator>(U scalar) const {
         if (is_empty()) return false;
         return is_greater(m_low, scalar);
     }
 
-    template<typename U>
+    template<std::floating_point U>
     constexpr bool operator>=(U scalar) const {
         if (is_empty()) return false;
         return is_greater_equal(m_low, scalar);
@@ -273,12 +271,12 @@ public:
 };
 
 // 全局操作符 - 标量在左侧的情况
-template<typename U, std::floating_point T>
+template<std::floating_point U, std::floating_point T>
 constexpr auto operator+(U scalar, const Interval<T>& interval) {
     return interval + scalar;
 }
 
-template<typename U, std::floating_point T2>
+template<std::floating_point U, std::floating_point T2>
 constexpr auto operator-(U scalar, const Interval<T2>& interval) {
     using R = std::common_type_t<T2, U>;
     if (interval.is_empty()) return Interval<R>::empty();
