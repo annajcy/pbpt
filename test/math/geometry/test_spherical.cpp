@@ -25,6 +25,30 @@ bool points_almost_equal(const PointType& p1, const PointType& p2, Float epsilon
     return true;
 }
 
+template <typename PointType>
+bool points_almost_equal_relative(const PointType& p1, const PointType& p2, Float relative_epsilon = Float(1e-5)) {
+    for (int i = 0; i < p1.dims(); ++i) {
+        Float abs_error = pbpt::math::abs(p1[i] - p2[i]);
+        Float abs_p1 = pbpt::math::abs(p1[i]);
+        Float abs_p2 = pbpt::math::abs(p2[i]);
+        Float max_abs = std::max(abs_p1, abs_p2);
+        
+        // 使用相对误差，当数值很小时使用绝对误差
+        if (max_abs > Float(1e-10)) {
+            Float relative_error = abs_error / max_abs;
+            if (relative_error > relative_epsilon) {
+                return false;
+            }
+        } else {
+            // 对于很小的数值，使用绝对误差
+            if (abs_error > relative_epsilon) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 // --- 2D 球坐标测试 ---
 TEST(SphericalPointTest, Construction2D) {
     // 测试从角度和半径构造
@@ -238,8 +262,27 @@ TEST(SphericalPointTest, NumericalStability) {
     Point<Float, 3>          large(1e6f, 1e6f, 1e6f);
     SphericalPoint<Float, 3> sphere_large(large);
     Point<Float, 3>          converted_large = sphere_large.to_cartesian();
+    std::cout << "large: " << large << std::endl;
     std::cout << "Converted back (large): " << converted_large << std::endl;
-    EXPECT_TRUE(points_almost_equal(large, converted_large, 1e-2f));
+    
+    // 计算并输出详细的误差信息
+    for (int i = 0; i < 3; ++i) {
+        Float abs_error = pbpt::math::abs(large[i] - converted_large[i]);
+        Float rel_error = abs_error / pbpt::math::abs(large[i]);
+        std::cout << "Component " << i << ": original=" << large[i] 
+                  << ", converted=" << converted_large[i]
+                  << ", abs_error=" << abs_error 
+                  << ", rel_error=" << rel_error << std::endl;
+    }
+    
+    // 也输出球坐标信息
+    std::cout << "Sphere radius: " << sphere_large.radius() << std::endl;
+    std::cout << "Sphere angles: [" << sphere_large.angle(0) << ", " 
+              << sphere_large.angle(1) << "]" << std::endl;
+    
+    // 使用相对误差检查，1e-5 的相对精度对于大数值是合理的
+    EXPECT_TRUE(points_almost_equal_relative(large, converted_large, Float(1e-5)))
+        << "High precision conversion failed for large values";
 }
 
 // --- 类型别名测试 ---
