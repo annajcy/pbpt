@@ -157,6 +157,8 @@ int main() {
 
     std::cout << "Point3Eps + vec1: " << p + math::Vector<float, 3>(1.0f, 1.0f, 1.0f) << std::endl;
     std::cout << "Point3Eps - vec1: " << p - math::Vector<float, 3>(1.0f, 1.0f, 1.0f) << std::endl;
+
+    core::Sphere sphere;
     
     return 0;
 }
