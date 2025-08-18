@@ -164,7 +164,7 @@ int main() {
 
     using namespace pbpt::integrator;
 
-    UniformSampler sampler(1, {0.0, M_PI_2});
+    UniformSampler sampler(1, {0.0, pi_v<Float> / 2});
 
     auto f = [](std::span<const double> x) {
         return std::cos(x[0]);
