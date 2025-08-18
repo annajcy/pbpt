@@ -1,7 +1,9 @@
+#include <cmath>
 #include <iostream>
 
 #include "core/interaction.hpp"
 #include "core/shape.hpp"
+#include "integrator/monte_carlo.hpp"
 #include "math/geometry/bounds.hpp"
 #include "math/geometry/frame.hpp"
 #include "math/geometry/homogeneous.hpp"
@@ -159,6 +161,19 @@ int main() {
     std::cout << "Point3Eps - vec1: " << p - math::Vector<float, 3>(1.0f, 1.0f, 1.0f) << std::endl;
 
     core::Sphere sphere;
+
+    using namespace pbpt::integrator;
+
+    UniformSampler sampler(1, {0.0, M_PI_2});
+
+    auto f = [](std::span<const double> x) {
+        return std::cos(x[0]);
+    };
+
+    auto [result, var] = monte_carlo_integrate(f, sampler, 1000000);
+
+    std::cout << "Integral ≈ " << result << ", Variance = " << var << "\n";
+    std::cout << "Ground truth = 1.0\n";
     
     return 0;
 }

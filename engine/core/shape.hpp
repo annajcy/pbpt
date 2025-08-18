@@ -6,6 +6,7 @@ namespace pbpt::core {
 template<typename Derived>
 class Shape {
 public:
+    
 
 };
 

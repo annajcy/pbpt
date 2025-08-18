@@ -5,8 +5,8 @@
 #include "math/geometry/transform.hpp"
 #include "math/global/function.hpp"
 #include "math/global/operator.hpp"
-#include "math/global/type_alias.hpp"
 #include "vector.hpp"
+#include "bounds.hpp"
 
 namespace pbpt::math {
 
@@ -18,8 +18,12 @@ private:
 
 public:
 
-    constexpr static DirectionalCone<T> hemisphere(const Vector<T, 3>& direction) {
+    constexpr static DirectionalCone<T> hemisphere(const Vector<T, 3>& direction = Vector<T, 3>(0, 0, 1)) {
         return DirectionalCone<T>(direction, pi_v<T> / T(2));
+    }
+
+    constexpr static DirectionalCone<T> entire_sphere(const Vector<T, 3>& direction = Vector<T, 3>(0, 0, 1)) {
+        return DirectionalCone<T>(direction, pi_v<T>);
     }
 
     constexpr DirectionalCone(const Vector<T, 3>& direction, T angle)
@@ -55,7 +59,7 @@ public:
         } else {
             T theta_o = (theta_this + theta_other + theta_delta) / 2;
             if (is_greater_equal(theta_o, pi_v<T>)) {
-                return DirectionalCone<T>::hemisphere(Vector<T, 3>(0, 0, 1));
+                return DirectionalCone<T>::entire_sphere(Vector<T, 3>(0, 0, 1));
             }
 
             auto rotate = cross(this->m_direction, other.m_direction);
@@ -63,7 +67,7 @@ public:
                 if (this->m_direction.dot(other.m_direction) > 0) {
                     return DirectionalCone<T>(this->m_direction, theta_o);
                 } else {
-                    return DirectionalCone<T>::hemisphere(Vector<T, 3>(0, 0, 1));
+                    return DirectionalCone<T>::entire_sphere(Vector<T, 3>(0, 0, 1));
                 }
             }
             auto theta_r = theta_o - theta_this;
@@ -91,6 +95,31 @@ public:
     constexpr Vector<T, 3> direction() const {
         return m_direction;
     }
+
+    // Compute the directional cone that bounds all directions from point p to any point in the bounding box
+    static DirectionalCone<T> bound_subtended_directions(const Point<T, 3>& p, const Bounds<T, 3>& bounds) {
+        if (bounds.contains(p)) {
+            return DirectionalCone<T>::entire_sphere(Vector<T, 3>(0, 0, 1));
+        }
+
+        Point<T, 3> sphere_center = bounds.center();
+        Vector<T, 3> diagonal = bounds.diagonal();
+        T sphere_radius = diagonal.length() / T(2);
+        Vector<T, 3> direction = (sphere_center - p).normalized();
+        T dist_to_center = p.distance(sphere_center);
+        
+        T angle;
+        if (dist_to_center <= sphere_radius) {
+            return DirectionalCone<T>::entire_sphere(direction);
+        } else {
+            T sin_theta = sphere_radius / dist_to_center;
+            angle = safe_asin(sin_theta);
+        }
+        
+        return DirectionalCone<T>(direction, angle);
+    }
+
+
 
 };
 
