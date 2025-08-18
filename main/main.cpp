@@ -175,5 +175,7 @@ int main() {
     std::cout << "Integral ≈ " << result << ", Variance = " << var << "\n";
     std::cout << "Ground truth = 1.0\n";
     
+
+    
     return 0;
 }
