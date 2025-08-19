@@ -3,11 +3,11 @@
 
 #include "assimp/Importer.hpp"
 #include "imgui.h"
-#include "math/geometry/bounds.hpp"
-#include "math/geometry/matrix.hpp"
-#include "math/geometry/point.hpp"
-#include "math/geometry/vector.hpp"
-#include "math/global/operator.hpp"
+#include "geometry/bounds.hpp"
+#include "math/matrix.hpp"
+#include "math/point.hpp"
+#include "math/vector.hpp"
+#include "math/operator.hpp"
 #include "slang.h"
 
 #if defined(RENDER_BACKEND_VULKAN)
@@ -103,6 +103,7 @@ int main() {
     std::cout << "IsExtensionSupported: " << is_supported << std::endl;
 
     using namespace math;
+    using namespace geometry;
 
     Mat2 m(Vec2(4, 7), Vec2(2, 6));  // Determinant is 10
     std::cout << "Determinant: " << m.determinant() << std::endl;

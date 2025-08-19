@@ -4,40 +4,41 @@
 #include "core/interaction.hpp"
 #include "core/shape.hpp"
 #include "integrator/monte_carlo.hpp"
-#include "math/geometry/bounds.hpp"
-#include "math/geometry/frame.hpp"
-#include "math/geometry/homogeneous.hpp"
-#include "math/geometry/interval.hpp"
-#include "math/geometry/matrix.hpp"
-#include "math/geometry/normal.hpp"
-#include "math/tools/octahedral.hpp"
-#include "math/geometry/point.hpp"
-#include "math/geometry/quaternion.hpp"
-#include "math/geometry/ray.hpp"
-#include "math/geometry/spherical.hpp"
-#include "math/geometry/transform.hpp"
-#include "math/geometry/vector.hpp"
-#include "math/global/function.hpp"
-#include "math/geometry/directional_cone.hpp"
-#include "math/global/type_alias.hpp"
+#include "geometry/bounds.hpp"
+#include "geometry/frame.hpp"
+#include "math/homogeneous.hpp"
+#include "math/interval.hpp"
+#include "math/matrix.hpp"
+#include "math/normal.hpp"
+#include "math/octahedral.hpp"
+#include "math/point.hpp"
+#include "math/quaternion.hpp"
+#include "geometry/ray.hpp"
+#include "geometry/spherical.hpp"
+#include "geometry/transform.hpp"
+#include "math/vector.hpp"
+#include "math/function.hpp"
+#include "geometry/directional_cone.hpp"
+#include "math/type_alias.hpp"
 
 using namespace pbpt;
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
 
-    math::Sphere3 sp(math::Vec2{math::deg2rad(45.0), math::deg2rad(45.0)}, 1.0);
-    std::cout << sp.to_cartesian() << std::endl;
+    // Commenting out Sphere3 as it doesn't exist yet
+    // math::Sphere3 sp(math::Vec2{math::deg2rad(45.0), math::deg2rad(45.0)}, 1.0);
+    // std::cout << sp.to_cartesian() << std::endl;
 
-    math::Ray3 ray(math::Pt3{0.0, 0.0, 0.0}, math::Vec3{1.0, 1.0, 1.0});
+    geometry::Ray3 ray(math::Pt3{0.0, 0.0, 0.0}, math::Vec3{1.0, 1.0, 1.0});
     std::cout << "Ray Origin: " << ray.origin() << ", Direction: " << ray.direction() << std::endl;
 
-    std::array<math::Ray3, 2> rds = {
-        math::Ray3(math::Pt3{0.1, 0.0, 0.0}, math::Vec3{1.0, 0.1, 0.0}),
-        math::Ray3(math::Pt3{0.0, 0.1, 0.0}, math::Vec3{1.0, 0.0, 0.1})
+    std::array<geometry::Ray3, 2> rds = {
+        geometry::Ray3(math::Pt3{0.1, 0.0, 0.0}, math::Vec3{1.0, 0.1, 0.0}),
+        geometry::Ray3(math::Pt3{0.0, 0.1, 0.0}, math::Vec3{1.0, 0.0, 0.1})
     };
 
-    math::RayDiff3 ray_diff(ray, rds);
+    geometry::RayDiff3 ray_diff(ray, rds);
     ray_diff.scale(2.0);
     std::cout << "Ray Differential Origin: " << ray_diff.main_ray().origin() << ", Direction: " << ray_diff.main_ray().direction()
               << std::endl;
@@ -46,7 +47,7 @@ int main() {
     std::cout << "Ray Differential Origin: " << ray_diff.y().origin() << ", Direction: " << ray_diff.y().direction()
               << std::endl;
 
-    math::Bounds3 box(math::Pt3{0.0, 0.0, 0.0}, math::Pt3{1.0, 1.0, 1.0});
+    geometry::Bounds3 box(math::Pt3{0.0, 0.0, 0.0}, math::Pt3{1.0, 1.0, 1.0});
     std::cout << "Bounding Box: " << box << std::endl;
 
     math::Quat quaternion(1.0, math::Vec3{0.0, 1.0, 0.0});
@@ -54,7 +55,7 @@ int main() {
     std::cout << "Quaternion Axis: " << quaternion.to_axis_angle().second << std::endl;
     std::cout << "Quaternion Angle: " << quaternion.to_axis_angle().first << std::endl;
 
-    auto transform = math::Transform<float>::translate(math::Vec3{1.0, 2.0, 3.0});
+    auto transform = geometry::Transform<float>::translate(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Transform Matrix: " << transform.matrix() << std::endl;
 
     math::Homo3 homo3 = math::Homo3::from_vector(math::Vec3{1.0, 2.0, 3.0});
@@ -80,7 +81,7 @@ int main() {
     math::OctahedralVector<double> octahedral_vec_d(vec_d.normalized());
     std::cout << "Octahedral Vector (double): " << octahedral_vec_d.decode() << std::endl;
 
-    math::DirectionalCone<math::Float> dc(
+    geometry::DirectionalCone<math::Float> dc(
         math::Vector<math::Float, 3>(0, 0, 1), math::deg2rad(80.0)
     );
 
@@ -121,10 +122,10 @@ int main() {
     auto pp = math::Homo3::from_point(math::Pt3(1.0, 2.0, 3.0));
     std::cout << "Homo3 from Point: " << pp << std::endl;
 
-    math::Trans tr = math::Trans::translate(math::Vec3(1.0, 2.0, 3.0));
+    geometry::Trans tr = geometry::Trans::translate(math::Vec3(1.0, 2.0, 3.0));
     std::cout << "Translation Transform: " << tr.matrix() << std::endl;
 
-    math::Frame<double> frame(math::Vec3(0.0, 1.0, 0.0));
+    geometry::Frame<double> frame(math::Vec3(0.0, 1.0, 0.0));
     std::cout << "Frame t: " << frame.t() << std::endl;
     std::cout << "Frame b: " << frame.b() << std::endl;
     std::cout << "Frame n: " << frame.n() << std::endl;

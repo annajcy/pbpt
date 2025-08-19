@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
+
+#include "math/normal.hpp"
+#include "math/point.hpp"
+#include "geometry/ray.hpp"
 #include "core/interaction.hpp"
-#include "math/geometry/interval.hpp"
 
 using namespace pbpt::core;
 using namespace pbpt::math;
+using namespace pbpt::geometry;
 
 class InteractionTest : public ::testing::Test {
 protected:
@@ -37,6 +41,7 @@ TEST_F(InteractionTest, OffsetRayOrigin) {
     Vec3 wi(0, 0, 1);  // 入射方向
     
     // 测试正常情况
+    
     Pt3 offset_origin = offset_ray_origin(pi, wi, n);
     
     // 验证偏移后的原点不等于原始点

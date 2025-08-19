@@ -1,13 +1,13 @@
 #pragma once
 
-#include "math/geometry/normal.hpp"
-#include "math/geometry/point.hpp"
-#include "math/geometry/ray.hpp"
-#include "math/geometry/vector.hpp"
-#include "math/global/operator.hpp"
-#include "math/global/type_alias.hpp"
+#include "math/point.hpp"
+#include "math/vector.hpp"
+#include "math/normal.hpp"
+#include "math/interval.hpp"
+#include "geometry/ray.hpp"
 
 using namespace pbpt::math;
+using namespace pbpt::geometry;
 
 namespace pbpt::core {
 

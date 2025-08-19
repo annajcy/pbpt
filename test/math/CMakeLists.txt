@@ -1,13 +1,52 @@
-# Include subdirectories
-add_subdirectory(geometry)
-add_subdirectory(integration)
-add_subdirectory(tools)
+# Basic math type tests
+add_executable(test_vector test_vector.cpp)
+target_link_libraries(test_vector PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_vector COMMAND test_vector)
 
-# Performance tests (separate from regular tests)
-add_executable(test_matrix_performance geometry/test_matrix.cpp)
-target_link_libraries(test_matrix_performance PRIVATE pbpt_engine gtest_main)
-target_compile_definitions(test_matrix_performance PRIVATE PERFORMANCE_TEST=1)
-add_test(NAME test_matrix_performance COMMAND test_matrix_performance)
+add_executable(test_tuple test_tuple.cpp)
+target_link_libraries(test_tuple PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_tuple COMMAND test_tuple)
+
+add_executable(test_point test_point.cpp)
+target_link_libraries(test_point PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_point COMMAND test_point)
+
+add_executable(test_point_eps test_point_eps.cpp)
+target_link_libraries(test_point_eps PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_point_eps COMMAND test_point_eps)
+
+add_executable(test_normal test_normal.cpp)
+target_link_libraries(test_normal PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_normal COMMAND test_normal)
+
+add_executable(test_matrix test_matrix.cpp)
+target_link_libraries(test_matrix PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_matrix COMMAND test_matrix)
+
+add_executable(test_matrix_enhanced test_matrix_enhanced.cpp)
+target_link_libraries(test_matrix_enhanced PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_matrix_enhanced COMMAND test_matrix_enhanced)
+
+add_executable(test_homo test_homo.cpp)
+target_link_libraries(test_homo PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_homo COMMAND test_homo)
+
+add_executable(test_homo_enhanced test_homo_enhanced.cpp)
+target_link_libraries(test_homo_enhanced PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_homo_enhanced COMMAND test_homo_enhanced)
+
+add_executable(test_quaternion test_quaternion.cpp)
+target_link_libraries(test_quaternion PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_quaternion COMMAND test_quaternion)
+
+add_executable(test_interval test_interval.cpp)
+target_link_libraries(test_interval PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_interval COMMAND test_interval)
+
+add_executable(test_octahedral test_octahedral.cpp)
+target_link_libraries(test_octahedral PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_octahedral COMMAND test_octahedral)
+
 
 
 

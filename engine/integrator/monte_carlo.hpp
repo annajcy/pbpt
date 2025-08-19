@@ -5,7 +5,6 @@
 #include <span>
 #include <concepts>
 #include <utility>
-#include <functional>
 #include <numeric>
 #include <cmath>
 #include <cassert>
