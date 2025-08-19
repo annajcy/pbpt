@@ -20,15 +20,16 @@
 #include "math/function.hpp"
 #include "geometry/directional_cone.hpp"
 #include "math/type_alias.hpp"
+#include "ml/activation.hpp"
+#include "ml/network.hpp"
 
 using namespace pbpt;
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
 
-    // Commenting out Sphere3 as it doesn't exist yet
-    // math::Sphere3 sp(math::Vec2{math::deg2rad(45.0), math::deg2rad(45.0)}, 1.0);
-    // std::cout << sp.to_cartesian() << std::endl;
+    geometry::Sphere3 sp(math::Vec2{math::deg2rad(45.0), math::deg2rad(45.0)}, 1.0);
+    std::cout << sp.to_cartesian() << std::endl;
 
     geometry::Ray3 ray(math::Pt3{0.0, 0.0, 0.0}, math::Vec3{1.0, 1.0, 1.0});
     std::cout << "Ray Origin: " << ray.origin() << ", Direction: " << ray.direction() << std::endl;
@@ -175,8 +176,6 @@ int main() {
 
     std::cout << "Integral ≈ " << result << ", Variance = " << var << "\n";
     std::cout << "Ground truth = 1.0\n";
-    
 
-    
     return 0;
 }

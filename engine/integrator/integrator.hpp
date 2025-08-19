@@ -5,9 +5,10 @@
 #include <memory>
 #include <stdexcept>
 
+#include "math/point.hpp"
+
 #include "sampler.hpp"
 #include "distribution.hpp"
-#include "math/point.hpp"
 
 namespace pbpt::integrator {
 

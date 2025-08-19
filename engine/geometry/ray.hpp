@@ -9,7 +9,6 @@
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
-
 using namespace pbpt::math;
 
 namespace pbpt::geometry {

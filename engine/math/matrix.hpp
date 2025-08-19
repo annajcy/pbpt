@@ -195,6 +195,14 @@ public:
         return result;
     }
 
+    static auto random() {
+        Matrix result{};
+        for (int i = 0; i < R * C; ++i) {
+            result.m_data[i] = rand<T>();
+        }
+        return result;
+    }
+
     // Constructors
     constexpr Matrix() noexcept = default;
 
@@ -373,7 +381,11 @@ public:
                                        "Cannot invert a singular matrix");
 
         // Optimized hardcoded versions for small matrices
-        if constexpr (R == 2) {
+        if constexpr (R == 1) {
+            Matrix result{};
+            result.at(0, 0) = T(1) / det;
+            return result;
+        } else if constexpr (R == 2) {
             return inverse_2x2_optimized();
         } else if constexpr (R == 3) {
             return inverse_3x3_optimized();

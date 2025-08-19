@@ -4,12 +4,13 @@
 #include <optional>
 #include <utility>
 
-#include "ray.hpp"
 #include "math/function.hpp"
 #include "math/operator.hpp"
 #include "math/utils.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
+
+#include "ray.hpp"
 
 using namespace pbpt::math;
 

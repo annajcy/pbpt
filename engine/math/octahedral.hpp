@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
+
 #include "vector.hpp" 
 
 namespace pbpt::math {

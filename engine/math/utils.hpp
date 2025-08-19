@@ -1,6 +1,8 @@
 #pragma once
 
 #include <concepts>
+#include <limits>
+#include <random>
 #include <stdexcept>
 #include <type_traits>
 
@@ -69,6 +71,18 @@ inline constexpr void assert_if_ex(F condition_condition, const char* message = 
     }
 }
 
-
+template <typename T>
+inline T rand(T min = std::numeric_limits<T>::lowest(), T max = std::numeric_limits<T>::max()) {
+    thread_local static std::random_device rd;
+    thread_local static std::mt19937 gen(rd());
+    
+    if constexpr (std::is_integral_v<T>) {
+        std::uniform_int_distribution<T> dist(min, max);
+        return dist(gen);
+    } else {
+        std::uniform_real_distribution<T> dist(min, max);
+        return dist(gen);
+    }
+}
 
 };  // namespace pbpt::math

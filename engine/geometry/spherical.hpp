@@ -11,7 +11,6 @@
 #include "math/point.hpp"
 #include "math/type_alias.hpp"
 
-
 using namespace pbpt::math;
 
 namespace pbpt::geometry {

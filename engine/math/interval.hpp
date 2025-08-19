@@ -3,6 +3,7 @@
 #include <concepts>
 #include <algorithm>
 #include <ostream>
+
 #include "operator.hpp"
 #include "utils.hpp"
 

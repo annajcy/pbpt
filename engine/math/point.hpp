@@ -1,14 +1,14 @@
 #pragma once
 
-#include "interval.hpp"
-#include "type_alias.hpp"
-#include "tuple.hpp"
-#include "vector.hpp"
-
 #include <array>
 #include <type_traits>
 #include <vector>
 #include <cmath>
+
+#include "interval.hpp"
+#include "type_alias.hpp"
+#include "tuple.hpp"
+#include "vector.hpp"
 
 namespace pbpt::math {
 

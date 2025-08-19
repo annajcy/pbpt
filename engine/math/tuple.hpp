@@ -1,11 +1,11 @@
 #pragma once
 
-#include "operator.hpp"
-#include "utils.hpp"
-
 #include <array>
 #include <type_traits>
 #include <iostream>
+
+#include "operator.hpp"
+#include "utils.hpp"
 
 namespace pbpt::math {
 
@@ -26,6 +26,13 @@ public:
 
     static constexpr auto zeros() { return filled(T(0)); }
     static constexpr auto ones() { return filled(T(1)); }
+
+    static auto random() {
+        Derived<T, N> t;
+        for (int i = 0; i < N; ++i)
+            t[i] = rand<T>();
+        return t;
+    }
 
     static constexpr auto from_array(const std::array<T, N>& arr) {
         Derived<T, N> t;

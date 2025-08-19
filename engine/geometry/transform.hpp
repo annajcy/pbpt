@@ -3,14 +3,16 @@
 #include <utility>
 #include <concepts>
 
-#include "bounds.hpp"
+
 #include "math/homogeneous.hpp"
 #include "math/type_alias.hpp"
 #include "math/matrix.hpp"
 #include "math/normal.hpp"
 #include "math/point.hpp"
-#include "ray.hpp"
 #include "math/vector.hpp"
+
+#include "bounds.hpp"
+#include "ray.hpp"
 
 using namespace pbpt::math;
 

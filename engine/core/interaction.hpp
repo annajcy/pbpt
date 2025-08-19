@@ -4,6 +4,7 @@
 #include "math/vector.hpp"
 #include "math/normal.hpp"
 #include "math/interval.hpp"
+
 #include "geometry/ray.hpp"
 
 using namespace pbpt::math;
