@@ -2,3 +2,7 @@
 add_executable(test_interaction test_interaction.cpp)
 target_link_libraries(test_interaction PRIVATE pbpt_engine gtest_main)
 add_test(NAME test_interaction COMMAND test_interaction)
+
+add_executable(test_radiometry test_radiometry.cpp)
+target_link_libraries(test_radiometry PRIVATE pbpt_engine gtest_main)
+add_test(NAME test_radiometry COMMAND test_radiometry)
