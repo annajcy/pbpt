@@ -146,10 +146,6 @@ public:
         return 2 * (diag.x() * diag.y() + diag.y() * diag.z() + diag.z() * diag.x());
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Bounds& box) {
-        os << "BoundingBox(" << box.m_min << ", " << box.m_max << ")";
-        return os;
-    }
 };
 
 template <typename T, int N>

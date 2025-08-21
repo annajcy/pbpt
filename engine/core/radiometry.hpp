@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <fstream>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -305,6 +306,11 @@ std::string to_string(const Radiometry<T, Tag>& q) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(6) << q.value() << " " << RadiometryUnitInfo<Tag>::symbol;
     return oss.str();
+}
+
+template<typename T, typename Tag>
+std::ostream & operator<<(std::ostream& os, const Radiometry<T, Tag>& q) {
+    return os << to_string(q);
 }
 
 }

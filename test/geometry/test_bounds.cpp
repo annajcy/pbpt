@@ -408,20 +408,6 @@ TEST(BoundingBoxTest, PointBox) {
     EXPECT_EQ(box.diagonal(), Vec3(0.0, 0.0, 0.0));
 }
 
-// --- 输出流测试 ---
-TEST(BoundingBoxTest, OutputStreamOperator) {
-    Bounds<Float, 3> box;
-    box.unite(Pt3(1.0, 2.0, 3.0));
-    box.unite(Pt3(4.0, 5.0, 6.0));
-    
-    std::stringstream ss;
-    ss << box;
-    
-    std::string result = ss.str();
-    EXPECT_TRUE(result.find("BoundingBox") != std::string::npos);
-    EXPECT_TRUE(result.find("1") != std::string::npos);
-    EXPECT_TRUE(result.find("6") != std::string::npos);
-}
 
 // --- 不同维度测试 ---
 TEST(BoundingBoxTest, OneDimensional) {

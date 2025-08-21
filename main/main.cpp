@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "core/interaction.hpp"
+#include "core/radiometry.hpp"
 #include "core/shape.hpp"
 #include "integrator/monte_carlo.hpp"
 #include "geometry/bounds.hpp"
@@ -16,6 +17,7 @@
 #include "geometry/ray.hpp"
 #include "geometry/spherical.hpp"
 #include "geometry/transform.hpp"
+#include "math/format.hpp"
 #include "math/vector.hpp"
 #include "math/function.hpp"
 #include "geometry/directional_cone.hpp"
@@ -49,7 +51,6 @@ int main() {
               << std::endl;
 
     geometry::Bounds3 box(math::Pt3{0.0, 0.0, 0.0}, math::Pt3{1.0, 1.0, 1.0});
-    std::cout << "Bounding Box: " << box << std::endl;
 
     math::Quat quaternion(1.0, math::Vec3{0.0, 1.0, 0.0});
     std::cout << "Quaternion: " << quaternion << std::endl;
@@ -176,6 +177,10 @@ int main() {
 
     std::cout << "Integral ≈ " << result << ", Variance = " << var << "\n";
     std::cout << "Ground truth = 1.0\n";
+
+    auto L = core::Radiance<Float>(1.0);
+    auto irrad = L * core::SolidAngle<Float>(1.0);
+    std::cout << "Irradiance: " << irrad << std::endl;
 
     return 0;
 }

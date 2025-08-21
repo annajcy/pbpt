@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include <concepts>
-#include <format>
 #include <type_traits>
 
 namespace pbpt::math {
@@ -18,8 +17,6 @@ private:
 
 public:
     using Base::Base;
-
-    static std::string name() { return std::format("Vector<{}, {}>", typeid(T).name(), N); }
 
     constexpr auto operator-() const {
         Vector<T, N> result{};

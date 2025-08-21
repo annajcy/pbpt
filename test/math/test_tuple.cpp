@@ -247,20 +247,6 @@ TEST_F(TupleTest, GeneralCasting) {
     EXPECT_EQ(t_double_2d.y(), 2.0);
 }
 
-TEST_F(TupleTest, OutputOperator) {
-    std::stringstream ss;
-    ss << t1;
-    std::string output = ss.str();
-    
-    // Check that it contains the expected format
-    EXPECT_TRUE(output.find("TestTuple") != std::string::npos);
-    EXPECT_TRUE(output.find("1") != std::string::npos);
-    EXPECT_TRUE(output.find("2") != std::string::npos);
-    EXPECT_TRUE(output.find("3") != std::string::npos);
-    EXPECT_TRUE(output.find("(") != std::string::npos);
-    EXPECT_TRUE(output.find(")") != std::string::npos);
-}
-
 // Test edge cases and error conditions
 TEST_F(TupleTest, EdgeCases) {
     // Test single element tuple

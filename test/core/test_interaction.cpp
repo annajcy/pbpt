@@ -180,8 +180,6 @@ TEST_F(InteractionTest, SpawnRayToSamePoint) {
     
     Ray3 ray = si1.spawn_ray_to(si2);
 
-    std::cout << "Ray Origin: " << ray.origin() << ", Direction: " << ray.direction() << std::endl;
-    
     // 应该有有效的射线
     EXPECT_GT(ray.t_max(), 0.0);
 }

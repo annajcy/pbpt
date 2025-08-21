@@ -1,6 +1,5 @@
 #pragma once
 
-#include <format>
 #include <stdexcept>
 #include <type_traits>
 
@@ -22,10 +21,6 @@ private:
 
 public:
     using Base::Base;
-
-    static std::string name() { 
-        return std::format("Homogeneous<{}, {}>", typeid(T).name(), N); 
-    }
     
     static constexpr auto point_at_origin() { 
         Homogeneous<T, N> result;

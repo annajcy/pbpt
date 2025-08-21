@@ -15,9 +15,7 @@ private:
 
 public:
     using Base::Base;
-
-    static std::string name() { return std::format("Normal<{}, {}>", typeid(T).name(), N); }
-
+    
     // 将 Vector 转换为 Normal
     static constexpr auto from_vector(const Vector<T, N>& vec) {
         Normal<T, N> p;

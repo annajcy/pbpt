@@ -8,6 +8,7 @@
 #include "math/point.hpp"
 #include "math/vector.hpp"
 #include "math/operator.hpp"
+#include "math/format.hpp"
 #include "slang.h"
 
 #if defined(RENDER_BACKEND_VULKAN)
@@ -108,9 +109,9 @@ int main() {
     Mat2 m(Vec2(4, 7), Vec2(2, 6));  // Determinant is 10
     std::cout << "Determinant: " << m.determinant() << std::endl;
     Mat2 m_inv = m.inversed();
-    std::cout << "Inverse: " << m_inv << std::endl;
+    std::cout << "Inverse: " << to_string(m_inv) << std::endl;
     Mat2 identity = m * m_inv;
-    std::cout << "Identity: " << identity << std::endl;
+    std::cout << "Identity: " << to_string(identity) << std::endl;
     // Test singular matrix exception
     Mat2 singular(Vec2(2, 4), Vec2(2, 4));
     std::cout << "Determinant: " << singular.determinant() << std::endl;
@@ -122,11 +123,11 @@ int main() {
     m1[1][1] = 7;
     m1[1][2] = 8;
 
-    std::cout << "m1: " << m1 << std::endl;
+    std::cout << "m1: " << to_string(m1) << std::endl;
 
     // Test contiguous submatrix
     Mat2 sub = m1.view<2, 2>(0, 1).to_matrix();
-    std::cout << "Submatrix: " << sub << std::endl;
+    std::cout << "Submatrix: " << to_string(sub) << std::endl;
 
     Mat2 d(1, 2, 3, 4);
 
@@ -142,10 +143,9 @@ int main() {
 
     box.unite(Pt3(1, 2, 3)).unite(Pt3(4, 5, 6)).unite(Pt3(7, 8, 9)).unite(Bounds3{Pt3(10, 11, 12), Pt3(13, 14, 15)});
 
-    std::cout << "box: " << box << std::endl;
     std::cout << "is_contain: " << box.contains(Pt3(4, 5, 6)) << std::endl;
-    
-    std::cout << box.center() << std::endl;
+
+    std::cout << to_string(box.center()) << std::endl;
 
     std::cout << math::is_not_equal(1.0, 2.0) << std::endl;
     std::cout << math::is_equal(1.0, 2.0) << std::endl;

@@ -263,9 +263,7 @@ TEST(SphericalPointTest, NumericalStability) {
     Point<Float, 3>          large(1e6f, 1e6f, 1e6f);
     SphericalPoint<Float, 3> sphere_large(large);
     Point<Float, 3>          converted_large = sphere_large.to_cartesian();
-    std::cout << "large: " << large << std::endl;
-    std::cout << "Converted back (large): " << converted_large << std::endl;
-    
+
     // 计算并输出详细的误差信息
     for (int i = 0; i < 3; ++i) {
         Float abs_error = pbpt::math::abs(large[i] - converted_large[i]);
@@ -1053,7 +1051,6 @@ TEST(SphericalUtilityTest, EqualAreaSquareToSphereBasic) {
     // Test center of square
     Vector<Float, 2> center(0.5f, 0.5f);
     auto sphere_center = equal_area_square_to_sphere(center);
-    std::cout << "Sphere center: " << sphere_center << std::endl;
     EXPECT_TRUE(are_almost_equal(sphere_center.length(), Float(1), Float(1e-6)));
     
     // Center should map to some reasonable point on sphere

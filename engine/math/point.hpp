@@ -21,9 +21,6 @@ private:
 public:
     using Base::Base;
 
-    static std::string name() { return std::format("Point<{}, {}>", typeid(T).name(), N); }
-
-    // 将 Vector 转换为 Point
     static constexpr auto from_vector(const Vector<T, N>& vec) {
         Point<T, N> p;
         for (int i = 0; i < N; ++i)

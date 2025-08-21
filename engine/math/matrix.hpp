@@ -2,8 +2,6 @@
 
 #include <array>
 #include <concepts>
-#include <format>
-#include <iostream>
 #include <algorithm>
 #include <type_traits>
 #include <utility>
@@ -677,25 +675,6 @@ public:
             }
         }
         return result;
-    }
-
-    // Stream output operator
-    friend std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& mat) {
-        os << name() << " [\n";
-        for (int i = 0; i < R; ++i) {
-            os << "  [";
-            for (int j = 0; j < C; ++j) {
-                os << mat.at(i, j);
-                if (j < C - 1) os << ", ";
-            }
-            os << "]\n";
-        }
-        os << "]";
-        return os;
-    }
-
-    static std::string name() { 
-        return std::format("Matrix<{}, {}, {}>", typeid(T).name(), R, C); 
     }
 
     constexpr bool is_all_zero() const {

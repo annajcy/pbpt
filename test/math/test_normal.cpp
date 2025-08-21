@@ -279,11 +279,5 @@ TEST(NormalConstraintsTest, FloatingPointOnly) {
     // Normal<long, 3> n_long;   // Should fail
 }
 
-// Test name generation
-TEST_F(NormalTest, Name) {
-    std::string name = Normal3::name();
-    EXPECT_TRUE(name.find("Normal") != std::string::npos);
-    EXPECT_TRUE(name.find("3") != std::string::npos);
-}
 
 }  // namespace pbpt::math::testing

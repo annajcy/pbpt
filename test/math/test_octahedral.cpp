@@ -66,14 +66,11 @@ TEST_F(OctahedralVectorTest, BasicEncodeDecode) {
         
         // Check that the reconstructed vector is normalized
         EXPECT_TRUE(reconstructed.is_normalized()) 
-            << "Reconstructed vector should be normalized for input: " 
-            << original;
+            << "Reconstructed vector should be normalized for input" ;
 
-        std::cout << "Original: " << original << ", Reconstructed: " << reconstructed << std::endl;
-
-        EXPECT_NEAR(reconstructed.x(), original.x(), 1e-4) << "Reconstructed x should match original x for input: " << original;
-        EXPECT_NEAR(reconstructed.y(), original.y(), 1e-4) << "Reconstructed y should match original y for input: " << original;
-        EXPECT_NEAR(reconstructed.z(), original.z(), 1e-4) << "Reconstructed z should match original z for input: " << original;
+        EXPECT_NEAR(reconstructed.x(), original.x(), 1e-4) << "Reconstructed x should match original x for input";
+        EXPECT_NEAR(reconstructed.y(), original.y(), 1e-4) << "Reconstructed y should match original y for input";
+        EXPECT_NEAR(reconstructed.z(), original.z(), 1e-4) << "Reconstructed z should match original z for input";
     }
 }
 

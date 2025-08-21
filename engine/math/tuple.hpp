@@ -2,7 +2,6 @@
 
 #include <array>
 #include <type_traits>
-#include <iostream>
 
 #include "operator.hpp"
 #include "utils.hpp"
@@ -208,15 +207,6 @@ public:
             result[i] = pbpt::math::abs((*this)[i]);
         }
         return result;
-    }
-
-    // -- Output --
-    friend std::ostream& operator<<(std::ostream& os, const Tuple& t) {
-        os << Derived<T, N>::name() << "(";
-        for (int i = 0; i < N; ++i)
-            os << t[i] << (i == N - 1 ? "" : ", ");
-        os << ")";
-        return os;
     }
 };
 

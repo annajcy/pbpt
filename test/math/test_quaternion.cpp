@@ -404,15 +404,6 @@ TEST(QuaternionTest, TypeAliases) {
     EXPECT_TRUE(q3.is_identity());
 }
 
-// ========== Stream Output Test ==========
-
-TEST(QuaternionTest, StreamOutput) {
-    Quat              q(1.0f, 2.0f, 3.0f, 4.0f);
-    std::stringstream ss;
-    ss << q;
-    EXPECT_EQ(ss.str(), "Quat(1, 2, 3, 4)");
-}
-
 // ========== Constexpr Tests ==========
 
 TEST(QuaternionTest, ConstexprSupport) {

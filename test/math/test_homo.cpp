@@ -35,8 +35,6 @@ TEST(HomoTest, ConstructFromPoint) {
     const Pt3   p(1.5, -2.5, 3.0);
     const Homo3 h = Homo3::from_point(p);
 
-    std::cout << h << std::endl;
-
     EXPECT_TRUE(h.is_point());
     EXPECT_FALSE(h.is_vector());
 
