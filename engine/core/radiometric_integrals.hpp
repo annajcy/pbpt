@@ -6,6 +6,7 @@
 #include <concepts>
 #include <algorithm>
 
+#include "math/normal.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
@@ -40,7 +41,10 @@ inline std::array<T, 3> uniform_sample_hemisphere(const std::array<T, 2>& uv) {
 }
 
 template<std::floating_point T>
-using DirectionSample = std::pair<math::Vector<T, 3>, T>;
+struct DirectionSample {
+    math::Vector<T, 3> direction;
+    T pdf;
+};
 
 template<std::floating_point T>
 class UniformHemisphereDomain {
@@ -93,7 +97,10 @@ public:
 };
 
 template<std::floating_point T>
-using DiskSample = std::pair<math::Point<T, 2>, T>;
+struct DiskSample {
+    math::Point<T, 2> point;
+    T pdf;
+};
 
 template<std::floating_point T>
 class UniformDiskDomain {
@@ -120,6 +127,13 @@ public:
     }
 };
 
+
+template<std::floating_point T>
+struct SurfaceSample {
+    math::Point<T, 3> position;
+    math::Normal<T, 3> normal;
+    T pdf;
+};
 
 template<std::floating_point T, typename Domain, typename Func, typename RNG>
 auto integrate(const Domain& domain, const Func& func, int sample_count, RNG& rng) {

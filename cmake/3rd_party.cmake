@@ -13,12 +13,6 @@ else()
   message(STATUS "PBPT_BUILD_TESTS is OFF")
 endif()
 
-find_package(Vulkan REQUIRED)
-message(STATUS "Vulkan_VERSION: ${Vulkan_VERSION}")
-
-find_package(OpenGL REQUIRED)
-message(STATUS "OpenGL dir: ${OPENGL_INCLUDE_DIR}")
-
 # GLAD (OpenGL loader)
 FetchContent_Declare(
     glad

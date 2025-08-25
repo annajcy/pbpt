@@ -30,6 +30,12 @@ if(FLOAT_64BIT)
   add_definitions("-DFLOAT_64BIT")
 endif()
 
+find_package(Vulkan REQUIRED)
+message(STATUS "Vulkan_VERSION: ${Vulkan_VERSION}")
+
+find_package(OpenGL REQUIRED)
+message(STATUS "OpenGL dir: ${OPENGL_INCLUDE_DIR}")
+
 include(3rd_party) 
 include(utils)
 
