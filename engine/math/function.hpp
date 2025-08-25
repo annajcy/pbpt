@@ -6,6 +6,8 @@
 
 #include "type_alias.hpp"
 
+namespace pbpt::math {
+
 template <typename T>
 inline constexpr T epsilon_v = static_cast<T>(FLOAT_EPS);  // float 默认
 
@@ -14,8 +16,6 @@ inline constexpr double epsilon_v<double> = DOUBLE_EPS;  // double 特化
 
 template <typename T>
 inline constexpr T pi_v = static_cast<T>(M_PI);
-
-namespace pbpt::math {
 
 template<typename T>
 constexpr inline T gamma(int n) {

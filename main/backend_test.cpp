@@ -19,7 +19,8 @@
 #endif
 
 #if defined(RENDER_BACKEND_OPENGL)
-
+#include "imgui_impl_opengl3.h"
+#include "GLFW/glfw3.h"
 #endif
 
 #include "stb_image.h"

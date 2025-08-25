@@ -2,11 +2,13 @@
 #include <iostream>
 
 #include "core/interaction.hpp"
+#include "core/radiometric_integrals.hpp"
 #include "core/radiometry.hpp"
 #include "core/shape.hpp"
 #include "integrator/monte_carlo.hpp"
 #include "geometry/bounds.hpp"
 #include "geometry/frame.hpp"
+#include "integrator/random_generator.hpp"
 #include "math/homogeneous.hpp"
 #include "math/interval.hpp"
 #include "math/matrix.hpp"
@@ -181,6 +183,32 @@ int main() {
     auto L = core::Radiance<Float>(1.0);
     auto irrad = L * core::SolidAngle<Float>(1.0);
     std::cout << "Irradiance: " << irrad << std::endl;
+
+    math::RandomGenerator<double, 2> rng2d(42);
+    core::UniformHemisphereDomain<double> hemisphere{};
+
+    math::Normal3 norm(0.0f, 0.0f, 1.0f);
+    int sample_count = 100000;
+    auto n = norm.to_vector();
+    auto res = core::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
+        return 1.0 * n.dot(wi);
+    }, sample_count, rng2d);
+
+    std::cout << "Estimated: " << res << ", Expected: " << pi_v<double> << "\n";
+
+    core::UniformDiskDomain<double> disk{};
+    auto res_disk = core::integrate<double>(disk, [](const math::Point<double, 2>& p) {
+        return 1.0f;
+    }, sample_count, rng2d);
+
+    std::cout << "Estimated: " << res_disk << ", Expected: " << pi_v<double> << "\n";
+
+    core::ProjectedHemisphereDomain<double> proj_hemi{};
+    auto res_proj_hemi = core::integrate<double>(proj_hemi, [&n](const math::Vector<double, 3>& wi) {
+        return 1.0f;
+    }, sample_count, rng2d);
+
+    std::cout << "Estimated: " << res_proj_hemi << ", Expected: " << pi_v<double> << "\n";
 
     return 0;
 }

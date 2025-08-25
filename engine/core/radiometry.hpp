@@ -1,14 +1,15 @@
 #pragma once
 
 #include <concepts>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <type_traits>
+
 #include "math/operator.hpp"
 #include "math/utils.hpp"
 #include "math/function.hpp"
+#include "math/vector.hpp"
 
 using namespace pbpt::math;
 namespace pbpt::core {
@@ -27,7 +28,8 @@ protected:
 
 public:
     // Construction
-    explicit constexpr Radiometry(T v = T{0}) : m_value(v) {}
+    explicit constexpr Radiometry() : m_value(T{0}) {}
+    explicit constexpr Radiometry(T v) : m_value(v) {}
     constexpr const T& value() const { return m_value; }
     constexpr T& value() { return m_value; }
     
@@ -153,6 +155,12 @@ inline Area<T> project_area_cos(const Area<T>& area, T cos_theta) {
 
 template<std::floating_point T>
 using SolidAngle = Radiometry<T, SolidAngleTag>;
+
+template<std::floating_point T>
+struct DirectionalSolidAngle {
+    SolidAngle<T> solid_angle;
+    math::Vector<T, 3> direction;
+};
 
 template<std::floating_point T>
 inline constexpr SolidAngle<T> hemisphere_sr() {
@@ -312,5 +320,7 @@ template<typename T, typename Tag>
 std::ostream & operator<<(std::ostream& os, const Radiometry<T, Tag>& q) {
     return os << to_string(q);
 }
+
+
 
 }
