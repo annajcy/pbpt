@@ -5,7 +5,7 @@
 #include "math/normal.hpp"
 #include "integrator/random_generator.hpp"
 
-using namespace pbpt;
+namespace pbpt::core::testing {
 
 TEST(RadiometricIntegrals, UniformHemisphereIntegral_Cosine)
 {
@@ -16,7 +16,7 @@ TEST(RadiometricIntegrals, UniformHemisphereIntegral_Cosine)
     auto res = core::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
         return n.to_vector().dot(wi);
     }, sample_count, rng2d);
-    EXPECT_NEAR(res, pi_v<double>, 0.01);
+    EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
 TEST(RadiometricIntegrals, UniformDiskIntegral_Constant)
@@ -27,7 +27,7 @@ TEST(RadiometricIntegrals, UniformDiskIntegral_Constant)
     auto res = core::integrate<double>(disk, [](const math::Point<double, 2>& p) {
         return 1.0;
     }, sample_count, rng2d);
-    EXPECT_NEAR(res, pi_v<double>, 0.01);
+    EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
 TEST(RadiometricIntegrals, ProjectedHemisphereIntegral_Constant)
@@ -38,7 +38,7 @@ TEST(RadiometricIntegrals, ProjectedHemisphereIntegral_Constant)
     auto res = core::integrate<double>(proj_hemi, [](const math::Vector<double, 3>& wi) {
         return 1.0;
     }, sample_count, rng2d);
-    EXPECT_NEAR(res, pi_v<double>, 0.01);
+    EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
 TEST(RadiometricIntegrals, ParallelogramAreaIntegral)
@@ -65,3 +65,7 @@ TEST(RadiometricIntegrals, ParallelogramAreaIntegral)
     }, sample_count, rng2d);
     EXPECT_NEAR(res, 0.2308367977, 0.01);
 }
+
+
+}
+

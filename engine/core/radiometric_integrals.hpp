@@ -7,30 +7,23 @@
 #include <algorithm>
 #include <utility>
 
-#include "geometry/bounds.hpp"
 #include "math/function.hpp"
 #include "math/normal.hpp"
-#include "math/operator.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
 namespace pbpt::core {
-
-template<template <typename> typename Derived, std::floating_point T>
-class IntegrableDomain {
-
-};
 
 template<std::floating_point T>
 inline std::array<T, 2> concentric_sample_disk(const std::array<T, 2>& u01) {
     const T a = T(2) * u01[0] - T(1);
     const T b = T(2) * u01[1] - T(1);
 
-    if (is_zero(a) && is_zero(b))
+    if (math::is_zero(a) && math::is_zero(b))
         return {0, 0};
 
     T r, phi;
-    if (is_greater(std::abs(a), std::abs(b))) {
+    if (math::is_greater(std::abs(a), std::abs(b))) {
         r = std::abs(a);
         phi = (math::pi_v<T> / 4) * (b / a);
     } else {
@@ -52,83 +45,94 @@ inline std::array<T, 3> uniform_sample_hemisphere(const std::array<T, 2>& uv) {
 template<typename SampleType, std::floating_point T>
 using Sample = std::pair<SampleType, T>;
 
-template<std::floating_point T>
-using DirectionSample = Sample<math::Vector<T, 3>, T>;
-
-template<std::floating_point T>
-class UniformHemisphereDomain {
+template<template <typename> typename Derived, std::floating_point T>
+class IntegrableDomain {
 public:
-    using sample_type = math::Vector<T,3>;
 
     template<typename RNG>
-    DirectionSample<T> sample_one(RNG& rng2d) const {
-        auto uv = rng2d.generate_uniform(0, 1); // uv ∈ [0,1]^2
-        auto dir = math::Vector<T, 3>::from_array(uniform_sample_hemisphere(uv));
-        return {dir, pdf()};
-    }
-
-    template<typename RNG, typename Func>
-    void foreach_sample(int count, RNG& rng2d, Func&& func) const {
-        for (int i = 0; i < count; ++i) {
-            auto [dir, pdf] = sample_one(rng2d);
-            func(dir, pdf);
-        }
+    auto sample_one(RNG& rng2d) const {
+        return static_cast<const Derived<T>&>(*this).sample_one_impl(rng2d);
     }
 
     constexpr T pdf() const {
-        return T(1) / (2 * math::pi_v<T>);
-    }
-};
-
-template<std::floating_point T>
-class ProjectedHemisphereDomain {
-public:
-    using sample_type = math::Vector<T, 3>;
-
-    template<typename RNG>
-    DirectionSample<T> sample_one(RNG& rng) const {
-        auto uv = rng.generate_uniform(T(0), T(1));
-        auto d  = concentric_sample_disk<T>(uv);
-        const T r2 = d[0] * d[0] + d[1] * d[1];
-        const T z  = std::sqrt(std::max(T(0), T(1) - r2));
-        return { math::Vector<T,3>{ d[0], d[1], z }, pdf() };
+        return static_cast<const Derived<T>&>(*this).pdf_impl();
     }
 
     template<typename RNG, typename Func>
     void foreach_sample(int count, RNG& rng, Func&& func) const {
         for (int i = 0; i < count; ++i) {
-            auto [dir, pdf] = sample_one(rng);
-            func(dir, pdf);
+            auto [sample, pdf] = sample_one(rng);
+            func(sample, pdf);
         }
     }
 
-    constexpr T pdf() const { return T(1) / math::pi_v<T>; } // wrt dω⊥
+};
+
+template<std::floating_point T>
+using DirectionSample = Sample<math::Vector<T, 3>, T>;
+
+template<std::floating_point T>
+class UniformHemisphereDomain : public IntegrableDomain<UniformHemisphereDomain, T> {
+public:
+    using Base = IntegrableDomain<UniformHemisphereDomain, T>;
+    using Base::pdf;
+    using Base::sample_one;
+
+    using sample_type = math::Vector<T,3>;
+
+    template<typename RNG>
+    DirectionSample<T> sample_one_impl(RNG& rng2d) const {
+        auto uv = rng2d.generate_uniform(0, 1); // uv ∈ [0,1]^2
+        auto dir = math::Vector<T, 3>::from_array(uniform_sample_hemisphere(uv));
+        return {dir, pdf_impl()};
+    }
+
+    constexpr T pdf_impl() const {
+        return T(1) / (2 * math::pi_v<T>);
+    }
+};
+
+template<std::floating_point T>
+class ProjectedHemisphereDomain : public IntegrableDomain<ProjectedHemisphereDomain, T> {
+public:
+    using Base = IntegrableDomain<ProjectedHemisphereDomain, T>;
+    using Base::pdf;
+    using Base::sample_one;
+
+    using sample_type = math::Vector<T, 3>;
+
+    template<typename RNG>
+    DirectionSample<T> sample_one_impl(RNG& rng) const {
+        auto uv = rng.generate_uniform(T(0), T(1));
+        auto d  = concentric_sample_disk<T>(uv);
+        const T r2 = d[0] * d[0] + d[1] * d[1];
+        const T z  = std::sqrt(std::max(T(0), T(1) - r2));
+        return { math::Vector<T,3>{ d[0], d[1], z }, pdf_impl() };
+    }
+
+    constexpr T pdf_impl() const { return T(1) / math::pi_v<T>; } // wrt dω⊥
 };
 
 template<std::floating_point T>
 using DiskSample = Sample<math::Point<T, 2>, T>;
 
 template<std::floating_point T>
-class UniformDiskDomain {
+class UniformDiskDomain : public IntegrableDomain<UniformDiskDomain, T> {
 public:
+    using Base = IntegrableDomain<UniformDiskDomain, T>;
+    using Base::pdf;
+    using Base::sample_one;
+
     using sample_type = math::Point<T, 2>;
 
     template<typename RNG>
-    DiskSample<T> sample_one(RNG& rng2d) const {
+    DiskSample<T> sample_one_impl(RNG& rng2d) const {
         auto u01 = rng2d.generate_uniform(0, 1);
         auto point = math::Point<T, 2>::from_array(concentric_sample_disk(u01));
-        return {point, pdf()};
+        return {point, pdf_impl()};
     }
 
-    template<typename RNG, typename Func>
-    void foreach_sample(int count, RNG& rng2d, Func&& func) const {
-        for (int i = 0; i < count; ++i) {
-            auto [point, pdf] = sample_one(rng2d);
-            func(point, pdf);
-        }
-    }
-
-    constexpr T pdf() const {
+    constexpr T pdf_impl() const {
         return T(1) / (math::pi_v<T>);
     }
 };
@@ -144,7 +148,7 @@ template<std::floating_point T>
 using SurfaceSample = Sample<SurfaceInfo<T>, T>;
 
 template<std::floating_point T>
-class ParallelogramAreaDomain {
+class ParallelogramAreaDomain : public IntegrableDomain<ParallelogramAreaDomain, T> {
 private:
     math::Point<T, 3> m_origin;
     math::Vector<T, 3> m_edge1;
@@ -154,13 +158,17 @@ private:
     T m_area;
 
 public:
+    using Base = IntegrableDomain<ParallelogramAreaDomain, T>;
+    using Base::pdf;
+    using Base::sample_one;
+
     using sample_type = SurfaceInfo<T>;
 
     ParallelogramAreaDomain(const math::Point<T, 3>& origin, const math::Vector<T, 3>& edge1, const math::Vector<T, 3>& edge2)
         : m_origin(origin), m_edge1(edge1), m_edge2(edge2) {
             m_normal = math::Normal<T, 3>(cross(m_edge1, m_edge2).normalized());
             m_area = cross(m_edge1, m_edge2).length();
-            math::assert_if(is_less_equal(m_area, T(0)), "Parallelogram area must be > 0");
+            math::assert_if(math::is_less_equal(m_area, T(0)), "Parallelogram area must be > 0");
         }
 
     constexpr T area() const {
@@ -172,22 +180,14 @@ public:
     }
 
     template<typename RNG>
-    SurfaceSample<T> sample_one(RNG& rng2d) const {
+    SurfaceSample<T> sample_one_impl(RNG& rng2d) const {
         auto uv = rng2d.generate_uniform(0.0, 1.0);
         auto p = m_origin + uv[0] * m_edge1 + uv[1] * m_edge2;
         SurfaceInfo<T> info{p, normal()};
-        return {info, pdf()};
+        return {info, pdf_impl()};
     }
 
-    template<typename RNG, typename Func>
-    void foreach_sample(int count, RNG& rng2d, Func&& func) const {
-        for (int i = 0; i < count; ++i) {
-            auto [surface_info, pdf] = sample_one(rng2d);
-            func(surface_info, pdf);
-        }
-    }
-
-    constexpr T pdf() const {
+    constexpr T pdf_impl() const {
         return T(1) / area();
     }
 
