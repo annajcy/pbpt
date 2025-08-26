@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 
 #include "core/interaction.hpp"
@@ -188,7 +189,7 @@ int main() {
     core::UniformHemisphereDomain<double> hemisphere{};
 
     math::Normal3 norm(0.0f, 0.0f, 1.0f);
-    int sample_count = 100000;
+    int sample_count = 10000;
     auto n = norm.to_vector();
     auto res = core::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
         return 1.0 * n.dot(wi);
@@ -209,6 +210,29 @@ int main() {
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res_proj_hemi << ", Expected: " << pi_v<double> << "\n";
+
+    core::ParallelogramAreaDomain<double> para{
+        math::Point<double, 3>(-1.0, 4.0, -1.0), 
+        math::Vector<double, 3>(2.0, 0.0, 0.0), 
+        math::Vector<double, 3>(0.0, 0.0, 2.0)
+    };
+
+    auto shading_p = math::Point<double, 3>(0.0, 0.0, 0.0);
+    auto shading_p_normal = math::Normal3(0.0, 1.0, 0.0);
+
+    auto res_para = core::integrate<double>(para, [&shading_p, &shading_p_normal](const core::SurfaceInfo<double>& surface) {
+        auto [p, normal] = surface;
+        auto n = normal.to_vector();
+        auto pn = shading_p_normal.to_vector();
+        auto wi = (p - shading_p).normalized();
+        auto cos_p = pn.dot(wi);
+        auto cos_x = n.dot(-wi);
+        auto r2 = (p - shading_p).length_squared();
+        auto L = 1.0;
+        return L * cos_p * cos_x / r2;
+    }, sample_count, rng2d);
+
+    std::cout << "Estimated: " << res_para << ", Expected: 0.2308367977" << "\n";
 
     return 0;
 }

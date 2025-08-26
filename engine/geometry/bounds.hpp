@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <type_traits>
 #include <optional>
 #include <utility>
@@ -126,6 +127,14 @@ public:
             offset[i] = (p[i] - m_min[i]) / (m_max[i] - m_min[i]);
         }
         return offset;
+    }
+
+    constexpr const Point<T, N> interpolate(const std::array<T, N>& offset) const {
+        Point<T, N> p;
+        for (size_t i = 0; i < N; ++i) {
+            p[i] = m_min[i] + offset[i] * (m_max[i] - m_min[i]);
+        }
+        return p;
     }
 
     constexpr const Point<T, N>& min() const { return m_min; }
