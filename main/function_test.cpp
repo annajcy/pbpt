@@ -28,6 +28,7 @@
 #include "math/type_alias.hpp"
 #include "ml/activation.hpp"
 #include "ml/network.hpp"
+#include "utils/cie_xyz_loader.hpp"
 
 using namespace pbpt;
 
@@ -258,5 +259,18 @@ int main() {
         ));
     std::cout << "Sampled Spectrum: " << sampled_spectrum / 1e12 << "\n";
     std::cout << "Max Value Wavelength: " << black_body_spectrum.max_wavelength() << "\n";
+
+    auto [Xbar, Ybar, Zbar] =
+        pbpt::utils::make_cie1931_2deg_xyz_from_csv<float>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/spectrum/CIE_xyz_1931_2deg.csv");
+
+    auto pppp = Ybar.sample<5>(core::SampledWavelength<float, 5>(math::Vector<float, 5>(400, 500, 600, 700, 800)));
+    std::cout << pppp << std::endl;
+
+    auto [X, Y, Z] =
+        pbpt::utils::make_cie1931_2deg_xyz_analytic<Float, 360, 830>();
+
+    auto ppppp = Y.sample<5>(core::SampledWavelength<float, 5>(math::Vector<float, 5>(400, 500, 600, 700, 800)));
+    std::cout << ppppp << std::endl;
+
     return 0;
 }

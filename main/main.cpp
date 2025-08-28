@@ -32,5 +32,6 @@ using namespace pbpt;
 
 int main() {
     
+    std::cout << "Hello, PBPT!" << std::endl;
     return 0;
 }

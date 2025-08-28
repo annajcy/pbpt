@@ -106,7 +106,7 @@ public:
     constexpr SpectrumDistribution() = default;
 
     constexpr T at(T lambda) const {
-        static_cast<Derived&>(*this)->at_impl(lambda);
+        return static_cast<Derived&>(*this)->at_impl(lambda);
     }
 
     template<int N>
