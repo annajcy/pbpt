@@ -384,50 +384,6 @@ TEST_F(RadiometryTest, SphereSolidAngle) {
     EXPECT_NEAR(sphere_sr_d.value(), 4.0 * 3.141592653589793, 1e-10);
 }
 
-// =============================================================================
-// 单位信息和字符串转换测试
-// =============================================================================
-
-TEST_F(RadiometryTest, RadiometryUnitInfoSymbols) {
-    EXPECT_STREQ(RadiometryUnitInfo<RadianceTag>::symbol, "W/(m²·sr)");
-    EXPECT_STREQ(RadiometryUnitInfo<FluxTag>::symbol, "W");
-    EXPECT_STREQ(RadiometryUnitInfo<IntensityTag>::symbol, "W/sr");
-    EXPECT_STREQ(RadiometryUnitInfo<IrradianceTag>::symbol, "W/m²");
-    EXPECT_STREQ(RadiometryUnitInfo<SolidAngleTag>::symbol, "sr");
-    EXPECT_STREQ(RadiometryUnitInfo<AreaTag>::symbol, "m²");
-}
-
-TEST_F(RadiometryTest, RadiometryUnitInfoDimensions) {
-    // 测试辐射度的维度
-    EXPECT_EQ(RadiometryUnitInfo<RadianceTag>::dim_work, 1);
-    EXPECT_EQ(RadiometryUnitInfo<RadianceTag>::dim_length, -2);
-    EXPECT_EQ(RadiometryUnitInfo<RadianceTag>::dim_solid_angle, -1);
-    
-    // 测试通量的维度
-    EXPECT_EQ(RadiometryUnitInfo<FluxTag>::dim_work, 1);
-    EXPECT_EQ(RadiometryUnitInfo<FluxTag>::dim_length, 0);
-    EXPECT_EQ(RadiometryUnitInfo<FluxTag>::dim_solid_angle, 0);
-    
-    // 测试强度的维度
-    EXPECT_EQ(RadiometryUnitInfo<IntensityTag>::dim_work, 1);
-    EXPECT_EQ(RadiometryUnitInfo<IntensityTag>::dim_length, 0);
-    EXPECT_EQ(RadiometryUnitInfo<IntensityTag>::dim_solid_angle, -1);
-    
-    // 测试辐照度的维度
-    EXPECT_EQ(RadiometryUnitInfo<IrradianceTag>::dim_work, 1);
-    EXPECT_EQ(RadiometryUnitInfo<IrradianceTag>::dim_length, -2);
-    EXPECT_EQ(RadiometryUnitInfo<IrradianceTag>::dim_solid_angle, 0);
-    
-    // 测试面积的维度
-    EXPECT_EQ(RadiometryUnitInfo<AreaTag>::dim_work, 0);
-    EXPECT_EQ(RadiometryUnitInfo<AreaTag>::dim_length, 2);
-    EXPECT_EQ(RadiometryUnitInfo<AreaTag>::dim_solid_angle, 0);
-    
-    // 测试立体角的维度
-    EXPECT_EQ(RadiometryUnitInfo<SolidAngleTag>::dim_work, 0);
-    EXPECT_EQ(RadiometryUnitInfo<SolidAngleTag>::dim_length, 0);
-    EXPECT_EQ(RadiometryUnitInfo<SolidAngleTag>::dim_solid_angle, -1);
-}
 
 TEST_F(RadiometryTest, ToString) {
     Radiance<float> radiance(123.45678f);
@@ -606,4 +562,285 @@ TEST_F(RadiometryTest, CopyAndMoveSemantics) {
     Radiance<float> move_assigned;
     move_assigned = std::move(assigned);
     EXPECT_FLOAT_EQ(move_assigned.value(), original.value());
+}
+
+// =============================================================================
+// 新功能测试 - TagTrait 系统
+// =============================================================================
+
+TEST_F(RadiometryTest, TagTraitBasic) {
+    // 测试普通标签
+    static_assert(!TagTrait<RadianceTag>::is_spectral());
+    static_assert(!TagTrait<FluxTag>::is_spectral());
+    static_assert(!TagTrait<IntensityTag>::is_spectral());
+    static_assert(!TagTrait<IrradianceTag>::is_spectral());
+    
+    using radiance_tag = TagTrait<RadianceTag>::tag_type;
+    static_assert(std::is_same_v<radiance_tag, RadianceTag>);
+}
+
+TEST_F(RadiometryTest, TagTraitSpectral) {
+    // 测试光谱标签
+    static_assert(TagTrait<SpectralTag<RadianceTag>>::is_spectral());
+    static_assert(TagTrait<SpectralTag<FluxTag>>::is_spectral());
+    static_assert(TagTrait<SpectralTag<IntensityTag>>::is_spectral());
+    static_assert(TagTrait<SpectralTag<IrradianceTag>>::is_spectral());
+    
+    using spectral_radiance_tag = TagTrait<SpectralTag<RadianceTag>>::tag_type;
+    static_assert(std::is_same_v<spectral_radiance_tag, SpectralTag<RadianceTag>>);
+    
+    using original_radiance_tag = TagTrait<SpectralTag<RadianceTag>>::original_tag_type;
+    static_assert(std::is_same_v<original_radiance_tag, RadianceTag>);
+}
+
+// =============================================================================
+// 新功能测试 - 光谱辐射量类型
+// =============================================================================
+
+TEST_F(RadiometryTest, SpectralRadianceConstruction) {
+    SpectralRadiance<float> spectral_radiance;
+    EXPECT_FLOAT_EQ(spectral_radiance.value(), 0.0f);
+    
+    SpectralRadiance<float> spectral_radiance_val(100.5f);
+    EXPECT_FLOAT_EQ(spectral_radiance_val.value(), 100.5f);
+    
+    // 测试类型检查
+    static_assert(std::is_same_v<SpectralRadiance<float>::unit_tag, SpectralTag<RadianceTag>>);
+}
+
+TEST_F(RadiometryTest, SpectralIntensityConstruction) {
+    SpectralIntensity<double> spectral_intensity(250.75);
+    EXPECT_DOUBLE_EQ(spectral_intensity.value(), 250.75);
+    
+    static_assert(std::is_same_v<SpectralIntensity<double>::unit_tag, SpectralTag<IntensityTag>>);
+}
+
+TEST_F(RadiometryTest, SpectralIrradianceConstruction) {
+    SpectralIrradiance<float> spectral_irradiance(75.25f);
+    EXPECT_FLOAT_EQ(spectral_irradiance.value(), 75.25f);
+    
+    static_assert(std::is_same_v<SpectralIrradiance<float>::unit_tag, SpectralTag<IrradianceTag>>);
+}
+
+TEST_F(RadiometryTest, SpectralFluxConstruction) {
+    SpectralFlux<double> spectral_flux(500.125);
+    EXPECT_DOUBLE_EQ(spectral_flux.value(), 500.125);
+    
+    static_assert(std::is_same_v<SpectralFlux<double>::unit_tag, SpectralTag<FluxTag>>);
+}
+
+TEST_F(RadiometryTest, SpectralQuantityArithmetic) {
+    SpectralRadiance<float> sr1(100.0f);
+    SpectralRadiance<float> sr2(50.0f);
+    
+    // 测试加法
+    auto sum = sr1 + sr2;
+    EXPECT_FLOAT_EQ(sum.value(), 150.0f);
+    static_assert(std::is_same_v<decltype(sum), SpectralRadiance<float>>);
+    
+    // 测试减法
+    auto diff = sr1 - sr2;
+    EXPECT_FLOAT_EQ(diff.value(), 50.0f);
+    
+    // 测试标量乘法
+    auto scaled = sr1 * 2.0f;
+    EXPECT_FLOAT_EQ(scaled.value(), 200.0f);
+    
+    // 测试标量除法
+    auto divided = sr1 / 4.0f;
+    EXPECT_FLOAT_EQ(divided.value(), 25.0f);
+}
+
+// =============================================================================
+// 新功能测试 - 波长类型
+// =============================================================================
+
+TEST_F(RadiometryTest, WaveLengthConstruction) {
+    WaveLength<float> wavelength;
+    EXPECT_FLOAT_EQ(wavelength.value(), 0.0f);
+    
+    WaveLength<float> wavelength_val(550.0f);  // 典型的可见光波长（纳米）
+    EXPECT_FLOAT_EQ(wavelength_val.value(), 550.0f);
+    
+    WaveLength<double> wavelength_double(700.5);
+    EXPECT_DOUBLE_EQ(wavelength_double.value(), 700.5);
+    
+    static_assert(std::is_same_v<WaveLength<float>::unit_tag, WaveLengthTag>);
+}
+
+TEST_F(RadiometryTest, WaveLengthArithmetic) {
+    WaveLength<float> w1(600.0f);
+    WaveLength<float> w2(100.0f);
+    
+    auto sum = w1 + w2;
+    EXPECT_FLOAT_EQ(sum.value(), 700.0f);
+    
+    auto diff = w1 - w2;
+    EXPECT_FLOAT_EQ(diff.value(), 500.0f);
+    
+    auto scaled = w1 * 2.0f;
+    EXPECT_FLOAT_EQ(scaled.value(), 1200.0f);
+    
+    auto divided = w1 / 3.0f;
+    EXPECT_FLOAT_EQ(divided.value(), 200.0f);
+}
+
+// =============================================================================
+// 新功能测试 - 光谱量与波长的乘法
+// =============================================================================
+
+TEST_F(RadiometryTest, SpectralQuantityTimesWaveLength) {
+    SpectralRadiance<float> spectral_radiance(10.0f);
+    WaveLength<float> wavelength(550.0f);
+    
+    auto radiance = spectral_radiance * wavelength;
+    static_assert(std::is_same_v<decltype(radiance), Radiance<float>>);
+    EXPECT_FLOAT_EQ(radiance.value(), 10.0f * 550.0f);
+    
+    // 测试类型提升
+    SpectralIntensity<float> spectral_intensity(5.0f);
+    WaveLength<double> wavelength_double(600.0);
+    auto intensity = spectral_intensity * wavelength_double;
+    static_assert(std::is_same_v<decltype(intensity), Intensity<double>>);
+    EXPECT_DOUBLE_EQ(intensity.value(), 5.0 * 600.0);
+}
+
+TEST_F(RadiometryTest, SpectralFluxTimesWaveLength) {
+    SpectralFlux<double> spectral_flux(25.5);
+    WaveLength<float> wavelength(450.0f);
+    
+    auto flux = spectral_flux * wavelength;
+    static_assert(std::is_same_v<decltype(flux), Flux<double>>);
+    EXPECT_DOUBLE_EQ(flux.value(), 25.5 * 450.0);
+}
+
+TEST_F(RadiometryTest, SpectralIrradianceTimesWaveLength) {
+    SpectralIrradiance<float> spectral_irradiance(15.5f);
+    WaveLength<double> wavelength(700.0);
+    
+    auto irradiance = spectral_irradiance * wavelength;
+    static_assert(std::is_same_v<decltype(irradiance), Irradiance<double>>);
+    EXPECT_DOUBLE_EQ(irradiance.value(), 15.5 * 700.0);
+}
+
+// =============================================================================
+// 新功能测试 - DirectionalSolidAngle
+// =============================================================================
+
+TEST_F(RadiometryTest, DirectionalSolidAngleConstruction) {
+    SolidAngle<float> angle(1.5f);
+    pbpt::math::Vector<float, 3> direction(1.0f, 0.0f, 0.0f);
+    
+    DirectionalSolidAngle<float> dir_angle{angle, direction};
+    EXPECT_FLOAT_EQ(dir_angle.solid_angle.value(), 1.5f);
+    EXPECT_FLOAT_EQ(dir_angle.direction[0], 1.0f);
+    EXPECT_FLOAT_EQ(dir_angle.direction[1], 0.0f);
+    EXPECT_FLOAT_EQ(dir_angle.direction[2], 0.0f);
+}
+
+TEST_F(RadiometryTest, DirectionalSolidAngleWithNormalizedDirection) {
+    SolidAngle<double> angle(2.0);
+    pbpt::math::Vector<double, 3> direction(0.0, 1.0, 0.0);  // Y轴方向
+    
+    DirectionalSolidAngle<double> dir_angle{angle, direction};
+    
+    // 验证方向向量的长度
+    double length_squared = direction[0] * direction[0] + 
+                           direction[1] * direction[1] + 
+                           direction[2] * direction[2];
+    EXPECT_NEAR(length_squared, 1.0, 1e-10);
+    
+    EXPECT_DOUBLE_EQ(dir_angle.solid_angle.value(), 2.0);
+    EXPECT_DOUBLE_EQ(dir_angle.direction[1], 1.0);
+}
+
+
+TEST_F(RadiometryTest, SpectralQuantityComparison) {
+    SpectralRadiance<float> sr1(100.0f);
+    SpectralRadiance<float> sr2(100.0f);
+    SpectralRadiance<float> sr3(150.0f);
+    
+    EXPECT_TRUE(sr1 == sr2);
+    EXPECT_FALSE(sr1 == sr3);
+    EXPECT_TRUE(sr1 != sr3);
+    EXPECT_TRUE(sr3 > sr1);
+    EXPECT_TRUE(sr1 < sr3);
+    EXPECT_TRUE(sr1 <= sr2);
+    EXPECT_TRUE(sr2 >= sr1);
+}
+
+TEST_F(RadiometryTest, SpectralQuantityTypePromotion) {
+    SpectralRadiance<float> srf(10.0f);
+    SpectralRadiance<double> srd(20.0);
+    
+    auto result = srf + srd;
+    static_assert(std::is_same_v<decltype(result), SpectralRadiance<double>>);
+    EXPECT_DOUBLE_EQ(result.value(), 30.0);
+    
+    // 光谱量与标量的类型提升
+    auto scaled = srf * 2.5;
+    static_assert(std::is_same_v<decltype(scaled), SpectralRadiance<double>>);
+    EXPECT_DOUBLE_EQ(scaled.value(), 25.0);
+}
+
+TEST_F(RadiometryTest, WaveLengthTypicalValues) {
+    // 测试典型的可见光波长（纳米）
+    WaveLength<float> red(700.0f);
+    WaveLength<float> green(550.0f);
+    WaveLength<float> blue(450.0f);
+    
+    EXPECT_TRUE(red > green);
+    EXPECT_TRUE(green > blue);
+    EXPECT_FLOAT_EQ((red - blue).value(), 250.0f);
+    
+    // 测试红外和紫外
+    WaveLength<double> infrared(1000.0);
+    WaveLength<double> ultraviolet(300.0);
+    
+    EXPECT_TRUE(infrared.value() > red.value());
+    EXPECT_TRUE(ultraviolet.value() < blue.value());
+}
+
+TEST_F(RadiometryTest, SpectralQuantityPhysicalRealism) {
+    // 测试物理现实的光谱量计算
+    SpectralRadiance<float> solar_spectral_radiance(2000.0f);  // W/(m²·sr·nm)
+    WaveLength<float> wavelength_interval(1.0f);  // 1 nm 间隔
+    
+    auto radiance = solar_spectral_radiance * wavelength_interval;
+    static_assert(std::is_same_v<decltype(radiance), Radiance<float>>);
+    EXPECT_FLOAT_EQ(radiance.value(), 2000.0f);  // W/(m²·sr)
+    
+    // 模拟在多个波长上的积分
+    float total_radiance = 0.0f;
+    for (int lambda = 400; lambda <= 700; lambda += 10) {  // 可见光范围
+        WaveLength<float> wl_interval(10.0f);  // 10 nm 间隔
+        auto contrib = solar_spectral_radiance * wl_interval;
+        total_radiance += contrib.value();
+    }
+    
+    // 验证总辐射度在合理范围内
+    EXPECT_GT(total_radiance, 0.0f);
+    EXPECT_LT(total_radiance, 1e6f);  // 合理的上限
+}
+
+TEST_F(RadiometryTest, ErrorHandlingInNewFeatures) {
+    // 测试光谱量除以零的错误处理
+    SpectralFlux<float> spectral_flux(100.0f);
+    EXPECT_THROW(spectral_flux / 0.0f, std::exception);
+    
+    // 测试波长除以零的错误处理
+    WaveLength<double> wavelength(550.0);
+    EXPECT_THROW(wavelength / 0.0, std::exception);
+}
+
+TEST_F(RadiometryTest, ConstexprSpectralOperations) {
+    // 测试光谱量的编译时计算
+    constexpr SpectralRadiance<float> sr1(10.0f);
+    constexpr SpectralRadiance<float> sr2(5.0f);
+    constexpr auto spectral_sum = sr1 + sr2;
+    static_assert(spectral_sum.value() == 15.0f);
+    
+    constexpr WaveLength<float> wl(100.0f);
+    constexpr auto spectral_product = sr1 * 2.0f;
+    static_assert(spectral_product.value() == 20.0f);
 }

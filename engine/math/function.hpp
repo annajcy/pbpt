@@ -63,4 +63,18 @@ constexpr T safe_acos(T x) {
     return std::acos(std::clamp(x, T(-1), T(1)));
 }
 
+template<typename T>
+constexpr T pow(T x, int n) {
+    if (n < 0) return 1 / pow(x, -n);
+    if (n == 0) return 1;
+    if (n == 1) return x;
+    T half = pow(x, n / 2);
+    return n % 2 == 0 ? half * half : half * half * x;
+}
+
+template<typename T>
+constexpr T fast_exp(T x) {
+    return std::exp(x);
+}
+
 }  // namespace pbpt::math

@@ -32,9 +32,12 @@ endif()
 
 find_package(Vulkan REQUIRED)
 message(STATUS "Vulkan_VERSION: ${Vulkan_VERSION}")
+message(STATUS "Vulkan include dir: ${Vulkan_INCLUDE_DIRS}")
+message(STATUS "Vulkan library: ${Vulkan_LIBRARY}")
 
 find_package(OpenGL REQUIRED)
-message(STATUS "OpenGL dir: ${OPENGL_INCLUDE_DIR}")
+message(STATUS "OpenGL include dir: ${OPENGL_INCLUDE_DIR}")
+message(STATUS "OpenGL library: ${OPENGL_LIBRARY}")
 
 include(3rd_party) 
 include(utils)

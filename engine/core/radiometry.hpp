@@ -15,42 +15,66 @@ using namespace pbpt::math;
 namespace pbpt::core {
 
 struct RadianceTag {};
+struct IrradianceTag {};
 struct FluxTag {};
 struct IntensityTag {};
 struct SolidAngleTag {};
 struct AreaTag {};
-struct IrradianceTag {};
+struct WaveLengthTag {};
+struct TemperatureTag {};
+
+template<typename Tag>
+struct SpectralTag {
+    using OriginalTag = Tag;
+};
+
+// 基础 TagTrait 模板声明
+template<typename Tag>
+struct TagTrait {
+    static constexpr bool is_spectral() { return false; }
+    using tag_type = Tag;
+};
+
+// SpectralTag 的特化 - 用于识别光谱标签
+template<typename Tag>
+struct TagTrait<SpectralTag<Tag>> {
+    static constexpr bool is_spectral() { return true; }
+    using tag_type = SpectralTag<Tag>;
+    using original_tag_type = Tag;
+};
 
 template<std::floating_point T, typename Tag>
-class Radiometry {
+class RadiometryUnit {
 protected:
     T m_value;
 
 public:
+    using unit_tag = Tag;
+
     // Construction
-    explicit constexpr Radiometry() : m_value(T{0}) {}
-    explicit constexpr Radiometry(T v) : m_value(v) {}
+    explicit constexpr RadiometryUnit() : m_value(T{0}) {}
+    explicit constexpr RadiometryUnit(T v) : m_value(v) {}
     constexpr const T& value() const { return m_value; }
     constexpr T& value() { return m_value; }
     
     // typename operators with type promotion
     template<std::floating_point U>
-    constexpr auto operator+(const Radiometry<U, Tag>& other) const {
+    constexpr auto operator+(const RadiometryUnit<U, Tag>& other) const {
         using R = std::common_type_t<T, U>;
-        return Radiometry<R, Tag>(static_cast<R>(m_value) + static_cast<R>(other.value()));
+        return RadiometryUnit<R, Tag>(static_cast<R>(m_value) + static_cast<R>(other.value()));
     }
     
     template<std::floating_point U>
-    constexpr auto operator-(const Radiometry<U, Tag>& other) const {
+    constexpr auto operator-(const RadiometryUnit<U, Tag>& other) const {
         using R = std::common_type_t<T, U>;
-        return Radiometry<R, Tag>(static_cast<R>(m_value) - static_cast<R>(other.value()));
+        return RadiometryUnit<R, Tag>(static_cast<R>(m_value) - static_cast<R>(other.value()));
     }
     
     template<typename  U>
     requires std::is_arithmetic_v<U>
     constexpr auto operator*(U scalar) const {
         using R = std::common_type_t<T, U>;
-        return Radiometry<R, Tag>(static_cast<R>(m_value) * static_cast<R>(scalar));
+        return RadiometryUnit<R, Tag>(static_cast<R>(m_value) * static_cast<R>(scalar));
     }
     
     template<typename U>
@@ -58,32 +82,32 @@ public:
     constexpr auto operator/(U scalar) const {
         using R = std::common_type_t<T, U>;
         assert_if(scalar == U{0}, "Division by zero");
-        return Radiometry<R, Tag>(static_cast<R>(m_value) / static_cast<R>(scalar));
+        return RadiometryUnit<R, Tag>(static_cast<R>(m_value) / static_cast<R>(scalar));
     }
     
     // Assignment operators with type promotion
     template<std::floating_point U>
-    constexpr Radiometry& operator+=(const Radiometry<U, Tag>& other) {
+    constexpr RadiometryUnit& operator+=(const RadiometryUnit<U, Tag>& other) {
         m_value += static_cast<T>(other.value());
         return *this;
     }
     
     template<std::floating_point U>
-    constexpr Radiometry& operator-=(const Radiometry<U, Tag>& other) {
+    constexpr RadiometryUnit& operator-=(const RadiometryUnit<U, Tag>& other) {
         m_value -= static_cast<T>(other.value());
         return *this;
     }
     
     template<typename U>
     requires std::is_arithmetic_v<U>
-    constexpr Radiometry& operator*=(U scalar) {
+    constexpr RadiometryUnit& operator*=(U scalar) {
         m_value *= static_cast<T>(scalar);
         return *this;
     }
     
     template<typename U>
     requires std::is_arithmetic_v<U>
-    constexpr Radiometry& operator/=(U scalar) {
+    constexpr RadiometryUnit& operator/=(U scalar) {
         assert_if(scalar == U{0}, "Division by zero");
         m_value /= static_cast<T>(scalar);
         return *this;
@@ -91,36 +115,36 @@ public:
     
     // Comparison operators with type promotion
     template<std::floating_point U>
-    constexpr bool operator==(const Radiometry<U, Tag>& other) const {
+    constexpr bool operator==(const RadiometryUnit<U, Tag>& other) const {
         using CommonType = std::common_type_t<T, U>;
         return is_equal(static_cast<CommonType>(m_value), static_cast<CommonType>(other.value()));
     }
     
     template<std::floating_point U>
-    constexpr bool operator!=(const Radiometry<U, Tag>& other) const {
+    constexpr bool operator!=(const RadiometryUnit<U, Tag>& other) const {
         return !(*this == other);
     }
     
     template<std::floating_point U>
-    constexpr bool operator<(const Radiometry<U, Tag>& other) const {
+    constexpr bool operator<(const RadiometryUnit<U, Tag>& other) const {
         using CommonType = std::common_type_t<T, U>;
         return is_less(static_cast<CommonType>(m_value), static_cast<CommonType>(other.value()));
     }
     
     template<std::floating_point U>
-    constexpr bool operator<=(const Radiometry<U, Tag>& other) const {
+    constexpr bool operator<=(const RadiometryUnit<U, Tag>& other) const {
         using CommonType = std::common_type_t<T, U>;
         return is_less_equal(static_cast<CommonType>(m_value), static_cast<CommonType>(other.value()));
     }
     
     template<std::floating_point U>
-    constexpr bool operator>(const Radiometry<U, Tag>& other) const {
+    constexpr bool operator>(const RadiometryUnit<U, Tag>& other) const {
         using CommonType = std::common_type_t<T, U>;
         return is_greater(static_cast<CommonType>(m_value), static_cast<CommonType>(other.value()));
     }
     
     template<std::floating_point U>
-    constexpr bool operator>=(const Radiometry<U, Tag>& other) const {
+    constexpr bool operator>=(const RadiometryUnit<U, Tag>& other) const {
         using CommonType = std::common_type_t<T, U>;
         return is_greater_equal(static_cast<CommonType>(m_value), static_cast<CommonType>(other.value()));
     }
@@ -129,24 +153,36 @@ public:
 // Global operators with type promotion
 template<typename U, std::floating_point T, typename Tag>
 requires std::is_arithmetic_v<U>
-constexpr auto operator*(U scalar, const Radiometry<T, Tag>& quantity) {
+constexpr auto operator*(U scalar, const RadiometryUnit<T, Tag>& quantity) {
     return quantity * scalar;
 }
 
 template<std::floating_point T>
-using Radiance = Radiometry<T, RadianceTag>;
+using Radiance = RadiometryUnit<T, RadianceTag>;
 
 template<std::floating_point T>
-using Intensity = Radiometry<T, IntensityTag>;
+using SpectralRadiance = RadiometryUnit<T, SpectralTag<RadianceTag>>;
 
 template<std::floating_point T>
-using Irradiance = Radiometry<T, IrradianceTag>;
+using Intensity = RadiometryUnit<T, IntensityTag>;
 
 template<std::floating_point T>
-using Flux = Radiometry<T, FluxTag>;
+using SpectralIntensity = RadiometryUnit<T, SpectralTag<IntensityTag>>;
 
 template<std::floating_point T>
-using Area = Radiometry<T, AreaTag>;
+using Irradiance = RadiometryUnit<T, IrradianceTag>;
+
+template<std::floating_point T>
+using SpectralIrradiance = RadiometryUnit<T, SpectralTag<IrradianceTag>>;
+
+template<std::floating_point T>
+using Flux = RadiometryUnit<T, FluxTag>;
+
+template<std::floating_point T>
+using SpectralFlux = RadiometryUnit<T, SpectralTag<FluxTag>>;
+
+template<std::floating_point T>
+using Area = RadiometryUnit<T, AreaTag>;
 
 template<std::floating_point T>
 inline Area<T> project_area_cos(const Area<T>& area, T cos_theta) {
@@ -154,7 +190,7 @@ inline Area<T> project_area_cos(const Area<T>& area, T cos_theta) {
 }
 
 template<std::floating_point T>
-using SolidAngle = Radiometry<T, SolidAngleTag>;
+using SolidAngle = RadiometryUnit<T, SolidAngleTag>;
 
 template<std::floating_point T>
 struct DirectionalSolidAngle {
@@ -170,6 +206,32 @@ inline constexpr SolidAngle<T> hemisphere_sr() {
 template<std::floating_point T>
 inline constexpr SolidAngle<T> sphere_sr() {
     return SolidAngle<T>(T{4} * pi_v<T>);
+}
+
+template<std::floating_point T>
+using WaveLength = RadiometryUnit<T, WaveLengthTag>;
+
+template<std::floating_point T>
+using Temperature = RadiometryUnit<T, TemperatureTag>;
+
+template<typename T, typename Tag, typename U>
+inline auto operator*(const RadiometryUnit<T, Tag>& quantity, WaveLength<U> lambda) {
+    using R = std::common_type_t<T, U>;
+    using tag_type = Tag;
+    bool is_spectral = TagTrait<tag_type>::is_spectral();
+    using original_tag_type = TagTrait<tag_type>::original_tag_type;
+    assert_if(!is_spectral, "Only spectral units can be multiplied by wavelength");
+    return RadiometryUnit<R, original_tag_type>(static_cast<R>(quantity.value()) * static_cast<R>(lambda.value()));
+}
+
+template<typename T, typename Tag, typename U>
+inline auto operator*(WaveLength<U> lambda, const RadiometryUnit<T, Tag>& quantity) {
+    using R = std::common_type_t<T, U>;
+    using tag_type = Tag;
+    bool is_spectral = TagTrait<tag_type>::is_spectral();
+    using original_tag_type = TagTrait<tag_type>::original_tag_type;
+    assert_if(!is_spectral, "Only spectral units can be multiplied by wavelength");
+    return RadiometryUnit<R, original_tag_type>(static_cast<R>(quantity.value()) * static_cast<R>(lambda.value()));
 }
 
 // Physics operators with type promotion
@@ -249,78 +311,66 @@ constexpr auto operator/(const Intensity<T1>& I, const Area<U>& a) {
     return Radiance<R>(static_cast<R>(I.value()) / static_cast<R>(a.value()));
 }
 
-// =============================================================================
-// Dimensional Analysis Unit Traits
-// =============================================================================
-
 template<typename Tag> 
 struct RadiometryUnitInfo {
     static constexpr const char* symbol = "unknown";
-    static constexpr int dim_work = 1;
-    static constexpr int dim_length = -2;      
-    static constexpr int dim_solid_angle = -1; 
 };
 
 template<> 
 struct RadiometryUnitInfo<RadianceTag> {
-    static constexpr const char* symbol = "W/(m²·sr)";
-    static constexpr int dim_work = 1;
-    static constexpr int dim_length = -2;      
-    static constexpr int dim_solid_angle = -1; 
+    static constexpr const char* symbol = "w/(m²·sr)";
 };
 
 template<> 
 struct RadiometryUnitInfo<FluxTag> {
-    static constexpr const char* symbol = "W";
-    static constexpr int dim_work = 1;
-    static constexpr int dim_length = 0;      
-    static constexpr int dim_solid_angle = 0; 
+    static constexpr const char* symbol = "w";
 };
 
 template<> 
 struct RadiometryUnitInfo<IntensityTag> {
-    static constexpr const char* symbol = "W/sr";
-    static constexpr int dim_work = 1;
-    static constexpr int dim_length = 0;      
-    static constexpr int dim_solid_angle = -1; 
+    static constexpr const char* symbol = "w/sr";
 };
 
 template<> 
 struct RadiometryUnitInfo<IrradianceTag> {
-    static constexpr const char* symbol = "W/m²";
-    static constexpr int dim_work = 1;       
-    static constexpr int dim_length = -2;      
-    static constexpr int dim_solid_angle = 0;
+    static constexpr const char* symbol = "w/m²";
 };
 
 template<> 
 struct RadiometryUnitInfo<SolidAngleTag> {
-    static constexpr const char* symbol = "sr";
-    static constexpr int dim_work = 0;       
-    static constexpr int dim_length = 0;      
-    static constexpr int dim_solid_angle = -1;
+    static inline const std::string symbol = "sr";
 };
 
 template<> 
 struct RadiometryUnitInfo<AreaTag> {
-    static constexpr const char* symbol = "m²";
-    static constexpr int dim_work = 0;
-    static constexpr int dim_length = 2; 
-    static constexpr int dim_solid_angle = 0;
+    static inline const std::string symbol = "m²";
+};
+
+template<> 
+struct RadiometryUnitInfo<WaveLengthTag> {
+    static inline const std::string  symbol = "nm";
+};
+
+template<> 
+struct RadiometryUnitInfo<TemperatureTag> {
+    static inline const std::string  symbol = "k";
+};
+
+template<typename Tag> 
+struct RadiometryUnitInfo<SpectralTag<Tag>> {
+    static inline const std::string symbol = std::string(RadiometryUnitInfo<Tag>::symbol) + "/nm";
 };
 
 template<typename T, typename Tag>
-std::string to_string(const Radiometry<T, Tag>& q) {
+std::string to_string(const RadiometryUnit<T, Tag>& q) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(6) << q.value() << " " << RadiometryUnitInfo<Tag>::symbol;
     return oss.str();
 }
 
 template<typename T, typename Tag>
-std::ostream & operator<<(std::ostream& os, const Radiometry<T, Tag>& q) {
+std::ostream & operator<<(std::ostream& os, const RadiometryUnit<T, Tag>& q) {
     return os << to_string(q);
 }
-
-
 
 }
