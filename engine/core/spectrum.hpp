@@ -106,7 +106,7 @@ public:
     constexpr SpectrumDistribution() = default;
 
     constexpr T at(T lambda) const {
-        return static_cast<Derived&>(*this)->at_impl(lambda);
+        return static_cast<const Derived&>(*this).at_impl(lambda);
     }
 
     template<int N>
@@ -125,6 +125,9 @@ private:
     T m_value;
 
 public:
+    using base = SpectrumDistribution<ConstantSpectrumDistribution<T>, T>;
+    using base::base;
+
     ConstantSpectrumDistribution(T value) : m_value(value) {}
 
     constexpr T at_impl(T lambda) const { return m_value; }
@@ -137,6 +140,9 @@ private:
     T m_temperature;
 
 public:
+    using base = SpectrumDistribution<BlackBodySpectrumDistribution<T>, T>;
+    using base::base;
+
     constexpr BlackBodySpectrumDistribution(T temperature) : m_temperature(temperature) {}
 
     constexpr T at_impl(T lambda) const {
@@ -158,6 +164,9 @@ private:
     std::function<T(T)> m_f;
 
 public:
+    using base = SpectrumDistribution<FunctionalSpectrumDistribution<T>, T>;
+    using base::base;
+
     constexpr FunctionalSpectrumDistribution(const std::function<T(T)>& f) : m_f(f) {}
 
     constexpr T at_impl(T lambda) const {
@@ -171,6 +180,11 @@ private:
     std::array<T, LambdaMax - LambdaMin + 1> m_samples;
 
 public:
+    using base = SpectrumDistribution<TabularSpectrumDistribution<T, LambdaMin, LambdaMax>, T>;
+    using base::base;
+
+    constexpr TabularSpectrumDistribution(const std::array<T, LambdaMax - LambdaMin + 1>& samples)
+        : m_samples(samples) {}
 
     constexpr int sample_count() const {
         return LambdaMax - LambdaMin + 1;
@@ -184,8 +198,7 @@ public:
         return LambdaMax;
     }
 
-    constexpr TabularSpectrumDistribution(const std::array<T, LambdaMax - LambdaMin + 1>& samples)
-        : m_samples(samples) {}
+    
 
     template<typename U>
     constexpr T at_impl(U lambda) const {

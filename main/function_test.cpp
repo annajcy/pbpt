@@ -28,7 +28,7 @@
 #include "math/type_alias.hpp"
 #include "ml/activation.hpp"
 #include "ml/network.hpp"
-#include "utils/cie_xyz_loader.hpp"
+#include "utils/spectrum_loader.hpp"
 
 using namespace pbpt;
 
@@ -252,7 +252,7 @@ int main() {
     auto ttt = spec_rad * delta_lambda;
     std::cout << "Spectral Radiance * Delta Wavelength: " << ttt << std::endl;
 
-    core::BlackBodySpectrumDistribution<double> black_body_spectrum(3000.0);
+    core::BlackBodySpectrumDistribution<double> black_body_spectrum(2856.0);
     auto sampled_spectrum = black_body_spectrum.sample<4>(
         core::SampledSpectrum<double, 4>(
             math::Vector<double, 4>(400.0, 600.0, 800.0, 1000.0)
@@ -260,17 +260,30 @@ int main() {
     std::cout << "Sampled Spectrum: " << sampled_spectrum / 1e12 << "\n";
     std::cout << "Max Value Wavelength: " << black_body_spectrum.max_wavelength() << "\n";
 
-    auto [Xbar, Ybar, Zbar] =
-        pbpt::utils::make_cie1931_2deg_xyz_from_csv<float>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/spectrum/CIE_xyz_1931_2deg.csv");
+    
+
+    auto arr = 
+        pbpt::utils::make_spectra_from_csv<float, 3, pbpt::utils::XYZRange>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_xyz_1931_2deg.csv");
+
+    auto [Xbar, Ybar, Zbar] = arr;
 
     auto pppp = Ybar.sample<5>(core::SampledWavelength<float, 5>(math::Vector<float, 5>(400, 500, 600, 700, 800)));
     std::cout << pppp << std::endl;
 
-    auto [X, Y, Z] =
-        pbpt::utils::make_cie1931_2deg_xyz_analytic<Float, 360, 830>();
+    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D50Range>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_std_illum_D50.csv");
+    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D65Range>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_std_illum_D65.csv");
+    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::ARange>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_std_illum_A.csv");
 
-    auto ppppp = Y.sample<5>(core::SampledWavelength<float, 5>(math::Vector<float, 5>(400, 500, 600, 700, 800)));
-    std::cout << ppppp << std::endl;
+    auto d50_sampled = D50.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+    auto d65_sampled = D65.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+    auto a_sampled = A.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+    auto black_body_sampled = black_body_spectrum.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+
+    std::cout << "D50 Sampled: " << d50_sampled << std::endl;
+    std::cout << "D65 Sampled: " << d65_sampled << std::endl;
+    std::cout << "A Sampled: " << a_sampled << std::endl;
+    std::cout << "Black Body Sampled: " << black_body_sampled / 1e11 << std::endl;
+    std::cout << black_body_sampled * a_sampled.inv() << std::endl;
 
     return 0;
 }

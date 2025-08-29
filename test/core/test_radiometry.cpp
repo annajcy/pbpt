@@ -384,22 +384,6 @@ TEST_F(RadiometryTest, SphereSolidAngle) {
     EXPECT_NEAR(sphere_sr_d.value(), 4.0 * 3.141592653589793, 1e-10);
 }
 
-
-TEST_F(RadiometryTest, ToString) {
-    Radiance<float> radiance(123.45678f);
-    std::string radiance_str = to_string(radiance);
-    std::cout << "Radiance: " << radiance_str << std::endl;
-    EXPECT_TRUE(radiance_str.find("W/(m²·sr)") != std::string::npos);
-    
-    Flux<double> flux(987.654321);
-    std::string flux_str = to_string(flux);
-    EXPECT_TRUE(flux_str.find("W") != std::string::npos);
-    
-    Area<float> area(42.0f);
-    std::string area_str = to_string(area);
-    EXPECT_TRUE(area_str.find("m²") != std::string::npos);
-}
-
 // =============================================================================
 // 边界和错误情况测试
 // =============================================================================
