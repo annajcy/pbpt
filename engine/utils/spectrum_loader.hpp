@@ -1,14 +1,11 @@
 #pragma once
 
 #include <array>
-#include <tuple>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
-#include <memory>
-#include <unordered_map>
 
 #include "core/spectrum.hpp"
 

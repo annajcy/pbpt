@@ -45,17 +45,17 @@ inline std::array<T, 3> uniform_sample_hemisphere(const std::array<T, 2>& uv) {
 template<typename SampleType, std::floating_point T>
 using Sample = std::pair<SampleType, T>;
 
-template<template <typename> typename Derived, std::floating_point T>
+template<typename Derived, std::floating_point T>
 class IntegrableDomain {
 public:
 
     template<typename RNG>
     auto sample_one(RNG& rng2d) const {
-        return static_cast<const Derived<T>&>(*this).sample_one_impl(rng2d);
+        return as_derived().sample_one_impl(rng2d);
     }
 
-    constexpr T pdf() const {
-        return static_cast<const Derived<T>&>(*this).pdf_impl();
+    constexpr auto pdf() const {
+        return as_derived().pdf_impl();
     }
 
     template<typename RNG, typename Func>
@@ -66,17 +66,22 @@ public:
         }
     }
 
+    Derived& as_derived() {
+        return static_cast<Derived&>(*this);
+    }
+
+    const Derived& as_derived() const {
+        return static_cast<const Derived&>(*this);
+    }
+
 };
 
 template<std::floating_point T>
 using DirectionSample = Sample<math::Vector<T, 3>, T>;
 
 template<std::floating_point T>
-class UniformHemisphereDomain : public IntegrableDomain<UniformHemisphereDomain, T> {
+class UniformHemisphereDomain : public IntegrableDomain<UniformHemisphereDomain<T>, T> {
 public:
-    using Base = IntegrableDomain<UniformHemisphereDomain, T>;
-    using Base::pdf;
-    using Base::sample_one;
 
     using sample_type = math::Vector<T,3>;
 
@@ -93,12 +98,8 @@ public:
 };
 
 template<std::floating_point T>
-class ProjectedHemisphereDomain : public IntegrableDomain<ProjectedHemisphereDomain, T> {
+class ProjectedHemisphereDomain : public IntegrableDomain<ProjectedHemisphereDomain<T>, T> {
 public:
-    using Base = IntegrableDomain<ProjectedHemisphereDomain, T>;
-    using Base::pdf;
-    using Base::sample_one;
-
     using sample_type = math::Vector<T, 3>;
 
     template<typename RNG>
@@ -117,12 +118,8 @@ template<std::floating_point T>
 using DiskSample = Sample<math::Point<T, 2>, T>;
 
 template<std::floating_point T>
-class UniformDiskDomain : public IntegrableDomain<UniformDiskDomain, T> {
+class UniformDiskDomain : public IntegrableDomain<UniformDiskDomain<T>, T> {
 public:
-    using Base = IntegrableDomain<UniformDiskDomain, T>;
-    using Base::pdf;
-    using Base::sample_one;
-
     using sample_type = math::Point<T, 2>;
 
     template<typename RNG>
@@ -148,7 +145,7 @@ template<std::floating_point T>
 using SurfaceSample = Sample<SurfaceInfo<T>, T>;
 
 template<std::floating_point T>
-class ParallelogramAreaDomain : public IntegrableDomain<ParallelogramAreaDomain, T> {
+class ParallelogramAreaDomain : public IntegrableDomain<ParallelogramAreaDomain<T>, T> {
 private:
     math::Point<T, 3> m_origin;
     math::Vector<T, 3> m_edge1;
@@ -158,10 +155,6 @@ private:
     T m_area;
 
 public:
-    using Base = IntegrableDomain<ParallelogramAreaDomain, T>;
-    using Base::pdf;
-    using Base::sample_one;
-
     using sample_type = SurfaceInfo<T>;
 
     ParallelogramAreaDomain(const math::Point<T, 3>& origin, const math::Vector<T, 3>& edge1, const math::Vector<T, 3>& edge2)

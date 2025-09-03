@@ -205,7 +205,7 @@ public:
     constexpr Matrix() noexcept = default;
 
     template <typename... Vecs>
-        requires(sizeof...(Vecs) == C && (std::is_same_v<Vector<T, R>, std::remove_cvref_t<Vecs>> && ...))
+        requires(sizeof...(Vecs) == C && (std::is_convertible_v<Vecs, Vector<T, R>> && ...))
     constexpr explicit Matrix(Vecs&&... col_vecs) noexcept {
         int col_index = 0;
         (([&] {

@@ -297,9 +297,9 @@ int main() {
     auto pppp = Ybar.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 500, 600, 700, 800)));
     std::cout << pppp << std::endl;
 
-    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D50Range>(cur_path / "CIE_std_illum_D50.csv");
-    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D65Range>(cur_path / "CIE_std_illum_D65.csv");
-    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::ARange>(cur_path / "CIE_std_illum_A.csv");
+    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D50Range>((cur_path / "CIE_std_illum_D50.csv").string());
+    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D65Range>((cur_path / "CIE_std_illum_D65.csv").string());
+    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::ARange>((cur_path / "CIE_std_illum_A.csv").string());
 
     auto d50_sampled = D50.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
     auto d65_sampled = D65.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
@@ -338,6 +338,15 @@ int main() {
 
     auto xyz_d65 = core::XYZ<double>::from_spectrum_distribution(D65);
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65 * 100 / xyz_d65.y() << std::endl;
+
+    math::Point<double, 2> rp{0.64, 0.33};
+    math::Point<double, 2> gp{0.3, 0.6};
+    math::Point<double, 2> bp{0.15, 0.06};
+
+    core::XYZ<double> wp = core::XYZ<double>::from_spectrum_distribution(D65).normalize_to_y(1);
+    core::RGBColorSpace<double> sRGB(rp, gp, bp, wp);
+
+    std::cout << "sRGB to XYZ Matrix:\n" << sRGB.rgb_to_xyz_matrix() << std::endl;
 
     return 0;
 }
