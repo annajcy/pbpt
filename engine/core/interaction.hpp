@@ -55,16 +55,24 @@ public:
     const Vec3& wo() const { return m_wo; }
 
     Ray3 spawn_ray(const Vec3& wi) const {
-        return static_cast<const Derived*>(this)->spawn_ray_impl(wi);
+        return as_derived().spawn_ray_impl(wi);
     }
 
     Ray3 spawn_ray_to(const Pt3& p) const {
-        return static_cast<const Derived*>(this)->spawn_ray_to_impl(p);
+        return as_derived().spawn_ray_to_impl(p);
     }
 
     template<typename OtherDerived>
     Ray3 spawn_ray_to(const Interaction<OtherDerived>& target) const {
-        return static_cast<const Derived*>(this)->spawn_ray_to_impl(static_cast<const OtherDerived&>(target));
+        return as_derived().spawn_ray_to_impl(static_cast<const OtherDerived&>(target));
+    }
+
+    const Derived& as_derived() const {
+        return static_cast<const Derived&>(*this);
+    }
+
+    Derived& as_derived() {
+        return static_cast<Derived&>(*this);
     }
 
 

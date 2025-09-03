@@ -131,6 +131,7 @@ public:
     }
 
     template <typename U>
+        requires std::is_arithmetic_v<U>
     constexpr auto operator*(U value) const {
         using R = std::common_type_t<T, U>;
         Vector<R, N> result{};

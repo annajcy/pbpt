@@ -208,6 +208,22 @@ public:
         }
         return result;
     }
+
+    constexpr auto sum() const {
+        T result = T(0);
+        for (int i = 0; i < N; i++) {
+            result += (*this)[i];
+        }
+        return result;
+    }
+
+    constexpr auto average() const {
+        T result = T(0);
+        for (int i = 0; i < N; i++) {
+            result += (*this)[i];
+        }
+        return result / N;
+    }
 };
 
 }  // namespace pbpt::math

@@ -10,11 +10,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include "../core/spectrum.hpp"
+#include "core/spectrum.hpp"
 
 namespace pbpt::utils {
 
-// CSV数据源实现
 template<typename T>
 class CsvSpectrumDataSource {
 private:

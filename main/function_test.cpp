@@ -1,6 +1,9 @@
+#include <array>
 #include <cmath>
 #include <cstdlib>
+#include <format>
 #include <iostream>
+#include <filesystem>
 
 #include "core/interaction.hpp"
 #include "core/radiometric_integrals.hpp"
@@ -260,19 +263,43 @@ int main() {
     std::cout << "Sampled Spectrum: " << sampled_spectrum / 1e12 << "\n";
     std::cout << "Max Value Wavelength: " << black_body_spectrum.max_wavelength() << "\n";
 
-    
 
-    auto arr = 
-        pbpt::utils::make_spectra_from_csv<float, 3, pbpt::utils::XYZRange>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_xyz_1931_2deg.csv");
+    auto cur_path = std::filesystem::current_path().parent_path().parent_path() / "asset" / "spectrum";
 
+    std::cout << "Current Path: " << cur_path << std::endl;
+
+    auto arr =
+        pbpt::utils::make_spectra_from_csv<double, 3, pbpt::utils::XYZRange>(cur_path / "CIE_xyz_1931_2deg.csv");
     auto [Xbar, Ybar, Zbar] = arr;
 
-    auto pppp = Ybar.sample<5>(core::SampledWavelength<float, 5>(math::Vector<float, 5>(400, 500, 600, 700, 800)));
+    // std::cout << "std::array<T, lambda_max<T> - lambda_min<T> + 1>{\n";
+    // for (int i = pbpt::utils::XYZRange::LMinValue; i <= pbpt::utils::XYZRange::LMaxValue; ++i) {
+    //     std::cout << std::format("{:.12f}", Xbar.at(i)) << ", ";
+    // }
+    // std::cout << "\n}\n";
+
+    // std::cout << "std::array<T, lambda_max<T> - lambda_min<T> + 1>{\n";
+    // for (int i = pbpt::utils::XYZRange::LMinValue; i <= pbpt::utils::XYZRange::LMaxValue; ++i) {
+    //     std::cout << std::format("{:.12f}", Ybar.at(i)) << ", ";
+    // }
+    // std::cout << "\n}\n";
+
+    // std::cout << "std::array<T, lambda_max<T> - lambda_min<T> + 1>{\n";
+    // for (int i = pbpt::utils::XYZRange::LMinValue; i <= pbpt::utils::XYZRange::LMaxValue; ++i) {
+    //     std::cout << std::format("{:.12f}", Zbar.at(i)) << ", ";
+    // }
+    // std::cout << "\n}\n";
+
+    Xbar = core::CIE_X<double>;
+    Ybar = core::CIE_Y<double>;
+    Zbar = core::CIE_Z<double>;
+
+    auto pppp = Ybar.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 500, 600, 700, 800)));
     std::cout << pppp << std::endl;
 
-    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D50Range>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_std_illum_D50.csv");
-    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D65Range>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_std_illum_D65.csv");
-    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::ARange>("/home/annaj/codebase/pbpt/asset/spectrum/CIE_std_illum_A.csv");
+    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D50Range>(cur_path / "CIE_std_illum_D50.csv");
+    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D65Range>(cur_path / "CIE_std_illum_D65.csv");
+    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::ARange>(cur_path / "CIE_std_illum_A.csv");
 
     auto d50_sampled = D50.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
     auto d65_sampled = D65.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
@@ -284,6 +311,33 @@ int main() {
     std::cout << "A Sampled: " << a_sampled << std::endl;
     std::cout << "Black Body Sampled: " << black_body_sampled / 1e11 << std::endl;
     std::cout << black_body_sampled * a_sampled.inv() << std::endl;
+
+
+    core::XYZ<double> expected_xyz{};
+
+    constexpr int sample_N = 10;
+    constexpr int round_N = 1000;
+    for (int i = 0; i < round_N; i ++) {
+        math::RandomGenerator<double, sample_N> rng;
+        auto wl_r = rng.generate_uniform(core::lambda_min<double>, core::lambda_max<double>);
+        auto wl = core::SampledWavelength<double, sample_N>(math::Vector<double, sample_N>::from_array(wl_r));
+
+        auto xyz = core::XYZ<double>::from_sampled_spectrum(
+            D65.sample(wl),
+            wl,
+            core::SampledPdf<double, sample_N>(math::Vector<double, sample_N>::filled(1 / (core::lambda_max<double> - core::lambda_min<double>)))
+        );
+
+        //std::cout << "XYZ from Sampled Spectrum: " << xyz * 100 / xyz.y() << std::endl;
+        expected_xyz += xyz;
+    }
+
+    expected_xyz = expected_xyz / round_N;
+
+    std::cout << "Expected XYZ: " << expected_xyz * 100 / expected_xyz.y() << std::endl;
+
+    auto xyz_d65 = core::XYZ<double>::from_spectrum_distribution(D65);
+    std::cout << "XYZ from D65 Spectrum: " << xyz_d65 * 100 / xyz_d65.y() << std::endl;
 
     return 0;
 }
