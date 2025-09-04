@@ -10,6 +10,7 @@
 #include "core/radiometry.hpp"
 #include "core/shape.hpp"
 #include "core/spectrum.hpp"
+#include "core/color.hpp"
 #include "integrator/monte_carlo.hpp"
 #include "geometry/bounds.hpp"
 #include "geometry/frame.hpp"
@@ -269,7 +270,7 @@ int main() {
     std::cout << "Current Path: " << cur_path << std::endl;
 
     auto arr =
-        pbpt::utils::make_spectra_from_csv<double, 3, pbpt::utils::XYZRange>(cur_path / "CIE_xyz_1931_2deg.csv");
+        pbpt::utils::make_spectra_from_csv<double, 3, pbpt::utils::XYZRange>((cur_path / "CIE_xyz_1931_2deg.csv").string());
     auto [Xbar, Ybar, Zbar] = arr;
 
     // std::cout << "std::array<T, lambda_max<T> - lambda_min<T> + 1>{\n";
@@ -347,6 +348,12 @@ int main() {
     core::RGBColorSpace<double> sRGB(rp, gp, bp, wp);
 
     std::cout << "sRGB to XYZ Matrix:\n" << sRGB.rgb_to_xyz_matrix() << std::endl;
+
+    auto white_xyz = sRGB.to_xyz(core::RGB<double>(1.0, 1.0, 1.0));
+    std::cout << "sRGB White Point to XYZ: " << white_xyz << std::endl;
+
+    auto white_rgb = sRGB.to_rgb(white_xyz);
+    std::cout << "XYZ White Point to sRGB: " << white_rgb << std::endl;
 
     return 0;
 }
