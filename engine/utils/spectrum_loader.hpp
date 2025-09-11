@@ -64,18 +64,6 @@ private:
     }
 };
 
-template<int LMin, int LMax>
-struct TabularSpectrumRange {
-    static constexpr int LMinValue = LMin;
-    static constexpr int LMaxValue = LMax;
-    static constexpr int Count = LMax - LMin + 1;
-};
-
-using D50Range = TabularSpectrumRange<300, 830>;
-using D65Range = TabularSpectrumRange<300, 830>;
-using ARange = TabularSpectrumRange<300, 830>;
-using XYZRange = TabularSpectrumRange<360, 830>;
-
 // 通用的光谱创建函数模板
 template<typename T, int N, typename Range>
 inline auto make_spectra_from_csv(const std::string& csv_path) {

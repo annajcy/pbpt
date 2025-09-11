@@ -4,6 +4,7 @@
 #include <cmath>
 #include <type_traits>
 
+#include "math/utils.hpp"
 #include "type_alias.hpp"
 
 namespace pbpt::math {
@@ -72,9 +73,22 @@ constexpr T pow(T x, int n) {
     return n % 2 == 0 ? half * half : half * half * x;
 }
 
+//TODO: implement fast_exp
 template<typename T>
 constexpr T fast_exp(T x) {
     return std::exp(x);
 }
+
+template<typename T>
+constexpr T sigmoid(T x) {
+    return 0.5 + 0.5 * x / std::sqrt(1 + x * x);
+}
+
+template<typename T>
+constexpr T inverse_sigmoid(T s) {
+    math::assert_if(s <= 0 && s >= 1, "s must be in (0, 1)");
+    return (s - 0.5) / std::sqrt(s * (1.0 - s));
+}
+
 
 }  // namespace pbpt::math

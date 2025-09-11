@@ -64,9 +64,20 @@ Thumbs.db
 
 # 忽略其他临时和缓存文件
 *.gch
-*.lock
 *.cache
 
 *.engine_cpp
 *.diagram.cpp
 *.gen.txt
+
+# python ignore
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv

@@ -270,7 +270,7 @@ int main() {
     std::cout << "Current Path: " << cur_path << std::endl;
 
     auto arr =
-        pbpt::utils::make_spectra_from_csv<double, 3, pbpt::utils::XYZRange>((cur_path / "CIE_xyz_1931_2deg.csv").string());
+        pbpt::utils::make_spectra_from_csv<double, 3, core::XYZRange>((cur_path / "CIE_xyz_1931_2deg.csv").string());
     auto [Xbar, Ybar, Zbar] = arr;
 
     // std::cout << "std::array<T, lambda_max<T> - lambda_min<T> + 1>{\n";
@@ -298,9 +298,30 @@ int main() {
     auto pppp = Ybar.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 500, 600, 700, 800)));
     std::cout << pppp << std::endl;
 
-    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D50Range>((cur_path / "CIE_std_illum_D50.csv").string());
-    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::D65Range>((cur_path / "CIE_std_illum_D65.csv").string());
-    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, pbpt::utils::ARange>((cur_path / "CIE_std_illum_A.csv").string());
+    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, core::luminantD50Range>((cur_path / "CIE_std_illum_D50.csv").string());
+    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, core::luminantD65Range>((cur_path / "CIE_std_illum_D65.csv").string());
+    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, core::luminantARange>((cur_path / "CIE_std_illum_A.csv").string());
+
+    // for (int i = core::D65Range::LMinValue; i <= core::D65Range::LMaxValue; ++i) {
+    //     std::cout << std::format("{:.5f}, ", D65.at(i)) << " ";
+    // }
+    // std::cout << std::endl;
+
+    D65 = core::CIE_D65_ilum<double>;
+
+    // for (int i = core::D50Range::LMinValue; i <= core::D50Range::LMaxValue; ++i) {
+    //     std::cout << std::format("{:.5f}, ", D50.at(i)) << " ";
+    // }
+    // std::cout << std::endl;
+
+    D50 = core::CIE_D50_ilum<double>;
+
+    // for (int i = core::ARange::LMinValue; i <= core::ARange::LMaxValue; ++i) {
+    //     std::cout << std::format("{:.5f}, ", A.at(i)) << " ";
+    // }
+    // std::cout << std::endl;
+
+    A = core::CIE_A_ilum<double>;
 
     auto d50_sampled = D50.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
     auto d65_sampled = D65.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
@@ -312,7 +333,6 @@ int main() {
     std::cout << "A Sampled: " << a_sampled << std::endl;
     std::cout << "Black Body Sampled: " << black_body_sampled / 1e11 << std::endl;
     std::cout << black_body_sampled * a_sampled.inv() << std::endl;
-
 
     core::XYZ<double> expected_xyz{};
 
@@ -351,9 +371,51 @@ int main() {
 
     auto white_xyz = sRGB.to_xyz(core::RGB<double>(1.0, 1.0, 1.0));
     std::cout << "sRGB White Point to XYZ: " << white_xyz << std::endl;
-
     auto white_rgb = sRGB.to_rgb(white_xyz);
     std::cout << "XYZ White Point to sRGB: " << white_rgb << std::endl;
+    std::cout << "sRGB White Point to LAB: " << core::LAB<double>::from_xyz(white_xyz, sRGB.white_point()) << std::endl;
+    std::cout << std::endl;
+
+    auto gray_xyz = sRGB.to_xyz(core::RGB<double>(0.214, 0.214, 0.214));
+    std::cout << "sRGB Gray Point to XYZ: " << gray_xyz << std::endl;
+    auto gray_rgb = sRGB.to_rgb(gray_xyz);
+    std::cout << "XYZ Gray Point to sRGB: " << gray_rgb << std::endl;
+    auto gray_lab = core::LAB<double>::from_xyz(gray_xyz, sRGB.white_point());
+    std::cout << "XYZ Gray Point to LAB: " << gray_lab << std::endl;
+    std::cout << std::endl;
+
+    auto red_xyz = sRGB.to_xyz(core::RGB<double>(1.0, 0.0, 0.0));
+    std::cout << "sRGB Red Point to XYZ: " << red_xyz << std::endl;
+    auto red_rgb = sRGB.to_rgb(red_xyz);
+    std::cout << "XYZ Red Point to sRGB: " << red_rgb << std::endl;
+    auto red_lab = core::LAB<double>::from_xyz(red_xyz, sRGB.white_point());
+    std::cout << "XYZ Red Point to LAB: " << red_lab << std::endl;
+    std::cout << std::endl;
+
+    auto green_xyz = sRGB.to_xyz(core::RGB<double>(0.0, 1.0, 0.0));
+    std::cout << "sRGB Green Point to XYZ: " << green_xyz << std::endl;
+    auto green_rgb = sRGB.to_rgb(green_xyz);
+    std::cout << "XYZ Green Point to sRGB: " << green_rgb << std::endl;
+    auto green_lab = core::LAB<double>::from_xyz(green_xyz, sRGB.white_point());
+    std::cout << "XYZ Green Point to LAB: " << green_lab << std::endl;
+    std::cout << std::endl;
+
+    auto blue_xyz = sRGB.to_xyz(core::RGB<double>(0.0, 0.0, 1.0));
+    std::cout << "sRGB Blue Point to XYZ: " << blue_xyz << std::endl;
+    auto blue_rgb = sRGB.to_rgb(blue_xyz);
+    std::cout << "XYZ Blue Point to sRGB: " << blue_rgb << std::endl;
+    auto blue_lab = core::LAB<double>::from_xyz(blue_xyz, sRGB.white_point());
+    std::cout << "XYZ Blue Point to LAB: " << blue_lab << std::endl;
+    std::cout << std::endl;
+
+    auto [error, coeff] = core::optimize_albedo_rgb_sigmoid_polynomial(red_rgb, sRGB, D50);
+    std::cout << "Optimized Coefficients: " << coeff[0] << ", " << coeff[1] << ", " << coeff[2] << ", Error: " << error << std::endl;
+
+    core::RGBAlbedoSpectrumDistribution<double> albedo({coeff[0], coeff[1], coeff[2]});
+    for (int i = 400; i <= 700; i += 10) {
+        std::cout << i << " nm: " << albedo.at(i) << " " << std::endl;
+
+    }
 
     return 0;
 }

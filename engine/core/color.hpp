@@ -3,6 +3,7 @@
 #include "core/spectrum.hpp"
 
 #include "math/matrix.hpp"
+#include "math/operator.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
@@ -72,7 +73,6 @@ public:
     }
 };
 
-
 template<typename T>
 std::string to_string(const XYZ<T>& xyz) {
     return std::format("XYZ<{}>({}, {}, {})", 
@@ -87,6 +87,52 @@ std::ostream& operator<<(std::ostream& os, const XYZ<T>& xyz) {
     return os << to_string(xyz);
 }
 
+template<typename T>
+class LAB : public math::Vector<T, 3> {
+public:
+    LAB() : math::Vector<T, 3>(0, 0, 0) {}
+    LAB(T L, T a, T b) : math::Vector<T, 3>(L, a, b) {}
+    LAB(const math::Vector<T, 3>& vec) : math::Vector<T, 3>(vec) {}
+
+    static LAB<T> from_xyz(const XYZ<T>& xyz, const XYZ<T>& white_point) {
+        auto f = [](T t) {
+            const T delta = T(6) / T(29);
+            if (t > delta * delta * delta) {
+                return std::cbrt(t);
+            } else {
+                return t / (3 * delta * delta) + T(4) / T(29);
+            }
+        };
+
+        T fx = f(xyz.x() / white_point.x());
+        T fy = f(xyz.y() / white_point.y());
+        T fz = f(xyz.z() / white_point.z());
+
+        T L = T(116) * fy - T(16);
+        T a = T(500) * (fx - fy);
+        T b = T(200) * (fy - fz);
+
+        return LAB<T>(L, a, b);
+    }
+
+    T L() const { return this->operator[](0); }
+    T a() const { return this->operator[](1); }
+    T b() const { return this->operator[](2); }
+};
+
+template<typename T>
+std::string to_string(const LAB<T>& lab) {
+    return std::format("LAB<{}>({}, {}, {})", 
+                       typeid(T).name(), 
+                       lab.L(), 
+                       lab.a(), 
+                       lab.b());
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const LAB<T>& lab) {
+    return os << to_string(lab);
+}
 
 template<typename T>
 class RGB : public math::Vector<T, 3> {
@@ -167,5 +213,61 @@ public:
     }
 
 };
+
+template<typename T>
+struct RGBSigmoidPolynomialOptimizationResult {
+    double error;
+    std::array<T, 3> coeffs;
+};
+
+template<typename T, typename LuminantSpectrumType>
+inline auto optimize_albedo_rgb_sigmoid_polynomial(
+    const RGB<T>& target_rgb, 
+    const RGBColorSpace<T>& color_space,
+    const LuminantSpectrumType& reference_luminant_spectrum,
+    int max_iterations = 1000, 
+    double error_threshold = 1e-4, 
+    const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0}
+) {
+    
+    XYZ<T> target_xyz = color_space.to_xyz(target_rgb).normalize_to_y();
+    //std::cout << "Target XYZ: " << target_xyz << std::endl;
+    LAB<T> target_lab = LAB<T>::from_xyz(target_xyz, color_space.white_point());
+    //std::cout << "Target LAB: " << target_lab << std::endl;
+
+    auto eval_lab = [&](const std::array<T,3>& c) -> LAB<T> {
+        RGBAlbedoSpectrumDistribution<T> albedo({c[0], c[1], c[2]});
+        XYZ<T> xyz = XYZ<T>::from_spectrum_distribution(albedo * reference_luminant_spectrum).normalize_to_y();
+        return LAB<T>::from_xyz(xyz, color_space.white_point());
+    };
+
+    auto eval_error = [&](const LAB<T>& lab) -> double {
+        T dL = lab.L() - target_lab.L();
+        T da = lab.a() - target_lab.a();
+        T db = lab.b() - target_lab.b();
+        return dL * dL + da * da + db * db;
+    };
+
+    std::array<T, 3> coeffs = initial_guess;
+    double error = std::numeric_limits<double>::max();
+    for (int i = 0; i < max_iterations; i ++) {
+        auto object_lab = eval_lab(coeffs);
+        //std::cout << "Object LAB: " << object_lab << std::endl;
+        error = eval_error(object_lab);
+
+        std::cout << "Iteration " << i << ": Error = " << error 
+                  << ", Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
+
+        if (math::is_less_equal(error, error_threshold)) {
+            return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
+        }
+
+        // TODO: Use a more sophisticated optimization method
+    }
+
+    return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
+}
+
+
 
 };
