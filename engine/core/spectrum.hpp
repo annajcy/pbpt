@@ -328,6 +328,11 @@ inline static constexpr TabularSpectrumDistribution<T, luminantARange::LMinValue
 );
 
 template<typename T>
-static constexpr T CIE_Y_integral = 106.856895;
+static constexpr T CIE_Y_integral = 
+106.856895;
+//105.67081667;
+
+
+
 
 };

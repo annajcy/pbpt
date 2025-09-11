@@ -358,8 +358,9 @@ int main() {
     std::cout << "Expected XYZ: " << expected_xyz * 100 / expected_xyz.y() << std::endl;
 
     auto xyz_d65 = core::XYZ<double>::from_spectrum_distribution(D65);
-    std::cout << "XYZ from D65 Spectrum: " << xyz_d65 * 100 / xyz_d65.y() << std::endl;
-
+    //std::cout << "XYZ from D65 Spectrum: " << xyz_d65 * 100 / xyz_d65.y() << std::endl;
+    std::cout << "XYZ from D65 Spectrum: " << xyz_d65 << std::endl;
+    std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65.normalized_to_y(100.0) << std::endl;
     math::Point<double, 2> rp{0.64, 0.33};
     math::Point<double, 2> gp{0.3, 0.6};
     math::Point<double, 2> bp{0.15, 0.06};
@@ -408,14 +409,10 @@ int main() {
     std::cout << "XYZ Blue Point to LAB: " << blue_lab << std::endl;
     std::cout << std::endl;
 
-    auto [error, coeff] = core::optimize_albedo_rgb_sigmoid_polynomial(red_rgb, sRGB, D50);
+    auto [error, coeff] = core::optimize_albedo_rgb_sigmoid_polynomial(core::RGB<double>(1.0, 0.0, 0.0), sRGB, D50);
     std::cout << "Optimized Coefficients: " << coeff[0] << ", " << coeff[1] << ", " << coeff[2] << ", Error: " << error << std::endl;
 
     core::RGBAlbedoSpectrumDistribution<double> albedo({coeff[0], coeff[1], coeff[2]});
-    for (int i = 400; i <= 700; i += 10) {
-        std::cout << i << " nm: " << albedo.at(i) << " " << std::endl;
-
-    }
 
     return 0;
 }

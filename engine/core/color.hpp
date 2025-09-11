@@ -31,7 +31,7 @@ public:
             inner_product(spectrum, CIE_X<T>), // X
             inner_product(spectrum, CIE_Y<T>), // Y
             inner_product(spectrum, CIE_Z<T>)  // Z
-        );
+        ) / CIE_Y_integral<T>;
         return xyz;
     }
 
@@ -225,19 +225,20 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     const RGB<T>& target_rgb, 
     const RGBColorSpace<T>& color_space,
     const LuminantSpectrumType& reference_luminant_spectrum,
-    int max_iterations = 1000, 
+    int max_iterations = 1, 
     double error_threshold = 1e-4, 
     const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0}
 ) {
     
-    XYZ<T> target_xyz = color_space.to_xyz(target_rgb).normalize_to_y();
-    //std::cout << "Target XYZ: " << target_xyz << std::endl;
+    std::cout << "Starting optimization for target RGB: " << target_rgb << std::endl;
+    XYZ<T> target_xyz = color_space.to_xyz(target_rgb);
+    std::cout << "Target XYZ: " << target_xyz << std::endl;
     LAB<T> target_lab = LAB<T>::from_xyz(target_xyz, color_space.white_point());
-    //std::cout << "Target LAB: " << target_lab << std::endl;
+    std::cout << "Target LAB: " << target_lab << std::endl;
 
     auto eval_lab = [&](const std::array<T,3>& c) -> LAB<T> {
         RGBAlbedoSpectrumDistribution<T> albedo({c[0], c[1], c[2]});
-        XYZ<T> xyz = XYZ<T>::from_spectrum_distribution(albedo * reference_luminant_spectrum).normalize_to_y();
+        XYZ<T> xyz = XYZ<T>::from_spectrum_distribution(albedo * reference_luminant_spectrum);
         return LAB<T>::from_xyz(xyz, color_space.white_point());
     };
 
@@ -245,6 +246,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
         T dL = lab.L() - target_lab.L();
         T da = lab.a() - target_lab.a();
         T db = lab.b() - target_lab.b();
+        std::cout << "Current LAB: " << lab << ", Target LAB: " << target_lab << ", dL: " << dL << ", da: " << da << ", db: " << db << std::endl;
         return dL * dL + da * da + db * db;
     };
 
