@@ -113,22 +113,38 @@ inline auto inner_product(const SpectrumDistribution<D1, T1>& d1, const Spectrum
     return result;
 }
 
-template<typename T, typename D1, typename D2>
-class MultipliedSpectrumDistribution : public SpectrumDistribution<MultipliedSpectrumDistribution<T, D1, D2>, T> {
-private:
-    const D1& m_spectrum1;
-    const D2& m_spectrum2;
+template<class S>
+struct Hold {
+    std::shared_ptr<S> owned;        // 如果是右值，就放到这里
+    const S* ref = nullptr;          // 如果是左值，就指向它
+    Hold(const S& s): ref(&s) {}
+    Hold(S&& s): owned(std::make_shared<S>(std::move(s))), ref(owned.get()) {}
+    const S& get() const { return *ref; }
+};
 
+template<typename T, class D1, class D2>
+class MultipliedSpectrumDistribution : public SpectrumDistribution<MultipliedSpectrumDistribution<T, D1, D2>, T> {
 public:
+    Hold<D1> s1; Hold<D2> s2;
+
     using base = SpectrumDistribution<MultipliedSpectrumDistribution<T, D1, D2>, T>;
     using base::base;
+public:
 
-    MultipliedSpectrumDistribution(const D1& s1, const D2& s2) : m_spectrum1(s1), m_spectrum2(s2) {}
-
-    constexpr T at_impl(T lambda) const {
-        return m_spectrum1.at(lambda) * m_spectrum2.at(lambda);
-    }
+    MultipliedSpectrumDistribution(const D1& a, const D2& b): s1(a), s2(b) {}
+    MultipliedSpectrumDistribution(D1&& a, const D2& b): s1(std::move(a)), s2(b) {}
+    MultipliedSpectrumDistribution(const D1& a, D2&& b): s1(a), s2(std::move(b)) {}
+    MultipliedSpectrumDistribution(D1&& a, D2&& b): s1(std::move(a)), s2(std::move(b)) {}
+    
+    constexpr T at_impl(T λ) const { return s1.get().at(λ) * s2.get().at(λ); }
 };
+
+template<class D1, class T1, class D2, class T2>
+auto operator*(D1&& a, D2&& b) {
+  using R = std::common_type_t<T1,T2>;
+  using A = std::decay_t<D1>; using B = std::decay_t<D2>;
+  return MultipliedSpectrumDistribution<R, A, B>(std::forward<D1>(a), std::forward<D2>(b));
+}
 
 template<typename D1, typename T1, typename D2, typename T2>
 inline auto operator*(const SpectrumDistribution<D1, T1>& s1, const SpectrumDistribution<D2, T2>& s2) {
@@ -239,16 +255,30 @@ public:
     }
 };
 
-template <typename T>
-class RGBAlbedoSpectrumDistribution : public SpectrumDistribution<RGBAlbedoSpectrumDistribution<T>, T>{
+template<typename T>
+class RGBSigmoidPolynomialNormalized {
 private:
-    RGBSigmoidPolynomial<T> m_rsp;
+    T c0, c1, c2;
 
 public:
-    using base = SpectrumDistribution<RGBAlbedoSpectrumDistribution<T>, T>;
+    RGBSigmoidPolynomialNormalized(T c0, T c1, T c2) : c0(c0), c1(c1), c2(c2) {}
+
+    constexpr T at(T lambda) const {
+        const T t = (lambda - T(360)) / T(830 - 360);   // 归一化
+        return math::sigmoid(math::Polynomial<T>::evaluate(t, c0, c1, c2));
+    }
+};
+
+template <typename T, template<typename> class RSPType>
+class RGBAlbedoSpectrumDistribution : public SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T>{
+private:
+    RSPType<T> m_rsp;
+
+public:
+    using base = SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T>;
     using base::base;
 
-    RGBAlbedoSpectrumDistribution(const RGBSigmoidPolynomial<T>& rsp) : m_rsp(rsp) {}
+    RGBAlbedoSpectrumDistribution(const RSPType<T>& rsp) : m_rsp(rsp) {}
 
     T at_impl(T lambda) const {
         return m_rsp.at(lambda);

@@ -411,11 +411,16 @@ int main() {
     std::cout << std::endl;
 
     auto rgb_ = core::RGB<double>(0.133333, 1.0, 1.0);
-    core::RGBAlbedoSpectrumDistribution<double> albedo({
-        -82.2253,   // C'  (constant)
-        0.357441,  // B'  (linear)
-        -0.000367656// A'  (quadratic)
+    // core::RGBAlbedoSpectrumDistribution<double, core::RGBSigmoidPolynomial> albedo({
+    //     -82.2253,   // C'  (constant)
+    //     0.357441,  // B'  (linear)
+    //     -0.000367656// A'  (quadratic)
+    // });
+
+    core::RGBAlbedoSpectrumDistribution<double, core::RGBSigmoidPolynomialNormalized> albedo({
+        -1.14795, 43.0904, -80.4218
     });
+
     auto xyz_from_albedo = core::XYZ<double>::from_reflectance_under_illuminant(albedo, D65);
     std::cout << "XYZ from Albedo Spectrum: " << xyz_from_albedo << std::endl;
     auto rgb_from_albedo = sRGB.to_rgb(xyz_from_albedo);
@@ -424,6 +429,8 @@ int main() {
     auto xyz_d65_ = core::XYZ<double>::from_illuminant(D65);
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65_ << std::endl;
     std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65_.normalized_to_y(100.0) << std::endl;
+
+    core::optimize_albedo_rgb_sigmoid_polynomial(rgb_, sRGB, D65);
     
     return 0;
 }

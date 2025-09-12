@@ -539,7 +539,12 @@ void gauss_newton(const double rgb[3], double coeffs[3], int it = 15) {
         double residual[3];
 
         eval_residual(coeffs, rgb, residual);
+        std::cout << "Residual: " << residual[0] << " " << residual[1] << " " << residual[2] << std::endl;
         eval_jacobian(coeffs, rgb, J);
+        for (int j = 0; j < 3; ++j)
+            std::cout << "J" << j << ": " << J[j][0] << " " << J[j][1] << " " << J[j][2]
+                      << std::endl;
+        std::cout << std::endl;
 
         int P[4];
         int rv = LUPDecompose(J, 3, 1e-15, P);
@@ -588,206 +593,6 @@ static Gamut parse_gamut(const char *str) {
     return NO_GAMUT;
 }
 
-/* hack: below is a copy of enough of util/parallel.* to be able to run
-   ParallelFor to generate the tables. Note that we don't want to #include
-   <util/parallel.h>, since we'd end up spending lots of time regenerating
-   these tables whenever that header file changed.
- */
-
-void ParallelFor(int64_t start, int64_t end, std::function<void(int64_t, int64_t)> func,
-                 const char *progressName = nullptr);
-
-inline void ParallelFor(int64_t start, int64_t end, std::function<void(int64_t)> func,
-                        const char *progressName = nullptr) {
-    ParallelFor(
-        start, end,
-        [&func](int64_t start, int64_t end) {
-            for (int64_t i = start; i < end; ++i)
-                func(i);
-        },
-        progressName);
-}
-
-class ParallelJob {
-  public:
-    virtual ~ParallelJob() { assert(removed); }
-
-    // *lock should be locked going in and and unlocked coming out.
-    virtual void RunStep(std::unique_lock<std::mutex> *lock) = 0;
-    virtual bool HaveWork() const = 0;
-
-    bool Finished() const { return !HaveWork() && activeWorkers == 0; }
-
-  private:
-    friend class ThreadPool;
-
-    ParallelJob *prev = nullptr, *next = nullptr;
-    int activeWorkers = 0;
-    bool removed = false;
-};
-
-class ThreadPool {
-  public:
-    explicit ThreadPool(int nThreads);
-    ~ThreadPool();
-
-    size_t size() const { return threads.size(); }
-
-    std::unique_lock<std::mutex> AddToJobList(ParallelJob *job);
-    void RemoveFromJobList(ParallelJob *job);
-
-    void WorkOrWait(std::unique_lock<std::mutex> *lock);
-
-  private:
-    void workerFunc(int tIndex);
-
-    ParallelJob *jobList = nullptr;
-    // Protects jobList
-    mutable std::mutex jobListMutex;
-    // Signaled both when a new job is added to the list and when a job has
-    // finished.
-    std::condition_variable jobListCondition;
-
-    std::vector<std::thread> threads;
-    bool shutdownThreads = false;
-};
-
-static std::unique_ptr<ThreadPool> threadPool;
-
-int AvailableCores() {
-    return std::max<int>(1, std::thread::hardware_concurrency());
-}
-
-int RunningThreads() {
-    return threadPool ? (1 + threadPool->size()) : 1;
-}
-
-ThreadPool::ThreadPool(int nThreads) {
-    // Launch one fewer worker thread than the total number we want doing
-    // work, since the main thread helps out, too.
-    for (int i = 0; i < nThreads - 1; ++i)
-        threads.push_back(std::thread(&ThreadPool::workerFunc, this, i + 1));
-}
-
-ThreadPool::~ThreadPool() {
-    if (threads.empty())
-        return;
-
-    {
-        std::lock_guard<std::mutex> lock(jobListMutex);
-        shutdownThreads = true;
-        jobListCondition.notify_all();
-    }
-
-    for (std::thread &thread : threads)
-        thread.join();
-}
-
-std::unique_lock<std::mutex> ThreadPool::AddToJobList(ParallelJob *job) {
-    std::unique_lock<std::mutex> lock(jobListMutex);
-    if (jobList != nullptr)
-        jobList->prev = job;
-    job->next = jobList;
-    jobList = job;
-    jobListCondition.notify_all();
-    return lock;
-}
-
-void ThreadPool::RemoveFromJobList(ParallelJob *job) {
-    assert(!job->removed);
-
-    if (job->prev != nullptr) {
-        job->prev->next = job->next;
-    } else {
-        assert(jobList == job);
-        jobList = job->next;
-    }
-    if (job->next != nullptr)
-        job->next->prev = job->prev;
-
-    job->removed = true;
-}
-
-void ThreadPool::workerFunc(int tIndex) {
-    std::unique_lock<std::mutex> lock(jobListMutex);
-    while (!shutdownThreads)
-        WorkOrWait(&lock);
-}
-
-void ThreadPool::WorkOrWait(std::unique_lock<std::mutex> *lock) {
-    assert(lock->owns_lock());
-
-    ParallelJob *job = jobList;
-    while ((job != nullptr) && !job->HaveWork())
-        job = job->next;
-    if (job != nullptr) {
-        // Run a chunk of loop iterations for _loop_
-        job->activeWorkers++;
-
-        job->RunStep(lock);
-
-        assert(!lock->owns_lock());
-        lock->lock();
-
-        // Update _loop_ to reflect completion of iterations
-        job->activeWorkers--;
-
-        if (job->Finished())
-            jobListCondition.notify_all();
-    } else
-        // Wait for something to change (new work, or this loop being
-        // finished).
-        jobListCondition.wait(*lock);
-}
-
-class ParallelForLoop1D : public ParallelJob {
-  public:
-    ParallelForLoop1D(int64_t start, int64_t end, int chunkSize,
-                      std::function<void(int64_t, int64_t)> func)
-        : func(std::move(func)), nextIndex(start), maxIndex(end), chunkSize(chunkSize) {}
-
-    bool HaveWork() const { return nextIndex < maxIndex; }
-    void RunStep(std::unique_lock<std::mutex> *lock);
-
-  private:
-    std::function<void(int64_t, int64_t)> func;
-    int64_t nextIndex;
-    int64_t maxIndex;
-    int chunkSize;
-};
-
-void ParallelForLoop1D::RunStep(std::unique_lock<std::mutex> *lock) {
-    // Find the set of loop iterations to run next
-    int64_t indexStart = nextIndex;
-    int64_t indexEnd = std::min(indexStart + chunkSize, maxIndex);
-
-    // Update _loop_ to reflect iterations this thread will run
-    nextIndex = indexEnd;
-
-    if (!HaveWork())
-        threadPool->RemoveFromJobList(this);
-
-    lock->unlock();
-
-    // Run loop indices in _[indexStart, indexEnd)_
-    func(indexStart, indexEnd);
-}
-
-void ParallelFor(int64_t start, int64_t end, std::function<void(int64_t, int64_t)> func,
-                 const char *progressName) {
-    assert(threadPool);
-
-    int64_t chunkSize = std::max<int64_t>(1, (end - start) / (8 * RunningThreads()));
-
-    // Create and enqueue _ParallelJob_ for this loop
-    ParallelForLoop1D loop(start, end, chunkSize, std::move(func));
-    std::unique_lock<std::mutex> lock = threadPool->AddToJobList(&loop);
-
-    // Help out with parallel loop iterations in the current thread
-    while (!loop.Finished())
-        threadPool->WorkOrWait(&lock);
-}
-
 int main(int argc, char **argv) {
     // if (argc < 3) {
     //     printf("Syntax: rgb2spec_opt <resolution> <output> [<gamut>]\n"
@@ -812,7 +617,6 @@ int main(int argc, char **argv) {
 
     const int res = 16;
 
-
     printf("Optimizing %s spectra...\n", argv[3]);
     fflush(stdout);
 
@@ -828,114 +632,131 @@ int main(int argc, char **argv) {
     size_t bufsize = 3 * 3 * res * res * res;
     float *out = new float[bufsize];
 
-    // 单线程实现
-    for (int l = 0; l < 3; ++l) {
-        for (int j = 0; j < res; ++j) {
-            const double y = j / double(res - 1);
-            fflush(stdout);
-            for (int i = 0; i < res; ++i) {
-                const double x = i / double(res - 1);
-                double coeffs[3], rgb[3];
-                memset(coeffs, 0, sizeof(double) * 3);
+    // // 单线程实现
+    // for (int l = 0; l < 3; ++l) {
+    //     for (int j = 0; j < res; ++j) {
+    //         const double y = j / double(res - 1);
+    //         fflush(stdout);
+    //         for (int i = 0; i < res; ++i) {
+    //             const double x = i / double(res - 1);
+    //             double coeffs[3], rgb[3];
+    //             memset(coeffs, 0, sizeof(double) * 3);
 
-                int start = res / 5;
+    //             int start = res / 5;
 
-                for (int k = start; k < res; ++k) {
-                    double b = (double)scale[k];
+    //             for (int k = start; k < res; ++k) {
+    //                 double b = (double)scale[k];
 
-                    rgb[l] = b;
-                    rgb[(l + 1) % 3] = x * b;
-                    rgb[(l + 2) % 3] = y * b;
+    //                 rgb[l] = b;
+    //                 rgb[(l + 1) % 3] = x * b;
+    //                 rgb[(l + 2) % 3] = y * b;
 
-                    std::cout << "rgb: " << rgb[0] << " " << rgb[1] << " " << rgb[2]
-                              << std::endl;
+    //                 std::cout << "rgb: " << rgb[0] << " " << rgb[1] << " " << rgb[2]
+    //                           << std::endl;
 
-                    gauss_newton(rgb, coeffs);
-
+    //                 gauss_newton(rgb, coeffs);
                     
 
-                    double c0 = 360.0, c1 = 1.0 / (830.0 - 360.0);
-                    double A = coeffs[0], B = coeffs[1], C = coeffs[2];
+    //                 double c0 = 360.0, c1 = 1.0 / (830.0 - 360.0);
+    //                 double A = coeffs[0], B = coeffs[1], C = coeffs[2];
 
-                    int idx = ((l * res + k) * res + j) * res + i;
+    //                 int idx = ((l * res + k) * res + j) * res + i;
 
-                    out[3 * idx + 0] = float(A * (sqr(c1)));
-                    out[3 * idx + 1] = float(B * c1 - 2 * A * c0 * (sqr(c1)));
-                    out[3 * idx + 2] = float(C - B * c0 * c1 + A * (sqr(c0 * c1)));
+    //                 out[3 * idx + 0] = float(A * (sqr(c1)));
+    //                 out[3 * idx + 1] = float(B * c1 - 2 * A * c0 * (sqr(c1)));
+    //                 out[3 * idx + 2] = float(C - B * c0 * c1 + A * (sqr(c0 * c1)));
 
-                    std::cout << "-> " << out[3 * idx + 0] << " " << out[3 * idx + 1]
-                              << " " << out[3 * idx + 2] << std::endl;
-                    // out[3*idx + 2] = resid;
-                }
+    //                 std::cout << "-> " << out[3 * idx + 0] << " " << out[3 * idx + 1]
+    //                           << " " << out[3 * idx + 2] << std::endl;
+    //                 // out[3*idx + 2] = resid;
+    //             }
 
-                memset(coeffs, 0, sizeof(double) * 3);
-                for (int k = start; k >= 0; --k) {
-                    double b = (double)scale[k];
+    //             memset(coeffs, 0, sizeof(double) * 3);
+    //             for (int k = start; k >= 0; --k) {
+    //                 double b = (double)scale[k];
 
-                    rgb[l] = b;
-                    rgb[(l + 1) % 3] = x * b;
-                    rgb[(l + 2) % 3] = y * b;
+    //                 rgb[l] = b;
+    //                 rgb[(l + 1) % 3] = x * b;
+    //                 rgb[(l + 2) % 3] = y * b;
 
-                    std::cout << "rgb: " << rgb[0] << " " << rgb[1] << " " << rgb[2]
-                              << std::endl;
+    //                 // std::cout << "rgb: " << rgb[0] << " " << rgb[1] << " " << rgb[2]
+    //                 //           << std::endl;
 
-                    gauss_newton(rgb, coeffs);
+    //                 gauss_newton(rgb, coeffs);
 
-                    double c0 = 360.0, c1 = 1.0 / (830.0 - 360.0);
-                    double A = coeffs[0], B = coeffs[1], C = coeffs[2];
+    //                 double c0 = 360.0, c1 = 1.0 / (830.0 - 360.0);
+    //                 double A = coeffs[0], B = coeffs[1], C = coeffs[2];
 
-                    int idx = ((l * res + k) * res + j) * res + i;
+    //                 int idx = ((l * res + k) * res + j) * res + i;
 
-                    out[3 * idx + 0] = float(A * (sqr(c1)));
-                    out[3 * idx + 1] = float(B * c1 - 2 * A * c0 * (sqr(c1)));
-                    out[3 * idx + 2] = float(C - B * c0 * c1 + A * (sqr(c0 * c1)));
-                    // out[3*idx + 2] = resid;
+    //                 out[3 * idx + 0] = float(A * (sqr(c1)));
+    //                 out[3 * idx + 1] = float(B * c1 - 2 * A * c0 * (sqr(c1)));
+    //                 out[3 * idx + 2] = float(C - B * c0 * c1 + A * (sqr(c0 * c1)));
+    //                 // out[3*idx + 2] = resid;
 
-                    std::cout << "-> " << out[3 * idx + 0] << " " << out[3 * idx + 1]
-                              << " " << out[3 * idx + 2] << std::endl;
-                }
-            }
-        }
-    }
+    //                 // std::cout << "-> " << out[3 * idx + 0] << " " << out[3 * idx + 1]
+    //                 //           << " " << out[3 * idx + 2] << std::endl;
+    //             }
+    //         }
+    //     }
+    // }
 
-    std::cout << "Optimization done.\n";
+    // std::cout << "Optimization done.\n";
 
-    //std::string filename = std::string(argv[2]);
-    std::string filename = "srgb_to_spectrum.hpp";
+    // //std::string filename = std::string(argv[2]);
+    // std::string filename = "srgb_to_spectrum.hpp";
 
-    FILE *f = fopen(filename.c_str(), "w");
-    if (f == nullptr)
-        throw std::runtime_error("Could not create file!");
-    fprintf(f, "namespace pbrt {\n");
-    fprintf(f, "extern const int rgbToSpectrumTable_Res = %d;\n", res);
-    fprintf(f, "extern const float rgbToSpectrumTable_Scale[%d] = {\n", res);
-    for (int i = 0; i < res; ++i)
-        fprintf(f, "%.9g, ", scale[i]);
-    fprintf(f, "};\n");
-    fprintf(f, "extern const float rgbToSpectrumTable_Data[3][%d][%d][%d][3] = {\n",
-            res, res, res);
-    const float *ptr = out;
-    for (int maxc = 0; maxc < 3; ++maxc) {
-        fprintf(f, "{ ");
-        for (int z = 0; z < res; ++z) {
-            fprintf(f, "{ ");
-            for (int y = 0; y < res; ++y) {
-                fprintf(f, "{ ");
-                for (int x = 0; x < res; ++x) {
-                    fprintf(f, "{ ");
-                    for (int c = 0; c < 3; ++c)
-                        fprintf(f, "%.9g, ", *ptr++);
-                    fprintf(f, "}, ");
-                }
-                fprintf(f, "},\n    ");
-            }
-            fprintf(f, "}, ");
-        }
-        fprintf(f, "}, ");
-    }
-    fprintf(f, "};\n");
-    fprintf(f, "} // namespace pbrt\n");
-    fclose(f);
+    // FILE *f = fopen(filename.c_str(), "w");
+    // if (f == nullptr)
+    //     throw std::runtime_error("Could not create file!");
+    // fprintf(f, "namespace pbrt {\n");
+    // fprintf(f, "extern const int rgbToSpectrumTable_Res = %d;\n", res);
+    // fprintf(f, "extern const float rgbToSpectrumTable_Scale[%d] = {\n", res);
+    // for (int i = 0; i < res; ++i)
+    //     fprintf(f, "%.9g, ", scale[i]);
+    // fprintf(f, "};\n");
+    // fprintf(f, "extern const float rgbToSpectrumTable_Data[3][%d][%d][%d][3] = {\n",
+    //         res, res, res);
+    // const float *ptr = out;
+    // for (int maxc = 0; maxc < 3; ++maxc) {
+    //     fprintf(f, "{ ");
+    //     for (int z = 0; z < res; ++z) {
+    //         fprintf(f, "{ ");
+    //         for (int y = 0; y < res; ++y) {
+    //             fprintf(f, "{ ");
+    //             for (int x = 0; x < res; ++x) {
+    //                 fprintf(f, "{ ");
+    //                 for (int c = 0; c < 3; ++c)
+    //                     fprintf(f, "%.9g, ", *ptr++);
+    //                 fprintf(f, "}, ");
+    //             }
+    //             fprintf(f, "},\n    ");
+    //         }
+    //         fprintf(f, "}, ");
+    //     }
+    //     fprintf(f, "}, ");
+    // }
+    // fprintf(f, "};\n");
+    // fprintf(f, "} // namespace pbrt\n");
+    // fclose(f);
+
+    double rgb_[3] = {
+        0.133333, 1.0, 1.0
+    };
+
+    double coeffs[3] = {0.0, 0.0, 0.0};
+    gauss_newton(rgb_, coeffs);
+    double c0 = 360.0, c1 = 1.0 / (830.0 - 360.0);
+    double A = coeffs[0], B = coeffs[1], C = coeffs[2];
+    coeffs[0] = float(A * (sqr(c1)));
+    coeffs[1] = float(B * c1 - 2 * A * c0 * (sqr(c1)));
+    coeffs[2] = float(C - B * c0 * c1 + A * (sqr(c0 * c1)));
+
+    std::cout << "-> " << coeffs[0] << " " << coeffs[1] << " " << coeffs[2]
+              << std::endl;
+
+    cie_lab(rgb_);
+    std::cout << "lab: " << rgb_[0] << " " << rgb_[1] << " " << rgb_[2] << std::endl;
 
     //threadPool.reset();
 }

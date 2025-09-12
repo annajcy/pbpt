@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include "core/spectrum.hpp"
 
 #include "math/matrix.hpp"
@@ -228,7 +229,7 @@ public:
 
 template<typename T>
 struct RGBSigmoidPolynomialOptimizationResult {
-    double error;
+    math::Vector<T, 3> error;
     std::array<T, 3> coeffs;
 };
 
@@ -237,7 +238,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     const RGB<T>& target_rgb, 
     const RGBColorSpace<T>& color_space,
     const LuminantSpectrumType& reference_luminant_spectrum,
-    int max_iterations = 1, 
+    int max_iterations = 15, 
     double error_threshold = 1e-4, 
     const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0}
 ) {
@@ -249,21 +250,40 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     std::cout << "Target LAB: " << target_lab << std::endl;
 
     auto eval_lab = [&](const std::array<T,3>& c) -> LAB<T> {
-        RGBAlbedoSpectrumDistribution<T> albedo({c[0], c[1], c[2]});
-        XYZ<T> xyz = XYZ<T>::from_illuminant(albedo * reference_luminant_spectrum);
+        RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> albedo({c[0], c[1], c[2]});
+        XYZ<T> xyz = XYZ<T>::from_reflectance_under_illuminant(albedo, reference_luminant_spectrum);
         return LAB<T>::from_xyz(xyz, color_space.white_point());
     };
 
-    auto eval_error = [&](const LAB<T>& lab) -> double {
-        T dL = lab.L() - target_lab.L();
-        T da = lab.a() - target_lab.a();
-        T db = lab.b() - target_lab.b();
-        std::cout << "Current LAB: " << lab << ", Target LAB: " << target_lab << ", dL: " << dL << ", da: " << da << ", db: " << db << std::endl;
-        return dL * dL + da * da + db * db;
+    auto eval_error = [&](const LAB<T>& lab) -> math::Vector<T, 3> {
+        T dL = target_lab.L() - lab.L();
+        T da = target_lab.a() - lab.a();
+        T db = target_lab.b() - lab.b();
+        return math::Vector<T, 3>{dL, da, db};
     };
 
+    auto eval_jacobian = [&](const std::array<T,3>& c) -> math::Matrix<T, 3, 3> {
+        const T epsilon = 1e-4;
+        math::Matrix<T, 3, 3> J;
+        for (int i = 0; i < 3; i++) {
+            std::array<T, 3> c_plus = c;
+            std::array<T, 3> c_minus = c;
+            c_plus[i] += epsilon;
+            c_minus[i] -= epsilon;
+            LAB<T> lab_plus = eval_lab(c_plus);
+            auto err_plus = eval_error(lab_plus);
+            LAB<T> lab_minus = eval_lab(c_minus);
+            auto err_minus = eval_error(lab_minus);
+            J[0][i] = (err_plus[0] - err_minus[0]) / (2 * epsilon);
+            J[1][i] = (err_plus[1] - err_minus[1]) / (2 * epsilon);
+            J[2][i] = (err_plus[2] - err_minus[2]) / (2 * epsilon);
+        }
+        return J;
+    };
+
+
     std::array<T, 3> coeffs = initial_guess;
-    double error = std::numeric_limits<double>::max();
+    auto error = math::Vector<T, 3>::filled(std::numeric_limits<double>::max());
     for (int i = 0; i < max_iterations; i ++) {
         auto object_lab = eval_lab(coeffs);
         //std::cout << "Object LAB: " << object_lab << std::endl;
@@ -272,11 +292,26 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
         std::cout << "Iteration " << i << ": Error = " << error 
                   << ", Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
 
-        if (math::is_less_equal(error, error_threshold)) {
+        if ([&]() -> bool {
+            for (int j = 0; j < 3; j++) {
+                if (!math::is_less_equal(error[j], error_threshold)) {
+                    return false;
+                }
+            }
+            return true;
+        }()) {
             return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
         }
 
-        // TODO: Use a more sophisticated optimization method
+        auto J = eval_jacobian(coeffs);
+
+        std::cout << "Jacobian:\n" << J << std::endl;   
+
+        // Solve the linear system J * delta = error and update coeffs
+        auto delta = J.inversed() * error;
+        coeffs[0] -= delta[0];
+        coeffs[1] -= delta[1];
+        coeffs[2] -= delta[2];
     }
 
     return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
