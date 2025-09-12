@@ -269,12 +269,18 @@ public:
     }
 
     RGBSigmoidPolynomial<T> to_unnormalized() const {
-        double a = 360.0, b = 1.0 / (830.0 - 360.0);
-        double A = c0, B =c1, C = c2;
+        // 转换公式基于归一化变换: t = (lambda - 360) / (830 - 360)
+        // 原多项式: A*t^2 + B*t + C
+        // 转换为原始wavelength域: A'*lambda^2 + B'*lambda + C'
+        double c0_val = 360.0, c1_val = 1.0 / (830.0 - 360.0);
+        double A = c2, B = c1, C = c0;
+        double c1_squared = c1_val * c1_val;
+        double c0_c1 = c0_val * c1_val;
+        
         return RGBSigmoidPolynomial<T>{
-            A * (c1 * c1), 
-            B * c1 - 2 * A * a * (c1 * c1), 
-            C - B * a * c1 + A * ((c0 * c1) * (c0 * c1))
+            T(C - B * c0_val * c1_val + A * c0_c1 * c0_c1),
+            T(B * c1_val - 2 * A * c0_val * c1_squared), 
+            T(A * c1_squared)
         };
     }
 };
