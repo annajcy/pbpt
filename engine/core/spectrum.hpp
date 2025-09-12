@@ -244,7 +244,7 @@ public:
 
 template<typename T>
 class RGBSigmoidPolynomial {
-private:
+public:
     T c0, c1, c2;
 
 public:
@@ -257,7 +257,7 @@ public:
 
 template<typename T>
 class RGBSigmoidPolynomialNormalized {
-private:
+public:
     T c0, c1, c2;
 
 public:
@@ -266,6 +266,16 @@ public:
     constexpr T at(T lambda) const {
         const T t = (lambda - T(360)) / T(830 - 360);   // 归一化
         return math::sigmoid(math::Polynomial<T>::evaluate(t, c0, c1, c2));
+    }
+
+    RGBSigmoidPolynomial<T> to_unnormalized() const {
+        double a = 360.0, b = 1.0 / (830.0 - 360.0);
+        double A = c0, B =c1, C = c2;
+        return RGBSigmoidPolynomial<T>{
+            A * (c1 * c1), 
+            B * c1 - 2 * A * a * (c1 * c1), 
+            C - B * a * c1 + A * ((c0 * c1) * (c0 * c1))
+        };
     }
 };
 
@@ -283,6 +293,9 @@ public:
     T at_impl(T lambda) const {
         return m_rsp.at(lambda);
     }
+
+    const RSPType<T>& rsp() const { return m_rsp; }
+    RSPType<T>& rsp() { return m_rsp; }
 };
 
 

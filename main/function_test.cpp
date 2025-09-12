@@ -421,6 +421,9 @@ int main() {
         -1.14795, 43.0904, -80.4218
     });
 
+    auto albedo_unnormalized = albedo.rsp().to_unnormalized();
+    std::cout << "Albedo Coefficients (C0, C1, C2): " << albedo.rsp().c0 << ", " << albedo.rsp().c1 << ", " << albedo.rsp().c2 << std::endl;
+
     auto xyz_from_albedo = core::XYZ<double>::from_reflectance_under_illuminant(albedo, D65);
     std::cout << "XYZ from Albedo Spectrum: " << xyz_from_albedo << std::endl;
     auto rgb_from_albedo = sRGB.to_rgb(xyz_from_albedo);
