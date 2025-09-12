@@ -2,6 +2,7 @@
 // The pbrt source code is licensed under the Apache License, Version 2.0.
 // SPDX: Apache-2.0
 
+#include <string>
 #if defined(_MSC_VER)
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -788,12 +789,12 @@ void ParallelFor(int64_t start, int64_t end, std::function<void(int64_t, int64_t
 }
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
-        printf("Syntax: rgb2spec_opt <resolution> <output> [<gamut>]\n"
-               "where <gamut> is one of "
-               "sRGB,eRGB,XYZ,ProPhotoRGB,ACES2065_1,REC2020\n");
-        exit(-1);
-    }
+    // if (argc < 3) {
+    //     printf("Syntax: rgb2spec_opt <resolution> <output> [<gamut>]\n"
+    //            "where <gamut> is one of "
+    //            "sRGB,eRGB,XYZ,ProPhotoRGB,ACES2065_1,REC2020\n");
+    //     exit(-1);
+    // }
     Gamut gamut = SRGB;
     if (argc > 3)
         gamut = parse_gamut(argv[3]);
@@ -803,14 +804,14 @@ int main(int argc, char **argv) {
     }
     init_tables(gamut);
 
-    const int res = atoi(argv[1]);
-    if (res == 0) {
-        printf("Invalid resolution!\n");
-        exit(-1);
-    }
+    // const int res = atoi(argv[1]);
+    // if (res == 0) {
+    //     printf("Invalid resolution!\n");
+    //     exit(-1);
+    // }
 
-    int nThreads = AvailableCores();
-    threadPool = std::make_unique<ThreadPool>(nThreads);
+    const int res = 16;
+
 
     printf("Optimizing %s spectra...\n", argv[3]);
     fflush(stdout);
@@ -819,11 +820,17 @@ int main(int argc, char **argv) {
     for (int k = 0; k < res; ++k)
         scale[k] = (float)smoothstep(smoothstep(k / double(res - 1)));
 
+    std::cout << "Scale: \n";
+    for (int k = 0; k < res; ++k)
+        std::cout << scale[k] << ", " << k / double(res - 1) << std::endl;
+    std::cout << std::endl;
+
     size_t bufsize = 3 * 3 * res * res * res;
     float *out = new float[bufsize];
 
+    // 单线程实现
     for (int l = 0; l < 3; ++l) {
-        ParallelFor(0, res, [&](size_t j) {
+        for (int j = 0; j < res; ++j) {
             const double y = j / double(res - 1);
             fflush(stdout);
             for (int i = 0; i < res; ++i) {
@@ -840,7 +847,12 @@ int main(int argc, char **argv) {
                     rgb[(l + 1) % 3] = x * b;
                     rgb[(l + 2) % 3] = y * b;
 
+                    std::cout << "rgb: " << rgb[0] << " " << rgb[1] << " " << rgb[2]
+                              << std::endl;
+
                     gauss_newton(rgb, coeffs);
+
+                    
 
                     double c0 = 360.0, c1 = 1.0 / (830.0 - 360.0);
                     double A = coeffs[0], B = coeffs[1], C = coeffs[2];
@@ -850,6 +862,9 @@ int main(int argc, char **argv) {
                     out[3 * idx + 0] = float(A * (sqr(c1)));
                     out[3 * idx + 1] = float(B * c1 - 2 * A * c0 * (sqr(c1)));
                     out[3 * idx + 2] = float(C - B * c0 * c1 + A * (sqr(c0 * c1)));
+
+                    std::cout << "-> " << out[3 * idx + 0] << " " << out[3 * idx + 1]
+                              << " " << out[3 * idx + 2] << std::endl;
                     // out[3*idx + 2] = resid;
                 }
 
@@ -861,6 +876,9 @@ int main(int argc, char **argv) {
                     rgb[(l + 1) % 3] = x * b;
                     rgb[(l + 2) % 3] = y * b;
 
+                    std::cout << "rgb: " << rgb[0] << " " << rgb[1] << " " << rgb[2]
+                              << std::endl;
+
                     gauss_newton(rgb, coeffs);
 
                     double c0 = 360.0, c1 = 1.0 / (830.0 - 360.0);
@@ -872,22 +890,30 @@ int main(int argc, char **argv) {
                     out[3 * idx + 1] = float(B * c1 - 2 * A * c0 * (sqr(c1)));
                     out[3 * idx + 2] = float(C - B * c0 * c1 + A * (sqr(c0 * c1)));
                     // out[3*idx + 2] = resid;
+
+                    std::cout << "-> " << out[3 * idx + 0] << " " << out[3 * idx + 1]
+                              << " " << out[3 * idx + 2] << std::endl;
                 }
             }
-        });
+        }
     }
 
-    FILE *f = fopen(argv[2], "w");
+    std::cout << "Optimization done.\n";
+
+    //std::string filename = std::string(argv[2]);
+    std::string filename = "srgb_to_spectrum.hpp";
+
+    FILE *f = fopen(filename.c_str(), "w");
     if (f == nullptr)
         throw std::runtime_error("Could not create file!");
     fprintf(f, "namespace pbrt {\n");
-    fprintf(f, "extern const int %sToSpectrumTable_Res = %d;\n", argv[3], res);
-    fprintf(f, "extern const float %sToSpectrumTable_Scale[%d] = {\n", argv[3], res);
+    fprintf(f, "extern const int rgbToSpectrumTable_Res = %d;\n", res);
+    fprintf(f, "extern const float rgbToSpectrumTable_Scale[%d] = {\n", res);
     for (int i = 0; i < res; ++i)
         fprintf(f, "%.9g, ", scale[i]);
     fprintf(f, "};\n");
-    fprintf(f, "extern const float %sToSpectrumTable_Data[3][%d][%d][%d][3] = {\n",
-            argv[3], res, res, res);
+    fprintf(f, "extern const float rgbToSpectrumTable_Data[3][%d][%d][%d][3] = {\n",
+            res, res, res);
     const float *ptr = out;
     for (int maxc = 0; maxc < 3; ++maxc) {
         fprintf(f, "{ ");
@@ -911,5 +937,5 @@ int main(int argc, char **argv) {
     fprintf(f, "} // namespace pbrt\n");
     fclose(f);
 
-    threadPool.reset();
+    //threadPool.reset();
 }

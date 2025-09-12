@@ -10,3 +10,6 @@ add_executable(function_test function_test.cpp)
 target_link_libraries(function_test PRIVATE pbpt_engine)
 add_runtime_dependency_copy_step(function_test ${ext_move_lib})
 
+add_executable(rgb2pec rgb2spec_opt.cpp)
+target_link_libraries(rgb2pec PRIVATE pbpt_engine)
+add_runtime_dependency_copy_step(rgb2pec ${ext_move_lib})

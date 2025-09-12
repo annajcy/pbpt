@@ -6,7 +6,6 @@
 #include <iostream>
 #include <type_traits>
 
-#include "core/radiometry.hpp"
 #include "math/function.hpp"
 #include "math/polynomial.hpp"
 #include "math/vector.hpp"
@@ -225,21 +224,6 @@ public:
 
         return m_samples[(static_cast<int>(lambda) - LambdaMin)];
     }
-
-    TabularSpectrumDistribution& operator*(const TabularSpectrumDistribution& other) const {
-        TabularSpectrumDistribution<T, LambdaMin, LambdaMax> result = *this;
-        for (int i = 0; i < sample_count(); ++i) {
-            result.m_samples[i] *= other.m_samples[i];
-        }
-        return result;
-    }
-
-    TabularSpectrumDistribution& operator*=(const TabularSpectrumDistribution& other) {
-        for (int i = 0; i < sample_count(); ++i) {
-            m_samples[i] *= other.m_samples[i];
-        }
-        return *this;
-    }
 };
 
 template<typename T>
@@ -328,11 +312,5 @@ inline static constexpr TabularSpectrumDistribution<T, luminantARange::LMinValue
 );
 
 template<typename T>
-static constexpr T CIE_Y_integral = 
-106.856895;
-//105.67081667;
-
-
-
-
+static constexpr T CIE_Y_integral = 106.856895;
 };

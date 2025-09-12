@@ -25,14 +25,26 @@ public:
         return XYZ(X, Y, Z);
     }
 
-    template<typename SpectrumType>
-    static constexpr XYZ from_spectrum_distribution(const SpectrumType& spectrum) {
-        auto xyz = XYZ(
-            inner_product(spectrum, CIE_X<T>), // X
-            inner_product(spectrum, CIE_Y<T>), // Y
-            inner_product(spectrum, CIE_Z<T>)  // Z
-        ) / CIE_Y_integral<T>;
-        return xyz;
+    template<typename IlluminantSpectrumType>
+    static XYZ<T> from_illuminant(const IlluminantSpectrumType& I) {
+        T Xn = inner_product(I, CIE_X<T>);
+        T Yn = inner_product(I, CIE_Y<T>);
+        T Zn = inner_product(I, CIE_Z<T>);
+        T denom = Yn; // = inner_product(I, CIE_Y<T>);
+        // 归一化使理想白(单位反射率)在该光源下 Y=1
+        return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
+    }
+
+    template<typename ReflectanceSpectrumType, typename IlluminantSpectrumType>
+    static XYZ<T> from_reflectance_under_illuminant(const ReflectanceSpectrumType& R,
+                                                    const IlluminantSpectrumType& I) {
+        // 分子：R(λ)*I(λ) 与 CIE CMF 的内积
+        T Xn = inner_product(R * I, CIE_X<T>);
+        T Yn = inner_product(R * I, CIE_Y<T>);
+        T Zn = inner_product(R * I, CIE_Z<T>);
+        // 分母：I(λ) 与 ȳ(λ) 的内积（归一化，使理想白 Y=1）
+        T denom = inner_product(I, CIE_Y<T>);
+        return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
     }
 
     template<int N>
@@ -59,7 +71,7 @@ public:
         return math::Point<T, 2>(x() / (x() + y() + z()), y() / (x() + y() + z()));
     }
 
-    XYZ<T>& normalize_to_y(T target_y = T{1}) {
+    XYZ<T>& normalize_to_y(T target_y = T{100}) {
         T current_y = y();
         if (current_y != 0) {
             T scale = target_y / current_y;
@@ -68,7 +80,7 @@ public:
         return *this;
     }
 
-    XYZ<T> normalized_to_y(T target_y) const {
+    XYZ<T> normalized_to_y(T target_y = T{100}) const {
         return XYZ<T>(*this).normalize_to_y(target_y);
     }
 };
@@ -238,7 +250,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
 
     auto eval_lab = [&](const std::array<T,3>& c) -> LAB<T> {
         RGBAlbedoSpectrumDistribution<T> albedo({c[0], c[1], c[2]});
-        XYZ<T> xyz = XYZ<T>::from_spectrum_distribution(albedo * reference_luminant_spectrum);
+        XYZ<T> xyz = XYZ<T>::from_illuminant(albedo * reference_luminant_spectrum);
         return LAB<T>::from_xyz(xyz, color_space.white_point());
     };
 

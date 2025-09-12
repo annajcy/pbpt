@@ -357,7 +357,7 @@ int main() {
 
     std::cout << "Expected XYZ: " << expected_xyz * 100 / expected_xyz.y() << std::endl;
 
-    auto xyz_d65 = core::XYZ<double>::from_spectrum_distribution(D65);
+    auto xyz_d65 = core::XYZ<double>::from_illuminant(D65);
     //std::cout << "XYZ from D65 Spectrum: " << xyz_d65 * 100 / xyz_d65.y() << std::endl;
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65 << std::endl;
     std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65.normalized_to_y(100.0) << std::endl;
@@ -365,7 +365,8 @@ int main() {
     math::Point<double, 2> gp{0.3, 0.6};
     math::Point<double, 2> bp{0.15, 0.06};
 
-    core::XYZ<double> wp = core::XYZ<double>::from_spectrum_distribution(D65).normalize_to_y(1);
+    core::XYZ<double> wp = core::XYZ<double>::from_illuminant(D65);
+    std::cout << "White Point from D65 Spectrum: " << wp << std::endl;
     core::RGBColorSpace<double> sRGB(rp, gp, bp, wp);
 
     std::cout << "sRGB to XYZ Matrix:\n" << sRGB.rgb_to_xyz_matrix() << std::endl;
@@ -409,10 +410,20 @@ int main() {
     std::cout << "XYZ Blue Point to LAB: " << blue_lab << std::endl;
     std::cout << std::endl;
 
-    auto [error, coeff] = core::optimize_albedo_rgb_sigmoid_polynomial(core::RGB<double>(1.0, 0.0, 0.0), sRGB, D50);
-    std::cout << "Optimized Coefficients: " << coeff[0] << ", " << coeff[1] << ", " << coeff[2] << ", Error: " << error << std::endl;
+    auto rgb_ = core::RGB<double>(0.133333, 1.0, 1.0);
+    core::RGBAlbedoSpectrumDistribution<double> albedo({
+        -82.2253,   // C'  (constant)
+        0.357441,  // B'  (linear)
+        -0.000367656// A'  (quadratic)
+    });
+    auto xyz_from_albedo = core::XYZ<double>::from_reflectance_under_illuminant(albedo, D65);
+    std::cout << "XYZ from Albedo Spectrum: " << xyz_from_albedo << std::endl;
+    auto rgb_from_albedo = sRGB.to_rgb(xyz_from_albedo);
+    std::cout << "sRGB from Albedo Spectrum: " << rgb_from_albedo << std::endl;
 
-    core::RGBAlbedoSpectrumDistribution<double> albedo({coeff[0], coeff[1], coeff[2]});
-
+    auto xyz_d65_ = core::XYZ<double>::from_illuminant(D65);
+    std::cout << "XYZ from D65 Spectrum: " << xyz_d65_ << std::endl;
+    std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65_.normalized_to_y(100.0) << std::endl;
+    
     return 0;
 }
