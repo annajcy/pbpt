@@ -426,14 +426,14 @@ int main() {
 
     auto xyz_from_albedo = core::XYZ<double>::from_reflectance_under_illuminant(albedo, D65);
     std::cout << "XYZ from Albedo Spectrum: " << xyz_from_albedo << std::endl;
-    auto rgb_from_albedo = sRGB.to_rgb(xyz_from_albedo);
+    auto rgb_from_albedo = core::sRGB<double>.to_rgb(xyz_from_albedo);
     std::cout << "sRGB from Albedo Spectrum: " << rgb_from_albedo << std::endl;
 
     auto xyz_d65_ = core::XYZ<double>::from_illuminant(D65);
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65_ << std::endl;
     std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65_.normalized_to_y(100.0) << std::endl;
 
-    auto [error, coeffs] = core::optimize_albedo_rgb_sigmoid_polynomial(core::RGB<double>(0.139, 0.735, 0.989), sRGB, D65);
+    auto [error, coeffs] = core::optimize_albedo_rgb_sigmoid_polynomial(core::RGB<double>(0.139, 0.735, 0.989), core::sRGB<double>, D65);
     std::cout << "Optimization Error: " << error << std::endl;
     std::cout << "Optimized Albedo Coefficients (C0, C1, C2): " << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << std::endl;
 
@@ -443,7 +443,7 @@ int main() {
     core::RGBAlbedoSpectrumDistribution<double, core::RGBSigmoidPolynomial> optimized_albedo(optimized_sigmoid_polynomial_unnormalized);
     auto xyz_from_optimized_albedo = core::XYZ<double>::from_reflectance_under_illuminant(optimized_albedo, D65);
     std::cout << "XYZ from Optimized Albedo Spectrum: " << xyz_from_optimized_albedo << std::endl;
-    auto rgb_from_optimized_albedo = sRGB.to_rgb(xyz_from_optimized_albedo);
+    auto rgb_from_optimized_albedo = core::sRGB<double>.to_rgb(xyz_from_optimized_albedo);
     std::cout << "sRGB from Optimized Albedo Spectrum: " << rgb_from_optimized_albedo << std::endl;
     
     return 0;

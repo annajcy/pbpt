@@ -315,6 +315,28 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
 }
 
+template<typename T>
+static RGBColorSpace<T> sRGB(
+    math::Point<double, 2> {0.64, 0.33},
+    math::Point<double, 2> {0.3, 0.6},
+    math::Point<double, 2> {0.15, 0.06},
+    core::XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
+);
 
+template<typename T>
+static RGBColorSpace<T> DCI_P3(
+    math::Point<double, 2> {0.68, 0.32},
+    math::Point<double, 2> {0.265, 0.69},
+    math::Point<double, 2> {0.15, 0.06},
+    core::XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
+);
 
-};
+template<typename T>
+static RGBColorSpace<T> Rec2020(
+    math::Point<double, 2> {0.708, 0.292},
+    math::Point<double, 2> {0.17, 0.797},
+    math::Point<double, 2> {0.131, 0.046},
+    core::XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
+);
+
+} // namespace pbpt::core
