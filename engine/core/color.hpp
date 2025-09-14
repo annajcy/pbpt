@@ -270,17 +270,14 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
             std::array<T, 3> c_minus = c;
             c_plus[i] += epsilon;
             c_minus[i] -= epsilon;
-            LAB<T> lab_plus = eval_lab(c_plus);
-            auto err_plus = eval_error(lab_plus);
-            LAB<T> lab_minus = eval_lab(c_minus);
-            auto err_minus = eval_error(lab_minus);
+            auto err_plus = eval_error(eval_lab(c_plus));
+            auto err_minus = eval_error(eval_lab(c_minus));
             J[0][i] = (err_plus[0] - err_minus[0]) / (2 * epsilon);
             J[1][i] = (err_plus[1] - err_minus[1]) / (2 * epsilon);
             J[2][i] = (err_plus[2] - err_minus[2]) / (2 * epsilon);
         }
         return J;
     };
-
 
     std::array<T, 3> coeffs = initial_guess;
     auto error = math::Vector<T, 3>::filled(std::numeric_limits<double>::max());
@@ -294,12 +291,13 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
 
         if ([&]() -> bool {
             for (int j = 0; j < 3; j++) {
-                if (!math::is_less_equal(error[j], error_threshold)) {
+                if (!math::is_less_equal(math::abs(error[j]), error_threshold)) {
                     return false;
                 }
             }
             return true;
         }()) {
+            std::cout << "Converged after " << i << " iterations.\n";
             return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
         }
 

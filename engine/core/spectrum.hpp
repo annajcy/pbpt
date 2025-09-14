@@ -243,11 +243,9 @@ public:
 };
 
 template<typename T>
-class RGBSigmoidPolynomial {
-public:
+struct RGBSigmoidPolynomial {
     T c0, c1, c2;
 
-public:
     RGBSigmoidPolynomial(T c0, T c1, T c2) : c0(c0), c1(c1), c2(c2) {}
 
     constexpr T at(T lambda) const {
@@ -256,11 +254,9 @@ public:
 };
 
 template<typename T>
-class RGBSigmoidPolynomialNormalized {
-public:
+struct RGBSigmoidPolynomialNormalized {
     T c0, c1, c2;
 
-public:
     RGBSigmoidPolynomialNormalized(T c0, T c1, T c2) : c0(c0), c1(c1), c2(c2) {}
 
     constexpr T at(T lambda) const {
