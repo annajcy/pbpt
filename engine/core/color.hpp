@@ -27,12 +27,11 @@ public:
     }
 
     template<typename IlluminantSpectrumType>
-    static XYZ<T> from_illuminant(const IlluminantSpectrumType& I) {
+    static XYZ<T> from_standard_illuminant(const IlluminantSpectrumType& I) {
         T Xn = inner_product(I, CIE_X<T>);
         T Yn = inner_product(I, CIE_Y<T>);
         T Zn = inner_product(I, CIE_Z<T>);
-        T denom = Yn; // = inner_product(I, CIE_Y<T>);
-        // 归一化使理想白(单位反射率)在该光源下 Y=1
+        T denom = Yn;
         return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
     }
 
@@ -45,6 +44,18 @@ public:
         T Zn = inner_product(R * I, CIE_Z<T>);
         // 分母：I(λ) 与 ȳ(λ) 的内积（归一化，使理想白 Y=1）
         T denom = inner_product(I, CIE_Y<T>);
+        return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
+    }
+
+    // 发光谱 L 在“参考照明（D65）归一化”的 XYZ
+    template<typename IlluminantSpectrumType, typename RefIlluminantSpectrumType>
+    static XYZ<T> from_emission_under_illuminant(
+        const IlluminantSpectrumType& L, const RefIlluminantSpectrumType& Iref // 例如 D65
+    ) {
+        T Xn = inner_product(L, CIE_X<T>);
+        T Yn = inner_product(L, CIE_Y<T>);
+        T Zn = inner_product(L, CIE_Z<T>);
+        T denom = inner_product(Iref, CIE_Y<T>);   // 固定：D65 的 Y
         return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
     }
 
@@ -315,12 +326,24 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
 }
 
+template <typename T>
+struct ScaledRGB {
+    RGB<T> rgb{};
+    T scale = T(1);
+};
+
+template<typename T>
+inline ScaledRGB<T> scale_unbounded_rgb(const RGB<T>& rgb) {
+    T max_component = std::max({rgb.r(), rgb.g(), rgb.b()});
+    return ScaledRGB<T>{rgb / (2 * max_component), 2 * max_component};
+}
+
 template<typename T>
 static RGBColorSpace<T> sRGB(
     math::Point<double, 2> {0.64, 0.33},
     math::Point<double, 2> {0.3, 0.6},
     math::Point<double, 2> {0.15, 0.06},
-    core::XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
+    core::XYZ<double>::from_standard_illuminant(CIE_D65_ilum<T>)
 );
 
 template<typename T>
@@ -328,7 +351,7 @@ static RGBColorSpace<T> DCI_P3(
     math::Point<double, 2> {0.68, 0.32},
     math::Point<double, 2> {0.265, 0.69},
     math::Point<double, 2> {0.15, 0.06},
-    core::XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
+    core::XYZ<double>::from_standard_illuminant(CIE_D65_ilum<T>)
 );
 
 template<typename T>
@@ -336,7 +359,7 @@ static RGBColorSpace<T> Rec2020(
     math::Point<double, 2> {0.708, 0.292},
     math::Point<double, 2> {0.17, 0.797},
     math::Point<double, 2> {0.131, 0.046},
-    core::XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
+    core::XYZ<double>::from_standard_illuminant(CIE_D65_ilum<T>)
 );
 
 } // namespace pbpt::core

@@ -300,6 +300,42 @@ public:
     RSPType<T>& rsp() { return m_rsp; }
 };
 
+template<typename T, template<typename> class RSPType>
+class RGBUnboundedSpectrumDistribution : public SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T>{
+private:
+    RSPType<T> m_rsp;
+    T m_scale;
+
+public:
+    using base = SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T>;
+    using base::base;
+
+    RGBUnboundedSpectrumDistribution(const RSPType<T>& rsp, T m_scale) 
+        : m_rsp(rsp), m_scale(m_scale) {}
+
+    T at_impl(T lambda) const {
+        return m_scale * m_rsp.at(lambda);
+    }
+};
+
+template<typename T, template<typename> class RSPType, typename LuminantSpectrumType>
+class RGBIlluminantSpectrumDistribution : public SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, LuminantSpectrumType>, T>{
+private:
+    RSPType<T> m_rsp;
+    T m_scale = T{1.0};
+    LuminantSpectrumType m_reference_luminant;
+
+public:
+    using base = SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, LuminantSpectrumType>, T>;
+    using base::base;
+
+    RGBIlluminantSpectrumDistribution(const RSPType<T>& rsp, const LuminantSpectrumType& reference_luminant, T m_scale = T{1.0}) 
+        : m_rsp(rsp), m_reference_luminant(reference_luminant) , m_scale(m_scale) {}
+
+    T at_impl(T lambda) const {
+        return m_scale * m_rsp.at(lambda) * m_reference_luminant.at(lambda);
+    }
+};
 
 template<int LMin, int LMax>
 struct TabularSpectrumRange {

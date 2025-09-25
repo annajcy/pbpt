@@ -357,7 +357,7 @@ int main() {
 
     std::cout << "Expected XYZ: " << expected_xyz * 100 / expected_xyz.y() << std::endl;
 
-    auto xyz_d65 = core::XYZ<double>::from_illuminant(D65);
+    auto xyz_d65 = core::XYZ<double>::from_standard_illuminant(D65);
     //std::cout << "XYZ from D65 Spectrum: " << xyz_d65 * 100 / xyz_d65.y() << std::endl;
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65 << std::endl;
     std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65.normalized_to_y(100.0) << std::endl;
@@ -365,7 +365,7 @@ int main() {
     math::Point<double, 2> gp{0.3, 0.6};
     math::Point<double, 2> bp{0.15, 0.06};
 
-    core::XYZ<double> wp = core::XYZ<double>::from_illuminant(D65);
+    core::XYZ<double> wp = core::XYZ<double>::from_standard_illuminant(D65);
     std::cout << "White Point from D65 Spectrum: " << wp << std::endl;
     core::RGBColorSpace<double> sRGB(rp, gp, bp, wp);
 
@@ -429,7 +429,7 @@ int main() {
     auto rgb_from_albedo = core::sRGB<double>.to_rgb(xyz_from_albedo);
     std::cout << "sRGB from Albedo Spectrum: " << rgb_from_albedo << std::endl;
 
-    auto xyz_d65_ = core::XYZ<double>::from_illuminant(D65);
+    auto xyz_d65_ = core::XYZ<double>::from_standard_illuminant(D65);
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65_ << std::endl;
     std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65_.normalized_to_y(100.0) << std::endl;
 
@@ -445,6 +445,33 @@ int main() {
     std::cout << "XYZ from Optimized Albedo Spectrum: " << xyz_from_optimized_albedo << std::endl;
     auto rgb_from_optimized_albedo = core::sRGB<double>.to_rgb(xyz_from_optimized_albedo);
     std::cout << "sRGB from Optimized Albedo Spectrum: " << rgb_from_optimized_albedo << std::endl;
-    
+
+    std::cout << "Target RGB: " << rgb_from_optimized_albedo << std::endl;
+    core::RGB<double> rgb_from_optimized_albedox2 = rgb_from_optimized_albedo * 2.0;
+    std::cout << "sRGB from Optimized Albedo Spectrum x2: " << rgb_from_optimized_albedox2 << std::endl;
+    auto [scaled_rgb, scale] = core::scale_unbounded_rgb(rgb_from_optimized_albedox2);
+    std::cout << "Scaled RGB: " << scaled_rgb << ", Scale: " << scale << std::endl;
+    auto opti = core::optimize_albedo_rgb_sigmoid_polynomial(scaled_rgb, core::sRGB<double>, D65);
+    auto rspn = core::RGBSigmoidPolynomialNormalized<double>{opti.coeffs[0], opti.coeffs[1], opti.coeffs[2]};
+    core::RGBUnboundedSpectrumDistribution<double, core::RGBSigmoidPolynomialNormalized> unbounded_rgb_spectrum(rspn, scale);
+    auto xyz_from_unbounded_rgb = core::XYZ<double>::from_reflectance_under_illuminant(unbounded_rgb_spectrum, D65);
+    std::cout << "XYZ from Unbounded RGB Spectrum: " << xyz_from_unbounded_rgb << std::endl;
+    auto rgb_from_unbounded_rgb = core::sRGB<double>.to_rgb(xyz_from_unbounded_rgb);
+    std::cout << "sRGB from Unbounded RGB Spectrum: " << rgb_from_unbounded_rgb << std::endl;
+    std::cout << "Target RGB: " << rgb_from_optimized_albedox2 << std::endl;
+
+    core::RGBIlluminantSpectrumDistribution<
+        double, 
+        core::RGBSigmoidPolynomialNormalized, 
+        core::TabularSpectrumDistribution<
+            double, 
+            core::luminantD65Range::LMinValue, core::luminantD65Range::LMaxValue
+        >
+    > illuminant_spectrum(rspn, D65, scale);
+    auto xyz_from_illuminant = core::XYZ<double>::from_emission_under_illuminant(illuminant_spectrum, D65);
+    std::cout << "XYZ from Illuminant Spectrum: " << xyz_from_illuminant << std::endl;
+    auto rgb_from_illuminant = core::sRGB<double>.to_rgb(xyz_from_illuminant);
+    std::cout << "sRGB from Illuminant Spectrum: " << rgb_from_illuminant << std::endl;
+    std::cout << "Target RGB: " << rgb_from_optimized_albedox2 << std::endl;
     return 0;
 }
