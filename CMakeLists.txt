@@ -44,7 +44,14 @@ include(utils)
 
 # 添加项目源代码
 add_subdirectory(src)
-add_subdirectory(examples)
+
+# 示例构建选项
+if(PBPT_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+  message(STATUS "Examples are enabled.")
+else()
+  message(STATUS "Examples are disabled. To enable them, set PBPT_BUILD_EXAMPLES to ON.")
+endif()
 
 # 测试构建选项
 if(PBPT_BUILD_TESTS)

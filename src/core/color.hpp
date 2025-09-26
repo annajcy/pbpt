@@ -7,6 +7,7 @@
 #include "math/operator.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
+#include "math/format.hpp"
 
 namespace pbpt::core {
 
