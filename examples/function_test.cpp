@@ -30,8 +30,6 @@
 #include "math/function.hpp"
 #include "geometry/directional_cone.hpp"
 #include "math/type_alias.hpp"
-#include "ml/activation.hpp"
-#include "ml/network.hpp"
 #include "utils/spectrum_loader.hpp"
 
 using namespace pbpt;
