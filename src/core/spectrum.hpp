@@ -136,7 +136,7 @@ public:
     MultipliedSpectrumDistribution(const D1& a, D2&& b): s1(a), s2(std::move(b)) {}
     MultipliedSpectrumDistribution(D1&& a, D2&& b): s1(std::move(a)), s2(std::move(b)) {}
     
-    constexpr T at_impl(T λ) const { return s1.get().at(λ) * s2.get().at(λ); }
+    constexpr T at_impl(T lambda) const { return s1.get().at(lambda) * s2.get().at(lambda); }
 };
 
 template<class D1, class T1, class D2, class T2>
