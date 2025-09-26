@@ -43,8 +43,8 @@ include(3rd_party)
 include(utils)
 
 # 添加项目源代码
-add_subdirectory(engine)
-add_subdirectory(main)
+add_subdirectory(src)
+add_subdirectory(examples)
 
 # 测试构建选项
 if(PBPT_BUILD_TESTS)
