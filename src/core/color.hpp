@@ -1,13 +1,12 @@
 #pragma once
 
 #include <array>
-#include "core/spectrum.hpp"
 
+#include "core/spectrum.hpp"
 #include "math/matrix.hpp"
 #include "math/operator.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
-#include "math/format.hpp"
 
 namespace pbpt::core {
 

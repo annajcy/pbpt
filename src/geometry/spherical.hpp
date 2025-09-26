@@ -238,11 +238,6 @@ inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p)
 }
 
 template<std::floating_point T>
-inline constexpr Vector<T, 2> equal_area_sphere_to_square(const Vector<T, 3>& w) {
-// TODO
-}
-
-template<std::floating_point T>
 inline constexpr T spherical_triangle_area(
     const Vector<T, 3>& a,
     const Vector<T, 3>& b,

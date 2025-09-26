@@ -3,8 +3,6 @@
 #include "math/point.hpp"
 #include "math/vector.hpp"
 #include "math/normal.hpp"
-#include "math/interval.hpp"
-
 #include "geometry/ray.hpp"
 
 using namespace pbpt::math;
@@ -12,10 +10,11 @@ using namespace pbpt::geometry;
 
 namespace pbpt::core {
 
-inline Pt3 offset_ray_origin(
-    const Pt3Interv& pi, 
-    const Vec3& wi, 
-    const Normal3& n
+template<typename T>
+inline Point<T, 3> offset_ray_origin(
+    const PointInterval<T, 3>& pi, 
+    const Vector<T, 3>& wi, 
+    const Normal<T, 3>& n
 ) {
     const auto p = to_point(pi);
 
@@ -23,7 +22,7 @@ inline Pt3 offset_ray_origin(
             abs(n.y()) * pi.y().width() + 
             abs(n.z()) * pi.z().width();
 
-    constexpr auto gamma7 = gamma<Float>(7);
+    constexpr auto gamma7 = gamma<T>(7);
 
     d += 2 * gamma7 * (
             abs(p.x() * abs(n.x())) + 
@@ -32,7 +31,7 @@ inline Pt3 offset_ray_origin(
         );
 
     auto nv = n.to_vector();
-    Vec3 offset = d * nv;
+    Vector<T, 3> offset = d * nv;
     if (is_less(nv.dot(wi), 0)) {
         offset = -offset;
     }
@@ -40,30 +39,30 @@ inline Pt3 offset_ray_origin(
     return p + offset;
 }
 
-template<typename Derived>
+template<typename T, typename Derived>
 class Interaction {
 private:
-    Pt3Interv m_pi; // Interaction point with intervals
-    Vec3 m_wo;
+    PointInterval<T, 3> m_pi; // Interaction point with intervals
+    Vector<T, 3> m_wo;
 
 public:
-    Interaction(const Pt3Interv& pi, const Vec3& wo)
+    Interaction(const PointInterval<T, 3>& pi, const Vector<T, 3>& wo)
         : m_pi(pi), m_wo(wo) {}
 
-    const Pt3Interv& pi() const { return m_pi; }
-    const Pt3 p() const { return to_point(m_pi); }
-    const Vec3& wo() const { return m_wo; }
+    const PointInterval<T, 3>& pi() const { return m_pi; }
+    const Point<T, 3> p() const { return to_point(m_pi); }
+    const Vector<T, 3>& wo() const { return m_wo; }
 
-    Ray3 spawn_ray(const Vec3& wi) const {
+    Ray<T, 3> spawn_ray(const Vector<T, 3>& wi) const {
         return as_derived().spawn_ray_impl(wi);
     }
 
-    Ray3 spawn_ray_to(const Pt3& p) const {
+    Ray<T, 3> spawn_ray_to(const Point<T, 3>& p) const {
         return as_derived().spawn_ray_to_impl(p);
     }
 
     template<typename OtherDerived>
-    Ray3 spawn_ray_to(const Interaction<OtherDerived>& target) const {
+    Ray<T, 3> spawn_ray_to(const Interaction<T, OtherDerived>& target) const {
         return as_derived().spawn_ray_to_impl(static_cast<const OtherDerived&>(target));
     }
 
@@ -74,62 +73,62 @@ public:
     Derived& as_derived() {
         return static_cast<Derived&>(*this);
     }
-
-
 };
 
-class SurfaceInteraction : public Interaction<SurfaceInteraction> {
+template<typename T>
+class SurfaceInteraction : public Interaction<T, SurfaceInteraction<T>> {
 private:
-    Normal3 m_n;
-    Pt2 m_uv;
-    Vec3 m_dpdu, m_dpdv;
-    Normal3 m_dndu, m_dndv;
+    Normal<T, 3> m_n;
+    Point<T, 2> m_uv;
+    Vector<T, 3> m_dpdu, m_dpdv;
+    Normal<T, 3> m_dndu, m_dndv;
 
 public:
+    using base = Interaction<T, SurfaceInteraction<T>>;
+    using base::pi;
+    using base::wo;
 
-    SurfaceInteraction(const Pt3Interv& pi, const Vec3& wo, const Normal3& n, const Pt2& uv,
-                      const Vec3& dpdu, const Vec3& dpdv, const Normal3& dndu, const Normal3& dndv)
-        : Interaction(pi, wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
+    SurfaceInteraction(const PointInterval<T, 3>& pi, const Vector<T, 3>& wo, const Normal<T, 3>& n, const Point<T, 2>& uv,
+                      const Vector<T, 3>& dpdu, const Vector<T, 3>& dpdv, const Normal<T, 3>& dndu, const Normal<T, 3>& dndv)
+        : Interaction<T, SurfaceInteraction<T>>(pi, wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
 
-    const Normal3& n() const { return m_n; }
-    const Pt2& uv() const { return m_uv; }
-    const Vec3& dpdu() const { return m_dpdu; }
-    const Vec3& dpdv() const { return m_dpdv; }
-    const Normal3& dndu() const { return m_dndu; }
-    const Normal3& dndv() const { return m_dndv; }
+    const Normal<T, 3>& n() const { return m_n; }
+    const Point<T, 2>& uv() const { return m_uv; }
+    const Vector<T, 3>& dpdu() const { return m_dpdu; }
+    const Vector<T, 3>& dpdv() const { return m_dpdv; }
+    const Normal<T, 3>& dndu() const { return m_dndu; }
+    const Normal<T, 3>& dndv() const { return m_dndv; }
 
-    Ray3 spawn_ray_impl(const Vec3& wi) const {
+    Ray<T, 3> spawn_ray_impl(const Vector<T, 3>& wi) const {
         auto o = offset_ray_origin(pi(), wi, m_n);
-        return Ray3(o, wi);
+        return Ray<T, 3>(o, wi);
     }
 
-    Ray3 spawn_ray_to_impl(const Pt3& p) const {
+    Ray<T, 3> spawn_ray_to_impl(const Point<T, 3>& p) const {
         auto p_from = to_point(pi());
         auto dir = p - p_from;
         auto o = offset_ray_origin(pi(), dir, m_n);
         auto dist = dir.length();
         dir = dir / dist;
-        return Ray3(o, dir, safe_ray_tmax(dist));
+        return Ray<T, 3>(o, dir, safe_ray_tmax(dist));
     }
 
-    Ray3 spawn_ray_to_impl(const SurfaceInteraction& target) const {
-        const Pt3 p_from = to_point(this->pi());
-        const Pt3 p_to   = to_point(target.pi());
+    Ray<T, 3> spawn_ray_to_impl(const SurfaceInteraction& target) const {
+        const Point<T, 3> p_from = to_point(this->pi());
+        const Point<T, 3> p_to   = to_point(target.pi());
 
-        const Vec3 dir = p_to - p_from;
-        const Float dist = dir.length();
-        const Vec3 dir_norm = dir / dist;
+        const Vector<T, 3> dir = p_to - p_from;
+        const T dist = dir.length();
+        const Vector<T, 3> dir_norm = dir / dist;
 
-        const Pt3 o1 = offset_ray_origin(this->pi(), dir_norm, this->n());
-        const Pt3 o2 = offset_ray_origin(target.pi(), -dir_norm, target.n());
+        const Point<T, 3> o1 = offset_ray_origin(this->pi(), dir_norm, this->n());
+        const Point<T, 3> o2 = offset_ray_origin(target.pi(), -dir_norm, target.n());
 
-        const Vec3 final_dir = o2 - o1;
-        const Float final_dist = final_dir.length();
+        const Vector<T, 3> final_dir = o2 - o1;
+        const T final_dist = final_dir.length();
 
-        return Ray3(o1, final_dir, safe_ray_tmax(final_dist));
+        return Ray<T, 3>(o1, final_dir / final_dist, safe_ray_tmax(final_dist));
     }
-
-
 };
 
 }

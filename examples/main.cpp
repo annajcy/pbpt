@@ -21,7 +21,6 @@
 #include "math/normal.hpp"
 #include "math/octahedral.hpp"
 #include "math/point.hpp"
-#include "math/quaternion.hpp"
 #include "geometry/ray.hpp"
 #include "geometry/spherical.hpp"
 #include "geometry/transform.hpp"
@@ -31,6 +30,8 @@
 #include "geometry/directional_cone.hpp"
 #include "math/type_alias.hpp"
 #include "utils/spectrum_loader.hpp"
+
+#include "core/camera.hpp"
 
 using namespace pbpt;
 
@@ -58,11 +59,6 @@ int main() {
               << std::endl;
 
     geometry::Bounds3 box(math::Pt3{0.0, 0.0, 0.0}, math::Pt3{1.0, 1.0, 1.0});
-
-    math::Quat quaternion(1.0, math::Vec3{0.0, 1.0, 0.0});
-    std::cout << "Quaternion: " << quaternion << std::endl;
-    std::cout << "Quaternion Axis: " << quaternion.to_axis_angle().second << std::endl;
-    std::cout << "Quaternion Angle: " << quaternion.to_axis_angle().first << std::endl;
 
     auto transform = geometry::Transform<float>::translate(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Transform Matrix: " << transform.matrix() << std::endl;

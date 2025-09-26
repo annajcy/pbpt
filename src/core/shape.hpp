@@ -2,7 +2,7 @@
 
 namespace pbpt::core {
 
-// TODO
+// TODO: shape
 template<typename Derived>
 class Shape {
 public:

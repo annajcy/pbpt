@@ -8,7 +8,6 @@
 #include "math/matrix.hpp"
 #include "math/normal.hpp"
 #include "math/octahedral.hpp"
-#include "math/quaternion.hpp"
 #include "math/tuple.hpp"
 
 namespace pbpt::math {
@@ -62,20 +61,6 @@ std::string to_string(const Matrix<T, R, C>& m) {
         }
         oss << "]\n";
     }
-    oss << ")";
-    return oss.str();
-}
-
-// =============================================================================
-// Quaternion type
-// =============================================================================
-
-template <typename T>
-std::string to_string(const Quaternion<T>& q) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(6);
-    oss << std::format("Quaternion<{}>(", typeid(T).name());
-    oss << "w=" << q.w() << ", x=" << q.x() << ", y=" << q.y() << ", z=" << q.z();
     oss << ")";
     return oss.str();
 }
@@ -152,16 +137,6 @@ std::string to_string_precision(const Matrix<T, R, C>& m, int precision) {
 }
 
 template <typename T>
-std::string to_string_precision(const Quaternion<T>& q, int precision) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(precision);
-    oss << std::format("Quaternion<{}>(", typeid(T).name());
-    oss << "w=" << q.w() << ", x=" << q.x() << ", y=" << q.y() << ", z=" << q.z();
-    oss << ")";
-    return oss.str();
-}
-
-template <typename T>
 std::string to_string_precision(const Interval<T>& interval, int precision) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(precision);
@@ -212,14 +187,6 @@ std::string to_string_compact(const Matrix<T, R, C>& m) {
 }
 
 template <typename T>
-std::string to_string_compact(const Quaternion<T>& q) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(3);
-    oss << "(" << q.w() << ", " << q.x() << ", " << q.y() << ", " << q.z() << ")";
-    return oss.str();
-}
-
-template <typename T>
 std::string to_string_compact(const Interval<T>& interval) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(3);
@@ -242,11 +209,6 @@ std::ostream& operator<<(std::ostream& os, const Tuple<Derived, T, N>& t) {
 template <typename T, int R, int C>
 std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& m) {
     return os << to_string(m);
-}
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const Quaternion<T>& q) {
-    return os << to_string(q);
 }
 
 template <typename T>

@@ -3,7 +3,6 @@
 #include <utility>
 #include <concepts>
 
-
 #include "math/homogeneous.hpp"
 #include "math/type_alias.hpp"
 #include "math/matrix.hpp"
@@ -263,6 +262,86 @@ public:
 };
 
 using Trans = Transform<Float>;
+
+template<typename T>
+struct TransformDecompositionResult {
+    Transform<T> translation{};
+    Transform<T> rotation{};
+    Transform<T> scale{};
+};
+
+//decompose a transform matrix to translation, rotation and scale
+// assume the matrix is composed by T * R * S
+
+// fast decomposition without shear (column-vector convention): M = T * R * S
+template<typename T>
+TransformDecompositionResult<T> fast_decompose_transform(const Transform<T>& transform) {
+    const auto& M4 = transform.matrix();            // 4x4
+    using Mat3 = Matrix<T,3,3>;
+    using Vec3 = Vector<T,3>;
+
+    // --- 1) Translation ---
+    const Vec3 t = { M4.at(0,3), M4.at(1,3), M4.at(2,3) };
+    Transform<T> Txf = Transform<T>::translate(t);
+
+    // --- 2) A = upper-left 3x3 ---
+    MatrixView<T, 4, 4, 3, 3> Aview{ M4, 0, 0 };
+    Matrix<T, 3, 3> A = Aview.to_matrix();                     // A = R * S  (no shear assumed)
+
+    // --- 3) scales = column norms ---
+    Vector<T, 3> s{};
+    const T eps = T(1e-12);
+    for (int c = 0; c < 3; ++c) {
+        // 手动求列范数（VectorView 无 /=）
+        T n2 = T(0);
+        for (int r = 0; r < 3; ++r) n2 += A.at(r,c) * A.at(r,c);
+        T n = std::sqrt(n2);
+        s[c] = (n > eps) ? n : T(1);    // 退化保护
+    }
+
+    // --- 4) R = A * S^{-1}：逐列除尺度 ---
+    Matrix<T, 3, 3> R = A;
+    for (int c = 0; c < 3; ++c) {
+        T invs = T(1) / s[c];
+        for (int r = 0; r < 3; ++r) R.at(r,c) *= invs;
+    }
+
+    // --- 5) 可选：简单正交化（Gram–Schmidt），提升稳健性 ---
+    auto normalize_col = [&](int c){
+        T n2 = T(0); for (int r=0;r<3;++r) n2 += R.at(r,c)*R.at(r,c);
+        T n = std::sqrt(n2); if (n > eps) for (int r=0;r<3;++r) R.at(r,c) /= n;
+    };
+    // Gram–Schmidt: c0, c1, c2
+    // c1 := c1 - proj_{c0}(c1)
+    auto dot_col = [&](int i, int j){
+        T s = T(0); for (int r=0;r<3;++r) s += R.at(r,i)*R.at(r,j); return s;
+    };
+    auto axpy_col = [&](int dst, int src, T alpha){
+        for (int r=0;r<3;++r) R.at(r,dst) -= alpha * R.at(r,src);
+    };
+    normalize_col(0);
+    T a10 = dot_col(1,0); axpy_col(1,0,a10); normalize_col(1);
+    // c2 := c2 - proj_{c0}(c2) - proj_{c1}(c2)
+    T a20 = dot_col(2,0); axpy_col(2,0,a20);
+    T a21 = dot_col(2,1); axpy_col(2,1,a21);
+    normalize_col(2);
+
+    // --- 6) 右手系修正（det(R) < 0） ---
+    T detR = R.determinant();
+    if (detR < T(0)) {
+        // 翻转最大尺度的那一列，使 det(R) -> +1，同时尺度取负
+        int k = 0;
+        if (std::abs(s[1]) > std::abs(s[k])) k = 1;
+        if (std::abs(s[2]) > std::abs(s[k])) k = 2;
+        s[k] = -s[k];
+        for (int r = 0; r < 3; ++r) R.at(r,k) = -R.at(r,k);
+    }
+
+    // --- 7) 输出 ---
+    Transform<T> Rxf = Transform<T>::from_mat3x3(R);
+    Transform<T> Sxf = Transform<T>::scale(s);
+    return { Txf, Rxf, Sxf };
+}
 
 } // namespace pbpt::geometry
 
