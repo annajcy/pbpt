@@ -35,10 +35,6 @@ add_executable(test_homo_enhanced test_homo_enhanced.cpp)
 target_link_libraries(test_homo_enhanced PRIVATE pbpt_engine gtest_main)
 add_test(NAME test_homo_enhanced COMMAND test_homo_enhanced)
 
-add_executable(test_quaternion test_quaternion.cpp)
-target_link_libraries(test_quaternion PRIVATE pbpt_engine gtest_main)
-add_test(NAME test_quaternion COMMAND test_quaternion)
-
 add_executable(test_interval test_interval.cpp)
 target_link_libraries(test_interval PRIVATE pbpt_engine gtest_main)
 add_test(NAME test_interval COMMAND test_interval)

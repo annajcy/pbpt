@@ -8,6 +8,8 @@
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
+#include <format>
+
 namespace pbpt::core {
 
 template<typename T>

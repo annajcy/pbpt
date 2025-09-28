@@ -5,6 +5,7 @@
 #include <functional>
 #include <iostream>
 #include <type_traits>
+#include <memory>
 
 #include "math/function.hpp"
 #include "math/polynomial.hpp"
