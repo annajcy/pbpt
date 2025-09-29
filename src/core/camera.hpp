@@ -99,7 +99,7 @@ private:
     RenderTransform<T> m_render_transform{};
 
 public:
-    Camera<T, Derived>(const RenderTransform<T>& render_transform) : 
+    Camera(const RenderTransform<T>& render_transform) : 
     m_render_transform(render_transform) {}
 
     RenderTransform<T> render_transform() const {
