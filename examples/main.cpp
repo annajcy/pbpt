@@ -467,5 +467,9 @@ int main() {
     auto rgb_from_illuminant = core::sRGB<double>.to_rgb(xyz_from_illuminant);
     std::cout << "sRGB from Illuminant Spectrum: " << rgb_from_illuminant << std::endl;
     std::cout << "Target RGB: " << rgb_from_optimized_albedox2 << std::endl;
+
+
+    
+
     return 0;
 }
