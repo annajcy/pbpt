@@ -124,8 +124,6 @@ jobs:
             -s build_type=${{ matrix.build_type }} \
             --build=missing \
             -s compiler.cppstd=17
-          echo "==== Conan output tree ===="
-          find build/${{ matrix.build_type }} -maxdepth 2 -type f \( -name 'conan_toolchain.cmake' -o -name 'conanbuild.sh' -o -name 'conanrun.sh' \) -print
 
       # 构建
       - name: Conan Build (${{ matrix.build_type }})
