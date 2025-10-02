@@ -109,21 +109,23 @@ jobs:
               [[ -d "$d" ]] || continue
               [[ -f "${d}/conanfile.py" ]] || continue
               echo "::group::Conan create ${d} (${{ matrix.build_type }})"
-              conan create "${d}" -s build_type=${{ matrix.build_type }} --build=missing -s compiler.cppstd=17
+              conan create "${d}" -s build_type=${{ matrix.build_type }} --build=missing
               echo "::endgroup::"
             done
           else
             echo "No conan_recipe directory; skipping custom recipes."
           fi
 
-      # Conan 安装依赖（指定 bash，避免 Windows 下续行问题）
+      # Conan 安装依赖
       - name: Conan install (${{ matrix.build_type }})
         shell: bash
         run: |
           conan install . \
             -s build_type=${{ matrix.build_type }} \
-            --build=missing \
-            -s compiler.cppstd=17
+            -s compiler.cppstd=17 \
+            -c tools.system.package_manager:mode=install \
+            -c tools.system.package_manager:sudo=True \
+            --build=missing
 
       # 构建
       - name: Conan Build (${{ matrix.build_type }})
@@ -136,12 +138,12 @@ jobs:
         shell: bash
         run: |
           set -e
-          source build/${{ matrix.build_type }}/conanrun.sh
+          source build/${{ matrix.build_type }}/generators/conanrun.sh
           ctest --test-dir build/${{ matrix.build_type }} -C ${{ matrix.build_type }} --output-on-failure
 
       - name: Test (${{ matrix.build_type }}) on Windows
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          call build\${{ matrix.build_type }}\conanrun.bat
+          call build\${{ matrix.build_type }}\generators\conanrun.bat
           ctest --test-dir build\${{ matrix.build_type }} -C ${{ matrix.build_type }} --output-on-failure
