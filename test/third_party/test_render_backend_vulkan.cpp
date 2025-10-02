@@ -1,6 +1,24 @@
 // vulkan_backend_test.cpp
+#pragma once
+#include <iostream>
 
-#define RENDER_BACKEND_VULKAN 1
+// Forward declare to avoid including heavy headers here
+struct GLFWwindow;
+
+// Define RENDER_BACKEND_VULKAN or RENDER_BACKEND_OPENGL before including this
+// file.
+
+#include "imgui_impl_vulkan.h"
+
+// The functions to be tested
+inline void init_render_backend(GLFWwindow* window, void* vulkan_init_info = nullptr) {
+    ImGui_ImplVulkan_Init(static_cast<ImGui_ImplVulkan_InitInfo*>(vulkan_init_info));
+    std::cout << "Runtime: Initialized Vulkan Backend" << std::endl;
+}
+
+inline void shutdown_render_backend() {
+    ImGui_ImplVulkan_Shutdown();
+}
 
 #include <GLFW/glfw3.h>
 #include <gtest/gtest.h>
@@ -12,7 +30,6 @@
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
-#include "test_render_backend.hpp"
 
 // ... (Manual macro definitions for old SDKs remain here if needed) ...
 #ifndef VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME

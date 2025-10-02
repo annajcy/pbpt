@@ -41,7 +41,7 @@ class TupleTest : public ::testing::Test {
 protected:
     TestTuple<Float, 3> t1{1.0, 2.0, 3.0};
     TestTuple<Float, 3> t2{4.0, 5.0, 6.0};
-    TestTuple<Int, 3>   ti1{1, 2, 3};
+    TestTuple<int, 3>   ti1{1, 2, 3};
     TestTuple<Float, 4> t4{1.0, 2.0, 3.0, 4.0};
 };
 

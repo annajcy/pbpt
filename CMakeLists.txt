@@ -1,51 +1,47 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.27)
 project(pbpt LANGUAGES CXX)
+
+message(STATUS "CMake version: ${CMAKE_VERSION}")
+
+option(ENABLE_COMPILE_COMMANDS "Symlink compile_commands.json to build root" ON)
+if (ENABLE_COMPILE_COMMANDS)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
+    file(CREATE_LINK
+      "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json"
+      "${CMAKE_SOURCE_DIR}/build/compile_commands.json"
+      SYMBOLIC)
+  endif()
+endif()
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-
-set(BUILD_SHARED_LIBS OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-include(FetchContent)
-
 option(PBPT_BUILD_TESTS "Build the project's tests" ON)
-option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" ON)
 option(PBPT_BUILD_EXAMPLES "Build the project's examples" ON)
-option(FLOAT_64BIT "Use double precision floating point" OFF)
-set(RENDER_BACKEND "Vulkan" CACHE STRING "Select the rendering backend (Vulkan or OpenGL)")
-set_property(CACHE RENDER_BACKEND PROPERTY STRINGS "Vulkan" "OpenGL")
-message(STATUS "Selected rendering backend: ${RENDER_BACKEND}")
+option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" OFF)
+option(PBPT_FLOAT_64BIT "Use double precision floating point" OFF)
+option(PBPT_INT_64BIT "Use 64-bit integer type" OFF)
 
-if (RENDER_BACKEND STREQUAL "Vulkan")
-  add_definitions("-DRENDER_BACKEND_VULKAN")
+if(PBPT_FLOAT_64BIT)
+  add_definitions("-DPBPT_FLOAT_64BIT")
+  message(STATUS "Using double precision floating point.")
+else()
+  message(STATUS "Using single precision floating point. To enable double precision, set PBPT_FLOAT_64BIT to ON.")
 endif()
 
-if (RENDER_BACKEND STREQUAL "OpenGL")
-  add_definitions("-DRENDER_BACKEND_OPENGL")
+if(PBPT_INT_64BIT)
+  add_definitions("-DPBPT_INT_64BIT")
+  message(STATUS "Using 64-bit integer type.")
+else()
+  message(STATUS "Using 32-bit integer type. To enable 64-bit integer type, set PBPT_INT_64BIT to ON.")
 endif()
 
-if(FLOAT_64BIT)
-  add_definitions("-DFLOAT_64BIT")
-endif()
-
-find_package(Vulkan REQUIRED)
-message(STATUS "Vulkan_VERSION: ${Vulkan_VERSION}")
-message(STATUS "Vulkan include dir: ${Vulkan_INCLUDE_DIRS}")
-message(STATUS "Vulkan library: ${Vulkan_LIBRARY}")
-
-find_package(OpenGL REQUIRED)
-message(STATUS "OpenGL include dir: ${OPENGL_INCLUDE_DIR}")
-message(STATUS "OpenGL library: ${OPENGL_LIBRARY}")
-
-include(3rd_party) 
-include(utils)
-
-# 添加项目源代码
+include(third_party) 
 add_subdirectory(src)
 
-# 示例构建选项
 if(PBPT_BUILD_EXAMPLES)
   add_subdirectory(examples)
   message(STATUS "Examples are enabled.")
@@ -53,7 +49,6 @@ else()
   message(STATUS "Examples are disabled. To enable them, set PBPT_BUILD_EXAMPLES to ON.")
 endif()
 
-# 测试构建选项
 if(PBPT_BUILD_TESTS)
   enable_testing()
   add_subdirectory(test)
@@ -62,7 +57,6 @@ else()
   message(STATUS "Tests are disabled. To enable them, set PBPT_BUILD_TESTS to ON.")
 endif()
 
-# 文档生成
 if(PBPT_BUILD_DOCUMENTATION)
   include(document)
   message(STATUS "Documentation is enabled.")

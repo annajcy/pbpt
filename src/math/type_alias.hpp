@@ -2,13 +2,13 @@
 
 namespace pbpt::math {
 
-#ifdef FLOAT_64BIT
+#ifdef PBPT_FLOAT_64BIT
 using Float = double;
 #else
 using Float = float;
 #endif
 
-#ifdef INT_64BIT
+#ifdef PBPT_INT_64BIT
 using Int  = long long;
 using UInt = unsigned long long;
 #else

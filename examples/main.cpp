@@ -259,7 +259,7 @@ int main() {
     std::cout << "Max Value Wavelength: " << black_body_spectrum.max_wavelength() << "\n";
 
 
-    auto cur_path = std::filesystem::current_path().parent_path().parent_path() / "asset" / "spectrum";
+    auto cur_path = std::filesystem::current_path() / "asset" / "spectrum";
 
     std::cout << "Current Path: " << cur_path << std::endl;
 
