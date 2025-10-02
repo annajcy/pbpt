@@ -97,7 +97,6 @@ jobs:
       - name: Conan profile detect
         run: |
           conan profile detect --force
-          conan profile update settings.compiler.cppstd=17 default
 
       # === 统一的自定义 recipes 构建（bash，三平台共用，只按 matrix.build_type）===
       - name: Conan build custom recipes (${{ matrix.build_type }})
@@ -110,7 +109,7 @@ jobs:
               [[ -d "$d" ]] || continue
               [[ -f "${d}/conanfile.py" ]] || continue
               echo "::group::Conan create ${d} (${{ matrix.build_type }})"
-              conan create "${d}" -s build_type=${{ matrix.build_type }} --build=missing
+              conan create "${d}" -s build_type=${{ matrix.build_type }} --build=missing -s compiler.cppstd=17
               echo "::endgroup::"
             done
           else
@@ -123,7 +122,8 @@ jobs:
         run: |
           conan install . \
             -s build_type=${{ matrix.build_type }} \
-            --build=missing
+            --build=missing \
+            -s compiler.cppstd=17
           echo "==== Conan output tree ===="
           find build/${{ matrix.build_type }} -maxdepth 2 -type f \( -name 'conan_toolchain.cmake' -o -name 'conanbuild.sh' -o -name 'conanrun.sh' \) -print
 
