@@ -41,7 +41,6 @@ ipch/
 *.iws
 
 # Visual Studio Code
-.vscode/
 *.code-workspace
 
 # 忽略系统生成的文件
