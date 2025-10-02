@@ -50,7 +50,7 @@ jobs:
           vulkan-components: Vulkan-Headers, Vulkan-Loader
           vulkan-use-cache: true
 
-      # 系统依赖（主要给 Linux 的 GLFW/X11/Wayland；命中二进制包也更稳）
+      # 系统依赖（主要给 Linux 的 GLFW/X11/Wayland）
       - name: Install system deps (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -75,11 +75,55 @@ jobs:
       - name: Conan profile detect
         run: conan profile detect --force
 
+      # 构建自定义 recipe 
+      - name: Conan build custom recipes (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d "conan_recipe" ]; then
+            cd conan_recipe
+            for d in */ ; do
+              [ -d "$d" ] || continue
+              [ -f "${d}/conanfile.py" ] || continue
+              echo "::group::Conan create ${d} (Release)"
+              conan create "${d}" -s build_type=Release --build=missing
+              echo "::endgroup::"
+              echo "::group::Conan create ${d} (Debug)"
+              conan create "${d}" -s build_type=Debug --build=missing
+              echo "::endgroup::"
+            done
+          else
+            echo "No conan_recipe directory; skipping custom recipes."
+          fi
+
+      - name: Conan build custom recipes (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          if (Test-Path "conan_recipe") {
+            Push-Location conan_recipe
+            Get-ChildItem -Directory | ForEach-Object {
+              $dir = $_.FullName
+              if (Test-Path (Join-Path $dir "conanfile.py")) {
+                Write-Host "Conan create $($_.Name) (Release)"
+                conan create "$dir" -s build_type=Release --build=missing
+                Write-Host "Conan create $($_.Name) (Debug)"
+                conan create "$dir" -s build_type=Debug --build=missing
+              }
+            }
+            Pop-Location
+          } else {
+            Write-Host "No conan_recipe directory; skipping custom recipes."
+          }
+
       - name: Conan install (${{ matrix.build_type }})
         run: |
           conan install . \
             -s build_type=${{ matrix.build_type }} \
             --build=missing \
+            --output-folder=build/${{ matrix.build_type }}
 
       # CMake 配置：使用 Conan 生成的 toolchain
       - name: Configure CMake (${{ matrix.build_type }})
@@ -95,18 +139,18 @@ jobs:
         run: |
           cmake --build build/${{ matrix.build_type }} --config ${{ matrix.build_type }} -- -v
 
-      # 运行测试：先激活 Conan 运行环境（确保找到 Vulkan/Assimp 等共享库）
+      # 运行测试：先激活 Conan 运行环境
       - name: Test (${{ matrix.build_type }}) on Linux/macOS
         if: runner.os != 'Windows'
+        shell: bash
         run: |
           set -e
           source build/${{ matrix.build_type }}/conanrun.sh
-          ctest --test-dir build/${{ matrix.build_type }} ${{ matrix.build_type == 'Debug' && '' || '' }} --output-on-failure
-        shell: bash
+          ctest --test-dir build/${{ matrix.build_type }} -C ${{ matrix.build_type }} --output-on-failure
 
       - name: Test (${{ matrix.build_type }}) on Windows
         if: runner.os == 'Windows'
-        run: |
-          call build\\${{ matrix.build_type }}\\conanrun.bat
-          ctest --test-dir build\\${{ matrix.build_type }} -C ${{ matrix.build_type }} --output-on-failure
         shell: cmd
+        run: |
+          call build\${{ matrix.build_type }}\conanrun.bat
+          ctest --test-dir build\${{ matrix.build_type }} -C ${{ matrix.build_type }} --output-on-failure
