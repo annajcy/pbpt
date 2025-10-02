@@ -116,32 +116,15 @@ jobs:
             echo "No conan_recipe directory; skipping custom recipes."
           fi
 
-      # Conan 安装依赖
-      - name: Conan install (${{ matrix.build_type }})
+      - name: Conan Build (${{ matrix.build_type }})
         shell: bash
         run: |
-          conan install . \
+          conan build . \
             -s build_type=${{ matrix.build_type }} \
             -s compiler.cppstd=17 \
             -c tools.system.package_manager:mode=install \
             -c tools.system.package_manager:sudo=True \
             --build=missing
-
-      - name: CMake Configure (${{ matrix.build_type }})
-        shell: bash
-        run: |
-          set -euo pipefail
-          build_dir="build/${{ matrix.build_type }}"
-          cmake -S . -B "${build_dir}" \
-            -DCMAKE_TOOLCHAIN_FILE="${build_dir}/generators/conan_toolchain.cmake" \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-
-      - name: CMake Build (${{ matrix.build_type }})
-        shell: bash
-        run: |
-          set -euo pipefail
-          build_dir="build/${{ matrix.build_type }}"
-          cmake --build "${build_dir}" --config ${{ matrix.build_type }} -- -v
 
       # 运行测试：Linux/macOS 用 .sh；Windows 仍需 .bat（这两步保留分开更稳）
       - name: Test (${{ matrix.build_type }}) on Linux/macOS
