@@ -65,38 +65,39 @@ jobs:
           vulkan-components: Vulkan-Headers, Vulkan-Loader
           vulkan-use-cache: true
 
-      # === 统一的系统依赖安装（bash，三平台共用） ===
       - name: Install system deps
         shell: bash
         run: |
           set -euo pipefail
           echo "Runner OS = $RUNNER_OS"
           if [[ "$RUNNER_OS" == "Linux" ]]; then
-            echo "Installing Linux deps..."
             sudo apt-get update
-            sudo apt-get install -y \
-              sudo apt-get install -y \
-                  build-essential pkg-config \
-                  libx11-dev libx11-xcb-dev libxau-dev libxdmcp-dev \
-                  libfontenc-dev libice-dev libsm-dev libxaw7-dev libxcomposite-dev \
-                  libxdamage-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev \
-                  libxres-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxxf86vm-dev \
-                  libxcb1-dev libxcb-glx0-dev libxcb-render0-dev libxcb-render-util0-dev \
-                  libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev \
-                  libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev \
-                  libxcb-xinerama0-dev libxcb-dri3-dev libxcb-dri2-0-dev libxcb-present-dev \
-                  libxcb-composite0-dev libxcb-ewmh-dev libxcb-res0-dev \
-                  uuid-dev libgl1-mesa-dev libglvnd-dev libwayland-dev libxkbcommon-dev \
-                  libxcursor-dev libxinerama-dev libxcb-cursor-dev
+            pkgs=(
+              build-essential pkg-config
+              libx11-dev libx11-xcb-dev libxau-dev libxdmcp-dev
+              libfontenc-dev libice-dev libsm-dev libxaw7-dev libxcomposite-dev
+              libxdamage-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev
+              libxres-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxxf86vm-dev
+              libxcb1-dev libxcb-glx0-dev libxcb-render0-dev libxcb-render-util0-dev
+              libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev
+              libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev
+              libxcb-xinerama0-dev libxcb-dri3-dev libxcb-dri2-0-dev libxcb-present-dev
+              libxcb-composite0-dev libxcb-ewmh-dev libxcb-res0-dev
+              uuid-dev libgl1-mesa-dev libglvnd-dev libwayland-dev libxkbcommon-dev
+              libxcursor-dev libxinerama-dev libxcb-cursor-dev
+            )
+            sudo apt-get install -y --no-install-recommends "${pkgs[@]}"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             echo "Using Xcode toolchain on macOS."
-          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+          else
             echo "Using MSVC toolchain on Windows."
           fi
 
       # 生成/刷新 Conan Profile
       - name: Conan profile detect
-        run: conan profile detect --force
+        run: |
+          conan profile detect --force
+          conan profile update settings.compiler.cppstd=17 default
 
       # === 统一的自定义 recipes 构建（bash，三平台共用，只按 matrix.build_type）===
       - name: Conan build custom recipes (${{ matrix.build_type }})
@@ -123,20 +124,13 @@ jobs:
           conan install . \
             -s build_type=${{ matrix.build_type }} \
             --build=missing
-
-      # CMake 配置：使用 Conan 生成的 toolchain
-      - name: Configure CMake (${{ matrix.build_type }})
-        run: |
-          cmake -S . \
-            -DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.build_type }}/conan_toolchain.cmake \
-            -DPBPT_BUILD_TESTS=ON \
-            -DPBPT_BUILD_EXAMPLES=OFF \
-            -DPBPT_BUILD_DOCUMENTATION=OFF
+          echo "==== Conan output tree ===="
+          find build/${{ matrix.build_type }} -maxdepth 2 -type f \( -name 'conan_toolchain.cmake' -o -name 'conanbuild.sh' -o -name 'conanrun.sh' \) -print
 
       # 构建
-      - name: Build (${{ matrix.build_type }})
+      - name: Conan Build (${{ matrix.build_type }})
         run: |
-          cmake --build build/${{ matrix.build_type }} --config ${{ matrix.build_type }} -- -v
+          conan build . -s build_type=${{ matrix.build_type }}
 
       # 运行测试：Linux/macOS 用 .sh；Windows 仍需 .bat（这两步保留分开更稳）
       - name: Test (${{ matrix.build_type }}) on Linux/macOS
