@@ -67,11 +67,8 @@ class PbptDeps(ConanFile):
             "PBPT_FLOAT_64BIT": "ON" if self.options.float_64bit else "OFF",
             "PBPT_INT_64BIT": "ON" if self.options.int_64bit else "OFF"
         }
-
-        # 单配置生成器在配置阶段写入 CMAKE_BUILD_TYPE
-        if not cmake.is_multi_configuration:
-            variables["CMAKE_BUILD_TYPE"] = str(self.settings.build_type)
-
+    
+        variables["CMAKE_BUILD_TYPE"] = str(self.settings.build_type)
         cmake.configure(variables=variables)
 
         # 多配置生成器在 build 阶段指定构建类型
