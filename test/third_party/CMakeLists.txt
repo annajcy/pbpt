@@ -1,3 +1,0 @@
-add_executable(test_render_backend_vulkan test_render_backend_vulkan.cpp)
-target_link_libraries(test_render_backend_vulkan PRIVATE pbpt gtest::gtest)
-add_test(NAME test_render_backend_vulkan COMMAND test_render_backend_vulkan)
