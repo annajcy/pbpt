@@ -2,22 +2,10 @@
 
 #include <optional>
 
-#include "geometry/ray.hpp"
-#include "math/point.hpp"
-
 #include "camera_transform.hpp"
+#include "film.hpp"
 
 namespace pbpt::camera {
-
-template<typename T>
-struct CameraSample {
-    math::Point<T, 2> p_film;
-};
-
-template<typename T>
-struct CameraRay {
-    geometry::Ray<T, 3> ray;   
-};
 
 template<typename T, typename Derived>
 class Camera {
@@ -31,9 +19,10 @@ public:
     RenderTransform<T> render_transform() const {
         return m_render_transform;
     }
-  
-    std::optional<CameraRay<T>> generate_ray(const CameraSample<T>& sample) const {
-        return as_derived().generate_ray_impl(sample);
+
+    template<template<typename> class CameraRayType, template <typename> class CameraSampleType>
+    std::optional<CameraRayType<T>> generate_ray(const CameraSampleType<T>& sample) const {
+        return as_derived().template generate_ray_impl<CameraRayType, CameraSampleType>(sample);
     }
 
     Derived& as_derived() {
