@@ -3,10 +3,7 @@
 #include <cmath>
 #include <type_traits>
 
-#include "math/point.hpp"
-#include "geometry/spherical.hpp"
-#include "math/vector.hpp"
-#include "math/function.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::geometry;
 

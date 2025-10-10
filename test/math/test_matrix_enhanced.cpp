@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
-#include "math/matrix.hpp"
-#include "math/vector.hpp"
+#include "pbpt.h"
 #include <limits>
 #include <type_traits>
 

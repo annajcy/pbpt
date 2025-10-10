@@ -4,13 +4,12 @@
 #include <cmath>
 #include <memory>
 
-#include "core/color.hpp"
-#include "core/spectrum.hpp"
-#include "math/vector.hpp"
-#include "math/point.hpp"
+#include "pbpt.h"
 
-using namespace pbpt::core;
+using namespace pbpt::radiometry;
 using namespace pbpt::math;
+
+namespace pbpt::radiometry::testing {
 
 class ColorTest : public ::testing::Test {
 protected:
@@ -771,4 +770,6 @@ TEST_F(ColorTest, ScaledRGBFunctionality) {
     
     // The scale should be 2 * original_max
     EXPECT_NEAR(scaled_result.scale, 2.0 * orig_max, 1e-10);
+}
+
 }

@@ -8,9 +8,6 @@
 
 namespace pbpt::math {
 
-/**
- * @brief 使用八面体映射压缩单位向量
- */
 template <std::floating_point T>
 class OctahedralVector {
 private:

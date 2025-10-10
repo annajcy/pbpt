@@ -11,9 +11,9 @@
 
 namespace pbpt::integrator {
 
-class UniformSampler {
+class MCUniformSampler {
 public:
-    UniformSampler(int dim, std::pair<double, double> range = {0.0, 1.0})
+    MCUniformSampler(int dim, std::pair<double, double> range = {0.0, 1.0})
         : m_dim(dim), m_range(range), m_dist(range.first, range.second) {}
 
     std::vector<double> operator()() {

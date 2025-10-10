@@ -3,15 +3,12 @@
 #include <array>
 #include <cmath>
 
-#include "core/spectrum.hpp"
-#include "core/color.hpp"
-#include "math/vector.hpp"
-#include "math/format.hpp"
-#include "integrator/random_generator.hpp"
-#include "utils/spectrum_loader.hpp"
+#include "pbpt.h"
+#include "math/random_generator.hpp"
 
-using namespace pbpt::core;
 using namespace pbpt::math;
+
+namespace pbpt::radiometry::testing {
 
 class SpectrumTest : public ::testing::Test {
 protected:
@@ -359,7 +356,7 @@ TEST_F(SpectrumTest, SpectrumIntegrationMonteCarloXYZ) {
     constexpr int round_N = 1000; 
     
         for (int i = 0; i < round_N; i++) {
-        RandomGenerator<double, sample_N> rng;
+        math::RandomGenerator<double, sample_N> rng;
         auto wl_r = rng.generate_uniform(lambda_min<double>, lambda_max<double>);
         auto wl = SampledWavelength<double, sample_N>(Vector<double, sample_N>::from_array(wl_r));
         
@@ -404,7 +401,7 @@ TEST_F(SpectrumTest, SpectrumLoadingFromCSVIfExists) {
     }
     
     try {
-        auto arr = pbpt::utils::make_spectra_from_csv<double, 3, XYZRange>(xyz_csv_path.string());
+        auto arr = pbpt::radiometry::make_spectra_from_csv<double, 3, XYZRange>(xyz_csv_path.string());
         auto [Xbar, Ybar, Zbar] = arr;
         
         // Test sampling loaded spectra
@@ -455,7 +452,7 @@ TEST_F(SpectrumTest, IlluminantLoadingFromCSVIfExists) {
     }
     
     try {
-        auto [D65_loaded] = pbpt::utils::make_spectra_from_csv<double, 1, luminantD65Range>(d65_csv_path.string());
+        auto [D65_loaded] = pbpt::radiometry::make_spectra_from_csv<double, 1, luminantD65Range>(d65_csv_path.string());
         
         // Test sampling
         Vector<double, 5> wavelengths_vec(400, 560, 600, 700, 800);
@@ -914,4 +911,6 @@ TEST_F(SpectrumTest, MultipleIlluminantSamplingAdvanced) {
         EXPECT_GT(bb_scaled[i], 0.0);
         EXPECT_LT(bb_scaled[i], 100.0);  // Should be reasonable after scaling
     }
+}
+
 }

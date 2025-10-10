@@ -1,11 +1,8 @@
 #pragma once
 
-#include <optional>
-#include "geometry/ray.hpp"
 #include "geometry/transform.hpp"
-#include "math/point.hpp"
 
-namespace pbpt::core {
+namespace pbpt::camera {
 
 enum class RenderSpace{
     Camera, 
@@ -75,49 +72,6 @@ public:
     RenderTransform<T> to_render_space(RenderSpace space) const {
         return RenderTransform<T>(m_camera_to_world, space);
     }
-};
-
-template<typename T>
-struct CameraSample {
-    math::Point<T, 2> p_film;   // 影像平面上的点，范围通常是[0,1]x[0,1]
-};
-
-template<typename T>
-struct CameraRay {
-    geometry::Ray<T, 3> ray;   
-};
-
-template<typename T>
-struct Film {
-    math::Point<T, 2> resolution; // 影像分辨率
-    math::Point<T, 2> size;       // 影像尺寸，单位通常是毫米
-};
-
-template<typename T, typename Derived>
-class Camera {
-private:
-    RenderTransform<T> m_render_transform{};
-
-public:
-    Camera(const RenderTransform<T>& render_transform) : 
-    m_render_transform(render_transform) {}
-
-    RenderTransform<T> render_transform() const {
-        return m_render_transform;
-    }
-
-    std::optional<CameraRay<T>> generate_ray(const CameraSample<T>& sample) const {
-        return as_derived().generate_ray_impl(sample);
-    }
-
-    Derived& as_derived() {
-        return static_cast<Derived&>(*this);
-    }
-
-    const Derived& as_derived() const {
-        return static_cast<const Derived&>(*this);
-    }
-
 };
 
 };

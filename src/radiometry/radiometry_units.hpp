@@ -12,7 +12,8 @@
 #include "math/vector.hpp"
 
 using namespace pbpt::math;
-namespace pbpt::core {
+
+namespace pbpt::radiometry {
 
 struct RadianceTag {};
 struct IrradianceTag {};

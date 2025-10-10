@@ -4,11 +4,7 @@
 #include <cmath>
 #include <memory>
 
-#include "math/point.hpp"
-#include "math/type_alias.hpp"
-#include "integrator/distribution.hpp"
-#include "integrator/integrator.hpp"
-#include "integrator/sampler.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::math;
 using namespace pbpt::integrator;

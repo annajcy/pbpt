@@ -7,13 +7,10 @@
  */
 
 #include <gtest/gtest.h>
-
 #include <type_traits>
 #include <limits>
 
-// 包含被测试的头文件和其依赖
-#include "math/vector.hpp"
-// 假设 type_alias.hpp 和 function.hpp 已被 vector.hpp 包含
+#include "pbpt.h"
 
 namespace pbpt::math::testing {
 

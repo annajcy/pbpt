@@ -12,7 +12,7 @@
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
-namespace pbpt::core {
+namespace pbpt::radiometry {
 
 template<std::floating_point T>
 inline std::array<T, 2> concentric_sample_disk(const std::array<T, 2>& u01) {
@@ -196,4 +196,4 @@ auto integrate(const Domain& domain, const Func& func, int sample_count, RNG& rn
     return result / T(sample_count);
 }
 
-} // namespace pbpt::core
+} 

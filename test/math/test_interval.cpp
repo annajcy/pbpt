@@ -9,8 +9,7 @@
 #include <gtest/gtest.h>
 #include <type_traits>
 
-#include "math/interval.hpp"
-#include "math/type_alias.hpp"
+#include "pbpt.h"
 
 namespace pbpt::math::testing {
 

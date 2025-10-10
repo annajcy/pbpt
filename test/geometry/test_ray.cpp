@@ -3,7 +3,7 @@
 #include <array>
 #include <cmath>
 
-#include "geometry/ray.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::math;
 

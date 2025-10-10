@@ -22,3 +22,7 @@ add_test(NAME test_spherical COMMAND test_spherical)
 add_executable(test_transform test_transform.cpp)
 target_link_libraries(test_transform PRIVATE pbpt gtest::gtest)
 add_test(NAME test_transform COMMAND test_transform)
+
+add_executable(test_interaction test_interaction.cpp)
+target_link_libraries(test_interaction PRIVATE pbpt gtest::gtest)
+add_test(NAME test_interaction COMMAND test_interaction)

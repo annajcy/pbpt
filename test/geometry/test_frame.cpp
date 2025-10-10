@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "geometry/frame.hpp"
-#include "math/vector.hpp"
-#include "geometry/transform.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::geometry;
 

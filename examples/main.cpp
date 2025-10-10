@@ -1,37 +1,9 @@
 #include <array>
-#include <cmath>
 #include <cstdlib>
-#include <format>
 #include <iostream>
 #include <filesystem>
 
-#include "core/interaction.hpp"
-#include "core/radiometric_integrals.hpp"
-#include "core/radiometry.hpp"
-#include "core/shape.hpp"
-#include "core/spectrum.hpp"
-#include "core/color.hpp"
-#include "integrator/monte_carlo.hpp"
-#include "geometry/bounds.hpp"
-#include "geometry/frame.hpp"
-#include "integrator/random_generator.hpp"
-#include "math/homogeneous.hpp"
-#include "math/interval.hpp"
-#include "math/matrix.hpp"
-#include "math/normal.hpp"
-#include "math/octahedral.hpp"
-#include "math/point.hpp"
-#include "geometry/ray.hpp"
-#include "geometry/spherical.hpp"
-#include "geometry/transform.hpp"
-#include "math/format.hpp"
-#include "math/vector.hpp"
-#include "math/function.hpp"
-#include "geometry/directional_cone.hpp"
-#include "math/type_alias.hpp"
-#include "utils/spectrum_loader.hpp"
-
-#include "core/camera.hpp"
+#include "pbpt.h"
 
 using namespace pbpt;
 
@@ -166,52 +138,37 @@ int main() {
     std::cout << "Point3Eps + vec1: " << p + math::Vector<float, 3>(1.0f, 1.0f, 1.0f) << std::endl;
     std::cout << "Point3Eps - vec1: " << p - math::Vector<float, 3>(1.0f, 1.0f, 1.0f) << std::endl;
 
-    core::Sphere sphere;
-
-    using namespace pbpt::integrator;
-
-    UniformSampler sampler(1, {0.0, pi_v<Float> / 2});
-
-    auto f = [](std::span<const double> x) {
-        return std::cos(x[0]);
-    };
-
-    auto [result, var] = monte_carlo_integrate(f, sampler, 1000000);
-
-    std::cout << "Integral ≈ " << result << ", Variance = " << var << "\n";
-    std::cout << "Ground truth = 1.0\n";
-
-    auto L = core::Radiance<Float>(1.0);
-    auto irrad = L * core::SolidAngle<Float>(1.0);
+    auto L = radiometry::Radiance<Float>(1.0);
+    auto irrad = L * radiometry::SolidAngle<Float>(1.0);
     std::cout << "Irradiance: " << irrad << std::endl;
 
     math::RandomGenerator<double, 2> rng2d(42);
-    core::UniformHemisphereDomain<double> hemisphere{};
+    radiometry::UniformHemisphereDomain<double> hemisphere{};
 
     math::Normal3 norm(0.0f, 0.0f, 1.0f);
     int sample_count = 10000;
     auto n = norm.to_vector();
-    auto res = core::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
+    auto res = radiometry::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
         return 1.0 * n.dot(wi);
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res << ", Expected: " << pi_v<double> << "\n";
 
-    core::UniformDiskDomain<double> disk{};
-    auto res_disk = core::integrate<double>(disk, [](const math::Point<double, 2>& p) {
+    radiometry::UniformDiskDomain<double> disk{};
+    auto res_disk = radiometry::integrate<double>(disk, [](const math::Point<double, 2>& p) {
         return 1.0f;
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res_disk << ", Expected: " << pi_v<double> << "\n";
 
-    core::ProjectedHemisphereDomain<double> proj_hemi{};
-    auto res_proj_hemi = core::integrate<double>(proj_hemi, [&n](const math::Vector<double, 3>& wi) {
+    radiometry::ProjectedHemisphereDomain<double> proj_hemi{};
+    auto res_proj_hemi = radiometry::integrate<double>(proj_hemi, [&n](const math::Vector<double, 3>& wi) {
         return 1.0f;
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res_proj_hemi << ", Expected: " << pi_v<double> << "\n";
 
-    core::ParallelogramAreaDomain<double> para{
+    radiometry::ParallelogramAreaDomain<double> para{
         math::Point<double, 3>(-1.0, 4.0, -1.0), 
         math::Vector<double, 3>(2.0, 0.0, 0.0), 
         math::Vector<double, 3>(0.0, 0.0, 2.0)
@@ -222,7 +179,7 @@ int main() {
     auto shading_p = math::Point<double, 3>(0.0, 0.0, 0.0);
     auto shading_p_normal = math::Normal3(0.0, 1.0, 0.0);
 
-    auto res_para = core::integrate<double>(para, [&shading_p, &shading_p_normal](const core::SurfaceInfo<double>& surface) {
+    auto res_para = radiometry::integrate<double>(para, [&shading_p, &shading_p_normal](const radiometry::SurfaceInfo<double>& surface) {
         auto [p, normal] = surface;
         auto n = normal.to_vector();
         auto pn = shading_p_normal.to_vector();
@@ -236,23 +193,23 @@ int main() {
 
     std::cout << "Estimated: " << res_para << ", Expected: 0.2308367977" << "\n";
 
-    core::RGB<float> spectrum(1.0f, 0.5f, 0.25f);
+    radiometry::RGB<float> spectrum(1.0f, 0.5f, 0.25f);
     std::cout << "RGB Spectrum: " << spectrum << "\n";
 
     spectrum *= 2.0f;
     std::cout << "RGB Spectrum after multiplication: " << spectrum << "\n";
 
-    core::SpectralRadiance<float> spec_rad(10.0f);
+    radiometry::SpectralRadiance<float> spec_rad(10.0f);
     std::cout << "Spectral Radiance: " << spec_rad << std::endl;
-    core::WaveLength<float> delta_lambda(3.0f); 
+    radiometry::WaveLength<float> delta_lambda(3.0f); 
     std::cout << "Delta Wavelength: " << delta_lambda << std::endl;
 
     auto ttt = spec_rad * delta_lambda;
     std::cout << "Spectral Radiance * Delta Wavelength: " << ttt << std::endl;
 
-    core::BlackBodySpectrumDistribution<double> black_body_spectrum(2856.0);
+    radiometry::BlackBodySpectrumDistribution<double> black_body_spectrum(2856.0);
     auto sampled_spectrum = black_body_spectrum.sample<4>(
-        core::SampledSpectrum<double, 4>(
+        radiometry::SampledSpectrum<double, 4>(
             math::Vector<double, 4>(400.0, 600.0, 800.0, 1000.0)
         ));
     std::cout << "Sampled Spectrum: " << sampled_spectrum / 1e12 << "\n";
@@ -264,7 +221,7 @@ int main() {
     std::cout << "Current Path: " << cur_path << std::endl;
 
     auto arr =
-        pbpt::utils::make_spectra_from_csv<double, 3, core::XYZRange>((cur_path / "CIE_xyz_1931_2deg.csv").string());
+        pbpt::radiometry::make_spectra_from_csv<double, 3, radiometry::XYZRange>((cur_path / "CIE_xyz_1931_2deg.csv").string());
     auto [Xbar, Ybar, Zbar] = arr;
 
     // std::cout << "std::array<T, lambda_max<T> - lambda_min<T> + 1>{\n";
@@ -285,42 +242,42 @@ int main() {
     // }
     // std::cout << "\n}\n";
 
-    Xbar = core::CIE_X<double>;
-    Ybar = core::CIE_Y<double>;
-    Zbar = core::CIE_Z<double>;
+    Xbar = radiometry::CIE_X<double>;
+    Ybar = radiometry::CIE_Y<double>;
+    Zbar = radiometry::CIE_Z<double>;
 
-    auto pppp = Ybar.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 500, 600, 700, 800)));
+    auto pppp = Ybar.sample<5>(radiometry::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 500, 600, 700, 800)));
     std::cout << pppp << std::endl;
 
-    auto [D50] = pbpt::utils::make_spectra_from_csv<double, 1, core::luminantD50Range>((cur_path / "CIE_std_illum_D50.csv").string());
-    auto [D65] = pbpt::utils::make_spectra_from_csv<double, 1, core::luminantD65Range>((cur_path / "CIE_std_illum_D65.csv").string());
-    auto [A] = pbpt::utils::make_spectra_from_csv<double, 1, core::luminantARange>((cur_path / "CIE_std_illum_A.csv").string());
+    auto [D50] = pbpt::radiometry::make_spectra_from_csv<double, 1, radiometry::luminantD50Range>((cur_path / "CIE_std_illum_D50.csv").string());
+    auto [D65] = pbpt::radiometry::make_spectra_from_csv<double, 1, radiometry::luminantD65Range>((cur_path / "CIE_std_illum_D65.csv").string());
+    auto [A] = pbpt::radiometry::make_spectra_from_csv<double, 1, radiometry::luminantARange>((cur_path / "CIE_std_illum_A.csv").string());
 
-    // for (int i = core::D65Range::LMinValue; i <= core::D65Range::LMaxValue; ++i) {
+    // for (int i = radiometry::D65Range::LMinValue; i <= radiometry::D65Range::LMaxValue; ++i) {
     //     std::cout << std::format("{:.5f}, ", D65.at(i)) << " ";
     // }
     // std::cout << std::endl;
 
-    D65 = core::CIE_D65_ilum<double>;
+    D65 = radiometry::CIE_D65_ilum<double>;
 
-    // for (int i = core::D50Range::LMinValue; i <= core::D50Range::LMaxValue; ++i) {
+    // for (int i = radiometry::D50Range::LMinValue; i <= radiometry::D50Range::LMaxValue; ++i) {
     //     std::cout << std::format("{:.5f}, ", D50.at(i)) << " ";
     // }
     // std::cout << std::endl;
 
-    D50 = core::CIE_D50_ilum<double>;
+    D50 = radiometry::CIE_D50_ilum<double>;
 
-    // for (int i = core::ARange::LMinValue; i <= core::ARange::LMaxValue; ++i) {
+    // for (int i = radiometry::ARange::LMinValue; i <= radiometry::ARange::LMaxValue; ++i) {
     //     std::cout << std::format("{:.5f}, ", A.at(i)) << " ";
     // }
     // std::cout << std::endl;
 
-    A = core::CIE_A_ilum<double>;
+    A = radiometry::CIE_A_ilum<double>;
 
-    auto d50_sampled = D50.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
-    auto d65_sampled = D65.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
-    auto a_sampled = A.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
-    auto black_body_sampled = black_body_spectrum.sample<5>(core::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+    auto d50_sampled = D50.sample<5>(radiometry::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+    auto d65_sampled = D65.sample<5>(radiometry::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+    auto a_sampled = A.sample<5>(radiometry::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
+    auto black_body_sampled = black_body_spectrum.sample<5>(radiometry::SampledWavelength<double, 5>(math::Vector<double, 5>(400, 560, 600, 700, 800)));
 
     std::cout << "D50 Sampled: " << d50_sampled << std::endl;
     std::cout << "D65 Sampled: " << d65_sampled << std::endl;
@@ -328,19 +285,19 @@ int main() {
     std::cout << "Black Body Sampled: " << black_body_sampled / 1e11 << std::endl;
     std::cout << black_body_sampled * a_sampled.inv() << std::endl;
 
-    core::XYZ<double> expected_xyz{};
+    radiometry::XYZ<double> expected_xyz{};
 
     constexpr int sample_N = 10;
     constexpr int round_N = 1000;
     for (int i = 0; i < round_N; i ++) {
         math::RandomGenerator<double, sample_N> rng;
-        auto wl_r = rng.generate_uniform(core::lambda_min<double>, core::lambda_max<double>);
-        auto wl = core::SampledWavelength<double, sample_N>(math::Vector<double, sample_N>::from_array(wl_r));
+        auto wl_r = rng.generate_uniform(radiometry::lambda_min<double>, radiometry::lambda_max<double>);
+        auto wl = radiometry::SampledWavelength<double, sample_N>(math::Vector<double, sample_N>::from_array(wl_r));
 
-        auto xyz = core::XYZ<double>::from_sampled_spectrum(
+        auto xyz = radiometry::XYZ<double>::from_sampled_spectrum(
             D65.sample(wl),
             wl,
-            core::SampledPdf<double, sample_N>(math::Vector<double, sample_N>::filled(1 / (core::lambda_max<double> - core::lambda_min<double>)))
+            radiometry::SampledPdf<double, sample_N>(math::Vector<double, sample_N>::filled(1 / (radiometry::lambda_max<double> - radiometry::lambda_min<double>)))
         );
 
         //std::cout << "XYZ from Sampled Spectrum: " << xyz * 100 / xyz.y() << std::endl;
@@ -351,7 +308,7 @@ int main() {
 
     std::cout << "Expected XYZ: " << expected_xyz * 100 / expected_xyz.y() << std::endl;
 
-    auto xyz_d65 = core::XYZ<double>::from_standard_illuminant(D65);
+    auto xyz_d65 = radiometry::XYZ<double>::from_standard_illuminant(D65);
     //std::cout << "XYZ from D65 Spectrum: " << xyz_d65 * 100 / xyz_d65.y() << std::endl;
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65 << std::endl;
     std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65.normalized_to_y(100.0) << std::endl;
@@ -359,112 +316,112 @@ int main() {
     math::Point<double, 2> gp{0.3, 0.6};
     math::Point<double, 2> bp{0.15, 0.06};
 
-    core::XYZ<double> wp = core::XYZ<double>::from_standard_illuminant(D65);
+    radiometry::XYZ<double> wp = radiometry::XYZ<double>::from_standard_illuminant(D65);
     std::cout << "White Point from D65 Spectrum: " << wp << std::endl;
-    core::RGBColorSpace<double> sRGB(rp, gp, bp, wp);
+    radiometry::RGBColorSpace<double> sRGB(rp, gp, bp, wp);
 
     std::cout << "sRGB to XYZ Matrix:\n" << sRGB.rgb_to_xyz_matrix() << std::endl;
 
-    auto white_xyz = sRGB.to_xyz(core::RGB<double>(1.0, 1.0, 1.0));
+    auto white_xyz = sRGB.to_xyz(radiometry::RGB<double>(1.0, 1.0, 1.0));
     std::cout << "sRGB White Point to XYZ: " << white_xyz << std::endl;
     auto white_rgb = sRGB.to_rgb(white_xyz);
     std::cout << "XYZ White Point to sRGB: " << white_rgb << std::endl;
-    std::cout << "sRGB White Point to LAB: " << core::LAB<double>::from_xyz(white_xyz, sRGB.white_point()) << std::endl;
+    std::cout << "sRGB White Point to LAB: " << radiometry::LAB<double>::from_xyz(white_xyz, sRGB.white_point()) << std::endl;
     std::cout << std::endl;
 
-    auto gray_xyz = sRGB.to_xyz(core::RGB<double>(0.214, 0.214, 0.214));
+    auto gray_xyz = sRGB.to_xyz(radiometry::RGB<double>(0.214, 0.214, 0.214));
     std::cout << "sRGB Gray Point to XYZ: " << gray_xyz << std::endl;
     auto gray_rgb = sRGB.to_rgb(gray_xyz);
     std::cout << "XYZ Gray Point to sRGB: " << gray_rgb << std::endl;
-    auto gray_lab = core::LAB<double>::from_xyz(gray_xyz, sRGB.white_point());
+    auto gray_lab = radiometry::LAB<double>::from_xyz(gray_xyz, sRGB.white_point());
     std::cout << "XYZ Gray Point to LAB: " << gray_lab << std::endl;
     std::cout << std::endl;
 
-    auto red_xyz = sRGB.to_xyz(core::RGB<double>(1.0, 0.0, 0.0));
+    auto red_xyz = sRGB.to_xyz(radiometry::RGB<double>(1.0, 0.0, 0.0));
     std::cout << "sRGB Red Point to XYZ: " << red_xyz << std::endl;
     auto red_rgb = sRGB.to_rgb(red_xyz);
     std::cout << "XYZ Red Point to sRGB: " << red_rgb << std::endl;
-    auto red_lab = core::LAB<double>::from_xyz(red_xyz, sRGB.white_point());
+    auto red_lab = radiometry::LAB<double>::from_xyz(red_xyz, sRGB.white_point());
     std::cout << "XYZ Red Point to LAB: " << red_lab << std::endl;
     std::cout << std::endl;
 
-    auto green_xyz = sRGB.to_xyz(core::RGB<double>(0.0, 1.0, 0.0));
+    auto green_xyz = sRGB.to_xyz(radiometry::RGB<double>(0.0, 1.0, 0.0));
     std::cout << "sRGB Green Point to XYZ: " << green_xyz << std::endl;
     auto green_rgb = sRGB.to_rgb(green_xyz);
     std::cout << "XYZ Green Point to sRGB: " << green_rgb << std::endl;
-    auto green_lab = core::LAB<double>::from_xyz(green_xyz, sRGB.white_point());
+    auto green_lab = radiometry::LAB<double>::from_xyz(green_xyz, sRGB.white_point());
     std::cout << "XYZ Green Point to LAB: " << green_lab << std::endl;
     std::cout << std::endl;
 
-    auto blue_xyz = sRGB.to_xyz(core::RGB<double>(0.0, 0.0, 1.0));
+    auto blue_xyz = sRGB.to_xyz(radiometry::RGB<double>(0.0, 0.0, 1.0));
     std::cout << "sRGB Blue Point to XYZ: " << blue_xyz << std::endl;
     auto blue_rgb = sRGB.to_rgb(blue_xyz);
     std::cout << "XYZ Blue Point to sRGB: " << blue_rgb << std::endl;
-    auto blue_lab = core::LAB<double>::from_xyz(blue_xyz, sRGB.white_point());
+    auto blue_lab = radiometry::LAB<double>::from_xyz(blue_xyz, sRGB.white_point());
     std::cout << "XYZ Blue Point to LAB: " << blue_lab << std::endl;
     std::cout << std::endl;
 
-    auto rgb_ = core::RGB<double>(0.133333, 1.0, 1.0);
-    // core::RGBAlbedoSpectrumDistribution<double, core::RGBSigmoidPolynomial> albedo({
+    auto rgb_ = radiometry::RGB<double>(0.133333, 1.0, 1.0);
+    // radiometry::RGBAlbedoSpectrumDistribution<double, radiometry::RGBSigmoidPolynomial> albedo({
     //     -82.2253,   // C'  (constant)
     //     0.357441,  // B'  (linear)
     //     -0.000367656// A'  (quadratic)
     // });
 
-    core::RGBAlbedoSpectrumDistribution<double, core::RGBSigmoidPolynomialNormalized> albedo({
+    radiometry::RGBAlbedoSpectrumDistribution<double, radiometry::RGBSigmoidPolynomialNormalized> albedo({
         -1.14795, 43.0904, -80.4218
     });
 
     auto albedo_unnormalized = albedo.rsp().to_unnormalized();
     std::cout << "Albedo Coefficients (C0, C1, C2): " << albedo_unnormalized.c0 << ", " << albedo_unnormalized.c1 << ", " << albedo_unnormalized.c2 << std::endl;
 
-    auto xyz_from_albedo = core::XYZ<double>::from_reflectance_under_illuminant(albedo, D65);
+    auto xyz_from_albedo = radiometry::XYZ<double>::from_reflectance_under_illuminant(albedo, D65);
     std::cout << "XYZ from Albedo Spectrum: " << xyz_from_albedo << std::endl;
-    auto rgb_from_albedo = core::sRGB<double>.to_rgb(xyz_from_albedo);
+    auto rgb_from_albedo = radiometry::sRGB<double>.to_rgb(xyz_from_albedo);
     std::cout << "sRGB from Albedo Spectrum: " << rgb_from_albedo << std::endl;
 
-    auto xyz_d65_ = core::XYZ<double>::from_standard_illuminant(D65);
+    auto xyz_d65_ = radiometry::XYZ<double>::from_standard_illuminant(D65);
     std::cout << "XYZ from D65 Spectrum: " << xyz_d65_ << std::endl;
     std::cout << "XYZ from D65 Spectrum (normalized to Y=100): " << xyz_d65_.normalized_to_y(100.0) << std::endl;
 
-    auto [error, coeffs] = core::optimize_albedo_rgb_sigmoid_polynomial(core::RGB<double>(0.139, 0.735, 0.989), core::sRGB<double>, D65);
+    auto [error, coeffs] = radiometry::optimize_albedo_rgb_sigmoid_polynomial(radiometry::RGB<double>(0.139, 0.735, 0.989), radiometry::sRGB<double>, D65);
     std::cout << "Optimization Error: " << error << std::endl;
     std::cout << "Optimized Albedo Coefficients (C0, C1, C2): " << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << std::endl;
 
-    auto optimized_sigmoid_polynomial_unnormalized = core::RGBSigmoidPolynomialNormalized<double>{coeffs[0], coeffs[1], coeffs[2]}.to_unnormalized();
+    auto optimized_sigmoid_polynomial_unnormalized = radiometry::RGBSigmoidPolynomialNormalized<double>{coeffs[0], coeffs[1], coeffs[2]}.to_unnormalized();
     std::cout << "Optimized Albedo Coefficients Unnormalized (C0, C1, C2): " << optimized_sigmoid_polynomial_unnormalized.c0 << ", " << optimized_sigmoid_polynomial_unnormalized.c1 << ", " << optimized_sigmoid_polynomial_unnormalized.c2 << std::endl;
     
-    core::RGBAlbedoSpectrumDistribution<double, core::RGBSigmoidPolynomial> optimized_albedo(optimized_sigmoid_polynomial_unnormalized);
-    auto xyz_from_optimized_albedo = core::XYZ<double>::from_reflectance_under_illuminant(optimized_albedo, D65);
+    radiometry::RGBAlbedoSpectrumDistribution<double, radiometry::RGBSigmoidPolynomial> optimized_albedo(optimized_sigmoid_polynomial_unnormalized);
+    auto xyz_from_optimized_albedo = radiometry::XYZ<double>::from_reflectance_under_illuminant(optimized_albedo, D65);
     std::cout << "XYZ from Optimized Albedo Spectrum: " << xyz_from_optimized_albedo << std::endl;
-    auto rgb_from_optimized_albedo = core::sRGB<double>.to_rgb(xyz_from_optimized_albedo);
+    auto rgb_from_optimized_albedo = radiometry::sRGB<double>.to_rgb(xyz_from_optimized_albedo);
     std::cout << "sRGB from Optimized Albedo Spectrum: " << rgb_from_optimized_albedo << std::endl;
 
     std::cout << "Target RGB: " << rgb_from_optimized_albedo << std::endl;
-    core::RGB<double> rgb_from_optimized_albedox2 = rgb_from_optimized_albedo * 2.0;
+    radiometry::RGB<double> rgb_from_optimized_albedox2 = rgb_from_optimized_albedo * 2.0;
     std::cout << "sRGB from Optimized Albedo Spectrum x2: " << rgb_from_optimized_albedox2 << std::endl;
-    auto [scaled_rgb, scale] = core::scale_unbounded_rgb(rgb_from_optimized_albedox2);
+    auto [scaled_rgb, scale] = radiometry::scale_unbounded_rgb(rgb_from_optimized_albedox2);
     std::cout << "Scaled RGB: " << scaled_rgb << ", Scale: " << scale << std::endl;
-    auto opti = core::optimize_albedo_rgb_sigmoid_polynomial(scaled_rgb, core::sRGB<double>, D65);
-    auto rspn = core::RGBSigmoidPolynomialNormalized<double>{opti.coeffs[0], opti.coeffs[1], opti.coeffs[2]};
-    core::RGBUnboundedSpectrumDistribution<double, core::RGBSigmoidPolynomialNormalized> unbounded_rgb_spectrum(rspn, scale);
-    auto xyz_from_unbounded_rgb = core::XYZ<double>::from_reflectance_under_illuminant(unbounded_rgb_spectrum, D65);
+    auto opti = radiometry::optimize_albedo_rgb_sigmoid_polynomial(scaled_rgb, radiometry::sRGB<double>, D65);
+    auto rspn = radiometry::RGBSigmoidPolynomialNormalized<double>{opti.coeffs[0], opti.coeffs[1], opti.coeffs[2]};
+    radiometry::RGBUnboundedSpectrumDistribution<double, radiometry::RGBSigmoidPolynomialNormalized> unbounded_rgb_spectrum(rspn, scale);
+    auto xyz_from_unbounded_rgb = radiometry::XYZ<double>::from_reflectance_under_illuminant(unbounded_rgb_spectrum, D65);
     std::cout << "XYZ from Unbounded RGB Spectrum: " << xyz_from_unbounded_rgb << std::endl;
-    auto rgb_from_unbounded_rgb = core::sRGB<double>.to_rgb(xyz_from_unbounded_rgb);
+    auto rgb_from_unbounded_rgb = radiometry::sRGB<double>.to_rgb(xyz_from_unbounded_rgb);
     std::cout << "sRGB from Unbounded RGB Spectrum: " << rgb_from_unbounded_rgb << std::endl;
     std::cout << "Target RGB: " << rgb_from_optimized_albedox2 << std::endl;
 
-    core::RGBIlluminantSpectrumDistribution<
+    radiometry::RGBIlluminantSpectrumDistribution<
         double, 
-        core::RGBSigmoidPolynomialNormalized, 
-        core::TabularSpectrumDistribution<
+        radiometry::RGBSigmoidPolynomialNormalized, 
+        radiometry::TabularSpectrumDistribution<
             double, 
-            core::luminantD65Range::LMinValue, core::luminantD65Range::LMaxValue
+            radiometry::luminantD65Range::LMinValue, radiometry::luminantD65Range::LMaxValue
         >
     > illuminant_spectrum(rspn, D65, scale);
-    auto xyz_from_illuminant = core::XYZ<double>::from_emission_under_illuminant(illuminant_spectrum, D65);
+    auto xyz_from_illuminant = radiometry::XYZ<double>::from_emission_under_illuminant(illuminant_spectrum, D65);
     std::cout << "XYZ from Illuminant Spectrum: " << xyz_from_illuminant << std::endl;
-    auto rgb_from_illuminant = core::sRGB<double>.to_rgb(xyz_from_illuminant);
+    auto rgb_from_illuminant = radiometry::sRGB<double>.to_rgb(xyz_from_illuminant);
     std::cout << "sRGB from Illuminant Spectrum: " << rgb_from_illuminant << std::endl;
     std::cout << "Target RGB: " << rgb_from_optimized_albedox2 << std::endl;
 

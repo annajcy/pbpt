@@ -10,10 +10,7 @@
 #include <limits>
 #include <cmath>
 
-#include "geometry/directional_cone.hpp"
-#include "geometry/bounds.hpp"
-#include "math/point.hpp"
-#include "math/type_alias.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::geometry;
 

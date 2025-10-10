@@ -1,13 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "math/homogeneous.hpp"
-#include "geometry/transform.hpp"
-#include "math/normal.hpp"
-#include "geometry/ray.hpp"
-#include "geometry/bounds.hpp"
-#include "math/vector.hpp"
-#include "math/function.hpp"
-#include "math/type_alias.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::geometry;
 

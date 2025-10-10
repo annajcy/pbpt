@@ -10,7 +10,7 @@
 
 #include <type_traits>
 
-#include "math/normal.hpp"
+#include "pbpt.h"
 
 namespace pbpt::math::testing {
 

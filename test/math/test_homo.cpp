@@ -2,9 +2,7 @@
 
 #include <sstream>  // 用于测试流输出
 
-// 包含您要测试的类的头文件
-// 假设 homo.hpp 包含了 point.hpp 和 vector.hpp
-#include "math/homogeneous.hpp"
+#include "pbpt.h"
 
 // 将测试代码放在一个独立的命名空间中是一种好习惯
 namespace pbpt::math::testing {

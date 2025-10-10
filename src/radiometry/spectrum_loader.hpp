@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "core/spectrum.hpp"
+#include "spectrum_distribution.hpp"
 
-namespace pbpt::utils {
+namespace pbpt::radiometry {
 
 template<typename T>
 class CsvSpectrumDataSource {
@@ -81,9 +81,9 @@ inline auto make_spectra_from_csv(const std::string& csv_path) {
         }
     }
 
-    std::array<core::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>, N> result{};
+    std::array<radiometry::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>, N> result{};
     for (int i = 0; i < N; ++i) {
-        result[i] = core::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>(spectra_data[i]);
+        result[i] = radiometry::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>(spectra_data[i]);
     }
     return result;
 }

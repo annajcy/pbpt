@@ -1,12 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "math/normal.hpp"
-#include "math/point.hpp"
-#include "geometry/ray.hpp"
-#include "core/interaction.hpp"
-#include "math/type_alias.hpp"
+#include "pbpt.h"
 
-using namespace pbpt::core;
 using namespace pbpt::math;
 using namespace pbpt::geometry;
 

@@ -7,11 +7,10 @@
  */
 
 #include <gtest/gtest.h>
-
 #include <type_traits>
 #include <vector>
 
-#include "math/point.hpp"
+#include "pbpt.h"
 
 namespace pbpt::math::testing {
 

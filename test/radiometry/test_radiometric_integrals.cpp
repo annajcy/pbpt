@@ -1,19 +1,16 @@
 #include <gtest/gtest.h>
-#include "core/radiometric_integrals.hpp"
-#include "math/vector.hpp"
-#include "math/point.hpp"
-#include "math/normal.hpp"
-#include "integrator/random_generator.hpp"
 
-namespace pbpt::core::testing {
+#include "pbpt.h"
+
+namespace pbpt::radiometry::testing {
 
 TEST(RadiometricIntegrals, UniformHemisphereIntegral_Cosine)
 {
     math::RandomGenerator<double, 2> rng2d(123);
-    core::UniformHemisphereDomain<double> hemisphere;
+    UniformHemisphereDomain<double> hemisphere;
     math::Normal3 n(0.0, 0.0, 1.0);
     int sample_count = 1000000;
-    auto res = core::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
+    auto res = integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
         return n.to_vector().dot(wi);
     }, sample_count, rng2d);
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
@@ -22,9 +19,9 @@ TEST(RadiometricIntegrals, UniformHemisphereIntegral_Cosine)
 TEST(RadiometricIntegrals, UniformDiskIntegral_Constant)
 {
     math::RandomGenerator<double, 2> rng2d(456);
-    core::UniformDiskDomain<double> disk;
+    UniformDiskDomain<double> disk;
     int sample_count = 100000;
-    auto res = core::integrate<double>(disk, [](const math::Point<double, 2>& p) {
+    auto res = integrate<double>(disk, [](const math::Point<double, 2>& p) {
         return 1.0;
     }, sample_count, rng2d);
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
@@ -33,9 +30,9 @@ TEST(RadiometricIntegrals, UniformDiskIntegral_Constant)
 TEST(RadiometricIntegrals, ProjectedHemisphereIntegral_Constant)
 {
     math::RandomGenerator<double, 2> rng2d(789);
-    core::ProjectedHemisphereDomain<double> proj_hemi;
+    ProjectedHemisphereDomain<double> proj_hemi;
     int sample_count = 100000;
-    auto res = core::integrate<double>(proj_hemi, [](const math::Vector<double, 3>& wi) {
+    auto res = integrate<double>(proj_hemi, [](const math::Vector<double, 3>& wi) {
         return 1.0;
     }, sample_count, rng2d);
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
@@ -44,7 +41,7 @@ TEST(RadiometricIntegrals, ProjectedHemisphereIntegral_Constant)
 TEST(RadiometricIntegrals, ParallelogramAreaIntegral)
 {
     math::RandomGenerator<double, 2> rng2d(321);
-    core::ParallelogramAreaDomain<double> para{
+    ParallelogramAreaDomain<double> para{
         math::Point<double, 3>(-1.0, 4.0, -1.0),
         math::Vector<double, 3>(2.0, 0.0, 0.0),
         math::Vector<double, 3>(0.0, 0.0, 2.0)
@@ -52,7 +49,7 @@ TEST(RadiometricIntegrals, ParallelogramAreaIntegral)
     auto shading_p = math::Point<double, 3>(0.0, 0.0, 0.0);
     auto shading_p_normal = math::Normal3(0.0, 1.0, 0.0);
     int sample_count = 100000;
-    auto res = core::integrate<double>(para, [&shading_p, &shading_p_normal](const core::SurfaceInfo<double>& surface) {
+    auto res = integrate<double>(para, [&shading_p, &shading_p_normal](const SurfaceInfo<double>& surface) {
         auto [p, normal] = surface;
         auto n = normal.to_vector();
         auto pn = shading_p_normal.to_vector();

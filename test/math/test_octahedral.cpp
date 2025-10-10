@@ -12,7 +12,7 @@
 #include <type_traits>
 #include <random>
 
-#include "math/octahedral.hpp"
+#include "pbpt.h"
 
 namespace pbpt::math::testing {
 

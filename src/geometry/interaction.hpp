@@ -6,9 +6,8 @@
 #include "geometry/ray.hpp"
 
 using namespace pbpt::math;
-using namespace pbpt::geometry;
 
-namespace pbpt::core {
+namespace pbpt::geometry {
 
 template<typename T>
 inline Point<T, 3> offset_ray_origin(

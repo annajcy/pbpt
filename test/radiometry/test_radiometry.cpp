@@ -2,10 +2,11 @@
 #include <type_traits>
 #include <limits>
 
-#include "core/radiometry.hpp"
+#include "pbpt.h"
 
-using namespace pbpt::core;
 using namespace pbpt::math;
+
+namespace pbpt::radiometry::testing{
 
 class RadiometryTest : public ::testing::Test {
 protected:
@@ -827,4 +828,6 @@ TEST_F(RadiometryTest, ConstexprSpectralOperations) {
     constexpr WaveLength<float> wl(100.0f);
     constexpr auto spectral_product = sr1 * 2.0f;
     static_assert(spectral_product.value() == 20.0f);
+}
+
 }

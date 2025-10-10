@@ -3,8 +3,7 @@
 #include <sstream>
 #include <optional>
 
-#include "geometry/bounds.hpp"
-#include "geometry/ray.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::geometry;
 

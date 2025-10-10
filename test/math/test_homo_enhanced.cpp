@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "math/homogeneous.hpp"
+#include "pbpt.h"
 
 using namespace pbpt;
 using namespace pbpt::math;

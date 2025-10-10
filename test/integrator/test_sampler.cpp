@@ -5,11 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include "math/point.hpp"
-#include "math/type_alias.hpp"
-#include "integrator/distribution.hpp"
-#include "integrator/integrator.hpp"
-#include "integrator/sampler.hpp"
+#include "pbpt.h"
 
 using namespace pbpt::integrator;
 using namespace pbpt::math;

@@ -17,12 +17,9 @@
  */
 
 #include <gtest/gtest.h>
-
-#include <sstream>
 #include <type_traits>
 
-// 包含被测试的头文件和其依赖
-#include "math/tuple.hpp"
+#include "pbpt.h"
 
 namespace pbpt::math::testing {
 

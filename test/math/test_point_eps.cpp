@@ -4,8 +4,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "math/point.hpp"
-#include "math/interval.hpp"
+#include "pbpt.h"
 
 namespace pbpt::math::testing {
 
