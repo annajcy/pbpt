@@ -399,9 +399,9 @@ TEST_F(MatrixHomoTransformTest, PointTranslation) {
     translation_matrix[1][3] = -2.0;
 
     const Pt3   p_original(10, 20, 30);
-    const Homo3 h_original = Homo3::from_point(p_original);
+    const Homo4 h_original = Homo4::from_point(p_original);
 
-    const Homo3 h_transformed = Homo3::from_vector_raw(translation_matrix * h_original.to_vector_raw());
+    const Homo4 h_transformed = Homo4::from_vector_raw(translation_matrix * h_original.to_vector_raw());
     const Pt3   p_final       = h_transformed.to_point();
 
     EXPECT_DOUBLE_EQ(h_transformed.to_vector_raw().w(), 1.0);  // Check it's still a point
@@ -416,9 +416,9 @@ TEST_F(MatrixHomoTransformTest, VectorTranslation) {
     translation_matrix[1][3] = -2.0;
 
     const Vec3  v_original(1, 1, 1);
-    const Homo3 h_original(v_original.x(), v_original.y(), v_original.z(), 0.0);
+    const Homo4 h_original(v_original.x(), v_original.y(), v_original.z(), 0.0);
 
-    const Homo3 h_transformed = Homo3(translation_matrix * h_original.to_vector_raw());
+    const Homo4 h_transformed = Homo4(translation_matrix * h_original.to_vector_raw());
     const Vec3  v_final       = h_transformed.to_vector();
 
     EXPECT_DOUBLE_EQ(h_transformed.to_vector_raw().w(), 0.0);  // Check it's still a vector
@@ -437,9 +437,9 @@ TEST_F(MatrixHomoTransformTest, PointRotation) {
     rotation_matrix[3][3] = 1.0;
 
     const Pt3   p_original(10, 0, 0);
-    const Homo3 h_original = Homo3::from_point(p_original);
+    const Homo4 h_original = Homo4::from_point(p_original);
 
-    const Homo3 h_transformed = Homo3::from_vector_raw(rotation_matrix * h_original.to_vector_raw());
+    const Homo4 h_transformed = Homo4::from_vector_raw(rotation_matrix * h_original.to_vector_raw());
     const Pt3   p_final       = h_transformed.to_point();
 
     EXPECT_NEAR(p_final.x(), 0.0, 1e-9);
@@ -459,9 +459,9 @@ TEST_F(MatrixHomoTransformTest, CombinedScaleAndTranslate) {
     const Mat4 combined_matrix = translate_matrix * scale_matrix;
 
     const Pt3   p_original(10, 10, 10);
-    const Homo3 h_original = Homo3::from_point(p_original);
+    const Homo4 h_original = Homo4::from_point(p_original);
 
-    const Homo3 h_transformed = Homo3::from_vector_raw(combined_matrix * h_original.to_vector_raw());
+    const Homo4 h_transformed = Homo4::from_vector_raw(combined_matrix * h_original.to_vector_raw());
     const Pt3   p_final       = h_transformed.to_point();
 
     EXPECT_DOUBLE_EQ(p_final.x(), 25.0);
@@ -734,10 +734,10 @@ protected:
     }
     
     template<typename T, int N>
-    Homogeneous<T, N> create_random_homogeneous() {
+    Homogeneous<T, N + 1> create_random_homogeneous() {
         Vector<T, N> v = create_random_vector<T, N>();
         T w = random_value<T>(T(0.1), T(2)); // Avoid zero weight
-        auto result = Homogeneous<T, N>::from_vector(v);
+        auto result = Homogeneous<T, N + 1>::from_vector(v);
         result.w() = w;
         return result;
     }
@@ -815,7 +815,7 @@ TEST_F(RandomMatrixTest, RandomHomogeneousOperations) {
         // Test conversion to vector and back
         if (h1.is_vector()) {
             auto v1 = h1.to_vector();
-            auto h1_reconstructed = Homogeneous<float, 3>::from_vector(v1);
+            auto h1_reconstructed = Homogeneous<float, 4>::from_vector(v1);
             EXPECT_TRUE(h1 == h1_reconstructed);
         }
         
@@ -863,7 +863,7 @@ TEST_F(RandomMatrixTest, RandomMatrixVectorMultiplication) {
         
         // Test matrix-homogeneous multiplication
         auto result_h = m * h;
-        static_assert(std::is_same_v<decltype(result_h), Homogeneous<float, 3>>);
+        static_assert(std::is_same_v<decltype(result_h), Homogeneous<float, 4>>);
         
         // Verify by converting homogeneous to vector and multiplying
         auto h_as_vector = h.to_vector_raw();

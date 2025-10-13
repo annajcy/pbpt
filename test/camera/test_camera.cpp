@@ -1,0 +1,770 @@
+/**
+ * @file test_camera.cpp
+ * @brief Comprehensive unit tests for Camera classes
+ * 
+ * This file contains thorough tests for the Camera class templates,
+ * including OrthographicCamera, PerspectiveCamera, ThinLensOrthographicCamera,
+ * and ThinLensPerspectiveCamera.
+ */
+
+#include <gtest/gtest.h>
+#include <cmath>
+#include <numbers>
+
+#include "camera/camera.hpp"
+#include "camera/camera_sample.hpp"
+#include "camera/camera_projection.hpp"
+#include "geometry/ray.hpp"
+#include "math/point.hpp"
+#include "math/vector.hpp"
+#include "math/format.hpp"
+
+namespace pbpt::camera::testing {
+
+// Helper struct to simulate a Film type
+template<typename T>
+struct MockFilm {
+    math::Vector<T, 2> m_physical_size;
+    math::Vector<int, 2> m_resolution;
+    
+    MockFilm(T width, T height, int res_x, int res_y)
+        : m_physical_size(width, height), m_resolution(res_x, res_y) {}
+    
+    const math::Vector<T, 2>& physical_size() const { return m_physical_size; }
+    const math::Vector<int, 2>& resolution() const { return m_resolution; }
+};
+
+// ============================================================================
+// OrthographicCamera Tests
+// ============================================================================
+
+TEST(OrthographicCameraTest, Construction) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    
+    EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<float>());
+}
+
+TEST(OrthographicCameraTest, GenerateRayCenter) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    
+    // Test ray from center of film
+    CameraSample<float> sample;
+    sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    
+    auto ray = camera.generate_ray(sample);
+    std::cout << "Ray Origin: " << ray.origin() << ", Direction: " << ray.direction() << std::endl;
+    
+    // For orthographic camera, direction should always be (0, 0, 1)
+    EXPECT_NEAR(ray.direction().x(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray.direction().y(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray.direction().z(), 1.0f, 1e-5f);
+    
+    // Origin should be approximately at center
+    EXPECT_NEAR(ray.origin().x(), 0.0f, 1e-3f);
+    EXPECT_NEAR(ray.origin().y(), 0.0f, 1e-3f);
+}
+
+TEST(OrthographicCameraTest, GenerateRayCorners) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+
+    // Test down-left corner
+    CameraSample<float> sample_tl;
+    sample_tl.p_film = math::Point<float, 2>(0.0f, 0.0f);
+    auto ray_tl = camera.generate_ray(sample_tl);
+    std::cout << "Ray TL Origin: " << ray_tl.origin() << ", Direction: " << ray_tl.direction() << std::endl;
+    
+    // Direction should still be (0, 0, 1)
+    EXPECT_NEAR(ray_tl.direction().z(), 1.0f, 1e-5f);
+    
+    // Origin should be at down-left of film
+    EXPECT_LT(ray_tl.origin().x(), 0.0f);
+    EXPECT_LT(ray_tl.origin().y(), 0.0f);
+    
+    // Test top-right corner
+    CameraSample<float> sample_br;
+    sample_br.p_film = math::Point<float, 2>(800.0f, 600.0f);
+    auto ray_br = camera.generate_ray(sample_br);
+    std::cout << "Ray BR Origin: " << ray_br.origin() << ", Direction: " << ray_br.direction() << std::endl;
+    
+    EXPECT_NEAR(ray_br.direction().z(), 1.0f, 1e-5f);
+    EXPECT_GT(ray_br.origin().x(), 0.0f);
+    EXPECT_GT(ray_br.origin().y(), 0.0f);
+}
+
+TEST(OrthographicCameraTest, GenerateDifferentialRay) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    
+    CameraSample<float> sample;
+    sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    
+    auto ray_diff = camera.generate_differential_ray(sample);
+    
+    // Main ray should be valid
+    EXPECT_NEAR(ray_diff.direction().z(), 1.0f, 1e-5f);
+    
+    // Differential rays should also have direction (0, 0, 1)
+    EXPECT_NEAR(ray_diff.x().direction().z(), 1.0f, 1e-5f);
+    EXPECT_NEAR(ray_diff.y().direction().z(), 1.0f, 1e-5f);
+    
+    // X-differential ray origin should be offset in x direction
+    EXPECT_GT(ray_diff.x().origin().x(), ray_diff.origin().x());
+    EXPECT_NEAR(ray_diff.x().origin().y(), ray_diff.origin().y(), 1e-3f);
+    
+    // Y-differential ray origin should be offset in y direction
+    EXPECT_NEAR(ray_diff.y().origin().x(), ray_diff.origin().x(), 1e-3f);
+    EXPECT_GT(ray_diff.y().origin().y(), ray_diff.origin().y());
+}
+
+TEST(OrthographicCameraTest, ParallelRays) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    
+    // Generate multiple rays at different positions
+    CameraSample<float> sample1, sample2, sample3;
+    sample1.p_film = math::Point<float, 2>(100.0f, 100.0f);
+    sample2.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    sample3.p_film = math::Point<float, 2>(700.0f, 500.0f);
+    
+    auto ray1 = camera.generate_ray(sample1);
+    auto ray2 = camera.generate_ray(sample2);
+    auto ray3 = camera.generate_ray(sample3);
+    
+    // All rays should be parallel (same direction)
+    EXPECT_NEAR(ray1.direction().x(), ray2.direction().x(), 1e-5f);
+    EXPECT_NEAR(ray1.direction().y(), ray2.direction().y(), 1e-5f);
+    EXPECT_NEAR(ray1.direction().z(), ray2.direction().z(), 1e-5f);
+    
+    EXPECT_NEAR(ray2.direction().x(), ray3.direction().x(), 1e-5f);
+    EXPECT_NEAR(ray2.direction().y(), ray3.direction().y(), 1e-5f);
+    EXPECT_NEAR(ray2.direction().z(), ray3.direction().z(), 1e-5f);
+}
+
+// ============================================================================
+// PerspectiveCamera Tests
+// ============================================================================
+
+TEST(PerspectiveCameraTest, Construction) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    
+    EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<double>());
+}
+
+TEST(PerspectiveCameraTest, GenerateRayCenter) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    
+    // Ray from center should point roughly along +Z axis
+    CameraSample<double> sample;
+    sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    
+    auto ray = camera.generate_ray(sample);
+    
+    // Origin should be at (0, 0, 0)
+    EXPECT_NEAR(ray.origin().x(), 0.0, 1e-10);
+    EXPECT_NEAR(ray.origin().y(), 0.0, 1e-10);
+    EXPECT_NEAR(ray.origin().z(), 0.0, 1e-10);
+    
+    // Direction should be normalized
+    double length = std::sqrt(
+        ray.direction().x() * ray.direction().x() +
+        ray.direction().y() * ray.direction().y() +
+        ray.direction().z() * ray.direction().z()
+    );
+    EXPECT_NEAR(length, 1.0, 1e-5);
+    
+    // Z component should be positive (pointing forward)
+    EXPECT_GT(ray.direction().z(), 0.0);
+}
+
+TEST(PerspectiveCameraTest, GenerateRayCorners) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    
+    // down-left corner
+    CameraSample<double> sample_tl;
+    sample_tl.p_film = math::Point<double, 2>(0.0, 0.0);
+    auto ray_tl = camera.generate_ray(sample_tl);
+    
+    // All rays should originate from camera origin
+    EXPECT_NEAR(ray_tl.origin().x(), 0.0, 1e-10);
+    EXPECT_NEAR(ray_tl.origin().y(), 0.0, 1e-10);
+    EXPECT_NEAR(ray_tl.origin().z(), 0.0, 1e-10);
+    
+    // Direction should be normalized and point left-down
+    EXPECT_LT(ray_tl.direction().x(), 0.0);
+    EXPECT_LT(ray_tl.direction().y(), 0.0);
+    EXPECT_GT(ray_tl.direction().z(), 0.0);
+    
+    // Top-right corner
+    CameraSample<double> sample_br;
+    sample_br.p_film = math::Point<double, 2>(800.0, 600.0);
+    auto ray_br = camera.generate_ray(sample_br);
+    
+    EXPECT_GT(ray_br.direction().x(), 0.0);
+    EXPECT_GT(ray_br.direction().y(), 0.0);
+    EXPECT_GT(ray_br.direction().z(), 0.0);
+}
+
+TEST(PerspectiveCameraTest, RaysDiverge) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    
+    // Generate rays at different positions
+    CameraSample<double> sample1, sample2;
+    sample1.p_film = math::Point<double, 2>(200.0, 300.0);
+    sample2.p_film = math::Point<double, 2>(600.0, 300.0);
+    
+    auto ray1 = camera.generate_ray(sample1);
+    auto ray2 = camera.generate_ray(sample2);
+    
+    // Rays should have different directions (perspective projection)
+    EXPECT_NE(ray1.direction().x(), ray2.direction().x());
+    
+    // But same origin
+    EXPECT_NEAR(ray1.origin().x(), ray2.origin().x(), 1e-10);
+    EXPECT_NEAR(ray1.origin().y(), ray2.origin().y(), 1e-10);
+    EXPECT_NEAR(ray1.origin().z(), ray2.origin().z(), 1e-10);
+}
+
+TEST(PerspectiveCameraTest, GenerateDifferentialRay) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    
+    CameraSample<double> sample;
+    sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    
+    auto ray_diff = camera.generate_differential_ray(sample);
+    
+    // All rays should originate from camera origin
+    EXPECT_NEAR(ray_diff.origin().x(), 0.0, 1e-10);
+    EXPECT_NEAR(ray_diff.x().origin().x(), 0.0, 1e-10);
+    EXPECT_NEAR(ray_diff.y().origin().x(), 0.0, 1e-10);
+    
+    // Differential rays should have slightly different directions
+    EXPECT_NE(ray_diff.direction().x(), ray_diff.x().direction().x());
+    EXPECT_NE(ray_diff.direction().y(), ray_diff.y().direction().y());
+}
+
+TEST(PerspectiveCameraTest, FieldOfView) {
+    MockFilm<double> film(2.0, 2.0, 1000, 1000);
+    double near = 1.0;
+    PerspectiveCamera<double> camera(film, near, 100.0);
+    
+    // Sample at extreme corners
+    CameraSample<double> sample_corner;
+    sample_corner.p_film = math::Point<double, 2>(0.0, 0.0);
+    auto ray_corner = camera.generate_ray(sample_corner);
+    
+    // Calculate angle from center
+    math::Vector<double, 3> center_dir(0.0, 0.0, 1.0);
+    double cos_angle = ray_corner.direction().dot(center_dir);
+    double angle = std::acos(cos_angle);
+    
+    // Should be within reasonable FOV
+    EXPECT_GT(angle, 0.0);
+    EXPECT_LT(angle, std::numbers::pi / 2.0); // Less than 90 degrees
+}
+
+// ============================================================================
+// Sample Lens Concentric Tests
+// ============================================================================
+
+TEST(SampleLensConcentricTest, CenterPoint) {
+    math::Point<float, 2> p_center(0.5f, 0.5f);
+    auto result = sample_lens_concentric(p_center, 1.0f);
+    
+    // Center should map to origin
+    EXPECT_NEAR(result.x(), 0.0f, 1e-5f);
+    EXPECT_NEAR(result.y(), 0.0f, 1e-5f);
+}
+
+TEST(SampleLensConcentricTest, CornerPoints) {
+    float lens_radius = 1.0f;
+    
+    // Test corner (1, 1) -> should be at radius 1
+    math::Point<float, 2> p_corner(1.0f, 1.0f);
+    auto result = sample_lens_concentric(p_corner, lens_radius);
+    
+    float radius = std::sqrt(result.x() * result.x() + result.y() * result.y());
+    EXPECT_NEAR(radius, lens_radius, 1e-5f);
+}
+
+TEST(SampleLensConcentricTest, EdgePoints) {
+    float lens_radius = 2.0f;
+    
+    // Test right edge (1, 0.5)
+    math::Point<float, 2> p_right(1.0f, 0.5f);
+    auto result_right = sample_lens_concentric(p_right, lens_radius);
+    
+    // Should be on the right side
+    EXPECT_GT(result_right.x(), 0.0f);
+    EXPECT_NEAR(result_right.y(), 0.0f, 1e-5f);
+    
+    // Radius should be lens_radius
+    float radius = std::sqrt(
+        result_right.x() * result_right.x() + 
+        result_right.y() * result_right.y()
+    );
+    EXPECT_NEAR(radius, lens_radius, 1e-5f);
+}
+
+TEST(SampleLensConcentricTest, UniformDistribution) {
+    float lens_radius = 1.5f;
+    
+    // Test multiple points
+    std::vector<math::Point<float, 2>> test_points;
+    test_points.push_back(math::Point<float, 2>(0.25f, 0.25f));
+    test_points.push_back(math::Point<float, 2>(0.75f, 0.25f));
+    test_points.push_back(math::Point<float, 2>(0.25f, 0.75f));
+    test_points.push_back(math::Point<float, 2>(0.75f, 0.75f));
+    test_points.push_back(math::Point<float, 2>(0.5f, 0.75f));
+    test_points.push_back(math::Point<float, 2>(0.75f, 0.5f));
+    
+    for (const auto& p : test_points) {
+        auto result = sample_lens_concentric(p, lens_radius);
+        
+        // All results should be within lens radius
+        float radius = std::sqrt(result.x() * result.x() + result.y() * result.y());
+        EXPECT_LE(radius, lens_radius + 1e-5f);
+    }
+}
+
+TEST(SampleLensConcentricTest, OriginMapping) {
+    float lens_radius = 1.0f;
+    
+    // Point at origin of [0,1]^2 space should map to negative coordinates
+    math::Point<float, 2> p_origin(0.0f, 0.0f);
+    auto result = sample_lens_concentric(p_origin, lens_radius);
+    
+    // Should be at (-1, 0) after rotation
+    float radius = std::sqrt(result.x() * result.x() + result.y() * result.y());
+    EXPECT_NEAR(radius, lens_radius, 1e-5f);
+}
+
+// ============================================================================
+// ThinLensOrthographicCamera Tests
+// ============================================================================
+
+TEST(ThinLensOrthographicCameraTest, Construction) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    float lens_radius = 0.1f;
+    float focal_distance = 10.0f;
+    
+    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    
+    EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<float>());
+}
+
+TEST(ThinLensOrthographicCameraTest, GenerateRayFromLensCenter) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    float lens_radius = 0.1f;
+    float focal_distance = 10.0f;
+    
+    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    
+    // Sample with lens center (0.5, 0.5)
+    ThinLensCameraSample<float> sample;
+    sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    sample.p_lens = math::Point<float, 2>(0.5f, 0.5f);
+    
+    auto ray = camera.generate_ray(sample);
+    
+    // Origin should be near (0, 0, 0) when lens center is used
+    EXPECT_NEAR(ray.origin().x(), 0.0f, 1e-3f);
+    EXPECT_NEAR(ray.origin().y(), 0.0f, 1e-3f);
+    EXPECT_NEAR(ray.origin().z(), 0.0f, 1e-5f);
+    
+    // Direction should be normalized
+    float length = std::sqrt(
+        ray.direction().x() * ray.direction().x() +
+        ray.direction().y() * ray.direction().y() +
+        ray.direction().z() * ray.direction().z()
+    );
+    EXPECT_NEAR(length, 1.0f, 1e-5f);
+}
+
+TEST(ThinLensOrthographicCameraTest, RaysConvergeAtFocalPlane) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    float lens_radius = 0.2f;
+    float focal_distance = 10.0f;
+    
+    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    
+    // Generate rays from same film point but different lens positions
+    ThinLensCameraSample<float> sample1, sample2;
+    sample1.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    sample2.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    
+    sample1.p_lens = math::Point<float, 2>(0.3f, 0.5f);
+    sample2.p_lens = math::Point<float, 2>(0.7f, 0.5f);
+    
+    auto ray1 = camera.generate_ray(sample1);
+    auto ray2 = camera.generate_ray(sample2);
+    
+    // Rays should have different origins
+    EXPECT_NE(ray1.origin().x(), ray2.origin().x());
+    
+    // But should converge at focal distance
+    auto point1_at_focal = ray1.at(focal_distance);
+    auto point2_at_focal = ray2.at(focal_distance);
+    
+    EXPECT_NEAR(point1_at_focal.x(), point2_at_focal.x(), 1e-2f);
+    EXPECT_NEAR(point1_at_focal.y(), point2_at_focal.y(), 1e-2f);
+}
+
+TEST(ThinLensOrthographicCameraTest, GenerateDifferentialRay) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    float lens_radius = 0.1f;
+    float focal_distance = 10.0f;
+    
+    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    
+    ThinLensCameraSample<float> sample;
+    sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    sample.p_lens = math::Point<float, 2>(0.5f, 0.5f);
+    
+    auto ray_diff = camera.generate_differential_ray(sample);
+    
+    // Main ray should be valid
+    float length = std::sqrt(
+        ray_diff.direction().x() * ray_diff.direction().x() +
+        ray_diff.direction().y() * ray_diff.direction().y() +
+        ray_diff.direction().z() * ray_diff.direction().z()
+    );
+    EXPECT_NEAR(length, 1.0f, 1e-5f);
+    
+    // Differential rays should also be normalized
+    float length_x = std::sqrt(
+        ray_diff.x().direction().x() * ray_diff.x().direction().x() +
+        ray_diff.x().direction().y() * ray_diff.x().direction().y() +
+        ray_diff.x().direction().z() * ray_diff.x().direction().z()
+    );
+    EXPECT_NEAR(length_x, 1.0f, 1e-5f);
+}
+
+TEST(ThinLensOrthographicCameraTest, DepthOfFieldEffect) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    float lens_radius = 0.5f; // Large aperture for visible DOF
+    float focal_distance = 10.0f;
+    
+    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    
+    // Sample rays from different lens positions
+    ThinLensCameraSample<float> sample1, sample2;
+    sample1.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    sample2.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    
+    sample1.p_lens = math::Point<float, 2>(0.2f, 0.5f);
+    sample2.p_lens = math::Point<float, 2>(0.8f, 0.5f);
+    
+    auto ray1 = camera.generate_ray(sample1);
+    auto ray2 = camera.generate_ray(sample2);
+    
+    // At focal distance, rays should converge
+    auto p1_focal = ray1.at(focal_distance);
+    auto p2_focal = ray2.at(focal_distance);
+    
+    float dist_at_focal = p1_focal.distance(p2_focal);
+    EXPECT_LT(dist_at_focal, 0.1f);
+    
+    // At different distance, rays should diverge
+    float test_distance = 20.0f; // Far from focal plane
+    auto p1_far = ray1.at(test_distance);
+    auto p2_far = ray2.at(test_distance);
+    
+    float dist_at_far = p1_far.distance(p2_far);
+    EXPECT_GT(dist_at_far, dist_at_focal);
+}
+
+// ============================================================================
+// ThinLensPerspectiveCamera Tests
+// ============================================================================
+
+TEST(ThinLensPerspectiveCameraTest, Construction) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double lens_radius = 0.1;
+    double focal_distance = 10.0;
+    
+    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    
+    EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<double>());
+}
+
+TEST(ThinLensPerspectiveCameraTest, GenerateRayFromLensCenter) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double lens_radius = 0.1;
+    double focal_distance = 10.0;
+    
+    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    
+    // Sample with lens center
+    ThinLensCameraSample<double> sample;
+    sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    sample.p_lens = math::Point<double, 2>(0.5, 0.5);
+    
+    auto ray = camera.generate_ray(sample);
+    
+    // Origin should be near (0, 0, 0) when lens center is used
+    EXPECT_NEAR(ray.origin().x(), 0.0, 1e-3);
+    EXPECT_NEAR(ray.origin().y(), 0.0, 1e-3);
+    EXPECT_NEAR(ray.origin().z(), 0.0, 1e-5);
+    
+    // Direction should be normalized
+    double length = std::sqrt(
+        ray.direction().x() * ray.direction().x() +
+        ray.direction().y() * ray.direction().y() +
+        ray.direction().z() * ray.direction().z()
+    );
+    EXPECT_NEAR(length, 1.0, 1e-5);
+}
+
+TEST(ThinLensPerspectiveCameraTest, RaysOriginateFromLens) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double lens_radius = 0.3;
+    double focal_distance = 10.0;
+    
+    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    
+    // Sample from edge of lens
+    ThinLensCameraSample<double> sample;
+    sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    sample.p_lens = math::Point<double, 2>(1.0, 0.5); // Right edge
+    
+    auto ray = camera.generate_ray(sample);
+    
+    // Origin should be offset from camera center
+    double origin_dist = std::sqrt(
+        ray.origin().x() * ray.origin().x() +
+        ray.origin().y() * ray.origin().y()
+    );
+    EXPECT_GT(origin_dist, 0.0);
+    EXPECT_LE(origin_dist, lens_radius + 1e-3);
+}
+
+TEST(ThinLensPerspectiveCameraTest, FocalPlaneConvergence) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double lens_radius = 0.2;
+    double focal_distance = 15.0;
+    
+    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    
+    // Generate rays from same film point but different lens positions
+    ThinLensCameraSample<double> sample1, sample2;
+    sample1.p_film = math::Point<double, 2>(400.0, 300.0);
+    sample2.p_film = math::Point<double, 2>(400.0, 300.0);
+    
+    sample1.p_lens = math::Point<double, 2>(0.2, 0.5);
+    sample2.p_lens = math::Point<double, 2>(0.8, 0.5);
+    
+    auto ray1 = camera.generate_ray(sample1);
+    auto ray2 = camera.generate_ray(sample2);
+    
+    // Origins should be different (from different lens positions)
+    EXPECT_NE(ray1.origin().x(), ray2.origin().x());
+    
+    // At focal distance, rays should converge (approximately)
+    auto p1_focal = ray1.at(focal_distance);
+    auto p2_focal = ray2.at(focal_distance);
+    
+    double dist_at_focal = p1_focal.distance(p2_focal);
+    EXPECT_LT(dist_at_focal, 0.5); // Should be close
+}
+
+TEST(ThinLensPerspectiveCameraTest, GenerateDifferentialRay) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double lens_radius = 0.1;
+    double focal_distance = 10.0;
+    
+    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    
+    ThinLensCameraSample<double> sample;
+    sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    sample.p_lens = math::Point<double, 2>(0.5, 0.5);
+    
+    auto ray_diff = camera.generate_differential_ray(sample);
+    
+    // All rays should be normalized
+    auto check_normalized = [](const geometry::Ray<double, 3>& ray) {
+        double length = std::sqrt(
+            ray.direction().x() * ray.direction().x() +
+            ray.direction().y() * ray.direction().y() +
+            ray.direction().z() * ray.direction().z()
+        );
+        return std::abs(length - 1.0) < 1e-5;
+    };
+    
+    EXPECT_TRUE(check_normalized(ray_diff));
+    EXPECT_TRUE(check_normalized(ray_diff.x()));
+    EXPECT_TRUE(check_normalized(ray_diff.y()));
+}
+
+TEST(ThinLensPerspectiveCameraTest, DepthOfFieldEffect) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double lens_radius = 0.4; // Large aperture
+    double focal_distance = 10.0;
+    
+    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    
+    // Sample rays from opposite lens edges
+    ThinLensCameraSample<double> sample1, sample2;
+    sample1.p_film = math::Point<double, 2>(400.0, 300.0);
+    sample2.p_film = math::Point<double, 2>(400.0, 300.0);
+    
+    sample1.p_lens = math::Point<double, 2>(0.1, 0.5);
+    sample2.p_lens = math::Point<double, 2>(0.9, 0.5);
+    
+    auto ray1 = camera.generate_ray(sample1);
+    auto ray2 = camera.generate_ray(sample2);
+    
+    // At focal distance, should be close
+    auto p1_focal = ray1.at(focal_distance);
+    auto p2_focal = ray2.at(focal_distance);
+    double dist_focal = p1_focal.distance(p2_focal);
+    
+    // At other distances, should be farther apart
+    double test_distance = 20.0;
+    auto p1_far = ray1.at(test_distance);
+    auto p2_far = ray2.at(test_distance);
+    double dist_far = p1_far.distance(p2_far);
+    
+    EXPECT_GT(dist_far, dist_focal);
+    
+    // Test near plane too
+    double near_distance = 5.0;
+    auto p1_near = ray1.at(near_distance);
+    auto p2_near = ray2.at(near_distance);
+    double dist_near = p1_near.distance(p2_near);
+    
+    EXPECT_GT(dist_near, dist_focal);
+}
+
+TEST(ThinLensPerspectiveCameraTest, BokehShapeTest) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double lens_radius = 0.3;
+    double focal_distance = 10.0;
+    
+    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    
+    // Sample multiple points on lens
+    std::vector<math::Point<double, 2>> lens_samples;
+    lens_samples.push_back(math::Point<double, 2>(0.5, 0.5)); // Center
+    lens_samples.push_back(math::Point<double, 2>(0.0, 0.5)); // Left
+    lens_samples.push_back(math::Point<double, 2>(1.0, 0.5)); // Right
+    lens_samples.push_back(math::Point<double, 2>(0.5, 0.0)); // Top
+    lens_samples.push_back(math::Point<double, 2>(0.5, 1.0)); // Bottom
+    lens_samples.push_back(math::Point<double, 2>(0.0, 0.0)); // Top-left
+    lens_samples.push_back(math::Point<double, 2>(1.0, 1.0)); // Bottom-right
+    
+    ThinLensCameraSample<double> sample;
+    sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    
+    for (const auto& lens_pos : lens_samples) {
+        sample.p_lens = lens_pos;
+        auto ray = camera.generate_ray(sample);
+        
+        // All rays should be valid and normalized
+        double length = std::sqrt(
+            ray.direction().x() * ray.direction().x() +
+            ray.direction().y() * ray.direction().y() +
+            ray.direction().z() * ray.direction().z()
+        );
+        EXPECT_NEAR(length, 1.0, 1e-5);
+        
+        // Direction z should be positive (forward)
+        EXPECT_GT(ray.direction().z(), 0.0);
+    }
+}
+
+// ============================================================================
+// Cross-Camera Comparison Tests
+// ============================================================================
+
+TEST(CameraComparisonTest, OrthographicVsPerspective) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    
+    OrthographicCamera<float> ortho_cam(film, 0.1f, 100.0f);
+    PerspectiveCamera<float> persp_cam(film, 0.1f, 100.0f);
+    
+    CameraSample<float> sample;
+    sample.p_film = math::Point<float, 2>(300.0f, 200.0f);
+    
+    auto ray_ortho = ortho_cam.generate_ray(sample);
+    auto ray_persp = persp_cam.generate_ray(sample);
+    
+    // Orthographic rays are parallel, perspective rays converge at origin
+    EXPECT_NE(ray_ortho.origin().x(), ray_persp.origin().x());
+    EXPECT_NE(ray_ortho.origin().y(), ray_persp.origin().y());
+}
+
+TEST(CameraComparisonTest, ThinLensVsPinhole) {
+    MockFilm<double> film(2.0, 2.0, 800, 600);
+    double focal_distance = 10.0;
+    
+    // Very small aperture should approximate pinhole
+    double tiny_aperture = 1e-6;
+    ThinLensPerspectiveCamera<double> thin_lens_cam(
+        film, 0.1, 100.0, tiny_aperture, focal_distance
+    );
+    PerspectiveCamera<double> pinhole_cam(film, 0.1, 100.0);
+    
+    ThinLensCameraSample<double> thin_lens_sample;
+    thin_lens_sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    thin_lens_sample.p_lens = math::Point<double, 2>(0.5, 0.5);
+    
+    CameraSample<double> pinhole_sample;
+    pinhole_sample.p_film = math::Point<double, 2>(400.0, 300.0);
+    
+    auto ray_thin_lens = thin_lens_cam.generate_ray(thin_lens_sample);
+    auto ray_pinhole = pinhole_cam.generate_ray(pinhole_sample);
+    
+    // With tiny aperture, thin lens should approximate pinhole
+    EXPECT_NEAR(ray_thin_lens.origin().x(), ray_pinhole.origin().x(), 1e-3);
+    EXPECT_NEAR(ray_thin_lens.origin().y(), ray_pinhole.origin().y(), 1e-3);
+    EXPECT_NEAR(ray_thin_lens.origin().z(), ray_pinhole.origin().z(), 1e-3);
+    
+    EXPECT_NEAR(ray_thin_lens.direction().x(), ray_pinhole.direction().x(), 1e-3);
+    EXPECT_NEAR(ray_thin_lens.direction().y(), ray_pinhole.direction().y(), 1e-3);
+    EXPECT_NEAR(ray_thin_lens.direction().z(), ray_pinhole.direction().z(), 1e-3);
+}
+
+// ============================================================================
+// Type Alias and Template Tests
+// ============================================================================
+
+TEST(CameraTemplateTest, FloatAndDoubleTypes) {
+    MockFilm<float> film_f(2.0f, 2.0f, 800, 600);
+    MockFilm<double> film_d(2.0, 2.0, 800, 600);
+    
+    // Test float types
+    OrthographicCamera<float> ortho_f(film_f, 0.1f, 100.0f);
+    PerspectiveCamera<float> persp_f(film_f, 0.1f, 100.0f);
+    
+    // Test double types
+    OrthographicCamera<double> ortho_d(film_d, 0.1, 100.0);
+    PerspectiveCamera<double> persp_d(film_d, 0.1, 100.0);
+    
+    SUCCEED() << "Both float and double camera types compile and construct";
+}
+
+TEST(CameraTemplateTest, PolymorphicBehavior) {
+    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    
+    // Test that derived cameras can be used as base Camera type
+    OrthographicCamera<float> ortho_cam(film, 0.1f, 100.0f);
+    Camera<float>& base_cam = ortho_cam;
+    
+    CameraSample<float> sample;
+    sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
+    
+    // Should be able to call generate_ray through base reference
+    auto ray = base_cam.generate_ray(sample);
+    
+    EXPECT_NEAR(ray.direction().z(), 1.0f, 1e-5f);
+}
+
+}  // namespace pbpt::camera::testing

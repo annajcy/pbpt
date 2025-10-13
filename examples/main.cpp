@@ -3,6 +3,11 @@
 #include <iostream>
 #include <filesystem>
 
+#include "camera/camera.hpp"
+#include "camera/camera_sample.hpp"
+#include "camera/film.hpp"
+#include "geometry/transform.hpp"
+#include "math/vector.hpp"
 #include "pbpt.h"
 
 using namespace pbpt;
@@ -35,7 +40,7 @@ int main() {
     auto transform = geometry::Transform<float>::translate(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Transform Matrix: " << transform.matrix() << std::endl;
 
-    math::Homo3 homo3 = math::Homo3::from_vector(math::Vec3{1.0, 2.0, 3.0});
+    math::Homo4 homo3 = math::Homo4::from_vector(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Homo3: " << homo3 << std::endl;
 
     math::Vec3 vec(1.0, 2.0, 3.0);
@@ -87,8 +92,8 @@ int main() {
 
     std::cout << "4x4 Matrix Addition:\n" << m << std::endl;
 
-    auto ho = math::Homo3::from_vector(math::Vec3(1.0, 2.0, 3.0));
-    auto ho2 = math::Homo3::from_point(math::Pt3(4.0, 5.0, 6.0));
+    auto ho = math::Homo4::from_vector(math::Vec3(1.0, 2.0, 3.0));
+    auto ho2 = math::Homo4::from_point(math::Pt3(4.0, 5.0, 6.0));
     std::cout << "Homo3 from Vector: " << ho << std::endl;
     std::cout << "Homo3 from Point: " << ho2 << std::endl;
 
@@ -96,7 +101,7 @@ int main() {
     std::cout << "Homo3 Sum: " << ho3 << std::endl;
     std::cout << "Homo3 Vector: " << ho3.to_point() << std::endl;
 
-    auto pp = math::Homo3::from_point(math::Pt3(1.0, 2.0, 3.0));
+    auto pp = math::Homo4::from_point(math::Pt3(1.0, 2.0, 3.0));
     std::cout << "Homo3 from Point: " << pp << std::endl;
 
     geometry::Trans tr = geometry::Trans::translate(math::Vec3(1.0, 2.0, 3.0));
@@ -426,7 +431,21 @@ int main() {
     std::cout << "Target RGB: " << rgb_from_optimized_albedox2 << std::endl;
 
 
-    
+    camera::ThinLensPerspectiveCamera<double> camera(
+        camera::Film<double> {math::Vector<int, 2>(1000, 1000), math::Vector<double, 2>(0.01, 0.01)}, 
+        0.1, 100.0, 0.1, 1.0);
+
+    for (int i = 0; i < 10; i ++) {
+        for (int j = 0; j < 10; j ++) {
+            auto r_ = camera.generate_ray(camera::ThinLensCameraSample<double> {
+                math::Point<double, 2>(i * 100 + 50, j * 100 + 50),
+                math::Point<double, 2>(0.3, 0.3)
+            });
+            
+            std::cout << "Center Camera Ray Origin: " << r_.origin() << ", Direction: " << r_.direction() << std::endl;
+            
+        }
+    }
 
     return 0;
 }

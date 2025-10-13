@@ -45,7 +45,7 @@ public:
     }
 
     geometry::Transform<T> render_to_camera() const {
-        return m_camera_to_render.inversed();
+        return m_camera_to_render.inverse_matrix();
     }
 
     geometry::Transform<T> render_to_world() const {
@@ -53,7 +53,7 @@ public:
     }
 
     geometry::Transform<T> world_to_render() const {
-        return m_render_to_world.inversed();
+        return m_render_to_world.inverse_matrix();
     }
 
     geometry::Transform<T> camera_to_world() const {
@@ -61,7 +61,7 @@ public:
     }
 
     geometry::Transform<T> world_to_camera() const {
-        return m_camera_to_world.inversed();
+        return m_camera_to_world.inverse_matrix();
     }
 
     RenderTransform<T>& change_render_space(RenderSpace space) {

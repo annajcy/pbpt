@@ -11,7 +11,7 @@ namespace pbpt::math::testing {
 
 TEST(HomoTest, DefaultConstructorIsOriginPoint) {
     // 默认构造函数应该创建一个表示原点的点 (0,0,0,1)
-    Homo3 h;
+    Homo4 h;
 
     EXPECT_FALSE(h.is_point());
     EXPECT_TRUE(h.is_vector());
@@ -31,7 +31,7 @@ TEST(HomoTest, DefaultConstructorIsOriginPoint) {
 
 TEST(HomoTest, ConstructFromPoint) {
     const Pt3   p(1.5, -2.5, 3.0);
-    const Homo3 h = Homo3::from_point(p);
+    const Homo4 h = Homo4::from_point(p);
 
     EXPECT_TRUE(h.is_point());
     EXPECT_FALSE(h.is_vector());
@@ -51,7 +51,7 @@ TEST(HomoTest, ConstructFromPoint) {
 
 TEST(HomoTest, ConstructFromVector) {
     const Vec3  v(4.0, 5.0, -6.5);
-    const Homo3 h = Homo3::from_vector(v);
+    const Homo4 h = Homo4::from_vector(v);
 
     EXPECT_FALSE(h.is_point());
     EXPECT_TRUE(h.is_vector());
@@ -71,7 +71,7 @@ TEST(HomoTest, ConstructFromVector) {
 
 TEST(HomoTest, ToPointPerformsPerspectiveDivide) {
     // 创建一个 w 不为 1 的齐次坐标点
-    const Homo3 h(Vec4(10.0, 20.0, -30.0, 2.0));
+    const Homo4 h(Vec4(10.0, 20.0, -30.0, 2.0));
 
     ASSERT_TRUE(h.is_point());
 
@@ -83,8 +83,8 @@ TEST(HomoTest, ToPointPerformsPerspectiveDivide) {
 }
 
 TEST(HomoTest, ConversionSafetyRuntime) {
-    const Homo3 h_point = Homo3::from_point(Pt3(1, 2, 3));
-    const Homo3 h_vector = Homo3::from_vector(Vec3(4, 5, 6));
+    const Homo4 h_point = Homo4::from_point(Pt3(1, 2, 3));
+    const Homo4 h_vector = Homo4::from_vector(Vec3(4, 5, 6));
 
     // 合法的转换不应该抛出异常
     ASSERT_NO_THROW(h_point.to_point());
@@ -98,8 +98,8 @@ TEST(HomoTest, ConversionSafetyRuntime) {
 TEST(HomoTest, ConversionSafetyCompileTime) {
     // 这个测试通过编译本身就证明了编译期检查的声明是有效的。
     // 我们使用 static_assert 来验证在编译期可以确定的条件。
-    constexpr Homo3 const_h_point = Homo3::from_point(Pt3(1, 1, 1));
-    constexpr Homo3 const_h_vector = Homo3::from_vector(Vec3(2, 2, 2));
+    constexpr Homo4 const_h_point = Homo4::from_point(Pt3(1, 1, 1));
+    constexpr Homo4 const_h_vector = Homo4::from_vector(Vec3(2, 2, 2));
 
     // 这些断言在编译期进行检查
     static_assert(const_h_point.is_point(), "A Homo from a Point should be a point at compile time.");
@@ -118,7 +118,7 @@ TEST(HomoTest, ConversionSafetyCompileTime) {
 
 TEST(HomoTest, RawAccessor) {
     const Pt3 p_orig(1, 2, 3);
-    Homo3     h = Homo3::from_point(p_orig);
+    Homo4     h = Homo4::from_point(p_orig);
 
     // 测试 const 版本的 to_vector_raw()
     const auto& const_to_vector_raw_data = h.to_vector_raw();

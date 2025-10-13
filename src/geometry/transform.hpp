@@ -130,6 +130,7 @@ public:
         return Transform<T>(mat, mat.inversed());
     }
 
+    // view matrix
     static constexpr Transform<T> look_at(const Point<T, 3>& eye, const Point<T, 3>& target, const Vector<T, 3>& up) {
         Vector<T, 3> f = (target - eye).normalized();
         Vector<T, 3> s = cross(f, up).normalized();
@@ -143,22 +144,40 @@ public:
         return Transform<T>(m, m.inversed());
     }
 
-    static Transform<T> perspective(T fov_y_rad, T aspect, T z_near, T z_far) {
-        T tan_half = std::tan(fov_y_rad / T(2));
+    // projection matrix, from camera space to clip space
+    static constexpr Transform<T> orthographic(T left, T right, T bottom, T top, T near, T far) {
         Matrix<T, 4, 4> m(
-            T(1)/(aspect * tan_half), T(0), T(0), T(0),
-            T(0), T(1)/tan_half, T(0), T(0),
-            T(0), T(0), z_far / (z_far - z_near), -z_far * z_near / (z_far - z_near),
-            T(0), T(0), T(1), T(0)
+            T(2) / (right - left), T(0), T(0), -(right + left) / (right - left),
+            T(0), T(2) / (top - bottom), T(0), -(top + bottom) / (top - bottom),
+            T(0), T(0), T(1) / (far - near), -near / (far - near),
+            T(0), T(0), T(0), T(1)
         );
-        return Transform<T>(m);
+        return Transform<T>(m, m.inversed());
     }
 
-    static constexpr Transform<T> orthographic(T l, T r, T b, T t, T zn, T zf) {
+    static Transform<T> pesp_to_ortho(T near, T far) {
         Matrix<T, 4, 4> m(
-            T(2)/(r-l), T(0), T(0), -(r+l)/(r-l),
-            T(0), T(2)/(t-b), T(0), -(t+b)/(t-b),
-            T(0), T(0), T(1)/(zf-zn), -zn/(zf-zn),
+            near, T(0), T(0), T(0),
+            T(0), near, T(0), T(0),
+            T(0), T(0), near + far, -near * far,
+            T(0), T(0), T(1), T(0)
+        );
+        return Transform<T>(m, m.inversed());
+    }
+
+    static Transform<T> perspective(T fov_y_rad, T aspect_xy, T near, T far) {
+        auto persp_to_ortho = pesp_to_ortho(near, far);
+        T right = near * std::tan(fov_y_rad / T(2)) * aspect_xy, left = -right;
+        T top = near * std::tan(fov_y_rad / T(2)), bottom = -top;
+        return orthographic(left, right, bottom, top, near, far) * persp_to_ortho;
+    }
+
+    // from clip space to viewport space, perspective division can be done before or after this transform
+    static Transform<T> viewport(T width, T height) {
+        Matrix<T, 4, 4> m(
+            width / T(2), T(0), T(0), width / T(2),
+            T(0), height / T(2), T(0), height / T(2),
+            T(0), T(0), T(1), T(0),
             T(0), T(0), T(0), T(1)
         );
         return Transform<T>(m, m.inversed());
@@ -226,21 +245,27 @@ public:
     }
 
     template<typename U>
+    constexpr auto operator*(const Homogeneous<U, 4>& rhs) const {
+        using R = std::common_type_t<T, U>;
+        return m_mat * rhs;
+    }
+
+    template<typename U>
     constexpr auto operator*(const Point<U, 3>& p) const {
         using R = std::common_type_t<T, U>;
-        return (m_mat * Homogeneous<R, 3>::from_point(p)).to_point();
+        return (m_mat * Homogeneous<R, 4>::from_point(p)).to_point();
     }
 
     template<typename U>
     constexpr auto operator*(const Vector<U, 3>& v) const {
         using R = std::common_type_t<T, U>;
-        return (m_mat * Homogeneous<R, 3>::from_vector(v)).to_vector();
+        return (m_mat * Homogeneous<R, 4>::from_vector(v)).to_vector();
     }
 
     template<typename U>
     constexpr auto operator*(const Normal<U, 3>& n) const {
         using R = std::common_type_t<T, U>;
-        auto r = m_inv.transposed() * Homogeneous<R, 3>::from_vector(n.to_vector());
+        auto r = m_inv.transposed() * Homogeneous<R, 4>::from_vector(n.to_vector());
         return Normal<R, 3>::from_vector(r.to_vector());
     }
 

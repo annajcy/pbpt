@@ -656,9 +656,9 @@ public:
     }
 
     template <typename U>
-    constexpr auto operator*(const Homogeneous<U, C - 1>& rhs) const noexcept {
+    constexpr auto operator*(const Homogeneous<U, C>& rhs) const noexcept {
         using ResultType = std::common_type_t<T, U>;
-        Homogeneous<ResultType, R - 1> result{};
+        Homogeneous<ResultType, R> result{};
         for (int r = 0; r < R; ++r) {
             result[r] = row(r).dot(rhs.to_vector_raw());
         }
