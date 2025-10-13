@@ -126,7 +126,7 @@ jobs:
         run: |
           set -e
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            source build/${{ matrix.build_type }}/generators/conanrun.sh
+            source build/generators/conanrun.sh
             ctest --test-dir build -C ${{ matrix.build_type }} --output-on-failure
           else
             source build/${{ matrix.build_type }}/generators/conanrun.sh

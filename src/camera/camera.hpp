@@ -27,9 +27,7 @@ protected:
     CameraProjection<T> m_projection{};
 
 public:
-    ProjectiveCamera<T> (
-        const CameraProjection<T>& projection
-    ) : m_projection(projection) {}
+    ProjectiveCamera(const CameraProjection<T>& projection) : m_projection(projection) {}
 
     const CameraProjection<T>& projection() const {
         return m_projection;
@@ -106,8 +104,8 @@ public:
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0); 
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
-        CameraSample<T> sample_x = { p_film_x};
-        CameraSample<T> sample_y = { p_film_y};
+        CameraSample<T> sample_x = { p_film_x };
+        CameraSample<T> sample_y = { p_film_y };
 
         geometry::Ray<T, 3> ray_x = this->generate_ray(sample_x);
         geometry::Ray<T, 3> ray_y = this->generate_ray(sample_y);
