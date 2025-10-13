@@ -192,7 +192,7 @@ std::string to_string_compact(const Interval<T>& interval) {
     oss << std::fixed << std::setprecision(3);
     
     if (interval.is_empty()) {
-        oss << "∅";
+        oss << "Empty";
     } else if (interval.is_point()) {
         oss << interval.m_low;
     } else {
