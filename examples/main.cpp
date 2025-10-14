@@ -3,11 +3,6 @@
 #include <iostream>
 #include <filesystem>
 
-#include "camera/camera.hpp"
-#include "camera/camera_sample.hpp"
-#include "camera/film.hpp"
-#include "geometry/transform.hpp"
-#include "math/vector.hpp"
 #include "pbpt.h"
 
 using namespace pbpt;
@@ -437,7 +432,7 @@ int main() {
 
     for (int i = 0; i < 10; i ++) {
         for (int j = 0; j < 10; j ++) {
-            auto r_ = camera.generate_ray(camera::ThinLensCameraSample<double> {
+            auto r_ = camera.generate_ray(camera::CameraSample<double> {
                 math::Point<double, 2>(i * 100 + 50, j * 100 + 50),
                 math::Point<double, 2>(0.3, 0.3)
             });
