@@ -121,7 +121,6 @@ jobs:
             -c tools.system.package_manager:sudo=True \
             --build=missing
 
-      # 运行测试：Linux/macOS 用 .sh；Windows 仍需 .bat（这两步保留分开更稳）
       - name: Test (${{ matrix.build_type }}) on Linux/macOS
         if: runner.os != 'Windows'
         shell: bash
@@ -132,7 +131,7 @@ jobs:
 
       - name: Test (${{ matrix.build_type }}) on Windows
         if: runner.os == 'Windows'
-        shell: cmd
+        shell: pwsh
         run: |
-          call build\generators\conanrun.bat
-          ctest --test-dir build -C ${{ matrix.build_type }} --output-on-failure
+          & "build/${{ matrix.build_type }}/generators/conanrun.ps1"
+          ctest --test-dir "build/${{ matrix.build_type }}" --output-on-failure

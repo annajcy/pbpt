@@ -3,15 +3,20 @@ project(pbpt LANGUAGES CXX)
 
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 
-option(ENABLE_COMPILE_COMMANDS "Symlink compile_commands.json to build root" ON)
+option(ENABLE_COMPILE_COMMANDS "Copy compile_commands.json to build root" ON)
 if (ENABLE_COMPILE_COMMANDS)
-  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-  if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
-    file(CREATE_LINK
-      "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json"
-      "${CMAKE_SOURCE_DIR}/build/compile_commands.json"
-      SYMBOLIC)
-  endif()
+  set(_SRC "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
+  set(_DST "${CMAKE_SOURCE_DIR}/build/compile_commands.json")
+
+  add_custom_target(copy_compile_commands ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_SRC}" "${_DST}"
+    COMMENT "Copying compile_commands.json -> ${_DST}"
+    VERBATIM
+  )
+
+  message(STATUS "compile_commands.json will be copied to build root.")
+else()
+  message(STATUS "compile_commands.json will NOT be copied to build root.")
 endif()
 
 set(CMAKE_CXX_STANDARD 23)
