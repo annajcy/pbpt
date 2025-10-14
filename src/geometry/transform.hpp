@@ -306,7 +306,7 @@ TransformDecompositionResult<T> fast_decompose_transform(const Transform<T>& tra
     using Vec3 = Vector<T,3>;
 
     // --- 1) Translation ---
-    const Vec3 t = { M4.at(0,3), M4.at(1,3), M4.at(2,3) };
+    const Vec3 t(M4.at(0,3), M4.at(1,3), M4.at(2,3));
     Transform<T> Txf = Transform<T>::translate(t);
 
     // --- 2) A = upper-left 3x3 ---
