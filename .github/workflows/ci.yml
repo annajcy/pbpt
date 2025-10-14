@@ -131,7 +131,7 @@ jobs:
 
       - name: Test (${{ matrix.build_type }}) on Windows
         if: runner.os == 'Windows'
-        shell: pwsh
+        shell: cmd
         run: |
-          & "build/${{ matrix.build_type }}/generators/conanrun.ps1"
-          ctest --test-dir "build/${{ matrix.build_type }}" --output-on-failure
+          call "build\${{ matrix.build_type }}\generators\conanrun.bat"
+          ctest --test-dir "build\${{ matrix.build_type }}" --output-on-failure
