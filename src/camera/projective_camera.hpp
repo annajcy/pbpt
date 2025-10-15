@@ -5,6 +5,7 @@
 #include "geometry/ray.hpp"
 #include "geometry/transform.hpp"
 
+#include "math/sampling.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
@@ -81,30 +82,64 @@ template<typename T>
 class ProjectiveCamera : public Camera<T> {
 protected:
     CameraProjection<T> m_projection{};
+    math::Vector<int, 2> m_film_resolution{1920, 960};
+    math::Vector<T, 2> m_film_physical_size{0.036, 0.018}; // Default to 36mm x 18mm
 
 public:
-    ProjectiveCamera(const CameraProjection<T>& projection) : m_projection(projection) {}
+    ProjectiveCamera(
+        const math::Vector<int, 2>& film_resolution, 
+        const math::Vector<T, 2>& film_physical_size, 
+        const CameraProjection<T>& projection
+    ) : m_film_resolution(film_resolution), m_film_physical_size(film_physical_size), m_projection(projection) {}
 
     const CameraProjection<T>& projection() const {
         return m_projection;
     }
+
+    const math::Vector<int, 2>& film_resolution() const {
+        return m_film_resolution;
+    }
+
+    const math::Vector<T, 2>& film_physical_size() const {
+        return m_film_physical_size;
+    }
+
+    virtual CameraProjection<T> create_projection(
+        const math::Vector<int, 2>& film_resolution,
+        const math::Vector<T, 2>& film_physical_size,
+        T near, T far
+    ) = 0;
 };
 
 template<typename T>
 class OrthographicCamera : public ProjectiveCamera<T> {
 public:
-    template<typename FilmType>
-    OrthographicCamera(const FilmType& film, T near, T far)
-        : ProjectiveCamera<T>(
-              CameraProjection<T>::orthographic(
-                -film.physical_size().x() / 2, 
-                film.physical_size().x() / 2, 
-                -film.physical_size().y() / 2, 
-                film.physical_size().y() / 2, 
-                near, 
-                far, 
-                film.resolution().x(), 
-                film.resolution().y())) {}
+
+    OrthographicCamera(
+        const math::Vector<int, 2>& film_resolution, 
+        const math::Vector<T, 2>& film_physical_size,
+        T near, T far
+    ) : ProjectiveCamera<T>(
+        film_resolution, film_physical_size, 
+        create_projection(film_resolution, film_physical_size, near, far)
+    ) {}
+
+    CameraProjection<T> create_projection(
+        const math::Vector<int, 2>& film_resolution,
+        const math::Vector<T, 2>& film_physical_size,
+        T near, T far
+    ) override {
+        return CameraProjection<T>::orthographic(
+            -film_physical_size.x() / 2,
+            film_physical_size.x() / 2,
+            -film_physical_size.y() / 2,
+            film_physical_size.y() / 2,
+            near,
+            far,
+            film_resolution.x(),
+            film_resolution.y()
+        );
+    }
 
     geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const override {
         auto origin = this->m_projection.apply_viewport_to_camera(sample.p_film);
@@ -132,19 +167,32 @@ public:
 template<typename T>
 class PerspectiveCamera : public ProjectiveCamera<T> {
 public:
-    PerspectiveCamera(const CameraProjection<T>& projection)
-        : ProjectiveCamera<T>(projection) {}
 
-    template<typename FilmType>
-    PerspectiveCamera(const FilmType& film, T near, T far)
-        : ProjectiveCamera<T>(
-              CameraProjection<T>::perspective(
-                std::atan2(film.physical_size().y(), 2 * near) * 2,
-                film.physical_size().x() / film.physical_size().y(),
-                near,
-                far,
-                film.resolution().x(),
-                film.resolution().y())) {}
+    PerspectiveCamera(
+        const math::Vector<int, 2>& film_resolution, 
+        const math::Vector<T, 2>& film_physical_size,
+        T near, T far
+    ) : ProjectiveCamera<T>(
+        film_resolution, film_physical_size, 
+        create_projection(film_resolution, film_physical_size, near, far)
+    ) {}
+
+    CameraProjection<T> create_projection(
+        const math::Vector<int, 2>& film_resolution,
+        const math::Vector<T, 2>& film_physical_size,
+        T near, T far
+    ) override {
+        T aspect = film_physical_size.x() / film_physical_size.y();
+        T fov_y = 2 * std::atan2(film_physical_size.y() / 2, near);
+        return CameraProjection<T>::perspective(
+            fov_y,
+            aspect,
+            near,
+            far,
+            film_resolution.x(),
+            film_resolution.y()
+        );
+    }
 
     geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const override {
         auto origin = math::Point<T, 3>(0, 0, 0);
@@ -172,27 +220,6 @@ public:
 
 // Thin Lens Cameras
 
-// 将 [0,1]^2 映射到 [-1,1]^2
-template<typename T>
-math::Point<T, 2> sample_lens_concentric(const math::Point<T, 2>& p_lens, T lens_radius) {
-    math::Point<T, 2> p_offset = 2.0 * p_lens.to_vector() - math::Vector<T, 2>(1, 1);
-
-    if (p_offset.x() == 0 && p_offset.y() == 0) {
-        return math::Point<T, 2>(0, 0);
-    }
-
-    T theta, r;
-    if (std::abs(p_offset.x()) > std::abs(p_offset.y())) {
-        r = p_offset.x();
-        theta = (M_PI / 4.0) * (p_offset.y() / p_offset.x());
-    } else {
-        r = p_offset.y();
-        theta = (M_PI / 2.0) - (M_PI / 4.0) * (p_offset.x() / p_offset.y());
-    }
-
-    return math::Point<T, 2>(lens_radius * r * math::Vector<T, 2>(std::cos(theta), std::sin(theta)));
-}
-
 template<typename T>
 class ThinLensOrthographicCamera : public OrthographicCamera<T> {
 private:
@@ -200,20 +227,20 @@ private:
     T m_focal_distance{1};
 
 public:
-    ThinLensOrthographicCamera(const CameraProjection<T>& projection, T lens_radius, T focal_distance)
-        : OrthographicCamera<T>(projection), m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
-
-    template<typename FilmType>
-    ThinLensOrthographicCamera(const FilmType& film, T near, T far, T lens_radius, T focal_distance)
-        : OrthographicCamera<T>(film, near, far), m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
-
+    ThinLensOrthographicCamera(
+        const math::Vector<int, 2>& film_resolution, 
+        const math::Vector<T, 2>& film_physical_size,
+        T near, T far, T lens_radius, T focal_distance
+    ) : OrthographicCamera<T>(film_resolution, film_physical_size, near, far), 
+          m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
+    
     geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const override {
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
         auto pinhole_ray = geometry::Ray<T, 3>(p_camera, math::Vector<T, 3>(0, 0, 1));
         T t = m_focal_distance / pinhole_ray.direction().z();
         auto p_focus = pinhole_ray.at(t);
 
-        auto p_lens = sample_lens_concentric(sample.p_lens, m_lens_radius);
+        auto p_lens = math::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
         auto direction = (p_focus - origin).normalized();
         return geometry::Ray<T, 3>(origin, direction);
@@ -245,17 +272,16 @@ private:
     T m_focal_distance{1};
     
 public:
-    ThinLensPerspectiveCamera(const CameraProjection<T>& projection, T lens_radius, T focal_distance)
-        : PerspectiveCamera<T>(projection), m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
+    ThinLensPerspectiveCamera(
+        const math::Vector<int, 2>& film_resolution, 
+        const math::Vector<T, 2>& film_physical_size,
+        T near, T far, T lens_radius, T focal_distance
+    ) : PerspectiveCamera<T>(film_resolution, film_physical_size, near, far), 
+          m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
 
-    template<typename FilmType>
-    ThinLensPerspectiveCamera(const FilmType& film, T near, T far, T lens_radius, T focal_distance)
-        : PerspectiveCamera<T>(film, near, far), m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
-
-    // Overload for CameraSample
     geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const override {
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
-        auto p_lens = sample_lens_concentric(sample.p_lens, m_lens_radius);
+        auto p_lens = math::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
         auto pinhole_ray = geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), p_camera);
         T t = m_focal_distance / pinhole_ray.direction().z();

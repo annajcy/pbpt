@@ -19,33 +19,22 @@
 
 namespace pbpt::camera::testing {
 
-// Helper struct to simulate a Film type
-template<typename T>
-struct MockFilm {
-    math::Vector<T, 2> m_physical_size;
-    math::Vector<int, 2> m_resolution;
-    
-    MockFilm(T width, T height, int res_x, int res_y)
-        : m_physical_size(width, height), m_resolution(res_x, res_y) {}
-    
-    const math::Vector<T, 2>& physical_size() const { return m_physical_size; }
-    const math::Vector<int, 2>& resolution() const { return m_resolution; }
-};
-
 // ============================================================================
 // OrthographicCamera Tests
 // ============================================================================
 
 TEST(OrthographicCameraTest, Construction) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
-    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
+    OrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f);
     
     EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<float>());
 }
 
 TEST(OrthographicCameraTest, GenerateRayCenter) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
-    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
+    OrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f);
     
     // Test ray from center of film
     CameraSample<float> sample;
@@ -65,8 +54,9 @@ TEST(OrthographicCameraTest, GenerateRayCenter) {
 }
 
 TEST(OrthographicCameraTest, GenerateRayCorners) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
-    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
+    OrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f);
 
     // Test down-left corner
     CameraSample<float> sample_tl;
@@ -93,8 +83,9 @@ TEST(OrthographicCameraTest, GenerateRayCorners) {
 }
 
 TEST(OrthographicCameraTest, GenerateDifferentialRay) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
-    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
+    OrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f);
     
     CameraSample<float> sample;
     sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
@@ -118,8 +109,9 @@ TEST(OrthographicCameraTest, GenerateDifferentialRay) {
 }
 
 TEST(OrthographicCameraTest, ParallelRays) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
-    OrthographicCamera<float> camera(film, 0.1f, 100.0f);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
+    OrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f);
     
     // Generate multiple rays at different positions
     CameraSample<float> sample1, sample2, sample3;
@@ -146,15 +138,17 @@ TEST(OrthographicCameraTest, ParallelRays) {
 // ============================================================================
 
 TEST(PerspectiveCameraTest, Construction) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
-    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
+    PerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0);
     
     EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<double>());
 }
 
 TEST(PerspectiveCameraTest, GenerateRayCenter) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
-    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
+    PerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0);
     
     // Ray from center should point roughly along +Z axis
     CameraSample<double> sample;
@@ -180,8 +174,9 @@ TEST(PerspectiveCameraTest, GenerateRayCenter) {
 }
 
 TEST(PerspectiveCameraTest, GenerateRayCorners) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
-    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
+    PerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0);
     
     // down-left corner
     CameraSample<double> sample_tl;
@@ -209,8 +204,9 @@ TEST(PerspectiveCameraTest, GenerateRayCorners) {
 }
 
 TEST(PerspectiveCameraTest, RaysDiverge) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
-    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
+    PerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0);
     
     // Generate rays at different positions
     CameraSample<double> sample1, sample2;
@@ -230,8 +226,9 @@ TEST(PerspectiveCameraTest, RaysDiverge) {
 }
 
 TEST(PerspectiveCameraTest, GenerateDifferentialRay) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
-    PerspectiveCamera<double> camera(film, 0.1, 100.0);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
+    PerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0);
     
     CameraSample<double> sample;
     sample.p_film = math::Point<double, 2>(400.0, 300.0);
@@ -249,9 +246,10 @@ TEST(PerspectiveCameraTest, GenerateDifferentialRay) {
 }
 
 TEST(PerspectiveCameraTest, FieldOfView) {
-    MockFilm<double> film(2.0, 2.0, 1000, 1000);
+    math::Vector<int, 2> resolution(1000, 1000);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double near = 1.0;
-    PerspectiveCamera<double> camera(film, near, 100.0);
+    PerspectiveCamera<double> camera(resolution, physical_size, near, 100.0);
     
     // Sample at extreme corners
     CameraSample<double> sample_corner;
@@ -274,7 +272,7 @@ TEST(PerspectiveCameraTest, FieldOfView) {
 
 TEST(SampleLensConcentricTest, CenterPoint) {
     math::Point<float, 2> p_center(0.5f, 0.5f);
-    auto result = sample_lens_concentric(p_center, 1.0f);
+    auto result = sample_uniform_disk_concentric(p_center, 1.0f);
     
     // Center should map to origin
     EXPECT_NEAR(result.x(), 0.0f, 1e-5f);
@@ -286,7 +284,7 @@ TEST(SampleLensConcentricTest, CornerPoints) {
     
     // Test corner (1, 1) -> should be at radius 1
     math::Point<float, 2> p_corner(1.0f, 1.0f);
-    auto result = sample_lens_concentric(p_corner, lens_radius);
+    auto result = sample_uniform_disk_concentric(p_corner, lens_radius);
     
     float radius = std::sqrt(result.x() * result.x() + result.y() * result.y());
     EXPECT_NEAR(radius, lens_radius, 1e-5f);
@@ -297,7 +295,7 @@ TEST(SampleLensConcentricTest, EdgePoints) {
     
     // Test right edge (1, 0.5)
     math::Point<float, 2> p_right(1.0f, 0.5f);
-    auto result_right = sample_lens_concentric(p_right, lens_radius);
+    auto result_right = sample_uniform_disk_concentric(p_right, lens_radius);
     
     // Should be on the right side
     EXPECT_GT(result_right.x(), 0.0f);
@@ -324,7 +322,7 @@ TEST(SampleLensConcentricTest, UniformDistribution) {
     test_points.push_back(math::Point<float, 2>(0.75f, 0.5f));
     
     for (const auto& p : test_points) {
-        auto result = sample_lens_concentric(p, lens_radius);
+        auto result = sample_uniform_disk_concentric(p, lens_radius);
         
         // All results should be within lens radius
         float radius = std::sqrt(result.x() * result.x() + result.y() * result.y());
@@ -337,7 +335,7 @@ TEST(SampleLensConcentricTest, OriginMapping) {
     
     // Point at origin of [0,1]^2 space should map to negative coordinates
     math::Point<float, 2> p_origin(0.0f, 0.0f);
-    auto result = sample_lens_concentric(p_origin, lens_radius);
+    auto result = sample_uniform_disk_concentric(p_origin, lens_radius);
     
     // Should be at (-1, 0) after rotation
     float radius = std::sqrt(result.x() * result.x() + result.y() * result.y());
@@ -349,21 +347,23 @@ TEST(SampleLensConcentricTest, OriginMapping) {
 // ============================================================================
 
 TEST(ThinLensOrthographicCameraTest, Construction) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
     float lens_radius = 0.1f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f, lens_radius, focal_distance);
     
     EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<float>());
 }
 
 TEST(ThinLensOrthographicCameraTest, GenerateRayFromLensCenter) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
     float lens_radius = 0.1f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f, lens_radius, focal_distance);
     
     // Sample with lens center (0.5, 0.5)
     CameraSample<float> sample;
@@ -387,11 +387,12 @@ TEST(ThinLensOrthographicCameraTest, GenerateRayFromLensCenter) {
 }
 
 TEST(ThinLensOrthographicCameraTest, RaysConvergeAtFocalPlane) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
     float lens_radius = 0.2f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f, lens_radius, focal_distance);
     
     // Generate rays from same film point but different lens positions
     CameraSample<float> sample1, sample2;
@@ -416,11 +417,12 @@ TEST(ThinLensOrthographicCameraTest, RaysConvergeAtFocalPlane) {
 }
 
 TEST(ThinLensOrthographicCameraTest, GenerateDifferentialRay) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
     float lens_radius = 0.1f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f, lens_radius, focal_distance);
     
     CameraSample<float> sample;
     sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
@@ -446,11 +448,12 @@ TEST(ThinLensOrthographicCameraTest, GenerateDifferentialRay) {
 }
 
 TEST(ThinLensOrthographicCameraTest, DepthOfFieldEffect) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
     float lens_radius = 0.5f; // Large aperture for visible DOF
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(film, 0.1f, 100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, 0.1f, 100.0f, lens_radius, focal_distance);
     
     // Sample rays from different lens positions
     CameraSample<float> sample1, sample2;
@@ -484,21 +487,23 @@ TEST(ThinLensOrthographicCameraTest, DepthOfFieldEffect) {
 // ============================================================================
 
 TEST(ThinLensPerspectiveCameraTest, Construction) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double lens_radius = 0.1;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0, lens_radius, focal_distance);
     
     EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<double>());
 }
 
 TEST(ThinLensPerspectiveCameraTest, GenerateRayFromLensCenter) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double lens_radius = 0.1;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0, lens_radius, focal_distance);
     
     // Sample with lens center
     CameraSample<double> sample;
@@ -522,11 +527,12 @@ TEST(ThinLensPerspectiveCameraTest, GenerateRayFromLensCenter) {
 }
 
 TEST(ThinLensPerspectiveCameraTest, RaysOriginateFromLens) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double lens_radius = 0.3;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0, lens_radius, focal_distance);
     
     // Sample from edge of lens
     CameraSample<double> sample;
@@ -545,11 +551,12 @@ TEST(ThinLensPerspectiveCameraTest, RaysOriginateFromLens) {
 }
 
 TEST(ThinLensPerspectiveCameraTest, FocalPlaneConvergence) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double lens_radius = 0.2;
     double focal_distance = 15.0;
     
-    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0, lens_radius, focal_distance);
     
     // Generate rays from same film point but different lens positions
     CameraSample<double> sample1, sample2;
@@ -574,11 +581,12 @@ TEST(ThinLensPerspectiveCameraTest, FocalPlaneConvergence) {
 }
 
 TEST(ThinLensPerspectiveCameraTest, GenerateDifferentialRay) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double lens_radius = 0.1;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0, lens_radius, focal_distance);
     
     CameraSample<double> sample;
     sample.p_film = math::Point<double, 2>(400.0, 300.0);
@@ -602,11 +610,12 @@ TEST(ThinLensPerspectiveCameraTest, GenerateDifferentialRay) {
 }
 
 TEST(ThinLensPerspectiveCameraTest, DepthOfFieldEffect) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double lens_radius = 0.4; // Large aperture
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0, lens_radius, focal_distance);
     
     // Sample rays from opposite lens edges
     CameraSample<double> sample1, sample2;
@@ -642,11 +651,12 @@ TEST(ThinLensPerspectiveCameraTest, DepthOfFieldEffect) {
 }
 
 TEST(ThinLensPerspectiveCameraTest, BokehShapeTest) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double lens_radius = 0.3;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(film, 0.1, 100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, 0.1, 100.0, lens_radius, focal_distance);
     
     // Sample multiple points on lens
     std::vector<math::Point<double, 2>> lens_samples;
@@ -683,10 +693,11 @@ TEST(ThinLensPerspectiveCameraTest, BokehShapeTest) {
 // ============================================================================
 
 TEST(CameraComparisonTest, OrthographicVsPerspective) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
     
-    OrthographicCamera<float> ortho_cam(film, 0.1f, 100.0f);
-    PerspectiveCamera<float> persp_cam(film, 0.1f, 100.0f);
+    OrthographicCamera<float> ortho_cam(resolution, physical_size, 0.1f, 100.0f);
+    PerspectiveCamera<float> persp_cam(resolution, physical_size, 0.1f, 100.0f);
     
     CameraSample<float> sample;
     sample.p_film = math::Point<float, 2>(300.0f, 200.0f);
@@ -700,15 +711,16 @@ TEST(CameraComparisonTest, OrthographicVsPerspective) {
 }
 
 TEST(CameraComparisonTest, ThinLensVsPinhole) {
-    MockFilm<double> film(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<double, 2> physical_size(2.0, 2.0);
     double focal_distance = 10.0;
     
     // Very small aperture should approximate pinhole
     double tiny_aperture = 1e-6;
     ThinLensPerspectiveCamera<double> thin_lens_cam(
-        film, 0.1, 100.0, tiny_aperture, focal_distance
+        resolution, physical_size, 0.1, 100.0, tiny_aperture, focal_distance
     );
-    PerspectiveCamera<double> pinhole_cam(film, 0.1, 100.0);
+    PerspectiveCamera<double> pinhole_cam(resolution, physical_size, 0.1, 100.0);
     
     CameraSample<double> thin_lens_sample;
     thin_lens_sample.p_film = math::Point<double, 2>(400.0, 300.0);
@@ -735,25 +747,28 @@ TEST(CameraComparisonTest, ThinLensVsPinhole) {
 // ============================================================================
 
 TEST(CameraTemplateTest, FloatAndDoubleTypes) {
-    MockFilm<float> film_f(2.0f, 2.0f, 800, 600);
-    MockFilm<double> film_d(2.0, 2.0, 800, 600);
+    math::Vector<int, 2> resolution_f(800, 600);
+    math::Vector<float, 2> physical_size_f(2.0f, 2.0f);
+    math::Vector<int, 2> resolution_d(800, 600);
+    math::Vector<double, 2> physical_size_d(2.0, 2.0);
     
     // Test float types
-    OrthographicCamera<float> ortho_f(film_f, 0.1f, 100.0f);
-    PerspectiveCamera<float> persp_f(film_f, 0.1f, 100.0f);
+    OrthographicCamera<float> ortho_f(resolution_f, physical_size_f, 0.1f, 100.0f);
+    PerspectiveCamera<float> persp_f(resolution_f, physical_size_f, 0.1f, 100.0f);
     
     // Test double types
-    OrthographicCamera<double> ortho_d(film_d, 0.1, 100.0);
-    PerspectiveCamera<double> persp_d(film_d, 0.1, 100.0);
+    OrthographicCamera<double> ortho_d(resolution_d, physical_size_d, 0.1, 100.0);
+    PerspectiveCamera<double> persp_d(resolution_d, physical_size_d, 0.1, 100.0);
     
     SUCCEED() << "Both float and double camera types compile and construct";
 }
 
 TEST(CameraTemplateTest, PolymorphicBehavior) {
-    MockFilm<float> film(2.0f, 2.0f, 800, 600);
+    math::Vector<int, 2> resolution(800, 600);
+    math::Vector<float, 2> physical_size(2.0f, 2.0f);
     
     // Test that derived cameras can be used as base Camera type
-    OrthographicCamera<float> ortho_cam(film, 0.1f, 100.0f);
+    OrthographicCamera<float> ortho_cam(resolution, physical_size, 0.1f, 100.0f);
     Camera<float>& base_cam = ortho_cam;
     
     CameraSample<float> sample;

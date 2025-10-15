@@ -427,8 +427,11 @@ int main() {
 
 
     camera::ThinLensPerspectiveCamera<double> camera(
-        camera::Film<double> {math::Vector<int, 2>(1000, 1000), math::Vector<double, 2>(0.01, 0.01)}, 
-        0.1, 100.0, 0.1, 1.0);
+        math::Vector<int, 2>(1000, 1000), 
+        math::Vector<double, 2>(0.01, 0.01), 
+        0.1, 100.0, 
+        0.1, 1.0
+    );
 
     for (int i = 0; i < 10; i ++) {
         for (int j = 0; j < 10; j ++) {

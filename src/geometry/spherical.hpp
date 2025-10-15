@@ -158,55 +158,55 @@ private:
     }
 };
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr auto cos_theta(const Vector<T, 3>& v) {
     return v.z();
 } 
 
-template <std::floating_point T>
+template <typename T>
 inline constexpr auto cos_theta_sq(const Vector<T, 3>& v) {
     return v.z() * v.z();
 }
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr auto sin_theta_sq(const Vector<T, 3>& v) {
     return std::max(T(0), T(1) - cos_theta_sq(v));
 }
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr auto sin_theta(const Vector<T, 3>& v) {
     return std::sqrt(sin_theta_sq(v));
 }
 
-template <std::floating_point T>
+template <typename T>
 inline constexpr auto tan_theta(const Vector<T, 3>& v) {
     return sin_theta(v) / cos_theta(v);
 }
 
-template <std::floating_point T>
+template <typename T>
 inline constexpr auto tan_theta_sq(const Vector<T, 3>& v) {
     return sin_theta_sq(v) / cos_theta_sq(v);
 }
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr auto phi(const Vector<T, 3>& v) {
     auto p = std::atan2(v.y(), v.x());
     return wrap_angle_2pi(p);
 }
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr auto sin_phi(const Vector<T, 3>& v) {
     auto s_th = sin_theta(v);
     return is_zero(s_th) ? T(0) : std::clamp(v.y() / s_th, T(-1), T(1));
 }
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr auto cos_phi(const Vector<T, 3>& v) {
     auto s_th = sin_theta(v);
     return is_zero(s_th) ? T(1) : std::clamp(v.x() / s_th, T(-1), T(1));
 }
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr auto cos_delta_phi(const Vector<T, 3>& a, const Vector<T, 3>& b) {
     auto axy = a.x() * a.x() + a.y() * a.y();
     auto bxy = b.x() * b.x() + b.y() * b.y();
@@ -216,7 +216,26 @@ inline constexpr auto cos_delta_phi(const Vector<T, 3>& a, const Vector<T, 3>& b
     );
 }
 
-template<std::floating_point T>
+template<typename T>
+inline constexpr auto warp_equal_area_square(math::Point<T, 2> uv) {
+    if (uv.x() < 0) {
+        uv.x() = -uv.x();     // mirror across u = 0
+        uv.y() = 1 - uv.y();  // mirror across v = 0.5
+    } else if (uv.x() > 1) {
+        uv.x() = 2 - uv.x();  // mirror across u = 1
+        uv.y() = 1 - uv.y();  // mirror across v = 0.5
+    }
+    if (uv.y() < 0) {
+        uv.x() = 1 - uv.x();  // mirror across u = 0.5
+        uv.y() = -uv.y();     // mirror across v = 0;
+    } else if (uv.y() > 1) {
+        uv.x() = 1 - uv.x();  // mirror across u = 0.5
+        uv.y() = 2 - uv.y();  // mirror across v = 1
+    }
+    return uv;
+}
+
+template<typename T>
 inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p) {
     T u = 2 * p.x() - 1, v = 2 * p.y() - 1;
     T up = std::abs(u), vp = std::abs(v);
@@ -237,7 +256,7 @@ inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p)
     );
 }
 
-template<std::floating_point T>
+template<typename T>
 inline constexpr T spherical_triangle_area(
     const Vector<T, 3>& a,
     const Vector<T, 3>& b,
@@ -249,7 +268,7 @@ inline constexpr T spherical_triangle_area(
     ));
 }
 
-template<std::floating_point T>
+template<typename T>
 constexpr T spherical_polygon_area(
     const std::vector<Vector<T, 3>>& vertices
 ) {

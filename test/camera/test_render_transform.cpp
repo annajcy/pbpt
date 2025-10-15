@@ -1,4 +1,4 @@
-#include "camera/render_tranform.hpp"
+#include "camera/render_transform.hpp"
 #include "geometry/transform.hpp"
 #include "math/function.hpp"
 #include "math/type_alias.hpp"
@@ -9,6 +9,8 @@ using namespace pbpt;
 using namespace pbpt::camera;
 using namespace pbpt::geometry;
 using namespace pbpt::math;
+
+namespace pbpt::camera::testing {
 
 template <typename T>
 void check_transform_approx(const Transform<T>& t1, const Transform<T>& t2) {
@@ -73,3 +75,6 @@ TEST(RenderTransform, ChangeSpace) {
     check_transform_approx(render_transform.camera_to_render(), camera_to_world);
     check_transform_approx(render_transform.render_to_world(), Transform<Float>::identity());
 }
+
+}
+
