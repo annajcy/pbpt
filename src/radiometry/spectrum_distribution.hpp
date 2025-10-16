@@ -145,6 +145,33 @@ public:
     }
 };
 
+template<typename T>
+class PiecewiseLinearSpectrumDistribution : public SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T> {
+private:
+    std::vector<std::pair<T, T>> m_points; // (lambda, value)
+
+public:
+    using base = SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T>;
+    using base::base;
+
+    PiecewiseLinearSpectrumDistribution(const std::vector<std::pair<T, T>>& points)
+        : m_points(points) {}
+
+    constexpr T at_impl(T lambda) const {
+        // Find the segment that contains the given lambda
+        for (size_t i = 1; i < m_points.size(); ++i) {
+            if (lambda < m_points[i].first) {
+                // Perform linear interpolation between the two points
+                const auto& [lambda0, value0] = m_points[i - 1];
+                const auto& [lambda1, value1] = m_points[i];
+                return value0 + (value1 - value0) * (lambda - lambda0) / (lambda1 - lambda0);
+            }
+        }
+        // If lambda is out of range, return 0
+        return T(0);
+    }
+};
+
 template<typename T, int LambdaMin, int LambdaMax>
 class TabularSpectrumDistribution : public SpectrumDistribution<TabularSpectrumDistribution<T, LambdaMin, LambdaMax>, T> {
 private:
