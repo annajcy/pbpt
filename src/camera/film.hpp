@@ -1,10 +1,6 @@
 #pragma once
 
-#include <type_traits>
 #include "math/vector.hpp"
-#include "math/point.hpp"
-#include "concepts"
-#include "type_traits"
 
 namespace pbpt::camera {
 

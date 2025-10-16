@@ -82,29 +82,17 @@ template<typename T>
 class ProjectiveCamera : public Camera<T> {
 protected:
     CameraProjection<T> m_projection{};
-    math::Vector<int, 2> m_film_resolution{1920, 960};
-    math::Vector<T, 2> m_film_physical_size{0.036, 0.018}; // Default to 36mm x 18mm
 
 public:
     ProjectiveCamera(
-        const math::Vector<int, 2>& film_resolution, 
-        const math::Vector<T, 2>& film_physical_size, 
         const CameraProjection<T>& projection
-    ) : m_film_resolution(film_resolution), m_film_physical_size(film_physical_size), m_projection(projection) {}
+    ) : m_projection(projection) {}
 
     const CameraProjection<T>& projection() const {
         return m_projection;
     }
 
-    const math::Vector<int, 2>& film_resolution() const {
-        return m_film_resolution;
-    }
-
-    const math::Vector<T, 2>& film_physical_size() const {
-        return m_film_physical_size;
-    }
-
-    virtual CameraProjection<T> create_projection(
+    virtual CameraProjection<T> create_projection_by_film(
         const math::Vector<int, 2>& film_resolution,
         const math::Vector<T, 2>& film_physical_size,
         T near, T far
@@ -116,15 +104,24 @@ class OrthographicCamera : public ProjectiveCamera<T> {
 public:
 
     OrthographicCamera(
+        T left, T right, T bottom, T top, T near, T far, 
+        T resolution_x, T resolution_y
+    ) : ProjectiveCamera<T>(CameraProjection<T>::orthographic(
+        left, right, bottom, top, near, far, 
+        resolution_x, resolution_y)
+    ) { }
+
+    OrthographicCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
         T near, T far
     ) : ProjectiveCamera<T>(
-        film_resolution, film_physical_size, 
-        create_projection(film_resolution, film_physical_size, near, far)
+        create_projection_by_film(
+            film_resolution, film_physical_size, 
+            near, far)
     ) {}
 
-    CameraProjection<T> create_projection(
+    CameraProjection<T> create_projection_by_film(
         const math::Vector<int, 2>& film_resolution,
         const math::Vector<T, 2>& film_physical_size,
         T near, T far
@@ -169,15 +166,31 @@ class PerspectiveCamera : public ProjectiveCamera<T> {
 public:
 
     PerspectiveCamera(
+        const T fov_y_rad,
+        const T aspect_xy,
+        const T near,
+        const T far,
+        const T resolution_x,
+        const T resolution_y
+    ) : ProjectiveCamera<T>(CameraProjection<T>::perspective(
+        fov_y_rad, 
+        aspect_xy, 
+        near, far, 
+        resolution_x, resolution_y)
+    ) { }
+
+    PerspectiveCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
         T near, T far
     ) : ProjectiveCamera<T>(
-        film_resolution, film_physical_size, 
-        create_projection(film_resolution, film_physical_size, near, far)
+        create_projection_by_film(
+            film_resolution, film_physical_size, 
+            near, far
+        )
     ) {}
 
-    CameraProjection<T> create_projection(
+    CameraProjection<T> create_projection_by_film(
         const math::Vector<int, 2>& film_resolution,
         const math::Vector<T, 2>& film_physical_size,
         T near, T far

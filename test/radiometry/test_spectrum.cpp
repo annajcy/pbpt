@@ -353,7 +353,7 @@ TEST_F(SpectrumTest, SpectrumIntegrationMonteCarloXYZ) {
     XYZ<double> expected_xyz{};
     
     constexpr int sample_N = 100;
-    constexpr int round_N = 1000; 
+    constexpr int round_N = 10000; 
     
         for (int i = 0; i < round_N; i++) {
         math::RandomGenerator<double, sample_N> rng;
@@ -378,9 +378,9 @@ TEST_F(SpectrumTest, SpectrumIntegrationMonteCarloXYZ) {
     
     // For D65, roughly expect x ≈ 0.31, y ≈ 0.33, z ≈ 0.36 (normalized)
     auto normalized_xyz = expected_xyz.normalized_to_y(100.0);
-    EXPECT_NEAR(normalized_xyz.x(), 95.0, 3.0);  // Rough D65 white point
+    EXPECT_NEAR(normalized_xyz.x(), 95.0, 2.0);  // Rough D65 white point
     EXPECT_NEAR(normalized_xyz.y(), 100.0, 0.001);
-    EXPECT_NEAR(normalized_xyz.z(), 108.0, 3.0);
+    EXPECT_NEAR(normalized_xyz.z(), 108.0, 2.0);
 }
 
 // =============================================================================
