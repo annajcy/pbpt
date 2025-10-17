@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <functional>
 #include <iostream>
 #include <type_traits>

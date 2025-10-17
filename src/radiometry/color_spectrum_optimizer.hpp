@@ -6,7 +6,6 @@
 #include "math/operator.hpp"
 #include "math/vector.hpp"
 
-
 #include "spectrum_distribution.hpp"
 #include "color.hpp"
 #include "color_space.hpp"

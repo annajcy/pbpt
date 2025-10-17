@@ -1,10 +1,6 @@
 #pragma once
 
-#include <array>
 #include <cstdlib>
-#include <cmath>
-#include <concepts>
-#include <algorithm>
 #include <utility>
 
 #include "math/function.hpp"
@@ -14,7 +10,6 @@
 #include "math/sampling.hpp"
 
 namespace pbpt::radiometry {
-
 
 template<typename SampleType, typename T>
 using Sample = std::pair<SampleType, T>;
