@@ -2,8 +2,9 @@
 
 #include "math/point.hpp"
 #include "../color_space.hpp"
+#include "illuminant_spectrum.hpp"
 
-namespace pbpt::radiometry {
+namespace pbpt::radiometry::constant {
 
 template<typename T>
 inline static RGBColorSpace<T> sRGB(

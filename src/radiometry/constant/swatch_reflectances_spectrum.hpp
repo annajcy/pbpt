@@ -3,7 +3,7 @@
 
 #include "../spectrum_distribution.hpp"
 
-namespace pbpt::radiometry {
+namespace pbpt::radiometry::constant {
 
 // Swatch reflectances are taken from Danny Pascale's Macbeth chart measurements
 // BabelColor ColorChecker data: Copyright (c) 2004-2012 Danny Pascale

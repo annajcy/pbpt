@@ -12,6 +12,7 @@
 #include "spectrum_distribution.hpp"
 #include "spectrum_loader.hpp"
 
-#include "radiometry_constant/swatch_reflectances_spectrum.hpp"
-#include "radiometry_constant/xyz_ilum_spectrum.hpp"
-#include "radiometry_constant/standard_color_spaces.hpp"
+#include "constant/swatch_reflectances_spectrum.hpp"
+#include "constant/xyz_spectrum.hpp"
+#include "constant/illuminant_spectrum.hpp"
+#include "constant/standard_color_spaces.hpp"

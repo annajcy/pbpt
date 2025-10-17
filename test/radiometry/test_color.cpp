@@ -8,6 +8,7 @@
 
 using namespace pbpt::radiometry;
 using namespace pbpt::math;
+using namespace pbpt::radiometry::constant;
 
 namespace pbpt::radiometry::testing {
 

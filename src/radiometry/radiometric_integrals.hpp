@@ -50,10 +50,12 @@ using DirectionSample = Sample<math::Vector<T, 3>, T>;
 
 template<typename T>
 class UniformHemisphereDomain : public IntegrableDomain<UniformHemisphereDomain<T>, T> {
+    friend class IntegrableDomain<UniformHemisphereDomain<T>, T>;
 public:
 
     using sample_type = math::Vector<T,3>;
 
+private:
     template<typename RNG>
     DirectionSample<T> sample_one_impl(RNG& rng2d) const {
         auto uv = math::Point<T, 2>::from_array(rng2d.generate_uniform(T(0), T(1))); // uv ∈ [0,1]^2
@@ -68,9 +70,11 @@ public:
 
 template<typename T>
 class ProjectedHemisphereDomain : public IntegrableDomain<ProjectedHemisphereDomain<T>, T> {
+    friend class IntegrableDomain<ProjectedHemisphereDomain<T>, T>;
 public:
     using sample_type = math::Vector<T, 3>;
 
+private:
     template<typename RNG>
     DirectionSample<T> sample_one_impl(RNG& rng) const {
         auto uv = math::Point<T, 2>::from_array(rng.generate_uniform(T(0), T(1)));
@@ -86,9 +90,12 @@ using DiskSample = Sample<math::Point<T, 2>, T>;
 
 template<typename T>
 class UniformDiskDomain : public IntegrableDomain<UniformDiskDomain<T>, T> {
+    friend class IntegrableDomain<UniformDiskDomain<T>, T>;
+
 public:
     using sample_type = math::Point<T, 2>;
 
+private:
     template<typename RNG>
     DiskSample<T> sample_one_impl(RNG& rng2d) const {
         auto u01 = math::Point<T, 2>::from_array(rng2d.generate_uniform(0, 1));
@@ -113,6 +120,8 @@ using SurfaceSample = Sample<SurfaceInfo<T>, T>;
 
 template<typename T>
 class ParallelogramAreaDomain : public IntegrableDomain<ParallelogramAreaDomain<T>, T> {
+    friend class IntegrableDomain<ParallelogramAreaDomain<T>, T>;
+
 private:
     math::Point<T, 3> m_origin;
     math::Vector<T, 3> m_edge1;
@@ -138,7 +147,8 @@ public:
     constexpr math::Normal<T, 3> normal() const {
         return m_normal;
     }
-
+    
+private:
     template<typename RNG>
     SurfaceSample<T> sample_one_impl(RNG& rng2d) const {
         auto uv = rng2d.generate_uniform(0.0, 1.0);

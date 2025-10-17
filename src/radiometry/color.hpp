@@ -6,7 +6,7 @@
 #include "math/vector.hpp"
 
 #include "sampled_spectrum.hpp"
-#include "radiometry_constant/xyz_ilum_spectrum.hpp"
+#include "constant/xyz_spectrum.hpp"
 
 namespace pbpt::radiometry {
 
@@ -28,9 +28,9 @@ public:
 
     template<typename IlluminantSpectrumType>
     static XYZ<T> from_standard_illuminant(const IlluminantSpectrumType& I) {
-        T Xn = inner_product(I, CIE_X<T>);
-        T Yn = inner_product(I, CIE_Y<T>);
-        T Zn = inner_product(I, CIE_Z<T>);
+        T Xn = inner_product(I, constant::CIE_X<T>);
+        T Yn = inner_product(I, constant::CIE_Y<T>);
+        T Zn = inner_product(I, constant::CIE_Z<T>);
         T denom = Yn;
         return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
     }
@@ -39,11 +39,11 @@ public:
     static XYZ<T> from_reflectance_under_illuminant(const ReflectanceSpectrumType& R,
                                                     const IlluminantSpectrumType& I) {
         // 分子：R(λ)*I(λ) 与 CIE CMF 的内积
-        T Xn = inner_product(R * I, CIE_X<T>);
-        T Yn = inner_product(R * I, CIE_Y<T>);
-        T Zn = inner_product(R * I, CIE_Z<T>);
+        T Xn = inner_product(R * I, constant::CIE_X<T>);
+        T Yn = inner_product(R * I, constant::CIE_Y<T>);
+        T Zn = inner_product(R * I, constant::CIE_Z<T>);
         // 分母：I(λ) 与 ȳ(λ) 的内积（归一化，使理想白 Y=1）
-        T denom = inner_product(I, CIE_Y<T>);
+        T denom = inner_product(I, constant::CIE_Y<T>);
         return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
     }
 
@@ -52,10 +52,10 @@ public:
     static XYZ<T> from_emission_under_illuminant(
         const IlluminantSpectrumType& L, const RefIlluminantSpectrumType& Iref // 例如 D65
     ) {
-        T Xn = inner_product(L, CIE_X<T>);
-        T Yn = inner_product(L, CIE_Y<T>);
-        T Zn = inner_product(L, CIE_Z<T>);
-        T denom = inner_product(Iref, CIE_Y<T>);   // 固定：D65 的 Y
+        T Xn = inner_product(L, constant::CIE_X<T>);
+        T Yn = inner_product(L, constant::CIE_Y<T>);
+        T Zn = inner_product(L, constant::CIE_Z<T>);
+        T denom = inner_product(Iref, constant::CIE_Y<T>);   // 固定：D65 的 Y
         return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
     }
 
@@ -65,9 +65,9 @@ public:
         const SampledWavelength<T, N>& wavelengths, 
         const SampledPdf<T, N>& pdf) 
     {
-        SampledSpectrum<T, N> X = CIE_X<T>.sample(wavelengths);
-        SampledSpectrum<T, N> Y = CIE_Y<T>.sample(wavelengths);
-        SampledSpectrum<T, N> Z = CIE_Z<T>.sample(wavelengths);
+        SampledSpectrum<T, N> X = constant::CIE_X<T>.sample(wavelengths);
+        SampledSpectrum<T, N> Y = constant::CIE_Y<T>.sample(wavelengths);
+        SampledSpectrum<T, N> Z = constant::CIE_Z<T>.sample(wavelengths);
         return XYZ(
             (X * spectrum * pdf.inv()).average(), 
             (Y * spectrum * pdf.inv()).average(), 

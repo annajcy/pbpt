@@ -8,6 +8,7 @@
 #include "math/random_generator.hpp"
 
 using namespace pbpt::math;
+using namespace pbpt::radiometry::constant;
 
 namespace pbpt::radiometry::testing {
 
