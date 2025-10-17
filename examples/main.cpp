@@ -294,7 +294,7 @@ int main() {
         auto wl_r = rng.generate_uniform(radiometry::lambda_min<double>, radiometry::lambda_max<double>);
         auto wl = radiometry::SampledWavelength<double, sample_N>(math::Vector<double, sample_N>::from_array(wl_r));
 
-        auto xyz = radiometry::XYZ<double>::from_sampled_spectrum(
+        auto xyz = radiometry::XYZ<double>::from_radiance(
             D65.sample(wl),
             wl,
             radiometry::SampledPdf<double, sample_N>(math::Vector<double, sample_N>::filled(1 / (radiometry::lambda_max<double> - radiometry::lambda_min<double>)))

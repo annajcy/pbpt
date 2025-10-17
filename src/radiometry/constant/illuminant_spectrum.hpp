@@ -9,7 +9,7 @@ using luminantD65Range = TabularSpectrumRange<300, 830>;
 using luminantARange   = TabularSpectrumRange<300, 830>;
 
 template <typename T>
-inline static TabularSpectrumDistribution<T, luminantD65Range::LMinValue, luminantD65Range::LMaxValue> CIE_D65_ilum(
+inline static constexpr TabularSpectrumDistribution<T, luminantD65Range::LMinValue, luminantD65Range::LMaxValue> CIE_D65_ilum(
     0.03410, 0.36014, 0.68618, 1.01222, 1.33826, 1.66430, 1.99034, 2.31638, 2.64242, 2.96846, 3.29450, 4.98865, 6.68280,
     8.37695, 10.07110, 11.76520, 13.45940, 15.15350, 16.84770, 18.54180, 20.23600, 21.91770, 23.59950, 25.28120,
     26.96300, 28.64470, 30.32650, 32.00820, 33.69000, 35.37170, 37.05350, 37.34300, 37.63260, 37.92210, 38.21160,
@@ -63,7 +63,7 @@ inline static TabularSpectrumDistribution<T, luminantD65Range::LMinValue, lumina
 );
 
 template <typename T>
-inline static TabularSpectrumDistribution<T, luminantD50Range::LMinValue, luminantD50Range::LMaxValue> CIE_D50_ilum(
+inline static constexpr TabularSpectrumDistribution<T, luminantD50Range::LMinValue, luminantD50Range::LMaxValue> CIE_D50_ilum(
     0.01922, 0.22235, 0.42548, 0.62860, 0.83173, 1.03486, 1.23799, 1.44112, 1.64424, 1.84737, 2.05050, 2.62329, 3.19608,
     3.76887, 4.34166, 4.91445, 5.48724, 6.06003, 6.63282, 7.20561, 7.77840, 8.47531, 9.17222, 9.86913, 10.56600,
     11.26300, 11.95990, 12.65680, 13.35370, 14.05060, 14.74750, 15.06760, 15.38760, 15.70760, 16.02770, 16.34780,
@@ -116,7 +116,7 @@ inline static TabularSpectrumDistribution<T, luminantD50Range::LMinValue, lumina
 );
 
 template <typename T>
-inline static TabularSpectrumDistribution<T, luminantARange::LMinValue, luminantARange::LMaxValue> CIE_A_ilum(
+inline static constexpr TabularSpectrumDistribution<T, luminantARange::LMinValue, luminantARange::LMaxValue> CIE_A_ilum(
     0.93048, 0.96764, 1.00597, 1.04549, 1.08623, 1.12821, 1.17147, 1.21602, 1.26188, 1.30910, 1.35769, 1.40768, 1.45910,
     1.51198, 1.56633, 1.62219, 1.67959, 1.73855, 1.79910, 1.86127, 1.92508, 1.99057, 2.05776, 2.12667, 2.19734, 2.26980,
     2.34406, 2.42017, 2.49814, 2.57801, 2.65981, 2.74355, 2.82928, 2.91701, 3.00678, 3.09861, 3.19253, 3.28857, 3.38676,

@@ -18,7 +18,6 @@ class CameraProjection {
 private:
     geometry::Transform<T> m_clip_to_viewport{};
     geometry::Transform<T> m_camera_to_clip{};
-
     geometry::Transform<T> m_camera_to_viewport{};
 
 public:

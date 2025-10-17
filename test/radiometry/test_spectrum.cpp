@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 
+#include "math/type_alias.hpp"
 #include "pbpt.h"
 #include "math/random_generator.hpp"
 
@@ -196,7 +197,7 @@ TEST_F(SpectrumTest, TabularSpectrumDistributionConstruction) {
     constexpr int lambda_max = 700;
     constexpr int size = lambda_max - lambda_min + 1;
 
-    std::vector<float> samples(size);
+    std::array<float, size> samples;
     for (int i = 0; i < size; ++i) {
         samples[i] = 1.0f + 0.001f * i;  // Linear increase
     }
@@ -218,7 +219,7 @@ TEST_F(SpectrumTest, TabularSpectrumDistributionOutOfRange) {
     constexpr int lambda_max = 600;
     constexpr int size = lambda_max - lambda_min + 1;
 
-    std::vector<double> samples(size);
+    std::array<double, size> samples;
     std::fill(samples.begin(), samples.end(), 1.0);
     
     TabularSpectrumDistribution<double, lambda_min, lambda_max> tabular(samples);
@@ -362,7 +363,7 @@ TEST_F(SpectrumTest, SpectrumIntegrationMonteCarloXYZ) {
         auto wl_r = rng.generate_uniform(lambda_min<double>, lambda_max<double>);
         auto wl = SampledWavelength<double, sample_N>(Vector<double, sample_N>::from_array(wl_r));
         
-        auto xyz = XYZ<double>::from_sampled_spectrum(
+        auto xyz = XYZ<double>::from_radiance(
             d65.sample(wl),
             wl,
             SampledPdf<double, sample_N>(Vector<double, sample_N>::filled(1.0 / (lambda_max<double> - lambda_min<double>)))

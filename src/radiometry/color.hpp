@@ -27,51 +27,51 @@ public:
     }
 
     template<typename IlluminantSpectrumType>
-    static XYZ<T> from_standard_illuminant(const IlluminantSpectrumType& I) {
-        T Xn = inner_product(I, constant::CIE_X<T>);
-        T Yn = inner_product(I, constant::CIE_Y<T>);
-        T Zn = inner_product(I, constant::CIE_Z<T>);
-        T denom = Yn;
-        return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
+    static XYZ<T> from_standard_illuminant(const IlluminantSpectrumType& illuminant) {
+        T X = inner_product(illuminant, constant::CIE_X<T>);
+        T Y = inner_product(illuminant, constant::CIE_Y<T>);
+        T Z = inner_product(illuminant, constant::CIE_Z<T>);
+        T Y_integral = Y;
+        return XYZ<T>(X / Y_integral, Y / Y_integral, Z / Y_integral);
     }
 
     template<typename ReflectanceSpectrumType, typename IlluminantSpectrumType>
-    static XYZ<T> from_reflectance_under_illuminant(const ReflectanceSpectrumType& R,
-                                                    const IlluminantSpectrumType& I) {
+    static XYZ<T> from_reflectance_under_illuminant(const ReflectanceSpectrumType& reflectance,
+                                                    const IlluminantSpectrumType& illuminant) {
         // 分子：R(λ)*I(λ) 与 CIE CMF 的内积
-        T Xn = inner_product(R * I, constant::CIE_X<T>);
-        T Yn = inner_product(R * I, constant::CIE_Y<T>);
-        T Zn = inner_product(R * I, constant::CIE_Z<T>);
+        T X = inner_product(reflectance * illuminant, constant::CIE_X<T>);
+        T Y = inner_product(reflectance * illuminant, constant::CIE_Y<T>);
+        T Z = inner_product(reflectance * illuminant, constant::CIE_Z<T>);
         // 分母：I(λ) 与 ȳ(λ) 的内积（归一化，使理想白 Y=1）
-        T denom = inner_product(I, constant::CIE_Y<T>);
-        return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
+        T Y_integral = inner_product(illuminant, constant::CIE_Y<T>);
+        return XYZ<T>(X / Y_integral, Y / Y_integral, Z / Y_integral);
     }
 
     // 发光谱 L 在“参考照明（D65）归一化”的 XYZ
-    template<typename IlluminantSpectrumType, typename RefIlluminantSpectrumType>
+    template<typename EmissionSpectrumType, typename IlluminantSpectrumType>
     static XYZ<T> from_emission_under_illuminant(
-        const IlluminantSpectrumType& L, const RefIlluminantSpectrumType& Iref // 例如 D65
+        const EmissionSpectrumType& emission, const IlluminantSpectrumType& illuminant // 例如 D65
     ) {
-        T Xn = inner_product(L, constant::CIE_X<T>);
-        T Yn = inner_product(L, constant::CIE_Y<T>);
-        T Zn = inner_product(L, constant::CIE_Z<T>);
-        T denom = inner_product(Iref, constant::CIE_Y<T>);   // 固定：D65 的 Y
-        return XYZ<T>(Xn / denom, Yn / denom, Zn / denom);
+        T X = inner_product(emission, constant::CIE_X<T>);
+        T Y = inner_product(emission, constant::CIE_Y<T>);
+        T Z = inner_product(emission, constant::CIE_Z<T>);
+        T Y_integral = inner_product(illuminant, constant::CIE_Y<T>);   // 固定：D65 的 Y
+        return XYZ<T>(X / Y_integral, Y / Y_integral, Z / Y_integral);
     }
 
     template<int N>
-    static constexpr XYZ from_sampled_spectrum(
-        const SampledSpectrum<T, N>& spectrum, 
+    static constexpr XYZ from_sampled_radiance(
+        const SampledSpectrum<T, N>& radiance, 
         const SampledWavelength<T, N>& wavelengths, 
-        const SampledPdf<T, N>& pdf) 
-    {
-        SampledSpectrum<T, N> X = constant::CIE_X<T>.sample(wavelengths);
-        SampledSpectrum<T, N> Y = constant::CIE_Y<T>.sample(wavelengths);
-        SampledSpectrum<T, N> Z = constant::CIE_Z<T>.sample(wavelengths);
+        const SampledPdf<T, N>& pdf
+    ) {
+        SampledSpectrum<T, N> X_response = constant::CIE_X<T>.sample(wavelengths);
+        SampledSpectrum<T, N> Y_response = constant::CIE_Y<T>.sample(wavelengths);
+        SampledSpectrum<T, N> Z_response = constant::CIE_Z<T>.sample(wavelengths);
         return XYZ(
-            (X * spectrum * pdf.inv()).average(), 
-            (Y * spectrum * pdf.inv()).average(), 
-            (Z * spectrum * pdf.inv()).average()
+            (X_response * radiance * pdf.inv()).average(), 
+            (Y_response * radiance * pdf.inv()).average(), 
+            (Z_response * radiance * pdf.inv()).average()
         );
     }
 

@@ -322,7 +322,7 @@ TEST_F(ColorTest, XYZFromSampledSpectrum) {
     Vector<double, N> pdf_values = Vector<double, N>::filled(1.0 / 300.0);
     SampledPdf<double, N> pdf(pdf_values);
     
-    auto xyz = XYZ<double>::from_sampled_spectrum(spectrum, wavelengths, pdf);
+    auto xyz = XYZ<double>::from_radiance(spectrum, wavelengths, pdf);
     
     // XYZ values should be positive for uniform spectrum
     EXPECT_GT(xyz.x(), 0.0);

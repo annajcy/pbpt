@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <functional>
 #include <iostream>
 #include <type_traits>
@@ -177,9 +178,6 @@ private:
     std::function<T(T)> m_f;
 
 public:
-    using base = SpectrumDistribution<FunctionalSpectrumDistribution<T>, T>;
-    using base::base;
-
     constexpr FunctionalSpectrumDistribution(const std::function<T(T)>& f) : m_f(f) {}
 
 private:
@@ -195,9 +193,6 @@ private:
     std::vector<std::pair<T, T>> m_points; // (lambda, value)
 
 public:
-    using base = SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T>;
-    using base::base;
-
     PiecewiseLinearSpectrumDistribution(const std::vector<std::pair<T, T>>& points)
         : m_points(points) {}
 
@@ -229,18 +224,11 @@ class TabularSpectrumDistribution : public SpectrumDistribution<TabularSpectrumD
     friend class SpectrumDistribution<TabularSpectrumDistribution<T, LambdaMin, LambdaMax>, T>;
 
 private:
-    std::vector<T> m_samples;
+    std::array<T, TabularSpectrumRange<LambdaMin, LambdaMax>::Count> m_samples;
 
 public:
-    using base = SpectrumDistribution<TabularSpectrumDistribution<T, LambdaMin, LambdaMax>, T>;
-    using base::base;
-
-    constexpr TabularSpectrumDistribution(const std::vector<T>& samples)
-        : m_samples(samples) {
-        if (samples.size() != static_cast<size_t>(LambdaMax - LambdaMin + 1)) {
-            throw std::invalid_argument("Sample size does not match the expected range.");
-        }
-    }
+    constexpr TabularSpectrumDistribution(const std::array<T, TabularSpectrumRange<LambdaMin, LambdaMax>::Count>& samples)
+        : m_samples(samples) {}
 
     template<typename... Args>
     requires (sizeof...(Args) == (LambdaMax - LambdaMin + 1)) && (std::conjunction_v<std::is_convertible<Args, T>...>)
@@ -337,9 +325,7 @@ private:
     T m_scale;
 
 public:
-
-    RGBUnboundedSpectrumDistribution(const RSPType<T>& rsp, T m_scale) 
-        : m_rsp(rsp), m_scale(m_scale) {}
+    RGBUnboundedSpectrumDistribution(const RSPType<T>& rsp, T m_scale) : m_rsp(rsp), m_scale(m_scale) {}
 
 private:
     T at_impl(T lambda) const {
@@ -347,17 +333,17 @@ private:
     }
 };
 
-template<typename T, template<typename> class RSPType, typename LuminantSpectrumType>
-class RGBIlluminantSpectrumDistribution : public SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, LuminantSpectrumType>, T>{
-    friend class SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, LuminantSpectrumType>, T>;
+template<typename T, template<typename> class RSPType, typename IlluminantSpectrumType>
+class RGBIlluminantSpectrumDistribution : public SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, IlluminantSpectrumType>, T>{
+    friend class SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, IlluminantSpectrumType>, T>;
 
 private:
     RSPType<T> m_rsp;
     T m_scale;
-    LuminantSpectrumType m_reference_luminant;
+    IlluminantSpectrumType m_reference_luminant;
 
 public:
-    RGBIlluminantSpectrumDistribution(const RSPType<T>& rsp, const LuminantSpectrumType& reference_luminant, T m_scale = T{1.0}) 
+    RGBIlluminantSpectrumDistribution(const RSPType<T>& rsp, const IlluminantSpectrumType& reference_luminant, T m_scale = T{1.0}) 
         : m_rsp(rsp), m_reference_luminant(reference_luminant) , m_scale(m_scale) {}
 
 private:
