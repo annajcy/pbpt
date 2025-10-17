@@ -14,6 +14,7 @@
 #include "point.hpp"
 #include "polynomial.hpp"
 #include "random_generator.hpp"
+#include "sampling.hpp"
 #include "tuple.hpp"
 #include "type_alias.hpp"
 #include "utils.hpp"

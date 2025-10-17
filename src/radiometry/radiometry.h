@@ -5,10 +5,13 @@
 
 #include "color.hpp"
 #include "color_space.hpp"
-#include "color_spectrum.hpp"
+#include "color_spectrum_optimizer.hpp"
 #include "radiometric_integrals.hpp"
 #include "radiometry_units.hpp"
 #include "sampled_spectrum.hpp"
 #include "spectrum_distribution.hpp"
 #include "spectrum_loader.hpp"
-#include "spectrum_utils.hpp"
+
+#include "radiometry_constant/swatch_reflectances_spectrum.hpp"
+#include "radiometry_constant/xyz_ilum_spectrum.hpp"
+#include "radiometry_constant/standard_color_spaces.hpp"

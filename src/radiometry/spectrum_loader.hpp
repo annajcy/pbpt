@@ -6,6 +6,7 @@
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
+#include <vector>
 
 #include "spectrum_distribution.hpp"
 
@@ -72,7 +73,7 @@ inline auto make_spectra_from_csv(const std::string& csv_path) {
     auto source = CsvSpectrumDataSource<T>(csv_path);
     auto data = source.load_data();
 
-    std::array<std::array<T, Range::Count>, N> spectra_data{};
+    std::vector<std::vector<T>> spectra_data(N, std::vector<T>(Range::Count));
 
     for (int i = 0; i < Range::Count; ++i) {
         auto &[wavelength, values] = data[i];

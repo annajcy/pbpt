@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <array>
 #include <cmath>
+#include <vector>
 
 #include "pbpt.h"
 #include "math/random_generator.hpp"
@@ -193,8 +194,8 @@ TEST_F(SpectrumTest, TabularSpectrumDistributionConstruction) {
     constexpr int lambda_min = 400;
     constexpr int lambda_max = 700;
     constexpr int size = lambda_max - lambda_min + 1;
-    
-    std::array<float, size> samples;
+
+    std::vector<float> samples(size);
     for (int i = 0; i < size; ++i) {
         samples[i] = 1.0f + 0.001f * i;  // Linear increase
     }
@@ -215,8 +216,8 @@ TEST_F(SpectrumTest, TabularSpectrumDistributionOutOfRange) {
     constexpr int lambda_min = 500;
     constexpr int lambda_max = 600;
     constexpr int size = lambda_max - lambda_min + 1;
-    
-    std::array<double, size> samples;
+
+    std::vector<double> samples(size);
     std::fill(samples.begin(), samples.end(), 1.0);
     
     TabularSpectrumDistribution<double, lambda_min, lambda_max> tabular(samples);

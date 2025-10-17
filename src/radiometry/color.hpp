@@ -6,7 +6,7 @@
 #include "math/vector.hpp"
 
 #include "sampled_spectrum.hpp"
-#include "spectrum_utils.hpp"
+#include "radiometry_constant/xyz_ilum_spectrum.hpp"
 
 namespace pbpt::radiometry {
 

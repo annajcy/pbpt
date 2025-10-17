@@ -4,8 +4,6 @@
 #include "radiometry/color.hpp"
 #include "radiometry/color_space.hpp"
 #include "radiometry/spectrum_distribution.hpp"
-#include "radiometry/spectrum_utils.hpp"
-
 namespace pbpt::camera {
 
 template<typename T, typename SceneIlluminantType, typename StandardIlluminantType>

@@ -96,7 +96,7 @@ def generate_main_pbpt_hpp(src_dir: Path, directory_headers: List[Path]):
 def main():
     """Main function to generate all header files."""
     # Get the script directory
-    script_dir = Path(__file__).parent.absolute()
+    script_dir = Path(__file__).parent.parent.absolute()
     
     # Define paths
     src_dir = script_dir / "src"

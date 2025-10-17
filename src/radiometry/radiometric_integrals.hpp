@@ -11,41 +11,15 @@
 #include "math/normal.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
+#include "math/sampling.hpp"
 
 namespace pbpt::radiometry {
 
-template<std::floating_point T>
-inline std::array<T, 2> concentric_sample_disk(const std::array<T, 2>& u01) {
-    const T a = T(2) * u01[0] - T(1);
-    const T b = T(2) * u01[1] - T(1);
 
-    if (math::is_zero(a) && math::is_zero(b))
-        return {0, 0};
-
-    T r, phi;
-    if (math::is_greater(std::abs(a), std::abs(b))) {
-        r = std::abs(a);
-        phi = (math::pi_v<T> / 4) * (b / a);
-    } else {
-        r = std::abs(b);
-        phi = (math::pi_v<T> / T(2)) - (math::pi_v<T> / T(4)) * (a / b);
-    }
-
-    return {r * std::cos(phi), r * std::sin(phi)};
-}
-
-template<std::floating_point T>
-inline std::array<T, 3> uniform_sample_hemisphere(const std::array<T, 2>& uv) {
-    T z = uv[0];
-    T r = std::sqrt(std::max(T(0), T(1) - z * z));
-    T phi = 2.0 * math::pi_v<T> * uv[1];
-    return {r * std::cos(phi), r * std::sin(phi), z};
-}
-
-template<typename SampleType, std::floating_point T>
+template<typename SampleType, typename T>
 using Sample = std::pair<SampleType, T>;
 
-template<typename Derived, std::floating_point T>
+template<typename Derived, typename T>
 class IntegrableDomain {
 public:
 
@@ -76,10 +50,10 @@ public:
 
 };
 
-template<std::floating_point T>
+template<typename T>
 using DirectionSample = Sample<math::Vector<T, 3>, T>;
 
-template<std::floating_point T>
+template<typename T>
 class UniformHemisphereDomain : public IntegrableDomain<UniformHemisphereDomain<T>, T> {
 public:
 
@@ -87,8 +61,8 @@ public:
 
     template<typename RNG>
     DirectionSample<T> sample_one_impl(RNG& rng2d) const {
-        auto uv = rng2d.generate_uniform(0, 1); // uv ∈ [0,1]^2
-        auto dir = math::Vector<T, 3>::from_array(uniform_sample_hemisphere(uv));
+        auto uv = math::Point<T, 2>::from_array(rng2d.generate_uniform(T(0), T(1))); // uv ∈ [0,1]^2
+        auto dir = math::sample_uniform_hemisphere(uv).to_vector();
         return {dir, pdf_impl()};
     }
 
@@ -97,35 +71,33 @@ public:
     }
 };
 
-template<std::floating_point T>
+template<typename T>
 class ProjectedHemisphereDomain : public IntegrableDomain<ProjectedHemisphereDomain<T>, T> {
 public:
     using sample_type = math::Vector<T, 3>;
 
     template<typename RNG>
     DirectionSample<T> sample_one_impl(RNG& rng) const {
-        auto uv = rng.generate_uniform(T(0), T(1));
-        auto d  = concentric_sample_disk<T>(uv);
-        const T r2 = d[0] * d[0] + d[1] * d[1];
-        const T z  = std::sqrt(std::max(T(0), T(1) - r2));
-        return { math::Vector<T,3>{ d[0], d[1], z }, pdf_impl() };
+        auto uv = math::Point<T, 2>::from_array(rng.generate_uniform(T(0), T(1)));
+        auto dir = math::sample_uniform_hemisphere_concentric(uv).to_vector();
+        return { dir, pdf_impl() };
     }
 
     constexpr T pdf_impl() const { return T(1) / math::pi_v<T>; } // wrt dω⊥
 };
 
-template<std::floating_point T>
+template<typename T>
 using DiskSample = Sample<math::Point<T, 2>, T>;
 
-template<std::floating_point T>
+template<typename T>
 class UniformDiskDomain : public IntegrableDomain<UniformDiskDomain<T>, T> {
 public:
     using sample_type = math::Point<T, 2>;
 
     template<typename RNG>
     DiskSample<T> sample_one_impl(RNG& rng2d) const {
-        auto u01 = rng2d.generate_uniform(0, 1);
-        auto point = math::Point<T, 2>::from_array(concentric_sample_disk(u01));
+        auto u01 = math::Point<T, 2>::from_array(rng2d.generate_uniform(0, 1));
+        auto point = math::sample_uniform_disk_concentric(u01);
         return {point, pdf_impl()};
     }
 
@@ -135,16 +107,16 @@ public:
 };
 
 
-template<std::floating_point T>
+template<typename T>
 struct SurfaceInfo {
     math::Point<T, 3> position;
     math::Normal<T, 3> normal;
 };
 
-template<std::floating_point T>
+template<typename T>
 using SurfaceSample = Sample<SurfaceInfo<T>, T>;
 
-template<std::floating_point T>
+template<typename T>
 class ParallelogramAreaDomain : public IntegrableDomain<ParallelogramAreaDomain<T>, T> {
 private:
     math::Point<T, 3> m_origin;
@@ -186,7 +158,7 @@ public:
 
 };
 
-template<std::floating_point T, typename Domain, typename Func, typename RNG>
+template<typename T, typename Domain, typename Func, typename RNG>
 auto integrate(const Domain& domain, const Func& func, int sample_count, RNG& rng) {
     using R = decltype(std::declval<const Func&>()(std::declval<typename Domain::sample_type>()) / static_cast<T>(std::declval<int>()));
     R result = R{};

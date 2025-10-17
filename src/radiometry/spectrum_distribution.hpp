@@ -10,15 +10,18 @@
 #include "math/polynomial.hpp"
 
 #include "sampled_spectrum.hpp"
-#include "spectrum_utils.hpp"
 
 namespace pbpt::radiometry {
+
+template <typename T>
+constexpr T lambda_min = 360;
+
+template <typename T>
+constexpr T lambda_max = 830;
 
 template<typename Derived, typename T>
 class SpectrumDistribution {
 public:
-    constexpr SpectrumDistribution() = default;
-
     constexpr T at(T lambda) const {
         return as_derived().at_impl(lambda);
     }
@@ -62,13 +65,12 @@ struct Hold {
 
 template<typename T, class D1, class D2>
 class MultipliedSpectrumDistribution : public SpectrumDistribution<MultipliedSpectrumDistribution<T, D1, D2>, T> {
+    friend class SpectrumDistribution<MultipliedSpectrumDistribution<T, D1, D2>, T>;
+
 public:
     Hold<D1> s1; Hold<D2> s2;
 
-    using base = SpectrumDistribution<MultipliedSpectrumDistribution<T, D1, D2>, T>;
-    using base::base;
 public:
-
     MultipliedSpectrumDistribution(const D1& a, const D2& b): s1(a), s2(b) {}
     MultipliedSpectrumDistribution(D1&& a, const D2& b): s1(std::move(a)), s2(b) {}
     MultipliedSpectrumDistribution(const D1& a, D2&& b): s1(a), s2(std::move(b)) {}
@@ -92,33 +94,68 @@ inline auto operator*(const SpectrumDistribution<D1, T1>& s1, const SpectrumDist
 
 template<typename T>
 class ConstantSpectrumDistribution : public SpectrumDistribution<ConstantSpectrumDistribution<T>, T> {
+    friend class SpectrumDistribution<ConstantSpectrumDistribution<T>, T>;
+
 private:
     T m_value;
 
 public:
-    using base = SpectrumDistribution<ConstantSpectrumDistribution<T>, T>;
-    using base::base;
-
     ConstantSpectrumDistribution(T value) : m_value(value) {}
+    
+    constexpr T max_value() const { 
+        return m_value; 
+    }
 
+private:
     constexpr T at_impl(T lambda) const { return m_value; }
-    constexpr T max_value() const { return m_value; }
+    
 };
+
+template <typename T>
+constexpr inline T black_body(T t_K, T lambda_nm) {
+    // Planck's law formula for black body radiation
+    const double h = 6.62607015e-34;  // Planck's constant
+    const double c = 299792458;       // Speed of light
+    const double k = 1.380649e-23;    // Boltzmann's constant
+
+    double l = lambda_nm * 1e-9;  // Convert nm to m
+
+    double L = (2 * h * c * c) / math::pow(l, 5) * (1 / (math::fast_exp(h * c / (l * k * t_K)) - 1));
+
+    return L;
+}
+
+template <typename T>
+constexpr inline T black_body_M(T t_K) {
+    // Stefan-Boltzmann law
+    const double sigma = 5.670374419e-8;  // Stefan-Boltzmann constant
+    double       E     = sigma * std::pow(t_K, 4);
+    return E;
+}
+
+template <typename T>
+constexpr inline T non_black_body(T t_K, T lambda_nm, T p_hd) {
+    // Kirchhoff's law of thermal radiation
+    return black_body(t_K, lambda_nm) * (1 - p_hd);
+}
+
+// max wavelength
+template <typename T>
+inline T black_body_max_wavelength(T t_K) {
+    // Wien's displacement law
+    const double b = 2.897771955e-3;  // Wien's displacement constant
+    return b / t_K * 1e9;             // Convert from m to nm
+}
 
 template<typename T>
 class BlackBodySpectrumDistribution : public SpectrumDistribution<BlackBodySpectrumDistribution<T>, T> {
+    friend class SpectrumDistribution<BlackBodySpectrumDistribution<T>, T>;
+
 private:
     T m_temperature;
 
 public:
-    using base = SpectrumDistribution<BlackBodySpectrumDistribution<T>, T>;
-    using base::base;
-
     constexpr BlackBodySpectrumDistribution(T temperature) : m_temperature(temperature) {}
-
-    constexpr T at_impl(T lambda) const {
-        return black_body(m_temperature, lambda);
-    }
 
     constexpr T max_wavelength() const {
         return black_body_max_wavelength(m_temperature);
@@ -127,10 +164,16 @@ public:
     constexpr T max_value() const {
         return black_body(m_temperature, max_wavelength());
     }
+
+private:
+    constexpr T at_impl(T lambda) const {
+        return black_body(m_temperature, lambda);
+    }
 };
 
 template<typename T>
 class FunctionalSpectrumDistribution : public SpectrumDistribution<FunctionalSpectrumDistribution<T>, T> {
+    friend class SpectrumDistribution<FunctionalSpectrumDistribution<T>, T>;
 private:
     std::function<T(T)> m_f;
 
@@ -140,6 +183,7 @@ public:
 
     constexpr FunctionalSpectrumDistribution(const std::function<T(T)>& f) : m_f(f) {}
 
+private:
     constexpr T at_impl(T lambda) const {
         return m_f(lambda);
     }
@@ -147,6 +191,7 @@ public:
 
 template<typename T>
 class PiecewiseLinearSpectrumDistribution : public SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T> {
+    friend class SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T>;
 private:
     std::vector<std::pair<T, T>> m_points; // (lambda, value)
 
@@ -157,6 +202,7 @@ public:
     PiecewiseLinearSpectrumDistribution(const std::vector<std::pair<T, T>>& points)
         : m_points(points) {}
 
+private:
     constexpr T at_impl(T lambda) const {
         // Find the segment that contains the given lambda
         for (size_t i = 1; i < m_points.size(); ++i) {
@@ -172,17 +218,35 @@ public:
     }
 };
 
+template <int LMin, int LMax>
+struct TabularSpectrumRange {
+    static constexpr int LMinValue = LMin;
+    static constexpr int LMaxValue = LMax;
+    static constexpr int Count     = LMax - LMin + 1;
+};
+
 template<typename T, int LambdaMin, int LambdaMax>
 class TabularSpectrumDistribution : public SpectrumDistribution<TabularSpectrumDistribution<T, LambdaMin, LambdaMax>, T> {
+    friend class SpectrumDistribution<TabularSpectrumDistribution<T, LambdaMin, LambdaMax>, T>;
+
 private:
-    std::array<T, LambdaMax - LambdaMin + 1> m_samples;
+    std::vector<T> m_samples;
 
 public:
     using base = SpectrumDistribution<TabularSpectrumDistribution<T, LambdaMin, LambdaMax>, T>;
     using base::base;
 
-    constexpr TabularSpectrumDistribution(const std::array<T, LambdaMax - LambdaMin + 1>& samples)
-        : m_samples(samples) {}
+    constexpr TabularSpectrumDistribution(const std::vector<T>& samples)
+        : m_samples(samples) {
+        if (samples.size() != static_cast<size_t>(LambdaMax - LambdaMin + 1)) {
+            throw std::invalid_argument("Sample size does not match the expected range.");
+        }
+    }
+
+    template<typename... Args>
+    requires (sizeof...(Args) == (LambdaMax - LambdaMin + 1)) && (std::conjunction_v<std::is_convertible<Args, T>...>)
+    constexpr TabularSpectrumDistribution(Args&&... args)
+        : m_samples{std::forward<Args>(args)...} {}
 
     constexpr int sample_count() const {
         return LambdaMax - LambdaMin + 1;
@@ -196,6 +260,7 @@ public:
         return LambdaMax;
     }
 
+private:
     template<typename U>
     constexpr T at_impl(U lambda) const {
         if(lambda < lambda_min() || lambda > lambda_max()){
@@ -248,36 +313,36 @@ struct RGBSigmoidPolynomialNormalized {
 
 template <typename T, template<typename> class RSPType>
 class RGBAlbedoSpectrumDistribution : public SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T>{
+    friend class SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T>;
+
 private:
     RSPType<T> m_rsp;
 
 public:
-    using base = SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T>;
-    using base::base;
-
     RGBAlbedoSpectrumDistribution(const RSPType<T>& rsp) : m_rsp(rsp) {}
+    const RSPType<T>& rsp() const { return m_rsp; }
+    RSPType<T>& rsp() { return m_rsp; }
 
+private:
     T at_impl(T lambda) const {
         return m_rsp.at(lambda);
     }
-
-    const RSPType<T>& rsp() const { return m_rsp; }
-    RSPType<T>& rsp() { return m_rsp; }
 };
 
 template<typename T, template<typename> class RSPType>
 class RGBUnboundedSpectrumDistribution : public SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T>{
+    friend class SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T>;
+
 private:
     RSPType<T> m_rsp;
     T m_scale;
 
 public:
-    using base = SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T>;
-    using base::base;
 
     RGBUnboundedSpectrumDistribution(const RSPType<T>& rsp, T m_scale) 
         : m_rsp(rsp), m_scale(m_scale) {}
 
+private:
     T at_impl(T lambda) const {
         return m_scale * m_rsp.at(lambda);
     }
@@ -285,18 +350,18 @@ public:
 
 template<typename T, template<typename> class RSPType, typename LuminantSpectrumType>
 class RGBIlluminantSpectrumDistribution : public SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, LuminantSpectrumType>, T>{
+    friend class SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, LuminantSpectrumType>, T>;
+
 private:
     RSPType<T> m_rsp;
-    T m_scale = T{1.0};
+    T m_scale;
     LuminantSpectrumType m_reference_luminant;
 
 public:
-    using base = SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, LuminantSpectrumType>, T>;
-    using base::base;
-
     RGBIlluminantSpectrumDistribution(const RSPType<T>& rsp, const LuminantSpectrumType& reference_luminant, T m_scale = T{1.0}) 
         : m_rsp(rsp), m_reference_luminant(reference_luminant) , m_scale(m_scale) {}
 
+private:
     T at_impl(T lambda) const {
         return m_scale * m_rsp.at(lambda) * m_reference_luminant.at(lambda);
     }
