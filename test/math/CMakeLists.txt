@@ -27,6 +27,10 @@ add_executable(test_matrix_enhanced test_matrix_enhanced.cpp)
 target_link_libraries(test_matrix_enhanced PRIVATE pbpt gtest::gtest)
 add_test(NAME test_matrix_enhanced COMMAND test_matrix_enhanced)
 
+add_executable(test_matrix_row_operations test_matrix_row_operations.cpp)
+target_link_libraries(test_matrix_row_operations PRIVATE pbpt gtest::gtest)
+add_test(NAME test_matrix_row_operations COMMAND test_matrix_row_operations)
+
 add_executable(test_homo test_homo.cpp)
 target_link_libraries(test_homo PRIVATE pbpt gtest::gtest)
 add_test(NAME test_homo COMMAND test_homo)

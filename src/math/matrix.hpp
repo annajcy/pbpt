@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vk_video/vulkan_video_codec_av1std.h>
 #include <array>
 #include <concepts>
 #include <algorithm>
@@ -244,15 +245,12 @@ public:
     }
 
     constexpr RowView operator[](int r) { return RowView(&(*this).at(r, 0), 1); }
-
     constexpr const RowView operator[](int r) const { return RowView(&(*this).at(r, 0), 1); }
 
     constexpr RowView row(int r) { return RowView(&(*this).at(r, 0), 1); }
-
     constexpr const RowView row(int r) const { return RowView(&(*this).at(r, 0), 1); }
 
     constexpr ColView col(int c) { return ColView(&(*this).at(0, c), C); }
-
     constexpr const ColView col(int c) const { return ColView(&(*this).at(0, c), C); }
 
     constexpr int row_dims() const noexcept { return R; }
@@ -731,6 +729,234 @@ public:
             }
         }
     }
+
+    // elementary row operations
+    constexpr Matrix<T, R, C>& swap_rows(int r1, int r2) {
+        assert_if_ex<std::out_of_range>(
+            r1 < 0 || r1 >= R || r2 < 0 || r2 >= R, 
+            "Row index out of range in swap_rows"
+        );
+
+        for (int c = 0; c < C; ++c) {
+            std::swap((*this).at(r1, c), (*this).at(r2, c));
+        }
+        return *this;
+    }
+
+    constexpr Matrix<T, R, C>& scale_row(int r, T scalar) {
+        assert_if_ex<std::out_of_range>(
+            r < 0 || r >= R, 
+            "Row index out of range in scale_row"
+        );
+
+        for (int c = 0; c < C; ++c) {
+            (*this).at(r, c) *= scalar;
+        }
+        return *this;
+    }
+
+    constexpr Matrix<T, R, C>& add_scaled_row(int dest_r, int src_r, T scalar) {
+        assert_if_ex<std::out_of_range>(
+            dest_r < 0 || dest_r >= R || src_r < 0 || src_r >= R, 
+            "Row index out of range in add_scaled_row"
+        );
+
+        for (int c = 0; c < C; ++c) {
+            (*this).at(dest_r, c) += scalar * (*this).at(src_r, c);
+        }
+        return *this;
+    }
+
+    constexpr Matrix<T, R, C>& swap_cols(int c1, int c2) {
+        assert_if_ex<std::out_of_range>(
+            c1 < 0 || c1 >= C || c2 < 0 || c2 >= C, 
+            "Column index out of range in swap_cols"
+        );
+        for (int r = 0; r < R; ++r) {
+            std::swap((*this).at(r, c1), (*this).at(r, c2));
+        }
+        return *this;
+    }
+
+    constexpr Matrix<T, R, C>& scale_col(int c, T scalar) {
+        assert_if_ex<std::out_of_range>(
+            c < 0 || c >= C, 
+            "Column index out of range in scale_col"
+        );
+        for (int r = 0; r < R; ++r) {
+            (*this).at(r, c) *= scalar;
+        }
+        return *this;
+    }
+
+    constexpr Matrix<T, R, C>& add_scaled_col(int dest_c, int src_c, T scalar) {
+        assert_if_ex<std::out_of_range>(
+            dest_c < 0 || dest_c >= C || src_c < 0 || src_c >= C, 
+            "Column index out of range in add_scaled_col"
+        );
+        for (int r = 0; r < R; ++r) {
+            (*this).at(r, dest_c) += scalar * (*this).at(r, src_c);
+        }
+        return *this;
+    }
+
+    //helpers: find index of max abs value in row/col
+    constexpr std::pair<int, T> argmax_abs_in_col(int c, int start_row = 0, int end_row = R) const {
+        assert_if_ex<std::out_of_range>(
+            c < 0 || c >= C, 
+            "Column index out of range in argmax_abs_in_col"
+        );
+
+        int max_index = start_row;
+        T max_value = (*this).at(start_row, c);
+        T max_abs_value = std::abs((*this).at(start_row, c));
+        for (int r = start_row + 1; r < end_row; ++r) {
+            T abs_value = std::abs((*this).at(r, c));
+            if (abs_value > max_abs_value) {
+                max_abs_value = abs_value;
+                max_value = (*this).at(r, c);
+                max_index = r;
+            }
+        }
+        return {max_index, max_value};
+    }
+
+    constexpr std::pair<int, T> argmax_abs_in_row(int r, int start_col = 0, int end_col = C) const {
+        assert_if_ex<std::out_of_range>(
+            r < 0 || r >= R, 
+            "Row index out of range in argmax_abs_in_row"
+        );
+
+        int max_index = start_col;
+        T max_value = (*this).at(r, start_col);
+        T max_abs_value = std::abs((*this).at(r, start_col));
+        for (int c = start_col + 1; c < end_col; ++c) {
+            T abs_value = std::abs((*this).at(r, c));
+            if (abs_value > max_abs_value) {
+                max_abs_value = abs_value;
+                max_value = (*this).at(r, c);
+                max_index = c;
+            }
+        }
+        return {max_index, max_value};
+    }
+
+    struct EchelonResult {
+        Matrix<T, R, C> matrix;
+        int rank{};
+        int row_swaps{};
+        T total_scale_inv{1}; // the inverse of the product of all scaling factors used
+    };
+
+    //transform to row echelon form and reduced row echelon form, return rank and number of row swaps
+    constexpr EchelonResult ref_inplace() {
+        int r = 0;
+        int swaps = 0;
+        T total_scale_inv = T(1);
+        for (int c = 0; c < C && r < R; c ++) {
+            auto [pr, pv] = argmax_abs_in_col(c, r);
+            if (is_zero(pv)) { continue; }
+            if (pr != r) swap_rows(r, pr), swaps ++; 
+            scale_row(r, T(1) / pv), total_scale_inv *= pv;
+            for (int rr = r + 1; rr < R; rr ++) {
+                T s = -(*this).at(rr, c);
+                add_scaled_row(rr, r, s);
+            }
+            r ++;
+        }
+        visit([&](T& x, int, int){ if (is_zero(x)) x = T(0); });
+        return {(*this), r, swaps, total_scale_inv};
+    } 
+
+    constexpr EchelonResult ref() const {
+        Matrix<T, R, C> temp = *this;
+        return temp.ref_inplace();
+    }
+
+    constexpr EchelonResult rref_inplace() {
+        int r = 0;
+        int swaps = 0;
+        T total_scale_inv = T(1);
+        for (int c = 0; c < C && r < R; c ++) {
+            auto [pr, pv] = argmax_abs_in_col(c, r);
+            if (is_zero(pv)) {continue; }
+            if (pr != r) swap_rows(r, pr), swaps ++;
+            scale_row(r, T(1) / pv), total_scale_inv *= pv;
+            for (int rr = 0; rr < R; rr ++) {
+                if (rr == r) continue;
+                T s = -(*this).at(rr, c);
+                add_scaled_row(rr, r, s);
+            }
+            r ++;
+        }
+        visit([&](T& x, int, int){ if (is_zero(x)) x = T(0); });
+        return {(*this), r, swaps, total_scale_inv};
+    }
+
+    constexpr EchelonResult rref() const {
+        Matrix<T, R, C> temp = *this;
+        return temp.rref_inplace();
+    }
+
+    // functions
+    int rank() const {
+        Matrix<T, R, C> temp = *this;
+        return temp.ref_inplace().rank;
+    }
+
+    bool is_invertible() const requires(R == C) {
+        Matrix<T, R, C> temp = *this;
+        auto [mat, rank, swaps, _] = temp.ref_inplace();
+        return rank == R;
+    }
+
+    Matrix<T, R, C> inversed_rref() const requires(R == C) {
+        Matrix<T, R, 2 * C> augmented{};
+        // Create augmented matrix [A | I]
+        for (int r = 0; r < R; r ++) {
+            for (int c = 0; c < C; c ++) {
+                augmented.at(r, c) = (*this).at(r, c);  
+                augmented.at(r, c + C) = (r == c) ? T(1) : T(0);
+            }
+        }
+        augmented.rref_inplace();
+        Matrix<T, R, C> result{};
+        for (int r = 0; r < R; r ++) {
+            for (int c = 0; c < C; c ++) {
+                result.at(r, c) = augmented.at(r, c + C);
+            }
+        }
+        return result;
+    }
+
+    Matrix<T, R, C>& inverse_rref() requires(R == C) {
+        Matrix<T, R, 2 * C> augmented{};
+        // Create augmented matrix [A | I]
+        for (int r = 0; r < R; r ++) {
+            for (int c = 0; c < C; c ++) {
+                augmented.at(r, c) = (*this).at(r, c);  
+                augmented.at(r, c + C) = (r == c) ? T(1) : T(0);
+            }
+        }
+        augmented.rref_inplace();
+        for (int r = 0; r < R; r ++) {
+            for (int c = 0; c < C; c ++) {
+                (*this).at(r, c) = augmented.at(r, c + C);
+            }
+        }
+        return *this;
+    }
+
+    T determinant_ref() const requires(R == C) {
+        Matrix<T, R, C> temp = *this;
+        auto [mat, rank, swaps, total_scale_inv] = temp.ref_inplace();
+        T det = (swaps % 2 == 0) ? T(1) : T(-1);
+        for (int i = 0; i < R; i ++) {
+            det *= temp.at(i, i);
+        }
+        return det * total_scale_inv;
+    }
+    
 };
 
 using Mat2   = Matrix<Float, 2, 2>;

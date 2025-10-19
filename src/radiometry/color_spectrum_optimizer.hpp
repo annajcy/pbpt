@@ -91,7 +91,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
         std::cout << "Jacobian:\n" << J << std::endl;   
 
         // Solve the linear system J * delta = error and update coeffs
-        auto delta = J.inversed() * error;
+        auto delta = J.inversed_rref() * error;
         coeffs[0] -= delta[0];
         coeffs[1] -= delta[1];
         coeffs[2] -= delta[2];

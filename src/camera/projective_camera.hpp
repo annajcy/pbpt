@@ -41,15 +41,15 @@ public:
     }
 
     geometry::Transform<T> viewport_to_clip() const {
-        return m_clip_to_viewport.inverse_matrix();
+        return m_clip_to_viewport.inversed();
     }
 
     geometry::Transform<T> clip_to_camera() const {
-        return m_camera_to_clip.inverse_matrix();
+        return m_camera_to_clip.inversed();
     }
 
     geometry::Transform<T> viewport_to_camera() const {
-        return m_camera_to_viewport.inverse_matrix();
+        return m_camera_to_viewport.inversed();
     }
 
     math::Point<T, 3> apply_viewport_to_camera(const math::Point<T, 2>& p) const {
