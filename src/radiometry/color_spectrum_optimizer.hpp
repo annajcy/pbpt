@@ -36,7 +36,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
 
     auto eval_lab = [&](const std::array<T,3>& c) -> LAB<T> {
         RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> albedo({c[0], c[1], c[2]});
-        XYZ<T> xyz = XYZ<T>::from_reflectance_under_illuminant(albedo, reference_luminant_spectrum);
+        XYZ<T> xyz = XYZ<T>::from_reflectance(albedo, reference_luminant_spectrum);
         return LAB<T>::from_xyz(xyz, color_space.white_point());
     };
 

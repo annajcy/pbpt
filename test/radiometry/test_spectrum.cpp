@@ -7,6 +7,7 @@
 #include "math/type_alias.hpp"
 #include "pbpt.h"
 #include "math/random_generator.hpp"
+#include "radiometry/spectrum_distribution.hpp"
 
 using namespace pbpt::math;
 using namespace pbpt::radiometry::constant;
@@ -140,18 +141,18 @@ TEST_F(SpectrumTest, SampledPdfInverse) {
 
 TEST_F(SpectrumTest, BlackBodyFunction) {
     // Test black body radiation function
-    double intensity_550 = black_body(temperature, test_wavelength_550);
+    double intensity_550 = BlackBodySpectrumDistribution<double>::black_body(temperature, test_wavelength_550);
     EXPECT_GT(intensity_550, 0.0);
     
     // Test Wien's displacement law - peak wavelength
-    double peak_wavelength = black_body_max_wavelength(temperature);
+    double peak_wavelength = BlackBodySpectrumDistribution<double>::black_body_max_wavelength(temperature);
     EXPECT_GT(peak_wavelength, 0.0);
     EXPECT_LT(peak_wavelength, 3000.0);  // Reasonable range for peak wavelength
     
     // Verify peak wavelength produces maximum intensity
-    double peak_intensity = black_body(temperature, peak_wavelength);
-    double intensity_400 = black_body(temperature, test_wavelength_400);
-    double intensity_800 = black_body(temperature, test_wavelength_800);
+    double peak_intensity = BlackBodySpectrumDistribution<double>::black_body(temperature, peak_wavelength);
+    double intensity_400 = BlackBodySpectrumDistribution<double>::black_body(temperature, test_wavelength_400);
+    double intensity_800 = BlackBodySpectrumDistribution<double>::black_body(temperature, test_wavelength_800);
     
     EXPECT_GT(peak_intensity, intensity_400);
     EXPECT_GT(peak_intensity, intensity_800);
@@ -363,7 +364,7 @@ TEST_F(SpectrumTest, SpectrumIntegrationMonteCarloXYZ) {
         auto wl_r = rng.generate_uniform(lambda_min<double>, lambda_max<double>);
         auto wl = SampledWavelength<double, sample_N>(Vector<double, sample_N>::from_array(wl_r));
         
-        auto xyz = XYZ<double>::from_radiance(
+        auto xyz = XYZ<double>::from_sampled_spectrum(
             d65.sample(wl),
             wl,
             SampledPdf<double, sample_N>(Vector<double, sample_N>::filled(1.0 / (lambda_max<double> - lambda_min<double>)))
@@ -404,8 +405,8 @@ TEST_F(SpectrumTest, SpectrumLoadingFromCSVIfExists) {
     }
     
     try {
-        auto arr = pbpt::radiometry::make_spectra_from_csv<double, 3, XYZRange>(xyz_csv_path.string());
-        auto [Xbar, Ybar, Zbar] = arr;
+        auto arr = pbpt::radiometry::make_spectra_from_csv<double, XYZRange>(xyz_csv_path.string(), 3);
+        auto Xbar= arr[0], Ybar = arr[1], Zbar = arr[2];
         
         // Test sampling loaded spectra
         Vector<double, 5> wavelengths_vec(400, 500, 600, 700, 800);
@@ -455,7 +456,7 @@ TEST_F(SpectrumTest, IlluminantLoadingFromCSVIfExists) {
     }
     
     try {
-        auto [D65_loaded] = pbpt::radiometry::make_spectra_from_csv<double, 1, luminantD65Range>(d65_csv_path.string());
+        auto D65_loaded = pbpt::radiometry::make_spectra_from_csv<double, luminantD65Range>(d65_csv_path.string(), 1)[0];
         
         // Test sampling
         Vector<double, 5> wavelengths_vec(400, 560, 600, 700, 800);
@@ -690,7 +691,7 @@ TEST_F(SpectrumTest, RGBOptimizationPipeline) {
     auto unnormalized_poly = normalized_poly.to_unnormalized();
     
     RGBAlbedoSpectrumDistribution<double, RGBSigmoidPolynomial> optimized_albedo(unnormalized_poly);
-    auto xyz_from_optimized = XYZ<double>::from_reflectance_under_illuminant(optimized_albedo, D65);
+    auto xyz_from_optimized = XYZ<double>::from_reflectance(optimized_albedo, D65);
     auto rgb_from_optimized = srgb.to_rgb(xyz_from_optimized);
     
     // Should closely match target RGB
@@ -761,7 +762,7 @@ TEST_F(SpectrumTest, UnboundedRGBSpectrumWorkflow) {
     }
     
     // Verify that the unbounded spectrum reproduces the original scaled RGB
-    auto xyz_from_unbounded = XYZ<double>::from_reflectance_under_illuminant(unbounded_spectrum, D65);
+    auto xyz_from_unbounded = XYZ<double>::from_reflectance(unbounded_spectrum, D65);
     auto rgb_from_unbounded = srgb.to_rgb(xyz_from_unbounded);
     
     std::cout << "Final verification: original scaled_rgb_x2 = " << scaled_rgb_x2 

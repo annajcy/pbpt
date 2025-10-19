@@ -1,14 +1,156 @@
 #pragma once
 
+#include <array>
 #include <format>
 
 #include "math/point.hpp"
+#include "math/utils.hpp"
 #include "math/vector.hpp"
 
+#include "radiometry/spectrum_distribution.hpp"
 #include "sampled_spectrum.hpp"
 #include "constant/xyz_spectrum.hpp"
 
 namespace pbpt::radiometry {
+
+template<typename ResponseSpectrumType>
+class ResponseSpectrum {
+private:
+    std::array<ResponseSpectrumType, 3> m_spectrum;
+
+public:
+    ResponseSpectrum(
+        const std::array<ResponseSpectrumType, 3>& spectrum
+    ) : m_spectrum{spectrum} {}
+
+    ResponseSpectrum(
+        const ResponseSpectrumType& r,
+        const ResponseSpectrumType& g,
+        const ResponseSpectrumType& b
+    ) : m_spectrum{r,g,b} {}
+
+    const ResponseSpectrumType& r() const { return m_spectrum[0]; }
+    const ResponseSpectrumType& g() const { return m_spectrum[1]; }
+    const ResponseSpectrumType& b() const { return m_spectrum[2]; }
+
+    const ResponseSpectrumType& x() const { return m_spectrum[0]; }
+    const ResponseSpectrumType& y() const { return m_spectrum[1]; }
+    const ResponseSpectrumType& z() const { return m_spectrum[2]; }
+
+    const ResponseSpectrumType& operator[](size_t index) const {
+        math::assert_if(index >= 3, "Index out of bounds");
+        return m_spectrum[index];
+    }
+
+};
+
+template<typename T, template <typename> class Color, typename SpectrumType, typename ResponseSpectrumType> 
+inline constexpr Color<T> project_spectrum(
+    const SpectrumType& spectrum,
+    const ResponseSpectrum<ResponseSpectrumType>& response
+) {
+    T r{}, g{}, b{};
+    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+        r += spectrum.at(lambda) * response.r().at(lambda);
+        g += spectrum.at(lambda) * response.g().at(lambda);
+        b += spectrum.at(lambda) * response.b().at(lambda);
+    }
+    return Color<T> (r, g, b);
+}
+
+template<typename T, template <typename> class Color, typename IlluminantSpectrumType, typename ResponseSpectrumType> 
+inline constexpr Color<T> project_illuminant(
+    const IlluminantSpectrumType& illuminant,
+    const ResponseSpectrum<ResponseSpectrumType>& response,
+    bool normalize_by_g = true
+) {
+    T r{}, g{}, b{};
+    T g_integral{};
+    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+        g_integral += illuminant.at(lambda) * response.g().at(lambda);
+        r += illuminant.at(lambda) * response.r().at(lambda);
+        g += illuminant.at(lambda) * response.g().at(lambda);
+        b += illuminant.at(lambda) * response.b().at(lambda);
+    }
+
+    if (!normalize_by_g || math::is_zero(g_integral)) {
+        return Color<T> (r, g, b);
+    }
+
+    return Color<T> (
+        r / g_integral,
+        g / g_integral,
+        b / g_integral
+    );
+}
+
+template<typename T, template <typename> class Color, typename ReflectanceSpectrumType, typename IlluminantSpectrumType, typename ResponseSpectrumType> 
+inline constexpr Color<T> project_reflectance(
+    const ReflectanceSpectrumType& reflectance,
+    const IlluminantSpectrumType& illuminant,
+    const ResponseSpectrum<ResponseSpectrumType>& response,
+    bool normalize_by_g = true
+) {
+    T r{}, g{}, b{};
+    T g_integral{};
+    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+        g_integral += illuminant.at(lambda) * response.g().at(lambda);
+        r += reflectance.at(lambda) * illuminant.at(lambda) * response.r().at(lambda);
+        g += reflectance.at(lambda) * illuminant.at(lambda) * response.g().at(lambda);
+        b += reflectance.at(lambda) * illuminant.at(lambda) * response.b().at(lambda);
+    }
+
+    if (!normalize_by_g || math::is_zero(g_integral)) {
+        return Color<T>(r, g, b);
+    }
+
+    return Color<T>(
+        r / g_integral,
+        g / g_integral,
+        b / g_integral
+    );
+}
+
+template<typename T, template <typename> class Color, typename EmissionSpectrumType, typename IlluminantSpectrumType, typename ResponseSpectrumType> 
+inline constexpr Color<T> project_emission(
+    const EmissionSpectrumType& emission,
+    const IlluminantSpectrumType& illuminant,
+    const ResponseSpectrum<ResponseSpectrumType>& response,
+    bool normalize_by_g = true
+) {
+    T r{}, g{}, b{};
+    T g_integral{};
+    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+        g_integral += illuminant.at(lambda) * response.g().at(lambda);
+        r += emission.at(lambda) * response.r().at(lambda);
+        g += emission.at(lambda) * response.g().at(lambda);
+        b += emission.at(lambda) * response.b().at(lambda);
+    }
+
+    if (!normalize_by_g || math::is_zero(g_integral)) {
+        return Color<T>(r, g, b);
+    }
+
+    return Color<T>(
+        r / g_integral,
+        g / g_integral,
+        b / g_integral
+    );
+}
+
+template<typename T, template <typename> class Color, int N, typename ResponseSpectrumType>
+inline constexpr Color<T> project_sampled_spectrum(
+    const SampledSpectrum<T, N>& spectrum, 
+    const SampledWavelength<T, N>& wavelengths, 
+    const SampledPdf<T, N>& pdf,
+    const ResponseSpectrum<ResponseSpectrumType>& response
+) {
+    return Color<T>(
+        (response.r().sample(wavelengths) * spectrum * pdf.inv()).average(), 
+        (response.g().sample(wavelengths) * spectrum * pdf.inv()).average(), 
+        (response.b().sample(wavelengths) * spectrum * pdf.inv()).average()
+    );
+}
 
 template<typename T>
 class XYZ : public math::Vector<T, 3> {
@@ -26,52 +168,88 @@ public:
         return XYZ(X, Y, Z);
     }
 
+    template<typename SpectrumType>
+    static XYZ<T> from_spectrum(const SpectrumType& spectrum) {
+        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
+            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        return project_spectrum<T, XYZ, SpectrumType, ResponseSpectrumType>(
+            spectrum, 
+            ResponseSpectrum<ResponseSpectrumType>{
+                constant::CIE_X<T>,
+                constant::CIE_Y<T>,
+                constant::CIE_Z<T>
+            }
+        );
+    }
+
     template<typename IlluminantSpectrumType>
-    static XYZ<T> from_standard_illuminant(const IlluminantSpectrumType& illuminant) {
-        T X = inner_product(illuminant, constant::CIE_X<T>);
-        T Y = inner_product(illuminant, constant::CIE_Y<T>);
-        T Z = inner_product(illuminant, constant::CIE_Z<T>);
-        T Y_integral = Y;
-        return XYZ<T>(X / Y_integral, Y / Y_integral, Z / Y_integral);
+    static XYZ<T> from_illuminant(const IlluminantSpectrumType& illuminant) {
+        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
+            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        return project_illuminant<T, XYZ, IlluminantSpectrumType, ResponseSpectrumType>(
+            illuminant, 
+            ResponseSpectrum<ResponseSpectrumType>{
+                constant::CIE_X<T>,
+                constant::CIE_Y<T>,
+                constant::CIE_Z<T>
+            }
+        );
     }
 
     template<typename ReflectanceSpectrumType, typename IlluminantSpectrumType>
-    static XYZ<T> from_reflectance_under_illuminant(const ReflectanceSpectrumType& reflectance,
-                                                    const IlluminantSpectrumType& illuminant) {
-        // 分子：R(λ)*I(λ) 与 CIE CMF 的内积
-        T X = inner_product(reflectance * illuminant, constant::CIE_X<T>);
-        T Y = inner_product(reflectance * illuminant, constant::CIE_Y<T>);
-        T Z = inner_product(reflectance * illuminant, constant::CIE_Z<T>);
-        // 分母：I(λ) 与 ȳ(λ) 的内积（归一化，使理想白 Y=1）
-        T Y_integral = inner_product(illuminant, constant::CIE_Y<T>);
-        return XYZ<T>(X / Y_integral, Y / Y_integral, Z / Y_integral);
+    static XYZ<T> from_reflectance(
+        const ReflectanceSpectrumType& reflectance,
+        const IlluminantSpectrumType& illuminant
+    ) {
+        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
+            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        return project_reflectance<T, XYZ, ReflectanceSpectrumType, IlluminantSpectrumType, ResponseSpectrumType>(
+            reflectance, 
+            illuminant, 
+            ResponseSpectrum<ResponseSpectrumType>{
+                constant::CIE_X<T>,
+                constant::CIE_Y<T>,
+                constant::CIE_Z<T>
+            }
+        );
     }
 
-    // 发光谱 L 在“参考照明（D65）归一化”的 XYZ
+    // emission with referenced illuminant XYZ
     template<typename EmissionSpectrumType, typename IlluminantSpectrumType>
-    static XYZ<T> from_emission_under_illuminant(
-        const EmissionSpectrumType& emission, const IlluminantSpectrumType& illuminant // 例如 D65
+    static XYZ<T> from_emission(
+        const EmissionSpectrumType& emission, 
+        const IlluminantSpectrumType& illuminant // e.g D65
     ) {
-        T X = inner_product(emission, constant::CIE_X<T>);
-        T Y = inner_product(emission, constant::CIE_Y<T>);
-        T Z = inner_product(emission, constant::CIE_Z<T>);
-        T Y_integral = inner_product(illuminant, constant::CIE_Y<T>);   // 固定：D65 的 Y
-        return XYZ<T>(X / Y_integral, Y / Y_integral, Z / Y_integral);
+        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
+            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        return project_emission<T, XYZ, EmissionSpectrumType, IlluminantSpectrumType, ResponseSpectrumType>(
+            emission, 
+            illuminant, 
+            ResponseSpectrum<ResponseSpectrumType>{
+                constant::CIE_X<T>,
+                constant::CIE_Y<T>,
+                constant::CIE_Z<T>
+            }
+        );
     }
 
     template<int N>
-    static constexpr XYZ from_sampled_radiance(
-        const SampledSpectrum<T, N>& radiance, 
+    static constexpr XYZ from_sampled_spectrum(
+        const SampledSpectrum<T, N>& spectrum, 
         const SampledWavelength<T, N>& wavelengths, 
         const SampledPdf<T, N>& pdf
     ) {
-        SampledSpectrum<T, N> X_response = constant::CIE_X<T>.sample(wavelengths);
-        SampledSpectrum<T, N> Y_response = constant::CIE_Y<T>.sample(wavelengths);
-        SampledSpectrum<T, N> Z_response = constant::CIE_Z<T>.sample(wavelengths);
-        return XYZ(
-            (X_response * radiance * pdf.inv()).average(), 
-            (Y_response * radiance * pdf.inv()).average(), 
-            (Z_response * radiance * pdf.inv()).average()
+        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
+            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        return project_sampled_spectrum<T, XYZ, N, ResponseSpectrumType>(
+            spectrum, 
+            wavelengths, 
+            pdf,
+            ResponseSpectrum<ResponseSpectrumType>{
+                constant::CIE_X<T>,
+                constant::CIE_Y<T>,
+                constant::CIE_Z<T>
+            }
         );
     }
 
@@ -168,6 +346,40 @@ public:
     T r() const { return this->operator[](0); }
     T g() const { return this->operator[](1); }
     T b() const { return this->operator[](2); }
+
+    RGB<T> clamp(T min = T{0}, T max = T{1}) {
+        return RGB<T>(
+            std::clamp(r(), min, max),
+            std::clamp(g(), min, max),
+            std::clamp(b(), min, max)
+        );
+    }
+
+    template<typename SpectrumType, typename ResponseSpectrumType>
+    static RGB<T> from_spectrum(
+        const SpectrumType& spectrum,
+        const ResponseSpectrum<ResponseSpectrumType>& response
+    ) {
+        return project_spectrum<T, RGB, SpectrumType, ResponseSpectrumType>(
+            spectrum, 
+            response
+        );
+    }
+
+    template<int N, typename ResponseSpectrumType>
+    RGB<T> from_sampled_spectrum(
+        const SampledSpectrum<T, N>& spectrum, 
+        const SampledWavelength<T, N>& wavelengths,
+        const SampledPdf<T, N> &pdf,
+        const ResponseSpectrum<ResponseSpectrumType>& response
+    ) const {
+        return project_sampled_spectrum<T, RGB, N, ResponseSpectrumType>(
+            spectrum,
+            wavelengths,
+            pdf,
+            response
+        );
+    }
 };
 
 template<typename T>

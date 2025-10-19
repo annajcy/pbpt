@@ -139,7 +139,7 @@ TEST_F(ColorTest, XYZFromxyY) {
 
 TEST_F(ColorTest, XYZFromStandardIlluminant) {
     auto d65 = CIE_D65_ilum<double>;
-    auto xyz = XYZ<double>::from_standard_illuminant(d65);
+    auto xyz = XYZ<double>::from_illuminant(d65);
 
     // For D65, expect normalized values
     EXPECT_NEAR(xyz.x(), 0.9504, 0.001);  // Approximate D65 x chromaticity
@@ -322,7 +322,7 @@ TEST_F(ColorTest, XYZFromSampledSpectrum) {
     Vector<double, N> pdf_values = Vector<double, N>::filled(1.0 / 300.0);
     SampledPdf<double, N> pdf(pdf_values);
     
-    auto xyz = XYZ<double>::from_radiance(spectrum, wavelengths, pdf);
+    auto xyz = XYZ<double>::from_sampled_spectrum(spectrum, wavelengths, pdf);
     
     // XYZ values should be positive for uniform spectrum
     EXPECT_GT(xyz.x(), 0.0);
@@ -342,10 +342,10 @@ TEST_F(ColorTest, XYZFromReflectanceUnderIlluminant) {
     RGBSigmoidPolynomial<double> white_poly{0.0, 0.0, 0.0};  // Constant 0.5 sigmoid
     RGBAlbedoSpectrumDistribution<double, RGBSigmoidPolynomial> white_reflector(white_poly);
     
-    auto xyz = XYZ<double>::from_reflectance_under_illuminant(white_reflector, d65);
+    auto xyz = XYZ<double>::from_reflectance(white_reflector, d65);
     
     // Should be similar to D65 white point
-    auto d65_xyz = XYZ<double>::from_standard_illuminant(d65);
+    auto d65_xyz = XYZ<double>::from_illuminant(d65);
     
     // The reflectance spectrum affects the result, so we check for reasonable values
     EXPECT_GT(xyz.x(), 0.0);
@@ -602,9 +602,9 @@ TEST_F(ColorTest, StandardIlluminantComparison) {
     auto D50 = CIE_D50_ilum<double>;
     auto A = CIE_A_ilum<double>;
     
-    auto xyz_d65 = XYZ<double>::from_standard_illuminant(D65);
-    auto xyz_d50 = XYZ<double>::from_standard_illuminant(D50);
-    auto xyz_a = XYZ<double>::from_standard_illuminant(A);
+    auto xyz_d65 = XYZ<double>::from_illuminant(D65);
+    auto xyz_d50 = XYZ<double>::from_illuminant(D50);
+    auto xyz_a = XYZ<double>::from_illuminant(A);
     
     // All should have positive Y (luminance)
     EXPECT_GT(xyz_d65.y(), 0.0);
@@ -726,7 +726,7 @@ TEST_F(ColorTest, RGBAlbedoSpectrumIntegration) {
     EXPECT_TRUE(std::isfinite(unnormalized.c2));
     
     // Test XYZ calculation from reflectance under illuminant
-    auto xyz_from_albedo = XYZ<double>::from_reflectance_under_illuminant(albedo, D65);
+    auto xyz_from_albedo = XYZ<double>::from_reflectance(albedo, D65);
     auto rgb_from_albedo = srgb.to_rgb(xyz_from_albedo);
     
     // Should produce a reasonable RGB color (approximately cyan from function_test output)

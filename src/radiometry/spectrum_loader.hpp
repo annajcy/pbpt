@@ -66,25 +66,24 @@ private:
 };
 
 // 通用的光谱创建函数模板
-template<typename T, int N, typename Range>
-inline auto make_spectra_from_csv(const std::string& csv_path) {
-    static_assert(N > 0, "Number of spectra must be positive");
+template<typename T, typename Range>
+inline auto make_spectra_from_csv(const std::string& csv_path, int spectrum_count) {
 
     auto source = CsvSpectrumDataSource<T>(csv_path);
     auto data = source.load_data();
 
-    std::array<std::array<T, Range::Count>, N> spectra_data{};
+    std::vector<std::array<T, Range::Count>> spectra_data(spectrum_count);
 
     for (int i = 0; i < Range::Count; ++i) {
         auto &[wavelength, values] = data[i];
-        for (int j = 0; j < N && j < static_cast<int>(values.size()); ++j) {
+        for (int j = 0; j < spectrum_count && j < static_cast<int>(values.size()); ++j) {
             spectra_data[j][i] = values[j];
         }
     }
 
-    std::array<radiometry::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>, N> result{};
-    for (int i = 0; i < N; ++i) {
-        result[i] = radiometry::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>(spectra_data[i]);
+    std::vector<radiometry::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>> result{};
+    for (int i = 0; i < spectrum_count; ++i) {
+        result.push_back(radiometry::TabularSpectrumDistribution<T, Range::LMinValue, Range::LMaxValue>(spectra_data[i]));
     }
     return result;
 }

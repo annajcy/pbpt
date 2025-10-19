@@ -11,7 +11,7 @@ inline static RGBColorSpace<T> sRGB(
     math::Point<double, 2> {0.64, 0.33},
     math::Point<double, 2> {0.3, 0.6},
     math::Point<double, 2> {0.15, 0.06},
-    XYZ<double>::from_standard_illuminant(CIE_D65_ilum<T>)
+    XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
 );
 
 template<typename T>
@@ -19,7 +19,7 @@ inline static RGBColorSpace<T> DCI_P3(
     math::Point<double, 2> {0.68, 0.32},
     math::Point<double, 2> {0.265, 0.69},
     math::Point<double, 2> {0.15, 0.06},
-    XYZ<double>::from_standard_illuminant(CIE_D65_ilum<T>)
+    XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
 );
 
 template<typename T>
@@ -27,7 +27,7 @@ inline static RGBColorSpace<T> Rec2020(
     math::Point<double, 2> {0.708, 0.292},
     math::Point<double, 2> {0.17, 0.797},
     math::Point<double, 2> {0.131, 0.046},
-    XYZ<double>::from_standard_illuminant(CIE_D65_ilum<T>)
+    XYZ<double>::from_illuminant(CIE_D65_ilum<T>)
 );
 
 } 

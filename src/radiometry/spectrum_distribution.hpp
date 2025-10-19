@@ -5,6 +5,7 @@
 #include <iostream>
 #include <type_traits>
 #include <memory>
+#include <vector>
 
 #include "math/function.hpp"
 #include "math/polynomial.hpp"
@@ -111,45 +112,39 @@ private:
     
 };
 
-template <typename T>
-constexpr inline T black_body(T t_K, T lambda_nm) {
-    // Planck's law formula for black body radiation
-    const double h = 6.62607015e-34;  // Planck's constant
-    const double c = 299792458;       // Speed of light
-    const double k = 1.380649e-23;    // Boltzmann's constant
-
-    double l = lambda_nm * 1e-9;  // Convert nm to m
-
-    double L = (2 * h * c * c) / math::pow(l, 5) * (1 / (math::fast_exp(h * c / (l * k * t_K)) - 1));
-
-    return L;
-}
-
-template <typename T>
-constexpr inline T black_body_M(T t_K) {
-    // Stefan-Boltzmann law
-    const double sigma = 5.670374419e-8;  // Stefan-Boltzmann constant
-    double       E     = sigma * std::pow(t_K, 4);
-    return E;
-}
-
-template <typename T>
-constexpr inline T non_black_body(T t_K, T lambda_nm, T p_hd) {
-    // Kirchhoff's law of thermal radiation
-    return black_body(t_K, lambda_nm) * (1 - p_hd);
-}
-
-// max wavelength
-template <typename T>
-inline T black_body_max_wavelength(T t_K) {
-    // Wien's displacement law
-    const double b = 2.897771955e-3;  // Wien's displacement constant
-    return b / t_K * 1e9;             // Convert from m to nm
-}
-
 template<typename T>
 class BlackBodySpectrumDistribution : public SpectrumDistribution<BlackBodySpectrumDistribution<T>, T> {
     friend class SpectrumDistribution<BlackBodySpectrumDistribution<T>, T>;
+public:
+    constexpr static inline T black_body(T t_K, T lambda_nm) {
+        // Planck's law formula for black body radiation
+        const double h = 6.62607015e-34;  // Planck's constant
+        const double c = 299792458;       // Speed of light
+        const double k = 1.380649e-23;    // Boltzmann's constant
+        double l = lambda_nm * 1e-9;  // Convert nm to m
+        double L = (2 * h * c * c) / math::pow(l, 5) * (1 / (math::fast_exp(h * c / (l * k * t_K)) - 1));
+        return L;
+    }
+
+    constexpr static inline T black_body_M(T t_K) {
+        // Stefan-Boltzmann law
+        const double sigma = 5.670374419e-8;  // Stefan-Boltzmann constant
+        double       E     = sigma * std::pow(t_K, 4);
+        return E;
+    }
+
+
+    constexpr static inline T non_black_body(T t_K, T lambda_nm, T p_hd) {
+        // Kirchhoff's law of thermal radiation
+        return black_body(t_K, lambda_nm) * (1 - p_hd);
+    }
+
+    // max wavelength
+    constexpr static inline T black_body_max_wavelength(T t_K) {
+        // Wien's displacement law
+        const double b = 2.897771955e-3;  // Wien's displacement constant
+        return b / t_K * 1e9;             // Convert from m to nm
+    }
 
 private:
     T m_temperature;
@@ -194,21 +189,51 @@ private:
 
 public:
     PiecewiseLinearSpectrumDistribution(const std::vector<std::pair<T, T>>& points)
-        : m_points(points) {}
+        : m_points(points) {
+            sort_points();
+        }
 
 private:
     constexpr T at_impl(T lambda) const {
-        // Find the segment that contains the given lambda
-        for (size_t i = 1; i < m_points.size(); ++i) {
-            if (lambda < m_points[i].first) {
-                // Perform linear interpolation between the two points
-                const auto& [lambda0, value0] = m_points[i - 1];
-                const auto& [lambda1, value1] = m_points[i];
-                return value0 + (value1 - value0) * (lambda - lambda0) / (lambda1 - lambda0);
-            }
+        if (m_points.empty()) {
+            return T(0);
         }
-        // If lambda is out of range, return 0
-        return T(0);
+
+        if (lambda <= m_points.front().first) {
+            return m_points.front().second;
+        }
+
+        if (lambda >= m_points.back().first) {
+            return m_points.back().second;
+        }
+
+        auto it = std::lower_bound(
+            m_points.begin(), 
+            m_points.end(), 
+            lambda,
+            [](const auto& point, T value) { return point.first < value; }
+        );
+
+        const auto& [lambda1, value1] = *it;
+        const auto& [lambda0, value0] = *(it - 1);
+        
+        return value0 + (value1 - value0) * (lambda - lambda0) / (lambda1 - lambda0);
+    }
+
+    void sort_points() {
+        std::sort(m_points.begin(), m_points.end(), [](const auto& a, const auto& b) {
+            return a.first < b.first;
+        });
+    }
+
+    void add_point(T lambda, T value) {
+        m_points.emplace_back(lambda, value);
+    }
+
+    void remove_point(T lambda) {
+        std::erase_if(m_points, [lambda](const auto& p) {
+            return p.first == lambda;
+        });
     }
 };
 
