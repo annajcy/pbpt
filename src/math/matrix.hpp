@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vk_video/vulkan_video_codec_av1std.h>
 #include <array>
 #include <concepts>
 #include <algorithm>
@@ -964,5 +963,20 @@ using Mat3   = Matrix<Float, 3, 3>;
 using Mat4   = Matrix<Float, 4, 4>;
 using Mat3x4 = Matrix<Float, 3, 4>;
 using Mat4x3 = Matrix<Float, 4, 3>;
+
+// slove least mean square problem: find M that minimizes ||M * A - B||
+template <typename T, int N, int ConstraintsCount>
+inline constexpr Matrix<T, N, N> solve_LMS(
+    const Matrix<T, N, ConstraintsCount>& A, 
+    const Matrix<T, N, ConstraintsCount>& B
+) {
+    Matrix<T, N, N> result = Matrix<T, N, N>::zeros();
+    auto At = A.transposed();
+    auto AAt = A * At;
+    auto BAt = B * At;
+    auto AAt_inv = AAt.inversed_rref();
+    result = BAt * AAt_inv;
+    return result;
+}
 
 }  // namespace pbpt::math

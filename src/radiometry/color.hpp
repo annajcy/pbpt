@@ -3,6 +3,7 @@
 #include <array>
 #include <format>
 
+#include "math/matrix.hpp"
 #include "math/point.hpp"
 #include "math/utils.hpp"
 #include "math/vector.hpp"
@@ -288,6 +289,44 @@ template<typename T>
 std::ostream& operator<<(std::ostream& os, const XYZ<T>& xyz) {
     return os << to_string(xyz);
 }
+
+template<typename T>
+class LMS : public math::Vector<T, 3> {
+public:
+
+    static constexpr math::Matrix<T, 3, 3> lms_to_xyz_matrix() {
+        return math::Matrix<T, 3, 3>(
+            0.986993, -0.147054, 0.159963,
+            0.432305, 0.51836, 0.0492912,
+            -0.00852866, 0.0400428, 0.968487
+        );
+    }
+
+    static constexpr math::Matrix<T, 3, 3> xyz_to_lms_matrix() {
+        return math::Matrix<T, 3, 3>(
+            0.8951, 0.2664, -0.1614,
+            -0.7502, 1.7135, 0.0367,
+            0.0389, -0.0685, 1.0296
+        );
+    }
+
+public:
+    LMS() : math::Vector<T, 3>(0, 0, 0) {}
+    LMS(T l, T m, T s) : math::Vector<T, 3>(l, m, s) {}
+    LMS(const math::Vector<T, 3>& vec) : math::Vector<T, 3>(vec) {}
+
+    T l() const { return this->operator[](0); }
+    T m() const { return this->operator[](1); }
+    T s() const { return this->operator[](2); }
+
+    XYZ<T> to_xyz() const {
+        return XYZ<T>(LMS<T>::lms_to_xyz_matrix() * (*this));
+    }
+
+    static LMS<T> from_xyz(const XYZ<T>& xyz) {
+        return LMS<T>(LMS<T>::xyz_to_lms_matrix() * xyz);
+    }
+};
 
 template<typename T>
 class LAB : public math::Vector<T, 3> {

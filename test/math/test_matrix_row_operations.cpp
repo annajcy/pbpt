@@ -529,4 +529,172 @@ TEST_F(MatrixRowOperationsTest, NumericalStability) {
     }
 }
 
+// ===== Least Mean Square (LMS) Tests =====
+
+TEST_F(MatrixRowOperationsTest, SolveLMS_SimpleCase) {
+    // Test solve_LMS with a simple overdetermined system
+    // We want to find M such that M * A ≈ B
+    // Example: fit a 2x2 transformation matrix
+    
+    // A: 2x3 matrix (2 dimensions, 3 constraint points)
+    Matrix<double, 2, 3> A(
+        Vector<double, 2>(1, 0),
+        Vector<double, 2>(0, 1),
+        Vector<double, 2>(1, 1)
+    );
+    
+    // B: target values (what we want M*A to equal)
+    Matrix<double, 2, 3> B(
+        Vector<double, 2>(2, 0),
+        Vector<double, 2>(0, 3),
+        Vector<double, 2>(2, 3)
+    );
+    
+    auto M = solve_LMS(A, B);
+    
+    // M should be approximately a 2x2 scaling matrix
+    // Verify by checking M * A ≈ B
+    auto result = M * A;
+    ExpectMatricesNear(result, B, 1e-9);
+}
+
+TEST_F(MatrixRowOperationsTest, SolveLMS_IdentityCase) {
+    // If A = I and B = I, then M should be I
+    Matrix<double, 3, 3> A = Matrix<double, 3, 3>::identity();
+    Matrix<double, 3, 3> B = Matrix<double, 3, 3>::identity();
+    
+    auto M = solve_LMS(A, B);
+    auto identity = Matrix<double, 3, 3>::identity();
+    
+    ExpectMatricesNear(M, identity, 1e-10);
+}
+
+TEST_F(MatrixRowOperationsTest, SolveLMS_ScalingTransform) {
+    // Test with a known scaling transformation
+    // A = points, B = scaled points
+    Matrix<double, 2, 4> A(
+        Vector<double, 2>(1, 0),
+        Vector<double, 2>(0, 1),
+        Vector<double, 2>(2, 0),
+        Vector<double, 2>(0, 2)
+    );
+    
+    // Expected: scale by [2, 3]
+    Matrix<double, 2, 4> B(
+        Vector<double, 2>(2, 0),
+        Vector<double, 2>(0, 3),
+        Vector<double, 2>(4, 0),
+        Vector<double, 2>(0, 6)
+    );
+    
+    auto M = solve_LMS(A, B);
+    
+    // M should be a diagonal matrix with [2, 3] on diagonal
+    EXPECT_NEAR(M.at(0, 0), 2.0, 1e-9);
+    EXPECT_NEAR(M.at(1, 1), 3.0, 1e-9);
+    EXPECT_NEAR(M.at(0, 1), 0.0, 1e-9);
+    EXPECT_NEAR(M.at(1, 0), 0.0, 1e-9);
+    
+    // Verify result
+    auto result = M * A;
+    ExpectMatricesNear(result, B, 1e-9);
+}
+
+TEST_F(MatrixRowOperationsTest, SolveLMS_RotationApproximation) {
+    // Test approximating a rotation with data
+    // Create some points and their rotated versions
+    constexpr double angle = math::pi_v<double> / 4.0; // 45 degrees
+    double cos_a = std::cos(angle);
+    double sin_a = std::sin(angle);
+    
+    Matrix<double, 2, 5> A(
+        Vector<double, 2>(1, 0),
+        Vector<double, 2>(0, 1),
+        Vector<double, 2>(1, 1),
+        Vector<double, 2>(2, 0),
+        Vector<double, 2>(0, 2)
+    );
+    
+    // Apply rotation matrix to get B
+    Matrix<double, 2, 2> rotation(
+        Vector<double, 2>(cos_a, sin_a),
+        Vector<double, 2>(-sin_a, cos_a)
+    );
+    
+    Matrix<double, 2, 5> B = rotation * A;
+    
+    // Solve for M
+    auto M = solve_LMS(A, B);
+    
+    // M should approximate the rotation matrix
+    ExpectMatricesNear(M, rotation, 1e-9);
+    
+    // Verify the result
+    auto result = M * A;
+    ExpectMatricesNear(result, B, 1e-9);
+}
+
+TEST_F(MatrixRowOperationsTest, SolveLMS_OverdeterminedSystem) {
+    // Test with more constraints than unknowns
+    // Fit a linear transformation with 10 point constraints
+    // Use deterministic data instead of random
+    Matrix<double, 2, 10> A(
+        Vector<double, 2>(1.0, 0.5),
+        Vector<double, 2>(2.0, 1.0),
+        Vector<double, 2>(3.0, 1.5),
+        Vector<double, 2>(4.0, 2.0),
+        Vector<double, 2>(5.0, 2.5),
+        Vector<double, 2>(0.5, 1.0),
+        Vector<double, 2>(1.5, 2.0),
+        Vector<double, 2>(2.5, 3.0),
+        Vector<double, 2>(3.5, 4.0),
+        Vector<double, 2>(4.5, 5.0)
+    );
+    
+    // Create target transformation
+    Matrix<double, 2, 2> target_M(
+        Vector<double, 2>(1.5, 0.5),
+        Vector<double, 2>(-0.3, 2.0)
+    );
+    
+    Matrix<double, 2, 10> B = target_M * A;
+    
+    // Solve for M
+    auto M = solve_LMS(A, B);
+    
+    // M should be very close to target_M
+    ExpectMatricesNear(M, target_M, 1e-9);
+    
+    // Verify solution
+    auto result = M * A;
+    ExpectMatricesNear(result, B, 1e-9);
+}
+
+TEST_F(MatrixRowOperationsTest, SolveLMS_3DTransformation) {
+    // Test with 3D transformations
+    Matrix<double, 3, 6> A(
+        Vector<double, 3>(1, 0, 0),
+        Vector<double, 3>(0, 1, 0),
+        Vector<double, 3>(0, 0, 1),
+        Vector<double, 3>(1, 1, 0),
+        Vector<double, 3>(1, 0, 1),
+        Vector<double, 3>(0, 1, 1)
+    );
+    
+    // Create a known 3x3 transformation
+    Matrix<double, 3, 3> target_M(
+        Vector<double, 3>(2, 0, 0),
+        Vector<double, 3>(0, 3, 0),
+        Vector<double, 3>(0, 0, 4)
+    );
+    
+    Matrix<double, 3, 6> B = target_M * A;
+    
+    // Solve for M
+    auto M = solve_LMS(A, B);
+    
+    // Should recover the scaling matrix
+    ExpectMatricesNear(M, target_M, 1e-9);
+}
+
 }  // namespace pbpt::math::testing

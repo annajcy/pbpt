@@ -228,4 +228,7 @@ inline static TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMax
     0.000000000000, 0.000000000000
 );
 
+template <typename T>
+using XYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue>;
+
 };  // namespace pbpt::radiometry
