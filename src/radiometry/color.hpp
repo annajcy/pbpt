@@ -259,7 +259,10 @@ public:
     T z() const { return this->operator[](2); }
 
     math::Point<T, 2> to_xy() const {
-        return math::Point<T, 2>(x() / (x() + y() + z()), y() / (x() + y() + z()));
+        return math::Point<T, 2>(
+            x() / (x() + y() + z()), 
+            y() / (x() + y() + z())
+        );
     }
 
     XYZ<T>& normalize_to_y(T target_y = T{100}) {
