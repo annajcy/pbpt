@@ -25,7 +25,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     const RGBColorSpace<T>& color_space,
     const LuminantSpectrumType& reference_luminant_spectrum,
     int max_iterations = 300, 
-    double learning_rate = 1e-1,
+    double learning_rate = 1.0,
     double delta_x = 1e-4,
     double error_threshold = 1e-2, 
     const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0},

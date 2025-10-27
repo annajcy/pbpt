@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cmath>
 
 #include "camera/pixel_sensor.hpp"
 #include "math/vector.hpp"
@@ -6,6 +7,7 @@
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
+#include "radiometry/spectrum_distribution.hpp"
 
 namespace pbpt::camera::testing {
 
@@ -50,7 +52,6 @@ TEST(PixelSensorTest, SensorRgbConversionsRespectIdentityMatrix) {
 
 TEST(PixelSensorTest, RadianceToSensorRgbAppliesResponseSpectrumAndImageRatio) {
     using T = float;
-    constexpr int N = 4;
     using Illuminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
     using SensorType =
         PixelSensor<T, Illuminant, Illuminant, radiometry::constant::XYZSpectrumType<T>>;
@@ -62,14 +63,24 @@ TEST(PixelSensorTest, RadianceToSensorRgbAppliesResponseSpectrumAndImageRatio) {
         image_ratio
     );
 
-    math::Vector<T, N> radiance_vec(T(1.0f), T(0.6f), T(0.35f), T(0.2f));
-    radiometry::SampledSpectrum<T, N> radiance(radiance_vec);
+    const T sigma = T(15.0f);
+    radiometry::FunctionalSpectrumDistribution<T> radiance(
+        [=](T lambda) -> T {
+            auto gaussian = [&](T mean, T amplitude) -> double {
+                const double diff = static_cast<double>(lambda - mean);
+                const double sigma_val = static_cast<double>(sigma);
+                const double exponent = -diff * diff / (2.0 * sigma_val * sigma_val);
+                return static_cast<double>(amplitude) * std::exp(exponent);
+            };
 
-    math::Vector<T, N> wavelength_vec(T(410.0f), T(510.0f), T(610.0f), T(710.0f));
-    radiometry::SampledWavelength<T, N> wavelengths(wavelength_vec);
-
-    math::Vector<T, N> pdf_vec(T(0.25f), T(0.25f), T(0.25f), T(0.25f));
-    radiometry::SampledPdf<T, N> pdf(pdf_vec);
+            const double value =
+                gaussian(T(410.0f), T(1.0f)) +
+                gaussian(T(510.0f), T(0.6f)) +
+                gaussian(T(610.0f), T(0.35f)) +
+                gaussian(T(710.0f), T(0.2f));
+            return static_cast<T>(value);
+        }
+    );
 
     radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>> response(
         radiometry::constant::CIE_X<T>,
@@ -78,12 +89,12 @@ TEST(PixelSensorTest, RadianceToSensorRgbAppliesResponseSpectrumAndImageRatio) {
     );
 
     auto projected_rgb =
-        radiometry::project_sampled_spectrum<T, radiometry::RGB, N,
-                                             radiometry::constant::XYZSpectrumType<T>>(
-            radiance, wavelengths, pdf, response);
+        radiometry::project_emission<T, radiometry::RGB, decltype(radiance), Illuminant,
+                                     radiometry::constant::XYZSpectrumType<T>>(
+            radiance, radiometry::constant::CIE_D65_ilum<T>, response);
     auto expected_sensor_rgb = radiometry::RGB<T>(projected_rgb * image_ratio);
 
-    auto sensor_rgb = sensor.template radiance_to_sensor_rgb<N>(radiance, wavelengths, pdf);
+    auto sensor_rgb = sensor.radiance_to_sensor_rgb(radiance);
 
     EXPECT_NEAR(sensor_rgb.r(), expected_sensor_rgb.r(), 1e-4f);
     EXPECT_NEAR(sensor_rgb.g(), expected_sensor_rgb.g(), 1e-4f);

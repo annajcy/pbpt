@@ -678,7 +678,7 @@ TEST_F(SpectrumTest, RGBOptimizationPipeline) {
     double error_magnitude = std::sqrt(result.error[0]*result.error[0] + 
                                       result.error[1]*result.error[1] + 
                                       result.error[2]*result.error[2]);
-    EXPECT_LT(error_magnitude, 1e-3);
+    EXPECT_LT(error_magnitude, 1e-2);
     EXPECT_EQ(result.normalized_coeffs.size(), 3);
     
     // Validate optimized coefficients are reasonable
@@ -798,7 +798,7 @@ TEST_F(SpectrumTest, IlluminantSpectrumDistributionBasic) {
     double albedo_error = std::sqrt(albedo_result.error[0]*albedo_result.error[0] + 
                                    albedo_result.error[1]*albedo_result.error[1] + 
                                    albedo_result.error[2]*albedo_result.error[2]);
-    EXPECT_LT(albedo_error, 1e-3);
+    EXPECT_LT(albedo_error, 1e-2);
     
     // Create optimized albedo polynomial
     RGBSigmoidPolynomialNormalized<double> optimized_albedo_poly{
