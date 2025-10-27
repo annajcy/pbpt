@@ -679,15 +679,15 @@ TEST_F(SpectrumTest, RGBOptimizationPipeline) {
                                       result.error[1]*result.error[1] + 
                                       result.error[2]*result.error[2]);
     EXPECT_LT(error_magnitude, 1e-3);
-    EXPECT_EQ(result.coeffs.size(), 3);
+    EXPECT_EQ(result.normalized_coeffs.size(), 3);
     
     // Validate optimized coefficients are reasonable
-    EXPECT_TRUE(std::isfinite(result.coeffs[0]));
-    EXPECT_TRUE(std::isfinite(result.coeffs[1]));
-    EXPECT_TRUE(std::isfinite(result.coeffs[2]));
+    EXPECT_TRUE(std::isfinite(result.normalized_coeffs[0]));
+    EXPECT_TRUE(std::isfinite(result.normalized_coeffs[1]));
+    EXPECT_TRUE(std::isfinite(result.normalized_coeffs[2]));
     
     // Create optimized albedo spectrum
-    RGBSigmoidPolynomialNormalized<double> normalized_poly{result.coeffs[0], result.coeffs[1], result.coeffs[2]};
+    RGBSigmoidPolynomialNormalized<double> normalized_poly{result.normalized_coeffs[0], result.normalized_coeffs[1], result.normalized_coeffs[2]};
     auto unnormalized_poly = normalized_poly.to_unnormalized();
     
     RGBAlbedoSpectrumDistribution<double, RGBSigmoidPolynomial> optimized_albedo(unnormalized_poly);
@@ -731,8 +731,8 @@ TEST_F(SpectrumTest, UnboundedRGBSpectrumWorkflow) {
               << std::sqrt(optimization_result.error[0]*optimization_result.error[0] + 
                           optimization_result.error[1]*optimization_result.error[1] + 
                           optimization_result.error[2]*optimization_result.error[2])
-              << ", coeffs = (" << optimization_result.coeffs[0] << ", " 
-              << optimization_result.coeffs[1] << ", " << optimization_result.coeffs[2] << ")" << std::endl;
+              << ", coeffs = (" << optimization_result.normalized_coeffs[0] << ", " 
+              << optimization_result.normalized_coeffs[1] << ", " << optimization_result.normalized_coeffs[2] << ")" << std::endl;
     
     // Check that optimization converged
     double error_magnitude = std::sqrt(optimization_result.error[0]*optimization_result.error[0] + 
@@ -742,9 +742,9 @@ TEST_F(SpectrumTest, UnboundedRGBSpectrumWorkflow) {
     
     // Create optimized polynomial
     RGBSigmoidPolynomialNormalized<double> optimized_poly{
-        optimization_result.coeffs[0], 
-        optimization_result.coeffs[1], 
-        optimization_result.coeffs[2]
+        optimization_result.normalized_coeffs[0], 
+        optimization_result.normalized_coeffs[1], 
+        optimization_result.normalized_coeffs[2]
     };
     
     // Create unbounded spectrum with optimized coefficients and original scale
@@ -791,8 +791,8 @@ TEST_F(SpectrumTest, IlluminantSpectrumDistributionBasic) {
               << std::sqrt(albedo_result.error[0]*albedo_result.error[0] + 
                           albedo_result.error[1]*albedo_result.error[1] + 
                           albedo_result.error[2]*albedo_result.error[2])
-              << ", coeffs = (" << albedo_result.coeffs[0] << ", " 
-              << albedo_result.coeffs[1] << ", " << albedo_result.coeffs[2] << ")" << std::endl;
+              << ", coeffs = (" << albedo_result.normalized_coeffs[0] << ", " 
+              << albedo_result.normalized_coeffs[1] << ", " << albedo_result.normalized_coeffs[2] << ")" << std::endl;
     
     // Check that albedo optimization converged
     double albedo_error = std::sqrt(albedo_result.error[0]*albedo_result.error[0] + 
@@ -802,9 +802,9 @@ TEST_F(SpectrumTest, IlluminantSpectrumDistributionBasic) {
     
     // Create optimized albedo polynomial
     RGBSigmoidPolynomialNormalized<double> optimized_albedo_poly{
-        albedo_result.coeffs[0], 
-        albedo_result.coeffs[1], 
-        albedo_result.coeffs[2]
+        albedo_result.normalized_coeffs[0], 
+        albedo_result.normalized_coeffs[1], 
+        albedo_result.normalized_coeffs[2]
     };
     
     // Test different scale factors for illuminant spectrum distribution

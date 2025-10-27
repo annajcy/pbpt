@@ -405,7 +405,7 @@ int main() {
     auto [scaled_rgb, scale] = radiometry::scale_unbounded_rgb(rgb_from_optimized_albedox2);
     std::cout << "Scaled RGB: " << scaled_rgb << ", Scale: " << scale << std::endl;
     auto opti = radiometry::optimize_albedo_rgb_sigmoid_polynomial(scaled_rgb, radiometry::constant::sRGB<double>, D65);
-    auto rspn = radiometry::RGBSigmoidPolynomialNormalized<double>{opti.coeffs[0], opti.coeffs[1], opti.coeffs[2]};
+    auto rspn = radiometry::RGBSigmoidPolynomialNormalized<double>{opti.normalized_coeffs[0], opti.normalized_coeffs[1], opti.normalized_coeffs[2]};
     radiometry::RGBUnboundedSpectrumDistribution<double, radiometry::RGBSigmoidPolynomialNormalized> unbounded_rgb_spectrum(rspn, scale);
     auto xyz_from_unbounded_rgb = radiometry::XYZ<double>::from_reflectance(unbounded_rgb_spectrum, D65);
     std::cout << "XYZ from Unbounded RGB Spectrum: " << xyz_from_unbounded_rgb << std::endl;

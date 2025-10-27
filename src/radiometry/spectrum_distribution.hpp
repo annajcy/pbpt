@@ -258,7 +258,7 @@ public:
     template<typename... Args>
     requires (sizeof...(Args) == (LambdaMax - LambdaMin + 1)) && (std::conjunction_v<std::is_convertible<Args, T>...>)
     constexpr TabularSpectrumDistribution(Args&&... args)
-        : m_samples{std::forward<Args>(args)...} {}
+        : m_samples{static_cast<T>(std::forward<Args>(args))...} {}
 
     constexpr int sample_count() const {
         return LambdaMax - LambdaMin + 1;
@@ -289,6 +289,7 @@ struct RGBSigmoidPolynomial {
     T c0, c1, c2;
 
     RGBSigmoidPolynomial(T c0, T c1, T c2) : c0(c0), c1(c1), c2(c2) {}
+    RGBSigmoidPolynomial(const std::array<T, 3>& coeffs) : c0(coeffs[0]), c1(coeffs[1]), c2(coeffs[2]) {}
 
     constexpr T at(T lambda) const {
         return math::sigmoid(math::Polynomial<T>::evaluate(lambda, c0, c1, c2));
@@ -300,6 +301,7 @@ struct RGBSigmoidPolynomialNormalized {
     T c0, c1, c2;
 
     RGBSigmoidPolynomialNormalized(T c0, T c1, T c2) : c0(c0), c1(c1), c2(c2) {}
+    RGBSigmoidPolynomialNormalized(const std::array<T, 3>& coeffs) : c0(coeffs[0]), c1(coeffs[1]), c2(coeffs[2]) {}
 
     constexpr T at(T lambda) const {
         const T t = (lambda - T(360)) / T(830 - 360);   // 归一化

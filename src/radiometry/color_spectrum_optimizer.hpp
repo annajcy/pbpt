@@ -5,6 +5,7 @@
 #include "math/matrix.hpp"
 #include "math/operator.hpp"
 #include "math/vector.hpp"
+#include "math/format.hpp"
 
 #include "spectrum_distribution.hpp"
 #include "color.hpp"
@@ -15,7 +16,7 @@ namespace pbpt::radiometry {
 template<typename T>
 struct RGBSigmoidPolynomialOptimizationResult {
     math::Vector<T, 3> error;
-    std::array<T, 3> coeffs;
+    std::array<T, 3> normalized_coeffs;
 };
 
 template<typename T, typename LuminantSpectrumType>
@@ -23,16 +24,25 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     const RGB<T>& target_rgb, 
     const RGBColorSpace<T>& color_space,
     const LuminantSpectrumType& reference_luminant_spectrum,
-    int max_iterations = 15, 
-    double error_threshold = 1e-4, 
-    const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0}
+    int max_iterations = 300, 
+    double learning_rate = 1e-1,
+    double delta_x = 1e-4,
+    double error_threshold = 1e-2, 
+    const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0},
+    bool verbose = false
 ) {
-    
-    std::cout << "Starting optimization for target RGB: " << target_rgb << std::endl;
+
+    if (verbose) {
+        std::cout << "Starting optimization for target RGB: " << target_rgb << std::endl;
+    }
     XYZ<T> target_xyz = color_space.to_xyz(target_rgb);
-    std::cout << "Target XYZ: " << target_xyz << std::endl;
+    if (verbose) {
+        std::cout << "Target XYZ: " << target_xyz << std::endl;
+    }
     LAB<T> target_lab = LAB<T>::from_xyz(target_xyz, color_space.white_point());
-    std::cout << "Target LAB: " << target_lab << std::endl;
+    if (verbose) {
+        std::cout << "Target LAB: " << target_lab << std::endl;
+    }
 
     auto eval_lab = [&](const std::array<T,3>& c) -> LAB<T> {
         RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> albedo({c[0], c[1], c[2]});
@@ -48,7 +58,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
     };
 
     auto eval_jacobian = [&](const std::array<T,3>& c) -> math::Matrix<T, 3, 3> {
-        const T epsilon = 1e-4;
+        const T epsilon = delta_x;
         math::Matrix<T, 3, 3> J;
         for (int i = 0; i < 3; i++) {
             std::array<T, 3> c_plus = c;
@@ -64,6 +74,7 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
         return J;
     };
 
+    bool converged = false;
     std::array<T, 3> coeffs = initial_guess;
     auto error = math::Vector<T, 3>::filled(std::numeric_limits<double>::max());
     for (int i = 0; i < max_iterations; i ++) {
@@ -71,8 +82,10 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
         //std::cout << "Object LAB: " << object_lab << std::endl;
         error = eval_error(object_lab);
 
-        std::cout << "Iteration " << i << ": Error = " << error 
-                  << ", Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
+        if (verbose) {
+            std::cout << "Iteration " << i << ": Error = " << error
+                      << ", Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
+        }
 
         if ([&]() -> bool {
             for (int j = 0; j < 3; j++) {
@@ -82,18 +95,32 @@ inline auto optimize_albedo_rgb_sigmoid_polynomial(
             }
             return true;
         }()) {
-            std::cout << "Converged after " << i << " iterations.\n";
+            if (verbose) {
+                std::cout << "Converged after " << i << " iterations.\n";
+                std::cout << "Final Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
+            } else {
+                std::cout << "converged after " << i << " iterations.\n";
+            }
+            converged = true;
             return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
         }
 
         auto J = eval_jacobian(coeffs);
-        std::cout << "Jacobian:\n" << J << std::endl;   
+        if (verbose) {
+            std::cout << "Jacobian:\n" << J << std::endl;
+        }
 
         // Solve the linear system J * delta = error and update coeffs
         auto delta = J.inversed_rref() * error;
-        coeffs[0] -= delta[0];
-        coeffs[1] -= delta[1];
-        coeffs[2] -= delta[2];
+        coeffs[0] -= delta[0] * learning_rate;
+        coeffs[1] -= delta[1] * learning_rate;
+        coeffs[2] -= delta[2] * learning_rate;
+    }
+
+    if (!converged) {
+        std::cout << "Did not converge after " << max_iterations << " iterations.\n";
+        std::cout << "Final Error = " << error << "\n";
+        std::cout << "Final Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
     }
 
     return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
