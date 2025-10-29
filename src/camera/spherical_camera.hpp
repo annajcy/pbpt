@@ -16,8 +16,8 @@ enum class SphericalCameraMapping {
 };
 
 template<typename T>
-class SphericalCamera : public Camera<T, SphericalCamera<T>> {
-    friend class Camera<T, SphericalCamera<T>>;
+class SphericalCamera : public Camera<SphericalCamera<T>, T> {
+    friend class Camera<SphericalCamera<T>, T>;
 
 private:
     SphericalCameraMapping m_mapping{SphericalCameraMapping::EqualRectangular};

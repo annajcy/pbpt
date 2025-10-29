@@ -14,7 +14,7 @@
 
 namespace pbpt::camera {
 
-template<typename T, typename Derived>
+template<typename Derived, typename T>
 class Film {
 private:
     math::Vector<int, 2> m_resolution{};
@@ -57,7 +57,7 @@ public:
 };
 
 template<typename T, typename PixelSensorType>
-class RGBFilm : public Film<T, RGBFilm<T, PixelSensorType>> {
+class RGBFilm : public Film<RGBFilm<T, PixelSensorType>, T> {
 public:
 
     struct Pixel {
@@ -94,7 +94,7 @@ public:
         const math::Vector<int, 2>& resolution,
         const math::Vector<T, 2>& physical_size,
         const PixelSensorType& pixel_sensor
-    ) : Film<T, RGBFilm<T, PixelSensorType>>(resolution, physical_size),
+    ) : Film<RGBFilm<T, PixelSensorType>, T>(resolution, physical_size),
         m_pixel_sensor(pixel_sensor) {
         int width = this->resolution().x();
         int height = this->resolution().y();

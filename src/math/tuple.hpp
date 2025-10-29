@@ -224,6 +224,14 @@ public:
         }
         return result / N;
     }
+
+    constexpr const Derived<T, N>& as_derived() const {
+        return *static_cast<const Derived<T, N>&>(*this);
+    }
+
+    constexpr Derived<T, N>& as_derived() {
+        return *static_cast<Derived<T, N>&>(*this);
+    }
 };
 
 }  // namespace pbpt::math

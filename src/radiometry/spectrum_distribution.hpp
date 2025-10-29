@@ -36,12 +36,12 @@ public:
         return result;
     }
 
-    const Derived& as_derived() const {
-        return static_cast<const Derived&>(*this);
+    constexpr Derived& as_derived() noexcept {
+        return static_cast<Derived&>(*this);
     }
 
-    Derived& as_derived() {
-        return static_cast<Derived&>(*this);
+    constexpr const Derived& as_derived() const noexcept {
+        return static_cast<const Derived&>(*this);
     }
 };
 

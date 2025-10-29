@@ -18,11 +18,9 @@ struct CameraSample{
     }
 };
 
-template<typename T, typename Derived>
+template<typename Derived, typename T>
 class Camera {
 public:
-    Camera() = default;
-    ~Camera() = default;
 
     geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const {
         return as_derived().generate_ray_impl(sample);
@@ -33,11 +31,11 @@ public:
     }
 
 private:
-    Derived& as_derived() {
+    constexpr Derived& as_derived() noexcept {
         return static_cast<Derived&>(*this);
     }
 
-    const Derived& as_derived() const {
+    constexpr const Derived& as_derived() const noexcept {
         return static_cast<const Derived&>(*this);
     }
 };

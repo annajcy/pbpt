@@ -77,8 +77,8 @@ public:
     }
 };
 
-template<typename T, typename Derived>
-class ProjectiveCamera : public Camera<T, Derived> {
+template<typename Derived, typename T>
+class ProjectiveCamera : public Camera<Derived, T> {
 protected:
     CameraProjection<T> m_projection{};
 
@@ -129,15 +129,15 @@ inline CameraProjection<T> create_perspective_projection(
 }
 
 template<typename T>
-class OrthographicCamera : public ProjectiveCamera<T, OrthographicCamera<T>> {
-    friend class Camera<T, OrthographicCamera<T>>;
-    friend class ProjectiveCamera<T, OrthographicCamera<T>>;
+class OrthographicCamera : public ProjectiveCamera<OrthographicCamera<T>, T> {
+    friend class Camera<OrthographicCamera<T>, T>;
+    friend class ProjectiveCamera<OrthographicCamera<T>, T>;
 
 public:
     OrthographicCamera(
         T left, T right, T bottom, T top, T near, T far, 
         T resolution_x, T resolution_y
-    ) : ProjectiveCamera<T, OrthographicCamera<T>>(CameraProjection<T>::orthographic(
+    ) : ProjectiveCamera<OrthographicCamera<T>, T>(CameraProjection<T>::orthographic(
         left, right, bottom, top, near, far, 
         resolution_x, resolution_y)
     ) { }
@@ -146,7 +146,7 @@ public:
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
         T near, T far
-    ) : ProjectiveCamera<T, OrthographicCamera<T>>(
+    ) : ProjectiveCamera<OrthographicCamera<T>, T>(
         create_orthographic_projection(film_resolution, film_physical_size, near, far)
     ) {}
 
@@ -175,9 +175,9 @@ private:
 };
 
 template<typename T>
-class PerspectiveCamera : public ProjectiveCamera<T, PerspectiveCamera<T>> {
-    friend class Camera<T, PerspectiveCamera<T>>;
-    friend class ProjectiveCamera<T, PerspectiveCamera<T>>;
+class PerspectiveCamera : public ProjectiveCamera<PerspectiveCamera<T>, T> {
+    friend class Camera<PerspectiveCamera<T>, T>;
+    friend class ProjectiveCamera<PerspectiveCamera<T>, T>;
 
 public:
     PerspectiveCamera(
@@ -185,7 +185,7 @@ public:
         const T aspect_xy,
         const T near, const T far,
         const T resolution_x, const T resolution_y
-    ) : ProjectiveCamera<T, PerspectiveCamera<T>>(CameraProjection<T>::perspective(
+    ) : ProjectiveCamera<PerspectiveCamera<T>, T>(CameraProjection<T>::perspective(
         fov_y_rad, 
         aspect_xy, 
         near, far, 
@@ -196,7 +196,7 @@ public:
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
         T near, T far
-    ) : ProjectiveCamera<T, PerspectiveCamera<T>>(
+    ) : ProjectiveCamera<PerspectiveCamera<T>, T>(
         create_perspective_projection(film_resolution, film_physical_size, near, far)
     ) {}
 
@@ -228,9 +228,9 @@ private:
 // Thin Lens Cameras
 
 template<typename T>
-class ThinLensOrthographicCamera : public ProjectiveCamera<T, ThinLensOrthographicCamera<T>> {
-    friend class Camera<T, ThinLensOrthographicCamera<T>>;
-    friend class ProjectiveCamera<T, ThinLensOrthographicCamera<T>>;
+class ThinLensOrthographicCamera : public ProjectiveCamera<ThinLensOrthographicCamera<T>, T> {
+    friend class Camera<ThinLensOrthographicCamera<T>, T>;
+    friend class ProjectiveCamera<ThinLensOrthographicCamera<T>, T>;
 
 private:
     T m_lens_radius{0};
@@ -242,7 +242,7 @@ public:
         T left, T right, T bottom, T top, T near, T far, 
         T resolution_x, T resolution_y,
         T lens_radius, T focal_distance
-    ) : ProjectiveCamera<T, ThinLensOrthographicCamera<T>>(CameraProjection<T>::orthographic(
+    ) : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(CameraProjection<T>::orthographic(
         left, right, bottom, top, near, far, 
         resolution_x, resolution_y)
     ), m_lens_radius(lens_radius), m_focal_distance(focal_distance) { }
@@ -251,7 +251,7 @@ public:
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
         T near, T far, T lens_radius, T focal_distance
-    ) : ProjectiveCamera<T, ThinLensOrthographicCamera<T>>(
+    ) : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
             create_orthographic_projection(film_resolution, film_physical_size, near, far)
         ), 
         m_lens_radius(lens_radius), 
@@ -289,9 +289,9 @@ private:
 };
 
 template<typename T>
-class ThinLensPerspectiveCamera : public ProjectiveCamera<T, ThinLensPerspectiveCamera<T>>{
-    friend class Camera<T, ThinLensPerspectiveCamera<T>>;
-    friend class ProjectiveCamera<T, ThinLensPerspectiveCamera<T>>;
+class ThinLensPerspectiveCamera : public ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>{
+    friend class Camera<ThinLensPerspectiveCamera<T>, T>;
+    friend class ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>;
 
 private:
     T m_lens_radius{0};
@@ -304,7 +304,7 @@ public:
         const T near, const T far,
         const T resolution_x, const T resolution_y,
         T lens_radius, T focal_distance
-    ) : ProjectiveCamera<T, ThinLensPerspectiveCamera<T>>(CameraProjection<T>::perspective(
+    ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(CameraProjection<T>::perspective(
         fov_y_rad, 
         aspect_xy, 
         near, far, 
@@ -316,7 +316,7 @@ public:
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
         T near, T far, T lens_radius, T focal_distance
-    ) : ProjectiveCamera<T, ThinLensPerspectiveCamera<T>>(
+    ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
             create_perspective_projection(film_resolution, film_physical_size, near, far)
         ), 
         m_lens_radius(lens_radius), 
