@@ -16,7 +16,9 @@ enum class SphericalCameraMapping {
 };
 
 template<typename T>
-class SphericalCamera : public Camera<T> {
+class SphericalCamera : public Camera<T, SphericalCamera<T>> {
+    friend class Camera<T, SphericalCamera<T>>;
+
 private:
     SphericalCameraMapping m_mapping{SphericalCameraMapping::EqualRectangular};
     math::Vector<int, 2> m_film_resolution{1920, 960};
@@ -35,7 +37,8 @@ public:
         return m_film_resolution;
     }
 
-    geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const override {
+private:
+    geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         math::Point<T, 2> uv = math::Point<T, 2>(
             sample.p_film.x() / static_cast<T>(m_film_resolution.x()),
             sample.p_film.y() / static_cast<T>(m_film_resolution.y())
@@ -54,8 +57,8 @@ public:
         return geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), dir);
     }
 
-    geometry::RayDifferential<T, 3> generate_differential_ray(const CameraSample<T>& sample) const override {
-        geometry::Ray<T, 3> main_ray = this->generate_ray(sample);
+    geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
+        geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
         T eps = static_cast<T>(1e-3);
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0); 
@@ -64,8 +67,8 @@ public:
         CameraSample<T> sample_x = { p_film_x, sample.p_lens };
         CameraSample<T> sample_y = { p_film_y, sample.p_lens };
 
-        geometry::Ray<T, 3> ray_x = this->generate_ray(sample_x);
-        geometry::Ray<T, 3> ray_y = this->generate_ray(sample_y);
+        geometry::Ray<T, 3> ray_x = this->generate_ray_impl(sample_x);
+        geometry::Ray<T, 3> ray_y = this->generate_ray_impl(sample_y);
 
         return geometry::RayDifferential<T, 3>(main_ray, {ray_x, ray_y});
     }

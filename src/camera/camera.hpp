@@ -18,13 +18,28 @@ struct CameraSample{
     }
 };
 
-template<typename T>
+template<typename T, typename Derived>
 class Camera {
 public:
     Camera() = default;
-    virtual ~Camera() = default;
-    virtual geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const = 0;
-    virtual geometry::RayDifferential<T, 3> generate_differential_ray(const CameraSample<T>& sample) const = 0;
+    ~Camera() = default;
+
+    geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const {
+        return as_derived().generate_ray_impl(sample);
+    }
+
+    geometry::RayDifferential<T, 3> generate_differential_ray(const CameraSample<T>& sample) const {
+        return as_derived().generate_differential_ray_impl(sample);
+    }
+
+private:
+    Derived& as_derived() {
+        return static_cast<Derived&>(*this);
+    }
+
+    const Derived& as_derived() const {
+        return static_cast<const Derived&>(*this);
+    }
 };
 
 } // namespace pbpt::camera

@@ -763,21 +763,30 @@ TEST(CameraTemplateTest, FloatAndDoubleTypes) {
     SUCCEED() << "Both float and double camera types compile and construct";
 }
 
-TEST(CameraTemplateTest, PolymorphicBehavior) {
+TEST(CameraTemplateTest, CRTPBehavior) {
     math::Vector<int, 2> resolution(800, 600);
     math::Vector<float, 2> physical_size(2.0f, 2.0f);
     
-    // Test that derived cameras can be used as base Camera type
+    // Test that cameras use CRTP for static polymorphism
     OrthographicCamera<float> ortho_cam(resolution, physical_size, 0.1f, 100.0f);
-    Camera<float>& base_cam = ortho_cam;
+    PerspectiveCamera<float> persp_cam(resolution, physical_size, 0.1f, 100.0f);
     
     CameraSample<float> sample;
     sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
     
-    // Should be able to call generate_ray through base reference
-    auto ray = base_cam.generate_ray(sample);
+    // Both cameras can call generate_ray through their base Camera interface
+    auto ray_ortho = ortho_cam.generate_ray(sample);
+    auto ray_persp = persp_cam.generate_ray(sample);
     
-    EXPECT_NEAR(ray.direction().z(), 1.0f, 1e-5f);
+    // Orthographic camera rays are parallel to z-axis
+    EXPECT_NEAR(ray_ortho.direction().z(), 1.0f, 1e-5f);
+    EXPECT_NEAR(ray_ortho.direction().x(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray_ortho.direction().y(), 0.0f, 1e-5f);
+    
+    // Perspective camera rays converge at origin
+    EXPECT_NEAR(ray_persp.origin().x(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray_persp.origin().y(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray_persp.origin().z(), 0.0f, 1e-5f);
 }
 
 }  // namespace pbpt::camera::testing

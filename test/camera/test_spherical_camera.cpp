@@ -469,25 +469,29 @@ TEST(SphericalCameraTest, FloatAndDoubleTypes) {
     SUCCEED() << "Both float and double spherical camera types compile and construct";
 }
 
-TEST(SphericalCameraTest, PolymorphicBehavior) {
+TEST(SphericalCameraTest, CRTPBehavior) {
     math::Vector<int, 2> resolution(1920, 960);
     SphericalCamera<float> spherical_cam(resolution, SphericalCameraMapping::EqualRectangular);
     
-    // Test that spherical camera can be used as base Camera type
-    Camera<float>& base_cam = spherical_cam;
-    
+    // Test that spherical camera uses CRTP for static polymorphism
     CameraSample<float> sample;
     sample.p_film = math::Point<float, 2>(960.0f, 480.0f);
     
-    // Should be able to call generate_ray through base reference
-    auto ray = base_cam.generate_ray(sample);
+    // Should be able to call generate_ray through the camera
+    auto ray = spherical_cam.generate_ray(sample);
     
+    // Ray should be normalized
     float length = std::sqrt(
         ray.direction().x() * ray.direction().x() +
         ray.direction().y() * ray.direction().y() +
         ray.direction().z() * ray.direction().z()
     );
     EXPECT_NEAR(length, 1.0f, 1e-5f);
+    
+    // Origin should be at (0, 0, 0)
+    EXPECT_NEAR(ray.origin().x(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray.origin().y(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray.origin().z(), 0.0f, 1e-5f);
 }
 
 // ============================================================================
