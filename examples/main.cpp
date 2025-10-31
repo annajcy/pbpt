@@ -2,6 +2,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
+#include <cmath>
+
+#include "radiometry/constant/illuminant_spectrum.hpp"
+#include "radiometry/constant/swatch_reflectances_spectrum.hpp"
+#include "shape/shape.hpp"
 
 #include "pbpt.h"
 
@@ -446,6 +452,56 @@ int main() {
             
         }
     }
+
+    radiometry::XYZ<double> d65_xyz = radiometry::XYZ<double>::from_illuminant(radiometry::constant::CIE_D65_ilum<double>);
+    std::cout << "D65 Illuminant XYZ: " << d65_xyz << std::endl;
+    auto d65_rgb = radiometry::constant::sRGB<double>.to_rgb(d65_xyz);
+    std::cout << "D65 Illuminant sRGB: " << d65_rgb << std::endl;
+    auto d65_rgb_encoded = encode_srgb(d65_rgb);
+    std::cout << "D65 Illuminant sRGB (gamma encoded): " << d65_rgb_encoded << std::endl;
+
+
+    auto ref_red = radiometry::constant::get_swatch_reflectance<double>(radiometry::constant::SwatchReflectance::Red);
+    radiometry::XYZ<double> xyz_red = radiometry::XYZ<double>::from_reflectance(ref_red, radiometry::constant::CIE_D65_ilum<double>);
+    std::cout << "Red Swatch Reflectance XYZ: " << xyz_red << std::endl;
+    auto rgb_red = radiometry::constant::sRGB<double>.to_rgb(xyz_red);
+    std::cout << "Red Swatch Reflectance sRGB: " << rgb_red << std::endl;
+    auto rgb_red_encoded = encode_srgb(rgb_red);
+    std::cout << "Red Swatch Reflectance sRGB (gamma encoded): " << rgb_red_encoded << std::endl;
+
+
+    auto ref_blue = radiometry::constant::get_swatch_reflectance<double>(radiometry::constant::SwatchReflectance::Blue);
+    radiometry::XYZ<double> xyz_blue = radiometry::XYZ<double>::from_reflectance(ref_blue, radiometry::constant::CIE_D65_ilum<double>);
+    std::cout << "Blue Swatch Reflectance XYZ: " << xyz_blue << std::endl;
+    auto rgb_blue = radiometry::constant::sRGB<double>.to_rgb(xyz_blue);
+    std::cout << "Blue Swatch Reflectance sRGB: " << rgb_blue << std::endl;
+    auto rgb_blue_encoded = radiometry::encode_srgb(rgb_blue);
+    std::cout << "Blue Swatch Reflectance sRGB (gamma encoded): " << rgb_blue_encoded << std::endl;
+
+
+    auto ref_blue_ = radiometry::constant::get_swatch_reflectance<double>(radiometry::constant::SwatchReflectance::BlueSky);
+    radiometry::XYZ<double> xyz_blue_ = radiometry::XYZ<double>::from_reflectance(ref_blue_, radiometry::constant::CIE_D65_ilum<double>);
+    std::cout << "Blue Sky Swatch Reflectance XYZ: " << xyz_blue_ << std::endl;
+    auto rgb_blue_ = radiometry::constant::sRGB<double>.to_rgb(xyz_blue_);
+    std::cout << "Blue Sky Swatch Reflectance sRGB: " << rgb_blue_ << std::endl;
+    auto rgb_blue_sky_encoded = radiometry::encode_srgb(rgb_blue_);
+    std::cout << "Blue Sky Swatch Reflectance sRGB (gamma encoded): " << rgb_blue_sky_encoded << std::endl;
+
+    auto white_ref = radiometry::constant::get_swatch_reflectance<double>(radiometry::constant::SwatchReflectance::White);
+    radiometry::XYZ<double> xyz_white = radiometry::XYZ<double>::from_reflectance(white_ref, radiometry::constant::CIE_D65_ilum<double>);
+    std::cout << "White Swatch Reflectance XYZ: " << xyz_white << std::endl;
+    auto rgb_white = radiometry::constant::sRGB<double>.to_rgb(xyz_white);
+    std::cout << "White Swatch Reflectance sRGB: " << rgb_white << std::endl;
+    auto rgb_white_encoded = radiometry::encode_srgb(rgb_white);
+    std::cout << "White Swatch Reflectance sRGB (gamma encoded): " << rgb_white_encoded << std::endl;
+
+    auto black_ref = radiometry::constant::get_swatch_reflectance<double>(radiometry::constant::SwatchReflectance::Black);
+    radiometry::XYZ<double> xyz_black = radiometry::XYZ<double>::from_reflectance(black_ref, radiometry::constant::CIE_D65_ilum<double>);
+    std::cout << "Black Swatch Reflectance XYZ: " << xyz_black << std::endl;    
+    auto rgb_black = radiometry::constant::sRGB<double>.to_rgb(xyz_black);
+    std::cout << "Black Swatch Reflectance sRGB: " << rgb_black << std::endl;
+    auto rgb_black_encoded = radiometry::encode_srgb(rgb_black);
+    std::cout << "Black Swatch Reflectance sRGB (gamma encoded): " << rgb_black_encoded << std::endl;
 
     return 0;
 }

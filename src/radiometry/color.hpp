@@ -533,4 +533,22 @@ inline constexpr math::Matrix<T, 3, 3> white_balance(
             radiometry::LMS<T>::xyz_to_lms_matrix();
 }
 
+template <typename T>
+T encode_srgb_channel(T linear) {
+    linear = std::clamp(linear, T{0}, T{1});
+    if (linear <= T{0.0031308}) {
+        return linear * T{12.92};
+    }
+    return T{1.055} * std::pow(linear, T{1.0 / 2.4}) - T{0.055};
+}
+
+template <typename T>
+RGB<T> encode_srgb(const RGB<T>& linear_rgb) {
+    return RGB<T>(
+        encode_srgb_channel(linear_rgb.r()),
+        encode_srgb_channel(linear_rgb.g()),
+        encode_srgb_channel(linear_rgb.b())
+    );
+}
+
 }
