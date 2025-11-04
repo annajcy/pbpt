@@ -66,27 +66,6 @@ std::string to_string(const Matrix<T, R, C>& m) {
 }
 
 // =============================================================================
-// Interval type
-// =============================================================================
-
-template <typename T>
-std::string to_string(const Interval<T>& interval) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(6);
-    oss << std::format("Interval<{}>(", typeid(T).name());
-    
-    if (interval.is_empty()) {
-        oss << "empty";
-    } else if (interval.is_point()) {
-        oss << interval.m_low;
-    } else {
-        oss << "[" << interval.m_low << ", " << interval.m_high << "]";
-    }
-    oss << ")";
-    return oss.str();
-}
-
-// =============================================================================
 // OctahedralVector type
 // =============================================================================
 
@@ -136,23 +115,6 @@ std::string to_string_precision(const Matrix<T, R, C>& m, int precision) {
     return oss.str();
 }
 
-template <typename T>
-std::string to_string_precision(const Interval<T>& interval, int precision) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(precision);
-    oss << std::format("Interval<{}>(", typeid(T).name());
-    
-    if (interval.is_empty()) {
-        oss << "empty";
-    } else if (interval.is_point()) {
-        oss << interval.m_low;
-    } else {
-        oss << "[" << interval.m_low << ", " << interval.m_high << "]";
-    }
-    oss << ")";
-    return oss.str();
-}
-
 // =============================================================================
 // Compact formatting functions (without type information)
 // =============================================================================
@@ -186,21 +148,6 @@ std::string to_string_compact(const Matrix<T, R, C>& m) {
     return oss.str();
 }
 
-template <typename T>
-std::string to_string_compact(const Interval<T>& interval) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(3);
-    
-    if (interval.is_empty()) {
-        oss << "Empty";
-    } else if (interval.is_point()) {
-        oss << interval.m_low;
-    } else {
-        oss << "[" << interval.m_low << ", " << interval.m_high << "]";
-    }
-    return oss.str();
-}
-
 template <template <typename, int> typename Derived, typename T, int N>
 std::ostream& operator<<(std::ostream& os, const Tuple<Derived, T, N>& t) {
     return os << to_string(t);
@@ -209,11 +156,6 @@ std::ostream& operator<<(std::ostream& os, const Tuple<Derived, T, N>& t) {
 template <typename T, int R, int C>
 std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& m) {
     return os << to_string(m);
-}
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const Interval<T>& interval) {
-    return os << to_string(interval);
 }
 
 template <typename T>

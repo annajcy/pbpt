@@ -5,7 +5,6 @@
 #include <vector>
 #include <cmath>
 
-#include "interval.hpp"
 #include "type_alias.hpp"
 #include "tuple.hpp"
 #include "vector.hpp"
@@ -144,20 +143,5 @@ using Pt1i = Point<Int, 1>;
 using Pt2i = Point<Int, 2>;
 using Pt3i = Point<Int, 3>;
 using Pt4i = Point<Int, 4>;
-
-template <std::floating_point T, int N>
-using PointInterval = Point<Interval<T>, N>;
-
-using Pt3Interv = PointInterval<float, 3>;
-
-template <std::floating_point T, int N>
-inline constexpr Point<T, N> to_point(const PointInterval<T, N>& pi) {
-    Point<T, N> p;
-    for (int i = 0; i < N; ++i) {
-        auto& interv = pi[i];
-        p[i] = interv.midpoint();
-    }
-    return p;
-}
 
 } // namespace pbpt::math

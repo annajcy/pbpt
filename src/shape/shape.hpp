@@ -1,7 +1,16 @@
 #pragma once
 
+#include <algorithm>
+#include <optional>
+#include <utility>
+
 #include "geometry/bounds.hpp"
 #include "geometry/directional_cone.hpp"
+#include "geometry/interaction.hpp"
+#include "geometry/ray.hpp"
+#include "geometry/transform.hpp"
+#include "math/function.hpp"
+#include "math/point.hpp"
 
 namespace pbpt::shape {
 
@@ -28,22 +37,62 @@ public:
         return as_derived().normal_bounding_cone_impl();
     }
 
-    bool is_intersected(const geometry::Ray<T, 3>& ray, T* t_hit) const {
-        return as_derived().is_intersected_impl(ray, t_hit);
+    std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {
+        return as_derived().is_intersected_impl(ray);
+    }
+
+    std::optional<std::pair<geometry::SurfaceInteraction<T>, T>> intersect(
+        const geometry::Ray<T, 3>& ray
+    ) const {
+        return as_derived().intersect_impl(ray);
     }
 };
 
-template<typename T>
-class Sphere : public Shape<Sphere<T>, T> {
-    friend class Shape<Sphere<T>, T>;
+template<typename T, template<typename> class ShapeType>
+class TransformedShape : public Shape<TransformedShape<T, ShapeType>, T> {
+    friend class Shape<TransformedShape<T, ShapeType>, T>;
 
 private:
-    math::Point<T, 3> m_center;
-    T m_radius;
+    ShapeType<T> m_shape;
+    geometry::Transform<T> render_to_object{};
+    geometry::Transform<T> object_to_render{};
 
 public:
-    Sphere(const math::Point<T, 3>& center, T radius) : m_center(center), m_radius(radius) {}
-    
+    TransformedShape(
+        const ShapeType<T>& shape,
+        const geometry::Transform<T>& render_to_object
+    ) : m_shape(shape), render_to_object(render_to_object) {
+        object_to_render = render_to_object.inversed();
+    }
+
+    const geometry::Transform<T>& render_to_object_transform() const {
+        return render_to_object;
+    }
+
+    const geometry::Transform<T>& object_to_render_transform() const {
+        return object_to_render;
+    }
+
+    void update_transform(const geometry::Transform<T>& new_render_to_object) {
+        render_to_object = new_render_to_object;
+        object_to_render = new_render_to_object.inversed();
+    }
+
+private:
+    geometry::Bounds<T, 3> bounding_box_impl() const {
+        auto bbox = m_shape.bounding_box();
+        return object_to_render * bbox;
+    }
+
+    geometry::DirectionalCone<T> normal_bounding_cone_impl() const {
+        return m_shape.normal_bounding_cone();
+    }
+
+    std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
+        auto ray_object = render_to_object * ray;
+        const Shape<ShapeType<T>, T>& shape_iface = m_shape;
+        return shape_iface.is_intersected(ray_object);
+    }
 };
 
 };

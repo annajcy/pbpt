@@ -17,7 +17,7 @@ using namespace pbpt::math;
 
 namespace pbpt::geometry {
 
-template <std::floating_point T>
+template <typename T>
 class Transform {
 private:
     Matrix<T, 4, 4> m_mat;
@@ -245,9 +245,21 @@ public:
     }
 
     template<typename U>
+    constexpr auto transform_homogeneous(const Homogeneous<U, 4>& rhs) const {
+        using R = std::common_type_t<T, U>;
+        return m_mat * rhs;
+    }
+
+    template<typename U>
     constexpr auto operator*(const Homogeneous<U, 4>& rhs) const {
         using R = std::common_type_t<T, U>;
         return m_mat * rhs;
+    }
+
+    template<typename U>
+    constexpr auto transform_point(const Point<U, 3>& p) const {
+        using R = std::common_type_t<T, U>;
+        return (m_mat * Homogeneous<R, 4>::from_point(p)).to_point();
     }
 
     template<typename U>
@@ -257,9 +269,22 @@ public:
     }
 
     template<typename U>
+    constexpr auto transform_vector(const Vector<U, 3>& v) const {
+        using R = std::common_type_t<T, U>;
+        return (m_mat * Homogeneous<R, 4>::from_vector(v)).to_vector();
+    }
+
+    template<typename U>
     constexpr auto operator*(const Vector<U, 3>& v) const {
         using R = std::common_type_t<T, U>;
         return (m_mat * Homogeneous<R, 4>::from_vector(v)).to_vector();
+    }
+
+    template<typename U>
+    constexpr auto transform_normal(const Normal<U, 3>& n) const {
+        using R = std::common_type_t<T, U>;
+        auto r = m_inv.transposed() * Homogeneous<R, 4>::from_vector(n.to_vector());
+        return Normal<R, 3>::from_vector(r.to_vector());
     }
 
     template<typename U>
@@ -270,9 +295,25 @@ public:
     }
 
     template<typename U>
+    constexpr auto transform_ray(const Ray<U, 3>& ray) const {
+        using R = std::common_type_t<T, U>;
+        return Ray<R, 3>((*this) * ray.origin(), (*this) * ray.direction());
+    }
+
+    template<typename U>
     constexpr auto operator*(const Ray<U, 3>& ray) const {
         using R = std::common_type_t<T, U>;
         return Ray<R, 3>((*this) * ray.origin(), (*this) * ray.direction());
+    }
+
+    template<typename U>
+    constexpr auto transform_bounds(const Bounds<U, 3>& b) const {
+        using R = std::common_type_t<T, U>;
+        Bounds<R, 3> result;
+        for (int i = 0; i < 8; i ++) {
+            result.unite((*this) * b.corner(i));
+        }
+        return result;
     }
 
     template<typename U>

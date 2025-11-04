@@ -2,8 +2,6 @@
 
 #include "pbpt.h"
 
-using namespace pbpt::geometry;
-
 namespace pbpt::geometry::testing {
 
 using Vec3d = Vector<double, 3>;

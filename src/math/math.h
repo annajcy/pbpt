@@ -6,7 +6,6 @@
 #include "format.hpp"
 #include "function.hpp"
 #include "homogeneous.hpp"
-#include "interval.hpp"
 #include "matrix.hpp"
 #include "normal.hpp"
 #include "octahedral.hpp"

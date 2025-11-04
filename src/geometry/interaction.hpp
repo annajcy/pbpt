@@ -1,32 +1,33 @@
 #pragma once
 
+#include <utility>
 #include "math/point.hpp"
 #include "math/vector.hpp"
 #include "math/normal.hpp"
 #include "geometry/ray.hpp"
 
-using namespace pbpt::math;
-
 namespace pbpt::geometry {
 
 template<typename T>
-inline Point<T, 3> offset_ray_origin(
-    const PointInterval<T, 3>& pi, 
+inline math::Point<T, 3> offset_ray_origin(
+    const math::Point<T, 3>& p_lower,
+    const math::Point<T, 3>& p_upper,
     const Vector<T, 3>& wi, 
     const Normal<T, 3>& n
 ) {
-    const auto p = to_point(pi);
 
-    auto d = abs(n.x()) * pi.x().width() + 
-            abs(n.y()) * pi.y().width() + 
-            abs(n.z()) * pi.z().width();
+    auto d = abs(n.x()) * (p_upper.x() - p_lower.x()) + 
+            abs(n.y()) * (p_upper.y() - p_lower.y()) + 
+            abs(n.z()) * (p_upper.z() - p_lower.z());
+
+    auto p_mid = p_lower.mid(p_upper);
 
     constexpr auto gamma7 = gamma<T>(7);
 
     d += 2 * gamma7 * (
-            abs(p.x() * abs(n.x())) + 
-            abs(p.y() * abs(n.y())) + 
-            abs(p.z() * abs(n.z()))
+            abs(p_mid.x() * abs(n.x())) + 
+            abs(p_mid.y() * abs(n.y())) + 
+            abs(p_mid.z() * abs(n.z()))
         );
 
     auto nv = n.to_vector();
@@ -35,34 +36,35 @@ inline Point<T, 3> offset_ray_origin(
         offset = -offset;
     }
 
-    return p + offset;
+    return p_mid + offset;
 }
 
 template<typename T, typename Derived>
 class Interaction {
-private:
-    PointInterval<T, 3> m_pi; // Interaction point with intervals
-    Vector<T, 3> m_wo;
+protected:
+    math::Point<T, 3> m_p_lower;
+    math::Point<T, 3> m_p_upper;
+    math::Vector<T, 3> m_wo;
 
 public:
-    Interaction(const PointInterval<T, 3>& pi, const Vector<T, 3>& wo)
-        : m_pi(pi), m_wo(wo) {}
+    Interaction(const math::Point<T, 3>& p_lower, const math::Point<T, 3>& p_upper, const math::Vector<T, 3>& wo)
+        : m_p_lower(p_lower), m_p_upper(p_upper), m_wo(wo) {}
 
-    const PointInterval<T, 3>& pi() const { return m_pi; }
-    const Point<T, 3> p() const { return to_point(m_pi); }
-    const Vector<T, 3>& wo() const { return m_wo; }
+    Interaction(const math::Point<T, 3>& p, const math::Vector<T, 3>& wo)
+        : m_p_lower(p), m_p_upper(p), m_wo(wo) {}
 
-    Ray<T, 3> spawn_ray(const Vector<T, 3>& wi) const {
+    const math::Vector<T, 3>& wo() const { return m_wo; }
+    const math::Point<T, 3>& p_lower() const { return m_p_lower; }
+    const math::Point<T, 3>& p_upper() const { return m_p_upper; }
+
+    math::Point<T, 3> p() const { return m_p_lower.mid(m_p_upper); }
+
+    geometry::Ray<T, 3> spawn_ray(const math::Vector<T, 3>& wi) const {
         return as_derived().spawn_ray_impl(wi);
     }
 
-    Ray<T, 3> spawn_ray_to(const Point<T, 3>& p) const {
+    geometry::Ray<T, 3> spawn_ray_to(const math::Point<T, 3>& p) const {
         return as_derived().spawn_ray_to_impl(p);
-    }
-
-    template<typename OtherDerived>
-    Ray<T, 3> spawn_ray_to(const Interaction<T, OtherDerived>& target) const {
-        return as_derived().spawn_ray_to_impl(static_cast<const OtherDerived&>(target));
     }
 
     const Derived& as_derived() const {
@@ -76,20 +78,54 @@ public:
 
 template<typename T>
 class SurfaceInteraction : public Interaction<T, SurfaceInteraction<T>> {
-private:
+    friend class Interaction<T, SurfaceInteraction<T>>;
+
+    using base = Interaction<T, SurfaceInteraction<T>>;
+    using base::m_p_lower;
+    using base::m_p_upper;
+    using base::m_wo;
+
+protected:
     Normal<T, 3> m_n;
     Point<T, 2> m_uv;
     Vector<T, 3> m_dpdu, m_dpdv;
     Normal<T, 3> m_dndu, m_dndv;
 
 public:
-    using base = Interaction<T, SurfaceInteraction<T>>;
-    using base::pi;
-    using base::wo;
+    SurfaceInteraction(
+        const math::Point<T, 3>& p_lower,
+        const math::Point<T, 3>& p_upper,
+        const math::Vector<T, 3>& wo,
+        const Normal<T, 3>& n,
+        const Point<T, 2>& uv,
+        const Vector<T, 3>& dpdu,
+        const Vector<T, 3>& dpdv,
+        const Normal<T, 3>& dndu,
+        const Normal<T, 3>& dndv
+    ) : Interaction<T, SurfaceInteraction<T>>(p_lower, p_upper, wo),
+          m_n(n),
+          m_uv(uv),
+          m_dpdu(dpdu),
+          m_dpdv(dpdv),
+          m_dndu(dndu),
+          m_dndv(dndv) {}
 
-    SurfaceInteraction(const PointInterval<T, 3>& pi, const Vector<T, 3>& wo, const Normal<T, 3>& n, const Point<T, 2>& uv,
-                      const Vector<T, 3>& dpdu, const Vector<T, 3>& dpdv, const Normal<T, 3>& dndu, const Normal<T, 3>& dndv)
-        : Interaction<T, SurfaceInteraction<T>>(pi, wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
+    SurfaceInteraction(
+        math::Point<T, 3> p,
+        const math::Vector<T, 3>& wo,
+        const Normal<T, 3>& n,
+        const Point<T, 2>& uv,
+        const Vector<T, 3>& dpdu,
+        const Vector<T, 3>& dpdv,
+        const Normal<T, 3>& dndu,
+        const Normal<T, 3>& dndv
+    ) : Interaction<T, SurfaceInteraction<T>>(p, wo),
+          m_n(n),
+          m_uv(uv),
+          m_dpdu(dpdu),
+          m_dpdv(dpdv),
+          m_dndu(dndu),
+          m_dndv(dndv) {}
 
     const Normal<T, 3>& n() const { return m_n; }
     const Point<T, 2>& uv() const { return m_uv; }
@@ -99,34 +135,17 @@ public:
     const Normal<T, 3>& dndv() const { return m_dndv; }
 
     Ray<T, 3> spawn_ray_impl(const Vector<T, 3>& wi) const {
-        auto o = offset_ray_origin(pi(), wi, m_n);
+        auto o = offset_ray_origin(m_p_lower, m_p_upper, wi, m_n);
         return Ray<T, 3>(o, wi);
     }
 
-    Ray<T, 3> spawn_ray_to_impl(const Point<T, 3>& p) const {
-        auto p_from = to_point(pi());
-        auto dir = p - p_from;
-        auto o = offset_ray_origin(pi(), dir, m_n);
+    Ray<T, 3> spawn_ray_to_impl(const Point<T, 3>& p_to) const {
+        auto p_from = this->p();
+        auto dir = p_to - p_from;
+        auto o = offset_ray_origin(m_p_lower, m_p_upper, dir, m_n);
         auto dist = dir.length();
         dir = dir / dist;
         return Ray<T, 3>(o, dir, safe_ray_tmax(dist));
-    }
-
-    Ray<T, 3> spawn_ray_to_impl(const SurfaceInteraction& target) const {
-        const Point<T, 3> p_from = to_point(this->pi());
-        const Point<T, 3> p_to   = to_point(target.pi());
-
-        const Vector<T, 3> dir = p_to - p_from;
-        const T dist = dir.length();
-        const Vector<T, 3> dir_norm = dir / dist;
-
-        const Point<T, 3> o1 = offset_ray_origin(this->pi(), dir_norm, this->n());
-        const Point<T, 3> o2 = offset_ray_origin(target.pi(), -dir_norm, target.n());
-
-        const Vector<T, 3> final_dir = o2 - o1;
-        const T final_dist = final_dir.length();
-
-        return Ray<T, 3>(o1, final_dir / final_dist, safe_ray_tmax(final_dist));
     }
 };
 

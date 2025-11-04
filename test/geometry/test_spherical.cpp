@@ -5,8 +5,6 @@
 
 #include "pbpt.h"
 
-using namespace pbpt::geometry;
-
 namespace pbpt::geometry::testing {
 
 bool are_almost_equal(Float a, Float b, Float epsilon = epsilon_v<Float>) {

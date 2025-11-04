@@ -12,7 +12,7 @@ namespace pbpt::geometry {
 
 /// @brief 正交局部坐标系 Frame，用于 BSDF、Shading、Scattering 等局部空间操作
 /// 保证 [t, b, n] 是单位正交基，默认构造为右手系（t × b = n）
-template <std::floating_point T>
+template <typename T>
 class Frame {
 private:
     Vector<T, 3> m_t, m_b, m_n;  

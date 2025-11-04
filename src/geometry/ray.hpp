@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <concepts>
 #include <type_traits>
 
 #include "math/function.hpp"
@@ -14,7 +13,6 @@ using namespace pbpt::math;
 namespace pbpt::geometry {
 
 template <typename T, int N>
-    requires(N > 0) && (std::is_floating_point_v<T>)
 class Ray {
 private:
     Point<T, N>  m_origin{};
@@ -156,7 +154,7 @@ public:
     
 };
 
-template <std::floating_point T>
+template <typename T>
 inline T safe_ray_tmax(T dist) {
     return dist * (T(1) - gamma<T>(3));
 }

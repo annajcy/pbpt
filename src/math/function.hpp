@@ -25,7 +25,6 @@ constexpr inline T gamma(int n) {
 }
 
 template <typename T>
-    requires std::is_arithmetic_v<T>
 constexpr T abs(T x) {
     if (x < 0) {
         return -x;
@@ -43,13 +42,11 @@ inline constexpr bool is_zero(T a) {
 }
 
 template <typename T>
-    requires std::is_floating_point_v<T>
 constexpr T rad2deg(T rad) {
     return rad * 180.0 / pi_v<T>;
 }
 
 template <typename T>
-    requires std::is_floating_point_v<T>
 constexpr T deg2rad(T deg) {
     return deg * pi_v<T> / 180.0;
 }

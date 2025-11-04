@@ -12,7 +12,7 @@ using namespace pbpt::math;
 
 namespace pbpt::geometry {
 
-template<std::floating_point T>
+template<typename T>
 class DirectionalCone {
 private:
     Vector<T, 3> m_direction;

@@ -2,8 +2,6 @@
 
 #include "pbpt.h"
 
-using namespace pbpt::geometry;
-
 namespace pbpt::geometry::testing {
 
 constexpr Float kEpsilon = 1e-6;

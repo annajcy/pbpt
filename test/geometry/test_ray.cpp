@@ -7,7 +7,6 @@
 
 using namespace pbpt::math;
 
-using namespace pbpt::geometry;
 namespace pbpt::geometry::testing {
 
 // 测试 Ray 类的基础功能

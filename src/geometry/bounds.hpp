@@ -18,7 +18,6 @@ using namespace pbpt::math;
 namespace pbpt::geometry {
 
 template <typename T, int N>
-    requires(N > 0) && (std::is_floating_point_v<T>)
 class Bounds {
 private:
     Point<T, N> m_min;
@@ -29,17 +28,11 @@ public:
         : m_min(Point<T, N>::filled(std::numeric_limits<T>::max())),
           m_max(Point<T, N>::filled(std::numeric_limits<T>::lowest())) {}
 
-    template <typename... Args>
-        requires(std::is_same_v<Point<T, N>, Args> && ...) && (sizeof...(Args) > 0)
-    constexpr explicit Bounds<T, N>(const Args&... args) {
-        // 将点解包到数组中以访问第一个元素
-        const Point<T, N> points[] = {args...};
-        m_min                      = points[0];
-        m_max                      = points[0];
-        // 从第二个元素开始合并
-        for (size_t i = 1; i < sizeof...(args); ++i) {
-            unite(points[i]);
-        }
+    template <typename First, typename... Rest>
+        requires std::same_as<Point<T, N>, First> && (std::same_as<Point<T, N>, Rest> && ...)
+    constexpr explicit Bounds(const First& first, const Rest&... rest)
+        : m_min(first), m_max(first) {
+        (unite(rest), ...);
     }
 
     Point<T, N> corner(int index) const {
