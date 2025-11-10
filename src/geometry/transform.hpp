@@ -1,8 +1,8 @@
 #pragma once
 
 #include <utility>
-#include <concepts>
 
+#include "geometry/interaction.hpp"
 #include "math/homogeneous.hpp"
 #include "math/type_alias.hpp"
 #include "math/matrix.hpp"
@@ -209,9 +209,9 @@ public:
     constexpr bool is_identity() const { return m_mat.is_identity(); }
 
     constexpr bool has_scale() const {
-        return !is_equal(((*this) * Vector<T, 3>(1,0,0)).length_squared(), T(1)) ||
-               !is_equal(((*this) * Vector<T, 3>(0,1,0)).length_squared(), T(1)) ||
-               !is_equal(((*this) * Vector<T, 3>(0,0,1)).length_squared(), T(1));
+        return !is_equal(((*this).transform_vector(Vector<T, 3>(1,0,0))).length_squared(), T(1)) ||
+               !is_equal(((*this).transform_vector(Vector<T, 3>(0,1,0))).length_squared(), T(1)) ||
+               !is_equal(((*this).transform_vector(Vector<T, 3>(0,0,1))).length_squared(), T(1));
     }
 
     constexpr Transform<T>& inverse() {
@@ -229,7 +229,7 @@ public:
         return *this;
     }
 
-    constexpr bool swaps_handedness() const {
+    constexpr bool is_swaps_handedness() const {
         Matrix<T, 3, 3> upper3x3 = m_mat.template view<3, 3>(0, 0).to_matrix();
         return upper3x3.determinant() < T(0);
     }
@@ -238,92 +238,56 @@ public:
         return Transform<T>(m_mat.transposed(), m_inv.transposed());
     }
 
-    template<typename U>
-    constexpr auto operator*(const Transform<U>& rhs) const {
-        using R = std::common_type_t<T, U>;
-        return Transform<R>(m_mat * rhs.matrix(), rhs.inverse_matrix() * m_inv);
+    constexpr Transform operator*(const Transform& rhs) const {
+        return Transform(m_mat * rhs.matrix(), rhs.inverse_matrix() * m_inv);
     }
 
-    template<typename U>
-    constexpr auto transform_homogeneous(const Homogeneous<U, 4>& rhs) const {
-        using R = std::common_type_t<T, U>;
+    constexpr Homogeneous<T, 4> transform_homogeneous(const Homogeneous<T, 4>& rhs) const {
         return m_mat * rhs;
     }
 
-    template<typename U>
-    constexpr auto operator*(const Homogeneous<U, 4>& rhs) const {
-        using R = std::common_type_t<T, U>;
-        return m_mat * rhs;
+    constexpr Point<T, 3> transform_point(const Point<T, 3>& p) const {
+        return (m_mat * Homogeneous<T, 4>::from_point(p)).to_point();
     }
 
-    template<typename U>
-    constexpr auto transform_point(const Point<U, 3>& p) const {
-        using R = std::common_type_t<T, U>;
-        return (m_mat * Homogeneous<R, 4>::from_point(p)).to_point();
+    constexpr Vector<T, 3> transform_vector(const Vector<T, 3>& v) const {
+        return (m_mat * Homogeneous<T, 4>::from_vector(v)).to_vector();
     }
 
-    template<typename U>
-    constexpr auto operator*(const Point<U, 3>& p) const {
-        using R = std::common_type_t<T, U>;
-        return (m_mat * Homogeneous<R, 4>::from_point(p)).to_point();
+    constexpr Normal<T, 3> transform_normal(const Normal<T, 3>& n) const {
+        auto inv_t = m_inv.transposed();
+        auto linear_part = inv_t.template view<3, 3>(0, 0).to_matrix();
+        auto transformed = linear_part * n.to_vector();
+        return Normal<T, 3>::from_vector(transformed);
     }
 
-    template<typename U>
-    constexpr auto transform_vector(const Vector<U, 3>& v) const {
-        using R = std::common_type_t<T, U>;
-        return (m_mat * Homogeneous<R, 4>::from_vector(v)).to_vector();
+    constexpr Ray<T, 3> transform_ray(const Ray<T, 3>& ray) const {
+        return Ray<T, 3>(transform_point(ray.origin()), transform_vector(ray.direction()));
     }
 
-    template<typename U>
-    constexpr auto operator*(const Vector<U, 3>& v) const {
-        using R = std::common_type_t<T, U>;
-        return (m_mat * Homogeneous<R, 4>::from_vector(v)).to_vector();
-    }
-
-    template<typename U>
-    constexpr auto transform_normal(const Normal<U, 3>& n) const {
-        using R = std::common_type_t<T, U>;
-        auto r = m_inv.transposed() * Homogeneous<R, 4>::from_vector(n.to_vector());
-        return Normal<R, 3>::from_vector(r.to_vector());
-    }
-
-    template<typename U>
-    constexpr auto operator*(const Normal<U, 3>& n) const {
-        using R = std::common_type_t<T, U>;
-        auto r = m_inv.transposed() * Homogeneous<R, 4>::from_vector(n.to_vector());
-        return Normal<R, 3>::from_vector(r.to_vector());
-    }
-
-    template<typename U>
-    constexpr auto transform_ray(const Ray<U, 3>& ray) const {
-        using R = std::common_type_t<T, U>;
-        return Ray<R, 3>((*this) * ray.origin(), (*this) * ray.direction());
-    }
-
-    template<typename U>
-    constexpr auto operator*(const Ray<U, 3>& ray) const {
-        using R = std::common_type_t<T, U>;
-        return Ray<R, 3>((*this) * ray.origin(), (*this) * ray.direction());
-    }
-
-    template<typename U>
-    constexpr auto transform_bounds(const Bounds<U, 3>& b) const {
-        using R = std::common_type_t<T, U>;
-        Bounds<R, 3> result;
+    constexpr Bounds<T, 3> transform_bounds(const Bounds<T, 3>& b) const {
+        Bounds<T, 3> result;
         for (int i = 0; i < 8; i ++) {
-            result.unite((*this) * b.corner(i));
+            result.unite(transform_point(b.corner(i)));
         }
         return result;
     }
 
-    template<typename U>
-    constexpr auto operator*(const Bounds<U, 3>& b) const {
-        using R = std::common_type_t<T, U>;
-        Bounds<R, 3> result;
-        for (int i = 0; i < 8; i ++) {
-            result.unite((*this) * b.corner(i));
-        }
-        return result;
+    constexpr auto transform_surface_interaction(const SurfaceInteraction<T>& si) const {
+        auto transform = *this;
+        auto n = transform.transform_normal(si.n());
+        if (transform.is_swaps_handedness()) n = -n;
+        return SurfaceInteraction<T>(
+            transform.transform_point(si.p_lower()),
+            transform.transform_point(si.p_upper()),
+            transform.transform_vector(si.wo()),
+            n,
+            si.uv(), 
+            transform.transform_vector(si.dpdu()),
+            transform.transform_vector(si.dpdv()),
+            transform.transform_normal(si.dndu()),
+            transform.transform_normal(si.dndv())
+        );
     }
 };
 
@@ -410,4 +374,3 @@ TransformDecompositionResult<T> fast_decompose_transform(const Transform<T>& tra
 }
 
 } // namespace pbpt::geometry
-

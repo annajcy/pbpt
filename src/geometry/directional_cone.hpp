@@ -73,7 +73,7 @@ public:
                 }
             }
             auto theta_r = theta_o - theta_this;
-            auto res = Transform<T>::rotate(theta_r, rotate.normalized()) * this->m_direction;
+            auto res = Transform<T>::rotate(theta_r, rotate.normalized()).transform_vector(this->m_direction);
             return DirectionalCone<T>(res, theta_o);
         }
     }

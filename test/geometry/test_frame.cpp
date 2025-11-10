@@ -61,14 +61,14 @@ TEST(FrameTest, LocalToWorldAndWorldToLocal) {
     Frame<double> f(normal);
     Vec3d localVec(2.0, 3.0, 4.0);
     // Convert local to world
-    Vec3d world = f.local_to_world() * localVec;
+    Vec3d world = f.local_to_world().transform_vector(localVec);
     // Manual computation: world = t*2 + b*3 + n*4
     Vec3d manual = f.t() * 2.0 + f.b() * 3.0 + f.n() * 4.0;
     EXPECT_NEAR(world.x(), manual.x(), kEps);
     EXPECT_NEAR(world.y(), manual.y(), kEps);
     EXPECT_NEAR(world.z(), manual.z(), kEps);
     // Convert back to local
-    Vec3d back = f.world_to_local() * world;
+    Vec3d back = f.world_to_local().transform_vector(world);
     EXPECT_NEAR(back.x(), localVec.x(), kEps);
     EXPECT_NEAR(back.y(), localVec.y(), kEps);
     EXPECT_NEAR(back.z(), localVec.z(), kEps);
@@ -171,8 +171,8 @@ TEST(FrameTest, MultipleVectorTransformation) {
     };
     
     for (const auto& local_vec : local_vectors) {
-        Vec3d world_vec = f.local_to_world() * local_vec;
-        Vec3d back_to_local = f.world_to_local() * world_vec;
+        Vec3d world_vec = f.local_to_world().transform_vector(local_vec);
+        Vec3d back_to_local = f.world_to_local().transform_vector(world_vec);
         
         EXPECT_NEAR(back_to_local.x(), local_vec.x(), kEps);
         EXPECT_NEAR(back_to_local.y(), local_vec.y(), kEps);

@@ -150,6 +150,7 @@ TEST_F(TransformTest, Perspective) {
     const Float z_near       = 1.0;
     const Float z_far        = 100.0;
     const Mat4  persp_matrix = Transform<double>::perspective(fov_rad, aspect, z_near, z_far).matrix();
+    std::cout << "Perspective Matrix:\n" << persp_matrix << std::endl;
 
     // Test a point on the near plane. Its Z should map to 0 in NDC.
     const Pt3   near_plane_point(0, 0, z_near);
@@ -174,14 +175,14 @@ TEST_F(TransformTest, Identity) {
 
     // Identity transform should not change points
     const Pt3 test_point(3.5, -2.1, 7.8);
-    const Pt3 transformed = identity_transform * test_point;
+    const Pt3 transformed = identity_transform.transform_point(test_point);
     EXPECT_DOUBLE_EQ(transformed.x(), test_point.x());
     EXPECT_DOUBLE_EQ(transformed.y(), test_point.y());
     EXPECT_DOUBLE_EQ(transformed.z(), test_point.z());
 
     // Identity transform should not change vectors
     const Vec3 test_vector(1.2, -4.5, 0.3);
-    const Vec3 transformed_vec = identity_transform * test_vector;
+    const Vec3 transformed_vec = identity_transform.transform_vector(test_vector);
     EXPECT_DOUBLE_EQ(transformed_vec.x(), test_vector.x());
     EXPECT_DOUBLE_EQ(transformed_vec.y(), test_vector.y());
     EXPECT_DOUBLE_EQ(transformed_vec.z(), test_vector.z());
@@ -204,12 +205,12 @@ TEST_F(TransformTest, Composition) {
     const Pt3 original(1, 0, 0);
     
     // Apply transformations step by step
-    Pt3 after_rotate = R * original;
-    Pt3 after_scale = S * after_rotate;
-    Pt3 after_translate = T * after_scale;
+    Pt3 after_rotate = R.transform_point(original);
+    Pt3 after_scale = S.transform_point(after_rotate);
+    Pt3 after_translate = T.transform_point(after_scale);
     
     // Should be same as combined transform
-    Pt3 combined_result = combined * original;
+    Pt3 combined_result = combined.transform_point(original);
     
     EXPECT_NEAR(combined_result.x(), after_translate.x(), kEpsilon);
     EXPECT_NEAR(combined_result.y(), after_translate.y(), kEpsilon);
@@ -228,8 +229,8 @@ TEST_F(TransformTest, InverseTransform) {
     
     // Test that inverse actually inverts the transformation
     const Pt3 test_point(2, 4, -1);
-    Pt3 transformed = T * test_point;
-    Pt3 back_to_original = T_inv * transformed;
+    Pt3 transformed = T.transform_point(test_point);
+    Pt3 back_to_original = T_inv.transform_point(transformed);
     
     EXPECT_NEAR(back_to_original.x(), test_point.x(), kEpsilon);
     EXPECT_NEAR(back_to_original.y(), test_point.y(), kEpsilon);
@@ -269,7 +270,7 @@ TEST_F(TransformTest, NormalTransform) {
     Normal3 normal = Normal3::from_vector(Vec3(0, 1, 0));
     
     // Transform the normal
-    Normal3 transformed_normal = S * normal;
+    Normal3 transformed_normal = S.transform_normal(normal);
     
     // Normal transformation uses the inverse transpose, so we expect:
     // For scaling (sx, sy, sz), the normal transform matrix should be (1/sx, 1/sy, 1/sz)
@@ -288,7 +289,7 @@ TEST_F(TransformTest, RayTransform) {
     Ray3 ray(Pt3(0, 0, 0), Vec3(1, 0, 0));
     
     // Transform the ray
-    Ray3 transformed_ray = T * ray;
+    Ray3 transformed_ray = T.transform_ray(ray);
     
     // Origin should be translated
     EXPECT_NEAR(transformed_ray.origin().x(), 1.0, kEpsilon);
@@ -302,7 +303,7 @@ TEST_F(TransformTest, RayTransform) {
     
     // Test with rotation
     Transform<double> R = Transform<double>::rotate_z(deg2rad(90.0));
-    Ray3 rotated_ray = R * ray;
+    Ray3 rotated_ray = R.transform_ray(ray);
     
     // Direction should be rotated from (1,0,0) to (0,1,0)
     EXPECT_NEAR(rotated_ray.direction().x(), 0.0, kEpsilon);
@@ -319,7 +320,7 @@ TEST_F(TransformTest, BoundsTransform) {
     
     // Scale it by 2
     Transform<double> S = Transform<double>::scale(2.0);
-    auto scaled_bounds = S * unit_cube;
+    auto scaled_bounds = S.transform_bounds(unit_cube);
     
     // The bounds should now be from (0,0,0) to (2,2,2)
     EXPECT_NEAR(scaled_bounds.min().x(), 0.0, kEpsilon);
@@ -332,7 +333,7 @@ TEST_F(TransformTest, BoundsTransform) {
     // Translate the bounds
     const Vec3 translation(1, 1, 1);
     Transform<double> T = Transform<double>::translate(translation);
-    auto translated_bounds = T * unit_cube;
+    auto translated_bounds = T.transform_bounds(unit_cube);
     
     // The bounds should now be from (1,1,1) to (2,2,2)
     EXPECT_NEAR(translated_bounds.min().x(), 1.0, kEpsilon);
@@ -377,7 +378,7 @@ TEST_F(TransformTest, SetMatrix) {
     
     // Test that the transform works correctly
     const Pt3 test_point(1, 1, 1);
-    const Pt3 transformed = T * test_point;
+    const Pt3 transformed = T.transform_point(test_point);
     
     EXPECT_NEAR(transformed.x(), 6.0, kEpsilon);
     EXPECT_NEAR(transformed.y(), 7.0, kEpsilon);
@@ -390,7 +391,7 @@ TEST_F(TransformTest, UniformScale) {
     Transform<double> S = Transform<double>::scale(scale_factor);
     
     const Pt3 test_point(1, 2, 3);
-    const Pt3 transformed = S * test_point;
+    const Pt3 transformed = S.transform_point(test_point);
     
     EXPECT_NEAR(transformed.x(), 3.0, kEpsilon);
     EXPECT_NEAR(transformed.y(), 6.0, kEpsilon);
@@ -408,8 +409,8 @@ TEST_F(TransformTest, AxisAngleRotationDifferentAxes) {
     
     // Should be equivalent to rotate_x
     const Pt3 test_point(0, 1, 0);
-    Pt3 result_axis = Rx_axis * test_point;
-    Pt3 result_func = Rx_func * test_point;
+    Pt3 result_axis = Rx_axis.transform_point(test_point);
+    Pt3 result_func = Rx_func.transform_point(test_point);
     
     EXPECT_NEAR(result_axis.x(), result_func.x(), kEpsilon);
     EXPECT_NEAR(result_axis.y(), result_func.y(), kEpsilon);
@@ -422,8 +423,8 @@ TEST_F(TransformTest, AxisAngleRotationDifferentAxes) {
     
     // Should be equivalent to rotate_y
     const Pt3 test_point2(1, 0, 0);
-    Pt3 result_axis2 = Ry_axis * test_point2;
-    Pt3 result_func2 = Ry_func * test_point2;
+    Pt3 result_axis2 = Ry_axis.transform_point(test_point2);
+    Pt3 result_func2 = Ry_func.transform_point(test_point2);
     
     EXPECT_NEAR(result_axis2.x(), result_func2.x(), kEpsilon);
     EXPECT_NEAR(result_axis2.y(), result_func2.y(), kEpsilon);
@@ -440,11 +441,11 @@ TEST_F(TransformTest, LookAtAdvanced) {
     Transform<double> view1 = Transform<double>::look_at(eye1, target1, up1);
     
     // The target should be in front of the camera (negative Z in view space)
-    const Pt3 target_in_view1 = view1 * target1;
+    const Pt3 target_in_view1 = view1.transform_point(target1);
     EXPECT_LT(target_in_view1.z(), 0.0);
     
     // The eye position should be at origin in view space
-    const Pt3 eye_in_view1 = view1 * eye1;
+    const Pt3 eye_in_view1 = view1.transform_point(eye1);
     EXPECT_NEAR(eye_in_view1.x(), 0.0, kEpsilon);
     EXPECT_NEAR(eye_in_view1.y(), 0.0, kEpsilon);
     EXPECT_NEAR(eye_in_view1.z(), 0.0, kEpsilon);
@@ -459,20 +460,20 @@ TEST_F(TransformTest, LookAtAdvanced) {
     
     // Point to the right of camera (positive X in world)
     const Pt3 right_point(1, 0, 0);
-    const Pt3 right_in_view = view2 * right_point;
+    const Pt3 right_in_view = view2.transform_point(right_point);
     EXPECT_GT(right_in_view.x(), 0.0);  // Should be positive X in view
     EXPECT_NEAR(right_in_view.y(), 0.0, kEpsilon);  // Same height as camera
     
     // Point above camera (positive Y in world)  
     const Pt3 up_point(0, 1, 0);
-    const Pt3 up_in_view = view2 * up_point;
+    const Pt3 up_in_view = view2.transform_point(up_point);
     EXPECT_NEAR(up_in_view.x(), 0.0, kEpsilon);  // Centered horizontally
     EXPECT_GT(up_in_view.y(), 0.0);  // Should be positive Y in view
     
     // Test 3: Direction vectors should transform correctly
     // Forward direction (-Z in world for this setup) should become -Z in view
     const Vec3 forward_world(0, 0, -1);
-    const Vec3 forward_view = view2 * forward_world;
+    const Vec3 forward_view = view2.transform_vector(forward_world);
     EXPECT_NEAR(forward_view.x(), 0.0, kEpsilon);
     EXPECT_NEAR(forward_view.y(), 0.0, kEpsilon);
     EXPECT_LT(forward_view.z(), 0.0);  // Forward should be negative Z
@@ -482,9 +483,9 @@ TEST_F(TransformTest, LookAtAdvanced) {
     const Vec3 up_dir(0, 1, 0);
     const Vec3 forward_dir(0, 0, -1);
     
-    const Vec3 right_transformed = view2 * right_dir;
-    const Vec3 up_transformed = view2 * up_dir;
-    const Vec3 forward_transformed = view2 * forward_dir;
+    const Vec3 right_transformed = view2.transform_vector(right_dir);
+    const Vec3 up_transformed = view2.transform_vector(up_dir);
+    const Vec3 forward_transformed = view2.transform_vector(forward_dir);
     
     // Check that transformed vectors are still orthogonal
     EXPECT_NEAR(right_transformed.dot(up_transformed), 0.0, kEpsilon);
@@ -521,7 +522,7 @@ TEST_F(TransformTest, MixedTypes) {
     
     // Test point transformation with mixed types
     Point<float, 3> pf{1.0f, 1.0f, 1.0f};
-    auto result = T * pf;  // Should create Point<double, 3>
+    auto result = T.transform_point(pf);  // Should create Point<double, 3>
     
     EXPECT_NEAR(result.x(), 2.0, kEpsilon);  // 1+1 = 2
     EXPECT_NEAR(result.y(), 3.0, kEpsilon);  // 1+2 = 3  
@@ -529,7 +530,7 @@ TEST_F(TransformTest, MixedTypes) {
     
     // Test vector transformation
     Vector<float, 3> vf{1.0f, 0.0f, 0.0f};
-    auto vec_result = T * vf;  // Should create Vector<double, 3>
+    auto vec_result = T.transform_vector(vf);  // Should create Vector<double, 3>
     
     // Translation shouldn't affect vectors
     EXPECT_NEAR(vec_result.x(), 1.0, kEpsilon);

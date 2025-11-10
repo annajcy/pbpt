@@ -54,7 +54,7 @@ public:
 
     math::Point<T, 3> apply_viewport_to_camera(const math::Point<T, 2>& p) const {
         math::Homogeneous<T, 4> hp = math::Homogeneous<T, 4>::from_point(math::Point<T, 3>(p.x(), p.y(), 0.0));
-        auto hc = viewport_to_camera() * hp;
+        auto hc = viewport_to_camera().transform_homogeneous(hp);
         return hc.to_point();
     }
 

@@ -47,15 +47,25 @@ protected:
     math::Vector<T, 3> m_wo;
 
 public:
-    Interaction(const math::Point<T, 3>& p_lower, const math::Point<T, 3>& p_upper, const math::Vector<T, 3>& wo)
-        : m_p_lower(p_lower), m_p_upper(p_upper), m_wo(wo) {}
+    Interaction(
+        const math::Point<T, 3>& p_lower, 
+        const math::Point<T, 3>& p_upper, 
+        const math::Vector<T, 3>& wo
+    ) : m_p_lower(p_lower), m_p_upper(p_upper), m_wo(wo) {}
 
-    Interaction(const math::Point<T, 3>& p, const math::Vector<T, 3>& wo)
-        : m_p_lower(p), m_p_upper(p), m_wo(wo) {}
+    Interaction(
+        const math::Point<T, 3>& p, 
+        const math::Vector<T, 3>& wo, 
+        const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0}
+    ) : m_p_lower(p - error_margin), m_p_upper(p + error_margin), m_wo(wo) {}
 
     const math::Vector<T, 3>& wo() const { return m_wo; }
     const math::Point<T, 3>& p_lower() const { return m_p_lower; }
     const math::Point<T, 3>& p_upper() const { return m_p_upper; }
+
+    math::Point<T, 3>& p_lower() { return m_p_lower; }
+    math::Point<T, 3>& p_upper() { return m_p_upper; }
+    math::Vector<T, 3>& wo() { return m_wo; }
 
     math::Point<T, 3> p() const { return m_p_lower.mid(m_p_upper); }
 
@@ -118,8 +128,9 @@ public:
         const Vector<T, 3>& dpdu,
         const Vector<T, 3>& dpdv,
         const Normal<T, 3>& dndu,
-        const Normal<T, 3>& dndv
-    ) : Interaction<T, SurfaceInteraction<T>>(p, wo),
+        const Normal<T, 3>& dndv,
+        const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0}
+    ) : Interaction<T, SurfaceInteraction<T>>(p, wo, error_margin),
           m_n(n),
           m_uv(uv),
           m_dpdu(dpdu),
@@ -133,6 +144,13 @@ public:
     const Vector<T, 3>& dpdv() const { return m_dpdv; }
     const Normal<T, 3>& dndu() const { return m_dndu; }
     const Normal<T, 3>& dndv() const { return m_dndv; }
+
+    Normal<T, 3>& n() { return m_n; }
+    Point<T, 2>& uv() { return m_uv; }
+    Vector<T, 3>& dpdu() { return m_dpdu; }
+    Vector<T, 3>& dpdv() { return m_dpdv; }
+    Normal<T, 3>& dndu() { return m_dndu; }
+    Normal<T, 3>& dndv() { return m_dndv; }
 
     Ray<T, 3> spawn_ray_impl(const Vector<T, 3>& wi) const {
         auto o = offset_ray_origin(m_p_lower, m_p_upper, wi, m_n);

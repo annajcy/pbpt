@@ -107,6 +107,12 @@ public:
         return !(*this == rhs);
     }
 
+    constexpr Derived<T, N> operator-() const {
+        Derived<T, N> result;
+        for (int i = 0; i < N; ++i)
+            result[i] = -(*this)[i];
+        return result;
+    }
    
     // -- Type Conversion --
     template <typename U, int M>

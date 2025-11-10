@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <optional>
 #include <utility>
 
@@ -10,8 +11,11 @@
 #include "geometry/ray.hpp"
 #include "geometry/transform.hpp"
 #include "math/function.hpp"
+#include "math/normal.hpp"
 #include "math/point.hpp"
 
+#include "math/type_alias.hpp"
+#include "math/vector.hpp"
 #include "shape/shape.hpp"
 
 namespace pbpt::shape {
@@ -50,6 +54,19 @@ public:
         if (m_z_min > m_z_max) {
             std::swap(m_z_min, m_z_max);
         }
+    }
+
+    T z_min() const { return m_z_min; }
+    T z_max() const { return m_z_max; }
+    T phi_max() const { return m_phi_max; }
+    T radius() const { return m_radius; }
+
+    T z_min_theta() const {
+        return std::acos(std::clamp(m_z_min / m_radius, static_cast<T>(-1), static_cast<T>(1)));
+    }
+
+    T z_max_theta() const {
+        return std::acos(std::clamp(m_z_max / m_radius, static_cast<T>(-1), static_cast<T>(1)));
     }
 
 private:
@@ -124,6 +141,96 @@ private:
         }
         return std::make_optional(result_opt->t_hit);
     }
+
+    std::optional<std::pair<geometry::SurfaceInteraction<T>, T>> intersect_impl(
+        const geometry::Ray<T, 3>& ray
+    ) const {
+        auto result_opt = is_intersected(ray);
+        if (!result_opt.has_value()) {
+            return std::nullopt;
+        }
+
+        auto intersection = get_surface_interaction(ray, result_opt.value());
+        return std::make_optional(std::make_pair(intersection, result_opt->t_hit));
+    }
+
+    geometry::SurfaceInteraction<T> get_surface_interaction(
+        const geometry::Ray<T, 3>& ray,
+        const IntersectionResult<T>& intersection
+    ) const {
+        T u = intersection.phi / m_phi_max;
+        T cos_theta = intersection.p_hit.z() / m_radius;
+        T theta = std::acos(std::clamp(cos_theta, static_cast<T>(-1), static_cast<T>(1)));
+        T v = (theta - z_min_theta()) / (z_max_theta() - z_min_theta());
+
+        // Compute sphere dpdu and dpdv
+        math::Vector<T, 3> dpdu(
+            -m_phi_max * intersection.p_hit.y(),
+            m_phi_max * intersection.p_hit.x(),
+            static_cast<T>(0)
+        );
+        T sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+        T z_radius = std::sqrt(intersection.p_hit.x() * intersection.p_hit.x() + intersection.p_hit.y() * intersection.p_hit.y());
+        T cos_phi = intersection.p_hit.x() / z_radius;
+        T sin_phi = intersection.p_hit.y() / z_radius;
+        math::Vector<T, 3> dpdv(
+            intersection.p_hit.z() * cos_phi,
+            intersection.p_hit.z() * sin_phi,
+            -m_radius * sin_theta
+        );
+        dpdv = dpdv * (z_max_theta() - z_min_theta());
+
+        // Compute sphere d2pduu, d2pdudv, d2pdvv
+        auto d2pduu = -m_phi_max * m_phi_max * math::Vector<T, 3>(
+            intersection.p_hit.x(),
+            intersection.p_hit.y(),
+            static_cast<T>(0)
+        );
+
+        auto d2pdudv = (z_max_theta() - z_min_theta()) * intersection.p_hit.z() * m_phi_max * math::Vector<T, 3>(
+            -sin_phi,
+            cos_phi,
+            static_cast<T>(0)
+        );
+        auto d2pdvv = -std::pow(z_max_theta() - z_min_theta(), 2) * math::Vector<T, 3>(
+            intersection.p_hit.x(),
+            intersection.p_hit.y(),
+            intersection.p_hit.z()
+        );
+
+        // Compute fundamental forms
+        T E = dpdu.dot(dpdu);
+        T F = dpdu.dot(dpdv);
+        T G = dpdv.dot(dpdv);
+        auto N = cross(dpdu, dpdv).normalized();
+        T e = N.dot(d2pduu);
+        T f = N.dot(d2pdudv);
+        T g = N.dot(d2pdvv);
+
+        T EGF2 = E * G - F * F;
+        T inv_EGF2 = (EGF2 == static_cast<T>(0)) ? static_cast<T>(0) : static_cast<T>(1) / EGF2;
+        math::Vector<T, 3> dndu = ((f * F - e * G) * inv_EGF2) * dpdu + ((e * F - f * E) * inv_EGF2) * dpdv;
+        math::Vector<T, 3> dndv = ((g * F - f * G) * inv_EGF2) * dpdu + ((f * F - g * E) * inv_EGF2) * dpdv;
+        
+        math::Vector<T, 3> p_error = math::gamma<T>(5) * math::Vector<T, 3>(
+            std::abs(intersection.p_hit.x()),
+            std::abs(intersection.p_hit.y()),
+            std::abs(intersection.p_hit.z())
+        );
+        return geometry::SurfaceInteraction<T>(
+            intersection.p_hit - p_error,
+            intersection.p_hit + p_error,
+            -ray.direction().normalized(),
+            math::Normal<T, 3>(N),
+            math::Point<T, 2>(u, v),
+            dpdu,
+            dpdv,
+            math::Normal<T, 3>(dndu),
+            math::Normal<T, 3>(dndv)
+        ); 
+    }
+
+    
 
 };
 

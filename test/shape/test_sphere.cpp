@@ -89,6 +89,58 @@ TEST_F(SphereTest, RayMissesClampedPhiRange) {
     EXPECT_FALSE(t_hit.has_value());
 }
 
+TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
+    SphereD sphere(1.0);
+    Point<double, 3> origin(2.0, 0.0, 0.0);
+    Vector<double, 3> direction(-1.0, 0.0, 0.0);
+    Ray<double, 3> ray(origin, direction);
+
+    const SphereShapeInterface& shape_iface = sphere;
+    auto result = shape_iface.intersect(ray);
+
+    ASSERT_TRUE(result.has_value());
+    const auto& [interaction, t_hit] = result.value();
+
+    EXPECT_NEAR(t_hit, 1.0, 1e-12);
+
+    auto p = interaction.p();
+    EXPECT_NEAR(p.x(), 1.0, 1e-12);
+    EXPECT_NEAR(p.y(), 0.0, 1e-12);
+    EXPECT_NEAR(p.z(), 0.0, 1e-12);
+
+    auto wo = interaction.wo();
+    EXPECT_NEAR(wo.x(), 1.0, 1e-12);
+    EXPECT_NEAR(wo.y(), 0.0, 1e-12);
+    EXPECT_NEAR(wo.z(), 0.0, 1e-12);
+
+    auto normal = interaction.n().to_vector();
+    EXPECT_NEAR(normal.x(), 1.0, 1e-12);
+    EXPECT_NEAR(normal.y(), 0.0, 1e-12);
+    EXPECT_NEAR(normal.z(), 0.0, 1e-12);
+
+    auto uv = interaction.uv();
+    EXPECT_NEAR(uv.x(), 0.0, 1e-12);
+    EXPECT_NEAR(uv.y(), 0.5, 1e-12);
+
+    auto dpdu = interaction.dpdu();
+    EXPECT_NEAR(dpdu.x(), 0.0, 1e-12);
+    EXPECT_NEAR(dpdu.y(), sphere.phi_max(), 1e-12);
+    EXPECT_NEAR(dpdu.z(), 0.0, 1e-12);
+
+    auto dpdv = interaction.dpdv();
+    EXPECT_NEAR(dpdv.x(), 0.0, 1e-12);
+    EXPECT_NEAR(dpdv.y(), 0.0, 1e-12);
+    EXPECT_NEAR(dpdv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
+
+    auto expected_error = pbpt::math::gamma<double>(5) * 1.0;
+    EXPECT_NEAR(interaction.p_lower().x(), p.x() - expected_error, 1e-12);
+    EXPECT_NEAR(interaction.p_upper().x(), p.x() + expected_error, 1e-12);
+    EXPECT_NEAR(interaction.p_lower().y(), p.y(), 1e-12);
+    EXPECT_NEAR(interaction.p_upper().y(), p.y(), 1e-12);
+    EXPECT_NEAR(interaction.p_lower().z(), p.z(), 1e-12);
+    EXPECT_NEAR(interaction.p_upper().z(), p.z(), 1e-12);
+}
+
 class TransformedSphereTest : public ::testing::Test {
 protected:
     void SetUp() override {}
@@ -142,6 +194,53 @@ TEST_F(TransformedSphereTest, UpdateTransformRefreshesInverseAndBoundingBox) {
 
     EXPECT_DOUBLE_EQ(bbox.min().x(), 0.0);
     EXPECT_DOUBLE_EQ(bbox.max().x(), 2.0);
+}
+
+TEST_F(TransformedSphereTest, IntersectProducesRenderSpaceSurfaceInteraction) {
+    SphereD base_sphere(1.0);
+    auto render_to_object = Transform<double>::translate(Vector<double, 3>(0.0, -2.0, 0.0));
+    TransformedSphereD transformed(base_sphere, render_to_object);
+
+    Point<double, 3> origin(2.0, 2.0, 0.0);
+    Vector<double, 3> direction(-1.0, 0.0, 0.0);
+    Ray<double, 3> ray(origin, direction);
+
+    const TransformedSphereShapeInterface& shape_iface = transformed;
+    auto result = shape_iface.intersect(ray);
+
+    ASSERT_TRUE(result.has_value());
+    const auto& [interaction, t_hit] = result.value();
+
+    EXPECT_NEAR(t_hit, 1.0, 1e-12);
+
+    auto p = interaction.p();
+    EXPECT_NEAR(p.x(), 1.0, 1e-12);
+    EXPECT_NEAR(p.y(), 2.0, 1e-12);
+    EXPECT_NEAR(p.z(), 0.0, 1e-12);
+
+    auto normal = interaction.n().to_vector();
+    EXPECT_NEAR(normal.x(), 1.0, 1e-12);
+    EXPECT_NEAR(normal.y(), 0.0, 1e-12);
+    EXPECT_NEAR(normal.z(), 0.0, 1e-12);
+
+    auto wo = interaction.wo();
+    EXPECT_NEAR(wo.x(), 1.0, 1e-12);
+    EXPECT_NEAR(wo.y(), 0.0, 1e-12);
+    EXPECT_NEAR(wo.z(), 0.0, 1e-12);
+
+    auto dpdu = interaction.dpdu();
+    EXPECT_NEAR(dpdu.y(), base_sphere.phi_max(), 1e-12);
+
+    auto dpdv = interaction.dpdv();
+    EXPECT_NEAR(dpdv.z(), -(base_sphere.z_max_theta() - base_sphere.z_min_theta()), 1e-12);
+
+    auto expected_error = pbpt::math::gamma<double>(5) * 1.0;
+    EXPECT_NEAR(interaction.p_lower().x(), p.x() - expected_error, 1e-12);
+    EXPECT_NEAR(interaction.p_upper().x(), p.x() + expected_error, 1e-12);
+    EXPECT_NEAR(interaction.p_lower().y(), p.y(), 1e-12);
+    EXPECT_NEAR(interaction.p_upper().y(), p.y(), 1e-12);
+    EXPECT_NEAR(interaction.p_lower().z(), p.z(), 1e-12);
+    EXPECT_NEAR(interaction.p_upper().z(), p.z(), 1e-12);
 }
 
 }  // namespace pbpt::shape::testing
