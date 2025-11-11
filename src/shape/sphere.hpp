@@ -230,6 +230,10 @@ private:
         ); 
     }
 
+    T area_impl() const {
+        return m_phi_max * m_radius * (m_z_max - m_z_min);  
+    }
+
     
 
 };

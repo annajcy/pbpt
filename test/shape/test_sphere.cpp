@@ -39,6 +39,34 @@ TEST_F(SphereTest, BoundingBoxMatchesFullSphere) {
     EXPECT_DOUBLE_EQ(bounds.max().z(), 1.0);
 }
 
+TEST_F(SphereTest, AreaMatchesFullSphere) {
+    SphereD sphere(2.0);
+
+    const SphereShapeInterface& shape_iface = sphere;
+    auto expected_area = static_cast<double>(4.0) * pi_v<double> * sphere.radius() * sphere.radius();
+
+    EXPECT_NEAR(shape_iface.area(), expected_area, 1e-12);
+}
+
+TEST_F(SphereTest, AreaRespectsPhiAndZClamps) {
+    SphereD partial(1.5, -0.25, 1.0, static_cast<double>(pi_v<double> / 2.0));
+
+    const SphereShapeInterface& shape_iface = partial;
+    auto expected_area =
+        partial.phi_max() * partial.radius() * (partial.z_max() - partial.z_min());
+
+    EXPECT_NEAR(shape_iface.area(), expected_area, 1e-12);
+}
+
+TEST_F(SphereTest, AreaRespectsHemisphericalClamp) {
+    SphereD hemisphere(3.0, 0.0, 3.0, static_cast<double>(2 * pi_v<double>));
+
+    const SphereShapeInterface& shape_iface = hemisphere;
+    auto expected_area = static_cast<double>(2.0) * pi_v<double> * hemisphere.radius() * hemisphere.radius();
+
+    EXPECT_NEAR(shape_iface.area(), expected_area, 1e-12);
+}
+
 TEST_F(SphereTest, RayHitsSphereReturnsClosestIntersection) {
     SphereD sphere(1.0);
     Point<double, 3> origin(0.0, 0.0, -3.0);
@@ -131,6 +159,16 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
     EXPECT_NEAR(dpdv.x(), 0.0, 1e-12);
     EXPECT_NEAR(dpdv.y(), 0.0, 1e-12);
     EXPECT_NEAR(dpdv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
+
+    auto dndu = interaction.dndu().to_vector();
+    EXPECT_NEAR(dndu.x(), 0.0, 1e-12);
+    EXPECT_NEAR(dndu.y(), sphere.phi_max(), 1e-12);
+    EXPECT_NEAR(dndu.z(), 0.0, 1e-12);
+
+    auto dndv = interaction.dndv().to_vector();
+    EXPECT_NEAR(dndv.x(), 0.0, 1e-12);
+    EXPECT_NEAR(dndv.y(), 0.0, 1e-12);
+    EXPECT_NEAR(dndv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
 
     auto expected_error = pbpt::math::gamma<double>(5) * 1.0;
     EXPECT_NEAR(interaction.p_lower().x(), p.x() - expected_error, 1e-12);
@@ -229,10 +267,24 @@ TEST_F(TransformedSphereTest, IntersectProducesRenderSpaceSurfaceInteraction) {
     EXPECT_NEAR(wo.z(), 0.0, 1e-12);
 
     auto dpdu = interaction.dpdu();
+    EXPECT_NEAR(dpdu.x(), 0.0, 1e-12);
     EXPECT_NEAR(dpdu.y(), base_sphere.phi_max(), 1e-12);
+    EXPECT_NEAR(dpdu.z(), 0.0, 1e-12);
 
     auto dpdv = interaction.dpdv();
+    EXPECT_NEAR(dpdv.x(), 0.0, 1e-12);
+    EXPECT_NEAR(dpdv.y(), 0.0, 1e-12);
     EXPECT_NEAR(dpdv.z(), -(base_sphere.z_max_theta() - base_sphere.z_min_theta()), 1e-12);
+
+    auto dndu = interaction.dndu().to_vector();
+    EXPECT_NEAR(dndu.x(), 0.0, 1e-12);
+    EXPECT_NEAR(dndu.y(), base_sphere.phi_max(), 1e-12);
+    EXPECT_NEAR(dndu.z(), 0.0, 1e-12);
+
+    auto dndv = interaction.dndv().to_vector();
+    EXPECT_NEAR(dndv.x(), 0.0, 1e-12);
+    EXPECT_NEAR(dndv.y(), 0.0, 1e-12);
+    EXPECT_NEAR(dndv.z(), -(base_sphere.z_max_theta() - base_sphere.z_min_theta()), 1e-12);
 
     auto expected_error = pbpt::math::gamma<double>(5) * 1.0;
     EXPECT_NEAR(interaction.p_lower().x(), p.x() - expected_error, 1e-12);

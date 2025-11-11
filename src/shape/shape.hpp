@@ -104,6 +104,10 @@ private:
         return std::make_optional(std::make_pair(si_render, t_hit));
     }
 
+    T area_impl() const {
+        return m_shape.area();
+    }
+
 };
 
 };
