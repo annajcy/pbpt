@@ -12,6 +12,8 @@
 
 #include "bounds.hpp"
 #include "ray.hpp"
+#include "math/format.hpp"
+#include <iostream>
 
 using namespace pbpt::math;
 
@@ -247,11 +249,13 @@ public:
     }
 
     constexpr Point<T, 3> transform_point(const Point<T, 3>& p) const {
-        return (m_mat * Homogeneous<T, 4>::from_point(p)).to_point();
+        auto result = (m_mat * Homogeneous<T, 4>::from_point(p));
+        return result.to_point();
     }
 
     constexpr Vector<T, 3> transform_vector(const Vector<T, 3>& v) const {
-        return (m_mat * Homogeneous<T, 4>::from_vector(v)).to_vector();
+        auto result =  (m_mat * Homogeneous<T, 4>::from_vector(v));
+        return result.to_vector();
     }
 
     constexpr Normal<T, 3> transform_normal(const Normal<T, 3>& n) const {
@@ -262,7 +266,12 @@ public:
     }
 
     constexpr Ray<T, 3> transform_ray(const Ray<T, 3>& ray) const {
-        return Ray<T, 3>(transform_point(ray.origin()), transform_vector(ray.direction()));
+        return Ray<T, 3>(
+            transform_point(ray.origin()), 
+            transform_vector(ray.direction()),
+            ray.t_max(),
+            ray.t_min()
+        );
     }
 
     constexpr Bounds<T, 3> transform_bounds(const Bounds<T, 3>& b) const {
@@ -280,7 +289,7 @@ public:
         return SurfaceInteraction<T>(
             transform.transform_point(si.p_lower()),
             transform.transform_point(si.p_upper()),
-            transform.transform_vector(si.wo()),
+            transform.transform_vector(si.dir()),
             n,
             si.uv(), 
             transform.transform_vector(si.dpdu()),

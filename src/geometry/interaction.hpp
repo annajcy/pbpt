@@ -1,20 +1,26 @@
 #pragma once
 
-#include <utility>
 #include "math/point.hpp"
 #include "math/vector.hpp"
 #include "math/normal.hpp"
 #include "geometry/ray.hpp"
 
 namespace pbpt::geometry {
-
+// Offsets the ray origin to avoid self-intersection issues.
+// The offset is computed based on the error bounds of the intersection point
+// and the surface normal at that point.
 template<typename T>
 inline math::Point<T, 3> offset_ray_origin(
     const math::Point<T, 3>& p_lower,
     const math::Point<T, 3>& p_upper,
-    const Vector<T, 3>& wi, 
+    const Vector<T, 3>& dir, 
     const Normal<T, 3>& n
 ) {
+    // Shift the ray start slightly along the geometric normal so that new rays
+    // do not immediately self‐intersect the triangle they originate from.
+    // The offset magnitude combines (1) how “thick” the triangle is when
+    // projected onto the normal and (2) a gamma-corrected term that compensates
+    // floating-point error proportional to the triangle midpoint coordinates.
 
     auto d = abs(n.x()) * (p_upper.x() - p_lower.x()) + 
             abs(n.y()) * (p_upper.y() - p_lower.y()) + 
@@ -32,7 +38,7 @@ inline math::Point<T, 3> offset_ray_origin(
 
     auto nv = n.to_vector();
     Vector<T, 3> offset = d * nv;
-    if (is_less(nv.dot(wi), 0)) {
+    if (is_less(nv.dot(dir), 0)) {
         offset = -offset;
     }
 
@@ -44,37 +50,37 @@ class Interaction {
 protected:
     math::Point<T, 3> m_p_lower;
     math::Point<T, 3> m_p_upper;
-    math::Vector<T, 3> m_wo;
+    math::Vector<T, 3> m_dir; // outgoing direction w.r.t local frame of the incoming ray
 
 public:
     Interaction(
         const math::Point<T, 3>& p_lower, 
         const math::Point<T, 3>& p_upper, 
-        const math::Vector<T, 3>& wo
-    ) : m_p_lower(p_lower), m_p_upper(p_upper), m_wo(wo) {}
+        const math::Vector<T, 3>& dir
+    ) : m_p_lower(p_lower), m_p_upper(p_upper), m_dir(dir) {}
 
     Interaction(
         const math::Point<T, 3>& p, 
-        const math::Vector<T, 3>& wo, 
+        const math::Vector<T, 3>& dir, 
         const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0}
-    ) : m_p_lower(p - error_margin), m_p_upper(p + error_margin), m_wo(wo) {}
+    ) : m_p_lower(p - error_margin), m_p_upper(p + error_margin), m_dir(dir) {}
 
-    const math::Vector<T, 3>& wo() const { return m_wo; }
+    const math::Vector<T, 3>& dir() const { return m_dir; }
     const math::Point<T, 3>& p_lower() const { return m_p_lower; }
     const math::Point<T, 3>& p_upper() const { return m_p_upper; }
 
     math::Point<T, 3>& p_lower() { return m_p_lower; }
     math::Point<T, 3>& p_upper() { return m_p_upper; }
-    math::Vector<T, 3>& wo() { return m_wo; }
+    math::Vector<T, 3>& dir() { return m_dir; }
 
-    math::Point<T, 3> p() const { return m_p_lower.mid(m_p_upper); }
+    math::Point<T, 3> point() const { return m_p_lower.mid(m_p_upper); }
 
-    geometry::Ray<T, 3> spawn_ray(const math::Vector<T, 3>& wi) const {
-        return as_derived().spawn_ray_impl(wi);
+    geometry::Ray<T, 3> spawn_ray(const math::Vector<T, 3>& direction) const {
+        return as_derived().spawn_ray_impl(direction);
     }
 
-    geometry::Ray<T, 3> spawn_ray_to(const math::Point<T, 3>& p) const {
-        return as_derived().spawn_ray_to_impl(p);
+    geometry::Ray<T, 3> spawn_ray_to(const math::Point<T, 3>& point) const {
+        return as_derived().spawn_ray_to_impl(point);
     }
 
     const Derived& as_derived() const {
@@ -93,7 +99,7 @@ class SurfaceInteraction : public Interaction<T, SurfaceInteraction<T>> {
     using base = Interaction<T, SurfaceInteraction<T>>;
     using base::m_p_lower;
     using base::m_p_upper;
-    using base::m_wo;
+    using base::m_dir;
 
 protected:
     Normal<T, 3> m_n;
@@ -158,7 +164,7 @@ public:
     }
 
     Ray<T, 3> spawn_ray_to_impl(const Point<T, 3>& p_to) const {
-        auto p_from = this->p();
+        auto p_from = this->point();
         auto dir = p_to - p_from;
         auto o = offset_ray_origin(m_p_lower, m_p_upper, dir, m_n);
         auto dist = dir.length();

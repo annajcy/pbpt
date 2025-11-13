@@ -80,7 +80,7 @@ TEST_F(RayTest, OriginTargetConstruction) {
 TEST_F(RayTest, AtMethod) {
     Pt3 origin(10.0, 20.0, 30.0);
     Vec3 direction(0.0, 0.0, 1.0);  // 单位向量
-    Ray3 r(origin, direction);
+    Ray3 r(origin, direction, std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity());
 
     // t = 0 时，应该返回原点
     auto p_at_0 = r.at(0.0);

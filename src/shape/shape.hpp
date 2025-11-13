@@ -55,12 +55,11 @@ private:
     geometry::Transform<T> m_object_to_render{};
 
 public:
+
     TransformedShape(
         const ShapeType<T>& shape,
-        const geometry::Transform<T>& render_to_object
-    ) : m_shape(shape), m_render_to_object(render_to_object) {
-        m_object_to_render = render_to_object.inversed();
-    }
+        const geometry::Transform<T>& object_to_render
+    ) : m_shape(shape), m_object_to_render(object_to_render), m_render_to_object(object_to_render.inversed()) {}
 
     const geometry::Transform<T>& render_to_object_transform() const {
         return m_render_to_object;

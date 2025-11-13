@@ -32,7 +32,8 @@ public:
         return ray;
     }
 
-    constexpr Ray<T, N>() : m_origin(Point<T, N>::zeros()), 
+    constexpr Ray<T, N>() : 
+    m_origin(Point<T, N>::zeros()), 
     m_direction(Vector<T, N>::zeros()), 
     m_tmax(std::numeric_limits<T>::infinity()), 
     m_tmin(-std::numeric_limits<T>::infinity()) {
@@ -40,12 +41,12 @@ public:
     }
 
     template<typename U>
-    constexpr Ray<T, N>(const Point<U, N>& origin, const Vector<U, N>& direction, T tmax = std::numeric_limits<T>::infinity(), T tmin = -std::numeric_limits<T>::infinity())
-        : m_origin(origin), m_direction(direction.normalized()), m_tmax(tmax), m_tmin(tmin) {}
+    constexpr Ray<T, N>(const Point<U, N>& origin, const Vector<U, N>& direction, T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
+        : m_origin(origin), m_direction(direction.normalized()), m_tmax(t_max), m_tmin(t_min) {}
 
     template<typename U>
-    constexpr Ray<T, N>(const Point<U, N>& origin, const Point<U, N>& target, T tmax = std::numeric_limits<T>::infinity(), T tmin = -std::numeric_limits<T>::infinity())
-        : m_origin(origin), m_direction((target - origin).normalized()), m_tmax(tmax), m_tmin(tmin) {}
+    constexpr Ray<T, N>(const Point<U, N>& origin, const Point<U, N>& target, T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
+        : m_origin(origin), m_direction((target - origin).normalized()), m_tmax(t_max), m_tmin(t_min) {}
 
     constexpr const auto& origin() const { return m_origin; }
     constexpr const auto& direction() const { return m_direction; }  

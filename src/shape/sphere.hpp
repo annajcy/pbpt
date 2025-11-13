@@ -170,9 +170,22 @@ private:
             static_cast<T>(0)
         );
         T sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
-        T z_radius = std::sqrt(intersection.p_hit.x() * intersection.p_hit.x() + intersection.p_hit.y() * intersection.p_hit.y());
-        T cos_phi = intersection.p_hit.x() / z_radius;
-        T sin_phi = intersection.p_hit.y() / z_radius;
+        T z_radius = std::sqrt(
+            intersection.p_hit.x() * intersection.p_hit.x() + 
+            intersection.p_hit.y() * intersection.p_hit.y()
+        );
+        T cos_phi{}, sin_phi{};
+        bool is_polar{};
+        if (std::abs(z_radius) <= epsilon_v<T>) {
+            cos_phi = 1;
+            sin_phi = 0;
+            is_polar = true;
+        } else {
+            cos_phi = intersection.p_hit.x() / z_radius;
+            sin_phi = intersection.p_hit.y() / z_radius;
+            is_polar = false;
+        }
+
         math::Vector<T, 3> dpdv(
             intersection.p_hit.z() * cos_phi,
             intersection.p_hit.z() * sin_phi,
@@ -198,11 +211,19 @@ private:
             intersection.p_hit.z()
         );
 
+        math::Vector<T, 3> N{};
+
         // Compute fundamental forms
         T E = dpdu.dot(dpdu);
         T F = dpdu.dot(dpdv);
         T G = dpdv.dot(dpdv);
-        auto N = cross(dpdu, dpdv).normalized();
+        if (!is_polar) {
+            N = cross(dpdu, dpdv).normalized();
+        } else {
+            auto n = (intersection.p_hit - math::Point<T, 3>(0, 0, 0));
+            N = n.normalized();
+        }
+        
         T e = N.dot(d2pduu);
         T f = N.dot(d2pdudv);
         T g = N.dot(d2pdvv);

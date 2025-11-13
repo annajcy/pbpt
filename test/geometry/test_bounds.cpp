@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <sstream>
 #include <optional>
 
+#include "math/type_alias.hpp"
 #include "pbpt.h"
 
 using namespace pbpt::geometry;
@@ -879,7 +881,12 @@ TEST(BoundingBoxTest, RayBoundsIntersection_OriginInsideVerifyRayPoints) {
     box.unite(Pt3(1.0, 1.0, 1.0));
     
     Pt3 origin(0.3, 0.4, 0.6);
-    Ray<Float, 3> ray(origin, Vec3(1.0, 0.0, 0.0));
+    Ray<Float, 3> ray(
+        origin, 
+        Vec3(1.0, 0.0, 0.0), 
+        std::numeric_limits<Float>::infinity(), 
+        -std::numeric_limits<Float>::infinity()
+    );
     
     auto result = intersect_ray_bounds(ray, box);
     ASSERT_TRUE(result.has_value());
