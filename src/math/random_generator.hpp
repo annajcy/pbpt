@@ -5,7 +5,7 @@
 
 namespace pbpt::math {
 
-template<std::floating_point T, int N>
+template<typename T, int N>
 class RandomGenerator { 
 private:
     std::mt19937 engine{};

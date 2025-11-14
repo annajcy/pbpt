@@ -6,7 +6,6 @@ namespace pbpt::math {
 template<typename T>
 class Polynomial {
 public:
-
     template<typename C>
     static constexpr T evaluate(T x, C c) {
         return c;

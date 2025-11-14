@@ -8,14 +8,13 @@
 
 namespace pbpt::math {
 
-template <std::floating_point T>
+template <typename T>
 class OctahedralVector {
 private:
     std::uint16_t m_x_encoded{};
     std::uint16_t m_y_encoded{};
 
 public:
-
     explicit OctahedralVector(const Vector<T, 3>& v) {
         Vector<T, 2> p = encode_direction(v);
         m_x_encoded = quantize(p[0]);

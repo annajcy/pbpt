@@ -9,12 +9,11 @@
 #include "geometry/directional_cone.hpp"
 #include "geometry/interaction.hpp"
 #include "geometry/ray.hpp"
-#include "geometry/transform.hpp"
 #include "math/function.hpp"
 #include "math/normal.hpp"
 #include "math/point.hpp"
+#include "math/sampling.hpp"
 
-#include "math/type_alias.hpp"
 #include "math/vector.hpp"
 #include "shape/shape.hpp"
 
@@ -238,6 +237,7 @@ private:
             std::abs(intersection.p_hit.y()),
             std::abs(intersection.p_hit.z())
         );
+
         return geometry::SurfaceInteraction<T>(
             intersection.p_hit - p_error,
             intersection.p_hit + p_error,
@@ -253,6 +253,43 @@ private:
 
     T area_impl() const {
         return m_phi_max * m_radius * (m_z_max - m_z_min);  
+    }
+
+    std::optional<ShapeSample<T>> sample_on_shape_impl(
+        const math::Point<T, 2>& u_sample
+    ) const {
+        math::Point<T, 3> p = math::sample_uniform_sphere(u_sample, m_radius);
+        if (p.z() < m_z_min || p.z() > m_z_max) {
+            return std::nullopt;
+        }
+        math::Vector<T, 3> p_error = math::gamma<T>(5) * math::Vector<T, 3>(
+            std::abs(p.x()),
+            std::abs(p.y()),
+            std::abs(p.z())
+        );
+
+        math::Normal<T, 3> n = math::Normal<T, 3>::from_vector(
+            (p - math::Point<T, 3>(0, 0, 0)).normalized()
+        );
+
+        T theta = std::acos(std::clamp(p.z() / m_radius, static_cast<T>(-1), static_cast<T>(1)));
+        T phi = std::atan2(p.y(), p.x());
+        if (phi < static_cast<T>(0)) {
+            phi += static_cast<T>(2 * math::pi_v<T>);
+        }
+
+        if (phi > m_phi_max) {
+            return std::nullopt;
+        }
+
+        T u = phi / m_phi_max;
+        T v = (theta - z_min_theta()) / (z_max_theta() - z_min_theta());
+        ShapeSample<T> sample{};
+        sample.point = p;
+        sample.normal = n;
+        sample.uv = math::Point<T, 2>(u, v);
+        sample.pdf = static_cast<T>(1) / area_impl();
+        return std::make_optional(sample);
     }
 
     

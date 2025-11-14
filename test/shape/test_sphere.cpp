@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "geometry/interaction.hpp"
+#include "math/point.hpp"
 #include "shape/shape.hpp"
 #include "shape/sphere.hpp"
 using namespace pbpt::math;
@@ -179,6 +180,57 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
     EXPECT_NEAR(interaction.p_upper().y(), p.y(), 1e-12);
     EXPECT_NEAR(interaction.p_lower().z(), p.z(), 1e-12);
     EXPECT_NEAR(interaction.p_upper().z(), p.z(), 1e-12);
+}
+
+TEST_F(SphereTest, SampleOnShapeProducesConsistentValues) {
+    SphereD sphere(1.0);
+    const SphereShapeInterface& shape_iface = sphere;
+
+    Point<double, 2> u_sample(0.0, 0.0);
+    auto sample_opt = shape_iface.sample_on_shape(u_sample);
+
+    ASSERT_TRUE(sample_opt.has_value());
+    const auto& sample = sample_opt.value();
+
+    EXPECT_DOUBLE_EQ(sample.point.x(), 0.0);
+    EXPECT_DOUBLE_EQ(sample.point.y(), 0.0);
+    EXPECT_DOUBLE_EQ(sample.point.z(), 1.0);
+
+    auto normal_vec = sample.normal.to_vector();
+    EXPECT_DOUBLE_EQ(normal_vec.x(), 0.0);
+    EXPECT_DOUBLE_EQ(normal_vec.y(), 0.0);
+    EXPECT_DOUBLE_EQ(normal_vec.z(), 1.0);
+
+    EXPECT_DOUBLE_EQ(sample.uv.x(), 0.0);
+    EXPECT_DOUBLE_EQ(sample.uv.y(), 1.0);
+
+    auto expected_pdf = 1.0 / shape_iface.area();
+    EXPECT_NEAR(sample.pdf, expected_pdf, 1e-12);
+
+    Point<double, 2> uv_sample(0.5, 0.5);
+    sample_opt = shape_iface.sample_on_shape(uv_sample);
+    ASSERT_TRUE(sample_opt.has_value());
+    const auto& sample2 = sample_opt.value();
+    EXPECT_NEAR(sample2.point.x(), -1.0, 1e-12);
+    EXPECT_NEAR(sample2.point.y(), 0.0, 1e-12);
+    EXPECT_NEAR(sample2.point.z(), 0.0, 1e-12);
+    auto normal_vec2 = sample2.normal.to_vector();
+    EXPECT_NEAR(normal_vec2.x(), -1.0, 1e-12);
+    EXPECT_NEAR(normal_vec2.y(), 0.0, 1e-12);
+    EXPECT_NEAR(normal_vec2.z(), 0.0, 1e-12);
+    EXPECT_NEAR(sample2.uv.x(), 0.5, 1e-12);
+    EXPECT_NEAR(sample2.uv.y(), 0.5, 1e-12);
+    EXPECT_NEAR(sample2.pdf, expected_pdf, 1e-12);
+}
+
+TEST_F(SphereTest, SampleOnShapeRespectsPhiClamp) {
+    SphereD partial(1.0, -1.0, 1.0, static_cast<double>(pi_v<double> / 2.0));
+    const SphereShapeInterface& shape_iface = partial;
+
+    Point<double, 2> u_sample(0.5, 0.5);  // maps to phi = pi which exceeds phi_max = pi/2
+    auto sample_opt = shape_iface.sample_on_shape(u_sample);
+
+    EXPECT_FALSE(sample_opt.has_value());
 }
 
 class TransformedSphereTest : public ::testing::Test {

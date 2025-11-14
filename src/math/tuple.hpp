@@ -9,13 +9,11 @@
 namespace pbpt::math {
 
 template <template <typename, int> typename Derived, typename T, int N>
-    requires(N > 0)
 class Tuple {
 protected:
     std::array<T, N> m_data{};
 
 public:
-    
     static constexpr auto filled(T value) {
         Derived<T, N> t;
         for (int i = 0; i < N; ++i)
@@ -93,7 +91,6 @@ public:
     constexpr const T& z() const requires (N > 2) { return m_data[2]; }
     constexpr const T& w() const requires (N > 3) { return m_data[3]; }
 
-    // -- Equality --
     template <typename U>
     constexpr bool operator==(const Tuple<Derived, U, N>& rhs) const {
         for (int i = 0; i < N; ++i)

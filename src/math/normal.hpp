@@ -1,16 +1,16 @@
 #pragma once
 
+#include "operator.hpp"
 #include "tuple.hpp"
 #include "vector.hpp"
-#include "operator.hpp"
+#include "vector_ops.hpp"
 
 namespace pbpt::math {
 
 template <typename T, int N>
-    requires(N > 0) && (std::is_floating_point_v<T> || std::is_integral_v<T>)
-class Normal : public Tuple<Normal, T, N> {
+class Normal : public VectorOps<Normal, T, N> {
 private:
-    using Base = Tuple<Normal, T, N>;
+    using Base = VectorOps<Normal, T, N>;
     using Base::m_data;
 
 public:
@@ -54,8 +54,6 @@ public:
         }
         return *this;
     }
-
-
 };
 
 template <typename T, int N>

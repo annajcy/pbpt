@@ -8,8 +8,18 @@
 #include "geometry/interaction.hpp"
 #include "geometry/ray.hpp"
 #include "geometry/transform.hpp"
+#include "math/normal.hpp"
+#include "math/point.hpp"
 
 namespace pbpt::shape {
+
+template<typename T>
+struct ShapeSample {
+    math::Point<T, 3> point;
+    math::Normal<T, 3> normal;
+    math::Point<T, 2> uv;
+    T pdf{};
+};
 
 template<typename Derived, typename T>
 class Shape {
@@ -42,6 +52,19 @@ public:
         const geometry::Ray<T, 3>& ray
     ) const {
         return as_derived().intersect_impl(ray);
+    }
+
+    std::optional<ShapeSample<T>> sample_on_shape(
+        const math::Point<T, 2>& u_sample
+    ) const {
+        return as_derived().sample_on_shape_impl(u_sample);
+    }
+
+    std::optional<ShapeSample<T>> sample_on_solid_angle(
+        const math::Point<T, 3>& reference,
+        const math::Point<T, 2>& u_sample
+    ) const {
+        return as_derived().sample_on_solid_angle_impl(reference, u_sample);
     }
 };
 
@@ -107,6 +130,49 @@ private:
         return m_shape.area();
     }
 
+    std::optional<ShapeSample<T>> sample_on_shape_impl(
+        const math::Point<T, 2>& u_sample
+    ) const {
+        const Shape<ShapeType<T>, T>& shape_iface = m_shape;
+        auto sample_opt = shape_iface.sample_on_shape(u_sample);
+        if (!sample_opt.has_value())
+            return std::nullopt;
+
+        auto sample_object = sample_opt.value();
+        auto point_render = m_object_to_render.transform_point(sample_object.point);
+        auto normal_render = m_object_to_render.transform_normal(sample_object.normal).normalized();
+
+        return std::make_optional(ShapeSample<T>{
+            point_render,
+            normal_render,
+            sample_object.uv,
+            sample_object.pdf
+        });
+    }
+
+    std::optional<ShapeSample<T>> sample_on_solid_angle_impl(
+        const math::Point<T, 3>& reference,
+        const math::Point<T, 2>& u_sample
+    ) const {
+        const Shape<ShapeType<T>, T>& shape_iface = m_shape;
+        auto sample_opt = shape_iface.sample_on_solid_angle(
+            m_render_to_object.transform_point(reference),
+            u_sample
+        );
+        if (!sample_opt.has_value())
+            return std::nullopt;
+
+        auto sample_object = sample_opt.value();
+        auto point_render = m_object_to_render.transform_point(sample_object.point);
+        auto normal_render = m_object_to_render.transform_normal(sample_object.normal).normalized();
+
+        return std::make_optional(ShapeSample<T>{
+            point_render,
+            normal_render,
+            sample_object.uv,
+            sample_object.pdf
+        });
+    }
 };
 
 };

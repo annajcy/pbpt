@@ -5,18 +5,18 @@
 
 #include "function.hpp"
 #include "operator.hpp"
-#include "utils.hpp"
 #include "point.hpp"
-#include "vector.hpp"
 #include "tuple.hpp"
+#include "utils.hpp"
+#include "vector.hpp"
+#include "vector_ops.hpp"
 
 namespace pbpt::math {
 
 template <typename T, int N>
-    requires std::is_floating_point_v<T> && (N > 0)
-class Homogeneous : public Tuple<Homogeneous, T, N> {
+class Homogeneous : public VectorOps<Homogeneous, T, N> {
 private:
-    using Base = Tuple<Homogeneous, T, N>;
+    using Base = VectorOps<Homogeneous, T, N>;
     using Base::m_data;
 
 public:
@@ -117,115 +117,20 @@ public:
         return reinterpret_cast<Vector<T, N>&>(*this);
     }
 
-    // Unified comparison operators
-    template <typename U>
-    constexpr bool operator==(const Homogeneous<U, N>& rhs) const {
-        for (int i = 0; i < N; ++i) {
-            if (!is_equal((*this)[i], static_cast<T>(rhs[i]))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    template <typename U>
-    constexpr bool operator!=(const Homogeneous<U, N>& rhs) const { 
-        return !(*this == rhs); 
-    }
-
-    // Assignment operators with type safety
-    template <typename U>
-    constexpr auto& operator+=(const Homogeneous<U, N>& rhs) {
-        for (int i = 0; i < N; ++i)
-            (*this)[i] += static_cast<T>(rhs[i]);
-        return *this;
-    }
-
-    template <typename U>
-    constexpr auto& operator-=(const Homogeneous<U, N>& rhs) {
-        for (int i = 0; i < N; ++i)
-            (*this)[i] -= static_cast<T>(rhs[i]);
-        return *this;
-    }
-
-    template <typename U>
-        requires std::is_arithmetic_v<U>
-    constexpr auto& operator*=(const U& scalar) {
-        for (int i = 0; i < N; ++i)
-            (*this)[i] *= static_cast<T>(scalar);
-        return *this;
-    }
-
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr auto& operator/=(const U& scalar) {
-        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
-                                       "Division by zero in homogeneous coordinate division");
-        for (int i = 0; i < N; ++i)
-            (*this)[i] /= static_cast<T>(scalar);
-        return *this;
-    }
-
-    // Arithmetic operators with type promotion
-    constexpr auto operator-() const {
-        Homogeneous<T, N> result{};
-        for (int i = 0; i < N; ++i)
-            result[i] = -(*this)[i];
-        return result;
-    }
-
-    template <typename U>
-    constexpr auto operator+(const Homogeneous<U, N>& rhs) const {
-        using ResultType = std::common_type_t<T, U>;
-        Homogeneous<ResultType, N> result{};
-        for (int i = 0; i < N; ++i) {
-            result[i] = static_cast<ResultType>((*this)[i]) + 
-                       static_cast<ResultType>(rhs[i]);
-        }
-        return result;
-    }
-
-    template <typename U>
-    constexpr auto operator-(const Homogeneous<U, N>& rhs) const {
-        using ResultType = std::common_type_t<T, U>;
-        Homogeneous<ResultType, N> result{};
-        for (int i = 0; i < N; ++i) {
-            result[i] = static_cast<ResultType>((*this)[i]) - 
-                       static_cast<ResultType>(rhs[i]);
-        }
-        return result;
-    }
-
-    template <typename U>
-        requires std::is_arithmetic_v<U>
-    constexpr auto operator*(const U& scalar) const {
-        using ResultType = std::common_type_t<T, U>;
-        Homogeneous<ResultType, N> result{};
-        for (int i = 0; i < N; ++i) {
-            result[i] = static_cast<ResultType>((*this)[i]) * 
-                       static_cast<ResultType>(scalar);
-        }
-        return result;
-    }
-
-    template <typename U>
-        requires std::is_arithmetic_v<U>
-    friend constexpr auto operator*(const U& scalar, const Homogeneous<T, N>& homo) {
-        return homo * scalar;
+        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); },
+                                        "Division by zero in homogeneous coordinate division");
+        return Base::operator/=(scalar);
     }
 
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr auto operator/(const U& scalar) const {
-        using ResultType = std::common_type_t<T, U>;
-        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
-                                       "Division by zero in homogeneous coordinate division");
-        Homogeneous<ResultType, N> result{};
-        for (int i = 0; i < N; ++i) {
-            result[i] = static_cast<ResultType>((*this)[i]) / 
-                       static_cast<ResultType>(scalar);
-        }
-        return result;
+        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); },
+                                        "Division by zero in homogeneous coordinate division");
+        return Base::operator/(scalar);
     }
 
     /// @brief Normalize the homogeneous coordinate (make w = 1 if it's a point)
