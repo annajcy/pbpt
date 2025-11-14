@@ -228,6 +228,20 @@ public:
         return result / N;
     }
 
+    constexpr Derived<T, N> clamp(
+        const Derived<T, N>& low = Derived<T, N>::zeros(), 
+        const Derived<T, N>& high = Derived<T, N>::ones()
+    ) const {
+        Derived<T, N> out;
+        for (int i = 0; i < N; ++i) {
+            auto v = this->m_data[i];
+            auto l = static_cast<T>(low[i]);
+            auto h = static_cast<T>(high[i]);
+            out[i] = v < l ? l : (v > h ? h : v);
+        }
+        return out;
+    }
+
     constexpr const Derived<T, N>& as_derived() const {
         return *static_cast<const Derived<T, N>&>(*this);
     }

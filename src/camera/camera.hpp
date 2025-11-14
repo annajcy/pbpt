@@ -21,7 +21,6 @@ struct CameraSample{
 template<typename Derived, typename T>
 class Camera {
 public:
-
     geometry::Ray<T, 3> generate_ray(const CameraSample<T>& sample) const {
         return as_derived().generate_ray_impl(sample);
     }

@@ -20,7 +20,7 @@ struct RGBSigmoidPolynomialOptimizationResult {
 };
 
 template<typename T, typename LuminantSpectrumType>
-inline auto optimize_albedo_rgb_sigmoid_polynomial(
+inline RGBSigmoidPolynomialOptimizationResult<T> optimize_albedo_rgb_sigmoid_polynomial(
     const RGB<T>& target_rgb, 
     const RGBColorSpace<T>& color_space,
     const LuminantSpectrumType& reference_luminant_spectrum,

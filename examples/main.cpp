@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "camera/projective_camera.hpp"
 #include "geometry/interaction.hpp"
 #include "geometry/ray.hpp"
 #include "math/normal.hpp"
@@ -15,6 +16,7 @@
 
 #include "pbpt.h"
 #include "shape/sphere.hpp"
+#include "scene/scene.hpp"
 
 using namespace pbpt;
 

@@ -113,18 +113,6 @@ public:
             sum[i] /= static_cast<R>(points.size());
         return Point<R, N>::from_array(sum);
     }
-
-    template <typename U>
-    constexpr Point clamp(const Point<U, N>& low, const Point<U, N>& high) const {
-        Point out;
-        for (int i = 0; i < N; ++i) {
-            auto v = this->m_data[i];
-            auto l = static_cast<T>(low[i]);
-            auto h = static_cast<T>(high[i]);
-            out[i] = v < l ? l : (v > h ? h : v);
-        }
-        return out;
-    }
 };
 
 // Vector + Point = Point
