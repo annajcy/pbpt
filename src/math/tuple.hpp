@@ -14,24 +14,24 @@ protected:
     std::array<T, N> m_data{};
 
 public:
-    static constexpr auto filled(T value) {
+    static constexpr Derived<T, N> filled(T value) {
         Derived<T, N> t;
         for (int i = 0; i < N; ++i)
             t[i] = value;
         return t;
     }
 
-    static constexpr auto zeros() { return filled(T(0)); }
-    static constexpr auto ones() { return filled(T(1)); }
+    static constexpr Derived<T, N> zeros() { return filled(T(0)); }
+    static constexpr Derived<T, N> ones() { return filled(T(1)); }
 
-    static auto random() {
+    static Derived<T, N> random() {
         Derived<T, N> t;
         for (int i = 0; i < N; ++i)
             t[i] = rand<T>();
         return t;
     }
 
-    static constexpr auto from_array(const std::array<T, N>& arr) {
+    static constexpr Derived<T, N> from_array(const std::array<T, N>& arr) {
         Derived<T, N> t;
         for (int i = 0; i < N; ++i)
             t[i] = arr[i];
@@ -114,7 +114,7 @@ public:
     // -- Type Conversion --
     template <typename U, int M>
         requires(M > 0) && std::is_convertible_v<T, U>
-    constexpr auto cast() const {
+    constexpr Derived<U, M> cast() const {
         Derived<U, M> result;
         int k = std::min(N, M);
         for (int i = 0; i < k; ++i)
@@ -126,13 +126,13 @@ public:
 
     template <typename U>
         requires std::is_convertible_v<T, U>
-    constexpr auto type_cast() const {
+    constexpr Derived<U, N> type_cast() const {
         return cast<U, N>();
     }
 
     template <int M>
         requires(M > 0)
-    constexpr auto dim_cast() const {
+    constexpr Derived<T, M> dim_cast() const {
         return cast<T, M>();
     }
 
@@ -182,7 +182,7 @@ public:
 
     template <typename... Args>
         requires(sizeof...(Args) == N)
-    constexpr auto permuted(Args... args) const {
+    constexpr Derived<T, N> permuted(Args... args) const {
         Derived<T, N> result;
         int          i = 0;
         ((result[i++] = (*this)[args]), ...);
@@ -191,9 +191,9 @@ public:
 
     template <typename... Args>
         requires(sizeof...(Args) == N)
-    constexpr auto& permute(Args... args) {
-        *this = permuted(args...);
-        return *this;
+    constexpr Derived<T, N>& permute(Args... args) {
+        *this = static_cast<Tuple<Derived, T, N>>(permuted(args...));
+        return static_cast<Derived<T, N>&>(*this);
     }
 
     constexpr bool is_all_zero() const {
@@ -204,7 +204,7 @@ public:
         return true;
     }
 
-    constexpr auto abs() const {
+    constexpr Derived<T, N> abs() const {
         Derived<T, N> result{};
         for (int i = 0; i < N; i++) {
             result[i] = pbpt::math::abs((*this)[i]);
@@ -212,7 +212,7 @@ public:
         return result;
     }
 
-    constexpr auto sum() const {
+    constexpr T sum() const {
         T result = T(0);
         for (int i = 0; i < N; i++) {
             result += (*this)[i];
@@ -220,7 +220,7 @@ public:
         return result;
     }
 
-    constexpr auto average() const {
+    constexpr T average() const {
         T result = T(0);
         for (int i = 0; i < N; i++) {
             result += (*this)[i];

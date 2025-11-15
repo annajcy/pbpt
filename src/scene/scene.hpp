@@ -134,10 +134,11 @@ private:
         const SampledWavelengthType& wavelengths
     ) const {
         auto normal = si.n().to_vector().normalized();
-        const math::Vector<T, 3> light_dir = math::Vector<T, 3>(T(-0.4), T(0.8), T(-1)).normalized();
-        const T ndotl = std::max(T(0), normal.dot(light_dir));
-        const T facing = std::max(T(0), normal.dot(-ray.direction()));
-        const T intensity = std::clamp(T(0.1) + ndotl * T(0.9) + facing * T(0.2), T(0), T(1));
+        // const math::Vector<T, 3> light_dir = math::Vector<T, 3>(T(-0.4), T(0.8), T(-1)).normalized();
+        // const T ndotl = std::max(T(0), normal.dot(light_dir));
+        // const T facing = std::max(T(0), normal.dot(-ray.direction()));
+        // const T intensity = std::clamp(T(0.1) + ndotl * T(0.9) + facing * T(0.2), T(0), T(1));
+        const T intensity = std::max(T(0), normal.dot(-ray.direction()));
         auto albedo_sample = m_sphere_albedo_spectrum.sample(wavelengths);
         auto illuminant_sample = m_scene_illuminant.sample(wavelengths);
         return albedo_sample * illuminant_sample * intensity;
@@ -147,12 +148,13 @@ private:
         const math::Vector<T, 3>& dir,
         const SampledWavelengthType& wavelengths
     ) const {
-        auto unit_dir = dir.normalized();
-        T t = T(0.5) * (unit_dir.y() + T(1));
-        t = std::clamp(t, T(0), T(1));
-        auto bottom = sample_rgb_illuminant_spectrum(m_background_bottom_rsp, wavelengths);
-        auto top = sample_rgb_illuminant_spectrum(m_background_top_rsp, wavelengths);
-        return bottom * (T(1) - t) + top * t;
+        // auto unit_dir = dir.normalized();
+        // T t = T(0.5) * (unit_dir.y() + T(1));
+        // t = std::clamp(t, T(0), T(1));
+        // auto bottom = sample_rgb_illuminant_spectrum(m_background_bottom_rsp, wavelengths);
+        // auto top = sample_rgb_illuminant_spectrum(m_background_top_rsp, wavelengths);
+        // return bottom * (T(1) - t) + top * t;
+        return SampledSpectrumType::filled(T(0));
     }
 
     static std::uint8_t to_byte(T value) {
@@ -181,9 +183,10 @@ private:
                     static_cast<std::size_t>(height - 1 - y) * static_cast<std::size_t>(width) +
                     static_cast<std::size_t>(x)
                 ) * 3;
-                buffer[idx + 0] = to_byte(rgb.r());
-                buffer[idx + 1] = to_byte(rgb.g());
-                buffer[idx + 2] = to_byte(rgb.b());
+                auto srgb = radiometry::encode_srgb(rgb);
+                buffer[idx + 0] = to_byte(srgb.r());
+                buffer[idx + 1] = to_byte(srgb.g());
+                buffer[idx + 2] = to_byte(srgb.b());
             }
         }
 

@@ -9,7 +9,7 @@
 #include "shape/sphere.hpp"
 
 int main() {
-    using T = float;
+    using T = double;
 
     pbpt::math::Vector<int, 2> resolution(640, 360);
     pbpt::math::Vector<T, 2> film_size(T(0.036f), T(0.020f));
@@ -42,10 +42,10 @@ int main() {
 
     std::cout << "Rendered image: simple_scene_white.png" << std::endl;
 
-    pbpt::radiometry::RGB<T> albedo_brown(T(0.85f), T(0.35f), T(0.25f));
-    pbpt::scene::Scene<T> scene(camera, spheres, albedo_brown);
-    scene.render("simple_scene_brown.png");
+    pbpt::radiometry::RGB<T> albedo_green(T(0.05f), T(0.9f), T(0.05f));
+    pbpt::scene::Scene<T> scene_green(camera, spheres, albedo_green);
+    scene_green.render("simple_scene_green.png");
 
-    std::cout << "Rendered image: simple_scene_brown.png" << std::endl;
+    std::cout << "Rendered image: simple_scene_green.png" << std::endl;
     return 0;
 }
