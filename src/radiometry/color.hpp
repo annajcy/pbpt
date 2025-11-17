@@ -534,7 +534,7 @@ inline constexpr math::Matrix<T, 3, 3> white_balance(
 }
 
 template <typename T>
-T encode_srgb_channel(T linear) {
+T encode_to_nonlinear_srgb_channel(T linear) {
     linear = std::clamp(linear, T{0}, T{1});
     if (linear <= T{0.0031308}) {
         return linear * T{12.92};
@@ -543,12 +543,30 @@ T encode_srgb_channel(T linear) {
 }
 
 template <typename T>
-RGB<T> encode_srgb(const RGB<T>& linear_rgb) {
+RGB<T> encode_to_nonlinear_srgb(const RGB<T>& linear_rgb) {
     return RGB<T>(
-        encode_srgb_channel(linear_rgb.r()),
-        encode_srgb_channel(linear_rgb.g()),
-        encode_srgb_channel(linear_rgb.b())
+        encode_to_nonlinear_srgb_channel(linear_rgb.r()),
+        encode_to_nonlinear_srgb_channel(linear_rgb.g()),
+        encode_to_nonlinear_srgb_channel(linear_rgb.b())
     );
 }
 
+template<typename T>
+T decode_from_nonlinear_srgb_channel(T nonlinear) {
+    nonlinear =  std::clamp(nonlinear, T{0}, T{1});
+    if (nonlinear <= T{0.04045}) {
+        return nonlinear / T{12.92};
+    }
+    return std::pow((nonlinear + T{0.055}) / T{1.055}, T{2.4});
 }
+
+template<typename T>
+RGB<T> decode_from_nonlinear_srgb(const RGB<T>& nonlinear_rgb) {
+    return RGB<T>(
+        decode_from_nonlinear_srgb_channel(nonlinear_rgb.r()),
+        decode_from_nonlinear_srgb_channel(nonlinear_rgb.g()),
+        decode_from_nonlinear_srgb_channel(nonlinear_rgb.b())
+    );
+}
+
+} // namespace pbpt::radiometry

@@ -44,6 +44,7 @@ class PbptDeps(ConanFile):
         self.requires("imgui/1.92.2b")
         self.requires("stb/cci.20230920")
         self.requires("vulkan-loader/[>=1.3]")
+        self.requires("openexr/3.2.4")
 
         # 本地 recipe：conan create . --name=slang --version=<ver>
         ver = str(self.options.slang_version)

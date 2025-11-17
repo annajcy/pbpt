@@ -39,8 +39,7 @@ int main() {
     //pbpt::radiometry::RGB<T> albedo(T(0.25f), T(0.65f), T(0.95f));
     pbpt::radiometry::RGB<T> albedo(T(0.1f), T(0.9f), T(0.1f));
     pbpt::scene::Scene<T> spectral_scene(camera, spheres, albedo);
-    spectral_scene.render("spectrum_scene.png");
-
-    std::cout << "Rendered spectrum_scene.png" << std::endl;
+    spectral_scene.render("spectrum_scene.exr");
+    std::cout << "Rendered spectrum_scene.exr" << std::endl;
     return 0;
 }

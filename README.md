@@ -4,5 +4,5 @@ Yet another pbrt.
 
 Simple Scene
 
-![white sphere](./simple_scene_white.png)
-![green sphere](./simple_scene_green.png)
+![white sphere](./simple_scene_white.exr)
+![green sphere](./simple_scene_green.exr)

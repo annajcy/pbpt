@@ -2,14 +2,16 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <filesystem>
 #include <limits>
 #include <optional>
 #include <stdexcept>
 #include <vector>
 
-#include "stb_image_write.h"
+#include <OpenEXR/ImfChannelList.h>
+#include <OpenEXR/ImfFrameBuffer.h>
+#include <OpenEXR/ImfHeader.h>
+#include <OpenEXR/ImfOutputFile.h>
 #include "camera/film.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "camera/projective_camera.hpp"
@@ -59,7 +61,7 @@ public:
         m_background_top_rsp(optimize_rgb_to_rsp(radiometry::RGB<T>(T(0.7), T(0.8), T(1.0))))
     {}
 
-    void render(const std::filesystem::path& output_path = std::filesystem::path("scene.png")) const {
+    void render(const std::filesystem::path& output_path = std::filesystem::path("scene.exr")) const {
         auto resolution = film_resolution_from_camera();
         math::Vector<T, 2> physical_size(
             static_cast<T>(resolution.x()),
@@ -92,7 +94,7 @@ public:
             }
         }
 
-        write_png(film, output_path, width, height);
+        write_exr(film, output_path, width, height);
     }
 
 private:
@@ -157,12 +159,7 @@ private:
         return SampledSpectrumType::filled(T(0));
     }
 
-    static std::uint8_t to_byte(T value) {
-        auto clamped = std::clamp(value, T(0), T(1));
-        return static_cast<std::uint8_t>(std::lround(static_cast<double>(clamped) * 255.0));
-    }
-
-    void write_png(
+    void write_exr(
         const FilmType& film,
         const std::filesystem::path& output_path,
         int width,
@@ -172,26 +169,43 @@ private:
             std::filesystem::create_directories(output_path.parent_path());
         }
 
-        std::vector<std::uint8_t> buffer(
+        std::vector<float> buffer(
             static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 3
         );
 
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                auto rgb = film.get_pixel_rgb(math::Point<int, 2>(x, y)).clamp();
+                auto rgb = film.get_pixel_rgb(math::Point<int, 2>(x, y));
                 std::size_t idx = (
                     static_cast<std::size_t>(height - 1 - y) * static_cast<std::size_t>(width) +
                     static_cast<std::size_t>(x)
                 ) * 3;
-                auto srgb = radiometry::encode_srgb(rgb);
-                buffer[idx + 0] = to_byte(srgb.r());
-                buffer[idx + 1] = to_byte(srgb.g());
-                buffer[idx + 2] = to_byte(srgb.b());
+                buffer[idx + 0] = static_cast<float>(rgb.r());
+                buffer[idx + 1] = static_cast<float>(rgb.g());
+                buffer[idx + 2] = static_cast<float>(rgb.b());
             }
         }
 
-        if (stbi_write_png(output_path.string().c_str(), width, height, 3, buffer.data(), width * 3) == 0) {
-            throw std::runtime_error("Failed to write image to " + output_path.string());
+        const std::size_t pixel_stride = sizeof(float) * 3;
+        const std::size_t row_stride = pixel_stride * static_cast<std::size_t>(width);
+        auto* base = reinterpret_cast<char*>(buffer.data());
+
+        Imf::Header header(width, height);
+        header.channels().insert("R", Imf::Channel(Imf::FLOAT));
+        header.channels().insert("G", Imf::Channel(Imf::FLOAT));
+        header.channels().insert("B", Imf::Channel(Imf::FLOAT));
+
+        Imf::FrameBuffer frame_buffer;
+        frame_buffer.insert("R", Imf::Slice(Imf::FLOAT, base, pixel_stride, row_stride));
+        frame_buffer.insert("G", Imf::Slice(Imf::FLOAT, base + sizeof(float), pixel_stride, row_stride));
+        frame_buffer.insert("B", Imf::Slice(Imf::FLOAT, base + sizeof(float) * 2, pixel_stride, row_stride));
+
+        try {
+            Imf::OutputFile file(output_path.string().c_str(), header);
+            file.setFrameBuffer(frame_buffer);
+            file.writePixels(height);
+        } catch (const std::exception& e) {
+            throw std::runtime_error("Failed to write image to " + output_path.string() + ": " + e.what());
         }
     }
 

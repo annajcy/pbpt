@@ -83,6 +83,11 @@ public:
                 static_cast<T>(rgb_sum[2] * inv_weight)
             );
         }
+
+        void clear() {
+            rgb_sum = {0.0, 0.0, 0.0};
+            weight_sum = 0.0;
+        }   
     };
 
 private:

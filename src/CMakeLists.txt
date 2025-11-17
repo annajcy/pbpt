@@ -7,5 +7,5 @@ target_link_libraries(pbpt INTERFACE
     Vulkan::Loader 
     assimp::assimp 
     slang::slang
+    OpenEXR::OpenEXR
 )
-
