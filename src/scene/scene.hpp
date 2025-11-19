@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <iostream>
 #include <limits>
 #include <optional>
 #include <vector>
@@ -22,6 +23,7 @@
 #include "shape/shape.hpp"
 #include "shape/sphere.hpp"
 #include "utils/exr_writer.hpp"
+#include "utils/progress_bar.hpp"
 
 namespace pbpt::scene {
 
@@ -89,6 +91,10 @@ public:
 
         const int width = resolution.x();
         const int height = resolution.y();
+        std::cout << "Starting render: " << width << "x" << height << " pixels." << std::endl;
+        const std::size_t total_pixels = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
+        utils::ProgressBar progress_bar(total_pixels, 40, "Rendering");
+        progress_bar.start(std::cout);
 
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
@@ -100,9 +106,11 @@ public:
                 auto ray = m_camera.generate_ray(sample);
                 auto spectrum = trace_ray(ray, wavelengths);
                 film.template add_sample<SpectrumSampleCount>(math::Point<int, 2>(x, y), spectrum, wavelengths, pdf, T(1));
+                progress_bar.update(std::cout);
             }
         }
 
+        progress_bar.finish(std::cout);
         utils::write_exr(film, output_path, width, height);
     }
 
@@ -113,14 +121,14 @@ private:
     ) const {
         T closest = std::numeric_limits<T>::infinity();
         std::optional<geometry::SurfaceInteraction<T>> closest_hit{};
-        std::vector<shape::TransformedShape<T, shape::Sphere>> m_spheres;
+        std::vector<std::reference_wrapper<const shape::TransformedShape<T, shape::Sphere>>> m_spheres;
         for (const auto& obj : m_scene_objects) {
-            m_spheres.push_back(obj.sphere);
+            m_spheres.push_back(std::cref(obj.sphere));
         }
 
         int shape_index = -1;
         for (const auto& sphere : m_spheres) {
-            if (auto hit = sphere.intersect(ray)) {
+            if (auto hit = sphere.get().intersect(ray)) {
                 const auto& [si, t_hit] = *hit;
                 if (t_hit < closest) {
                     closest = t_hit;
@@ -133,6 +141,7 @@ private:
         if (closest_hit.has_value()) {
             return shade_hit(closest_hit.value(), ray, wavelengths, shape_index);
         }
+        
         return shade_background(ray.direction(), wavelengths);
     }
 

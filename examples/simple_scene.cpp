@@ -11,8 +11,8 @@
 int main() {
     using T = double;
 
-    pbpt::math::Vector<int, 2> resolution(640, 360);
-    pbpt::math::Vector<T, 2> film_size(T(0.036f), T(0.020f));
+    pbpt::math::Vector<int, 2> resolution(1920, 1080);
+    pbpt::math::Vector<T, 2> film_size(T(2 * 0.0192f), T(2 * 0.0108f));
     pbpt::camera::ThinLensPerspectiveCamera<T> camera(
         resolution,
         film_size,
