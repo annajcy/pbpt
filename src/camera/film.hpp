@@ -148,7 +148,7 @@ public:
 
     void clear() {
         for (auto& pixel : m_pixels) {
-            pixel = Pixel{};
+            pixel.clear();
         }
     }
 

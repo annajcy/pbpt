@@ -29,6 +29,10 @@ public:
         return as_derived().generate_differential_ray_impl(sample);
     }
 
+    math::Vector<int, 2> film_resolution() const {
+        return as_derived().film_resolution_impl();
+    }
+
 private:
     constexpr Derived& as_derived() noexcept {
         return static_cast<Derived&>(*this);

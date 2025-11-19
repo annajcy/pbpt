@@ -33,9 +33,7 @@ public:
         return m_mapping;
     }
 
-    const math::Vector<int, 2>& film_resolution() const {
-        return m_film_resolution;
-    }
+    
 
 private:
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
@@ -73,7 +71,9 @@ private:
         return geometry::RayDifferential<T, 3>(main_ray, {ray_x, ray_y});
     }
 
-    
+    math::Vector<int, 2> film_resolution_impl() const {
+        return m_film_resolution;
+    }
 };
 
 

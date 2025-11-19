@@ -36,14 +36,13 @@ int main() {
         pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0f), T(0.9f), T(3.2f)))
     );
 
-    pbpt::radiometry::RGB<T> albedo_white(T(0.95f), T(0.95f), T(0.95f));
-    pbpt::scene::Scene<T> scene_white(camera, spheres, albedo_white);
-    scene_white.render("simple_scene_white.exr");
-    std::cout << "Rendered image: simple_scene_white.exr" << std::endl;
+    std::vector<pbpt::scene::SimpleScene<T>::SceneObject> scene_objects {
+        {spheres[0], pbpt::radiometry::RGB<T>(T(0.9f), T(0.1f), T(0.1f))},
+        {spheres[1], pbpt::radiometry::RGB<T>(T(0.1f), T(0.9f), T(0.1f))},
+        {spheres[2], pbpt::radiometry::RGB<T>(T(0.1f), T(0.1f), T(0.9f))}  
+    };
 
-    pbpt::radiometry::RGB<T> albedo_green(T(0.05f), T(0.9f), T(0.05f));
-    pbpt::scene::Scene<T> scene_green(camera, spheres, albedo_green);
-    scene_green.render("simple_scene_green.exr");
-    std::cout << "Rendered image: simple_scene_green.exr" << std::endl;
+    pbpt::scene::SimpleScene<T> scene(camera, scene_objects, pbpt::radiometry::constant::SwatchReflectance::Black);
+    scene.render("output/simple_scene.exr");
     return 0;
 }

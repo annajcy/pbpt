@@ -1,17 +1,11 @@
 #pragma once
 
 #include <algorithm>
-#include <cmath>
 #include <filesystem>
 #include <limits>
 #include <optional>
-#include <stdexcept>
 #include <vector>
 
-#include <OpenEXR/ImfChannelList.h>
-#include <OpenEXR/ImfFrameBuffer.h>
-#include <OpenEXR/ImfHeader.h>
-#include <OpenEXR/ImfOutputFile.h>
 #include "camera/film.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "camera/projective_camera.hpp"
@@ -20,49 +14,64 @@
 #include "radiometry/color_spectrum_optimizer.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
+#include "radiometry/constant/swatch_reflectances_spectrum.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 #include "radiometry/spectrum_distribution.hpp"
+#include "radiometry/function.hpp"
 #include "shape/shape.hpp"
 #include "shape/sphere.hpp"
+#include "utils/exr_writer.hpp"
 
 namespace pbpt::scene {
 
 template<typename T>
-class Scene {
+class SimpleScene {
+public:
+    struct SceneObject {
+        shape::TransformedShape<T, shape::Sphere> sphere;
+        radiometry::RGB<T> rgb_albedo;
+    };
+
 private:
     using Illuminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
     using SensorResponse = radiometry::constant::XYZSpectrumType<T>;
     using PixelSensorType = camera::PixelSensor<T, Illuminant, Illuminant, SensorResponse>;
     using FilmType = camera::RGBFilm<T, PixelSensorType>;
+    using CameraType = camera::ThinLensPerspectiveCamera<T>;
+
     static constexpr int SpectrumSampleCount = 20;
     using SampledSpectrumType = radiometry::SampledSpectrum<T, SpectrumSampleCount>;
     using SampledWavelengthType = radiometry::SampledWavelength<T, SpectrumSampleCount>;
     using SampledPdfType = radiometry::SampledPdf<T, SpectrumSampleCount>;
 
-    camera::ThinLensPerspectiveCamera<T> m_camera{};
-    std::vector<shape::TransformedShape<T, shape::Sphere>> m_spheres{};
-    radiometry::RGB<T> m_sphere_albedo{};
-    radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> m_sphere_albedo_spectrum{};
+    using SceneObjectAlbedoSpectrumDistributionType = radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>;
+
+    CameraType m_camera{};
+
+    std::vector<SceneObject> m_scene_objects{};
+    radiometry::constant::SwatchReflectance m_background_reflectance{radiometry::constant::SwatchReflectance::Cyan};
+    std::vector<SceneObjectAlbedoSpectrumDistributionType> m_sphere_albedo_spectra{};
+
     Illuminant m_scene_illuminant{radiometry::constant::CIE_D65_ilum<T>};
-    radiometry::RGBSigmoidPolynomialNormalized<T> m_background_bottom_rsp{};
-    radiometry::RGBSigmoidPolynomialNormalized<T> m_background_top_rsp{};
 
 public:
-    Scene(
+    SimpleScene(
         const camera::ThinLensPerspectiveCamera<T>& camera,
-        const std::vector<shape::TransformedShape<T, shape::Sphere>>& spheres,
-        const radiometry::RGB<T>& sphere_albedo
+        const std::vector<SceneObject> &scene_objects,
+        radiometry::constant::SwatchReflectance background_reflectance = radiometry::constant::SwatchReflectance::Cyan
     ) : m_camera(camera),
-        m_spheres(spheres),
-        m_sphere_albedo(sphere_albedo),
-        m_sphere_albedo_spectrum(create_albedo_spectrum(m_sphere_albedo)),
-        m_background_bottom_rsp(optimize_rgb_to_rsp(radiometry::RGB<T>(T(0.05), T(0.07), T(0.15)))),
-        m_background_top_rsp(optimize_rgb_to_rsp(radiometry::RGB<T>(T(0.7), T(0.8), T(1.0))))
-    {}
+        m_scene_objects(scene_objects),
+        m_background_reflectance(background_reflectance) {
+        for (const auto& obj : m_scene_objects) {
+            m_sphere_albedo_spectra.emplace_back(
+                radiometry::create_albedo_spectrum(obj.rgb_albedo)
+            );
+        }
+    }
 
     void render(const std::filesystem::path& output_path = std::filesystem::path("scene.exr")) const {
-        auto resolution = film_resolution_from_camera();
+        auto resolution = m_camera.film_resolution();
         math::Vector<T, 2> physical_size(
             static_cast<T>(resolution.x()),
             static_cast<T>(resolution.y())
@@ -75,8 +84,8 @@ public:
 
         FilmType film(resolution, physical_size, pixel_sensor);
         const math::Point<T, 2> lens_sample(T(0.5), T(0.5));
-        const auto wavelengths = create_wavelength_samples();
-        const auto pdf = create_wavelength_pdf();
+        const auto wavelengths = radiometry::create_wavelength_samples_uniform<T, SpectrumSampleCount>();
+        const auto pdf = radiometry::create_wavelength_pdf_uniform<T, SpectrumSampleCount>();
 
         const int width = resolution.x();
         const int height = resolution.y();
@@ -94,38 +103,35 @@ public:
             }
         }
 
-        write_exr(film, output_path, width, height);
+        utils::write_exr(film, output_path, width, height);
     }
 
 private:
-    math::Vector<int, 2> film_resolution_from_camera() const {
-        const auto viewport = m_camera.projection().clip_to_viewport();
-        const auto& mat = viewport.matrix();
-        auto width_value = mat.at(0, 0) * T(2);
-        auto height_value = mat.at(1, 1) * T(2);
-        const int width = std::max(1, static_cast<int>(std::lround(static_cast<double>(width_value))));
-        const int height = std::max(1, static_cast<int>(std::lround(static_cast<double>(height_value))));
-        return math::Vector<int, 2>(width, height);
-    }
-
     SampledSpectrumType trace_ray(
         const geometry::Ray<T, 3>& ray,
         const SampledWavelengthType& wavelengths
     ) const {
         T closest = std::numeric_limits<T>::infinity();
         std::optional<geometry::SurfaceInteraction<T>> closest_hit{};
+        std::vector<shape::TransformedShape<T, shape::Sphere>> m_spheres;
+        for (const auto& obj : m_scene_objects) {
+            m_spheres.push_back(obj.sphere);
+        }
+
+        int shape_index = -1;
         for (const auto& sphere : m_spheres) {
             if (auto hit = sphere.intersect(ray)) {
                 const auto& [si, t_hit] = *hit;
                 if (t_hit < closest) {
                     closest = t_hit;
                     closest_hit = si;
+                    shape_index = &sphere - &m_spheres[0];
                 }
             }
         }
 
         if (closest_hit.has_value()) {
-            return shade_hit(closest_hit.value(), ray, wavelengths);
+            return shade_hit(closest_hit.value(), ray, wavelengths, shape_index);
         }
         return shade_background(ray.direction(), wavelengths);
     }
@@ -133,15 +139,12 @@ private:
     SampledSpectrumType shade_hit(
         const geometry::SurfaceInteraction<T>& si,
         const geometry::Ray<T, 3>& ray,
-        const SampledWavelengthType& wavelengths
+        const SampledWavelengthType& wavelengths,
+        const int sphere_index
     ) const {
         auto normal = si.n().to_vector().normalized();
-        // const math::Vector<T, 3> light_dir = math::Vector<T, 3>(T(-0.4), T(0.8), T(-1)).normalized();
-        // const T ndotl = std::max(T(0), normal.dot(light_dir));
-        // const T facing = std::max(T(0), normal.dot(-ray.direction()));
-        // const T intensity = std::clamp(T(0.1) + ndotl * T(0.9) + facing * T(0.2), T(0), T(1));
         const T intensity = std::max(T(0), normal.dot(-ray.direction()));
-        auto albedo_sample = m_sphere_albedo_spectrum.sample(wavelengths);
+        auto albedo_sample = m_sphere_albedo_spectra[sphere_index].sample(wavelengths);
         auto illuminant_sample = m_scene_illuminant.sample(wavelengths);
         return albedo_sample * illuminant_sample * intensity;
     }
@@ -150,114 +153,8 @@ private:
         const math::Vector<T, 3>& dir,
         const SampledWavelengthType& wavelengths
     ) const {
-        // auto unit_dir = dir.normalized();
-        // T t = T(0.5) * (unit_dir.y() + T(1));
-        // t = std::clamp(t, T(0), T(1));
-        // auto bottom = sample_rgb_illuminant_spectrum(m_background_bottom_rsp, wavelengths);
-        // auto top = sample_rgb_illuminant_spectrum(m_background_top_rsp, wavelengths);
-        // return bottom * (T(1) - t) + top * t;
-        return SampledSpectrumType::filled(T(0));
-    }
-
-    void write_exr(
-        const FilmType& film,
-        const std::filesystem::path& output_path,
-        int width,
-        int height
-    ) const {
-        if (!output_path.parent_path().empty()) {
-            std::filesystem::create_directories(output_path.parent_path());
-        }
-
-        std::vector<float> buffer(
-            static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 3
-        );
-
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                auto rgb = film.get_pixel_rgb(math::Point<int, 2>(x, y));
-                std::size_t idx = (
-                    static_cast<std::size_t>(height - 1 - y) * static_cast<std::size_t>(width) +
-                    static_cast<std::size_t>(x)
-                ) * 3;
-                buffer[idx + 0] = static_cast<float>(rgb.r());
-                buffer[idx + 1] = static_cast<float>(rgb.g());
-                buffer[idx + 2] = static_cast<float>(rgb.b());
-            }
-        }
-
-        const std::size_t pixel_stride = sizeof(float) * 3;
-        const std::size_t row_stride = pixel_stride * static_cast<std::size_t>(width);
-        auto* base = reinterpret_cast<char*>(buffer.data());
-
-        Imf::Header header(width, height);
-        header.channels().insert("R", Imf::Channel(Imf::FLOAT));
-        header.channels().insert("G", Imf::Channel(Imf::FLOAT));
-        header.channels().insert("B", Imf::Channel(Imf::FLOAT));
-
-        Imf::FrameBuffer frame_buffer;
-        frame_buffer.insert("R", Imf::Slice(Imf::FLOAT, base, pixel_stride, row_stride));
-        frame_buffer.insert("G", Imf::Slice(Imf::FLOAT, base + sizeof(float), pixel_stride, row_stride));
-        frame_buffer.insert("B", Imf::Slice(Imf::FLOAT, base + sizeof(float) * 2, pixel_stride, row_stride));
-
-        try {
-            Imf::OutputFile file(output_path.string().c_str(), header);
-            file.setFrameBuffer(frame_buffer);
-            file.writePixels(height);
-        } catch (const std::exception& e) {
-            throw std::runtime_error("Failed to write image to " + output_path.string() + ": " + e.what());
-        }
-    }
-
-    SampledWavelengthType create_wavelength_samples() const {
-        math::Vector<T, SpectrumSampleCount> values{};
-        const T min_lambda = radiometry::lambda_min<T>;
-        const T max_lambda = radiometry::lambda_max<T>;
-        const T span = max_lambda - min_lambda;
-        const T step = span / static_cast<T>(SpectrumSampleCount);
-        for (int i = 0; i < SpectrumSampleCount; ++i) {
-            values[i] = min_lambda + step * (static_cast<T>(i) + T(0.5));
-        }
-        return SampledWavelengthType(values);
-    }
-
-    SampledPdfType create_wavelength_pdf() const {
-        const T span = radiometry::lambda_max<T> - radiometry::lambda_min<T>;
-        const T pdf_value = T(1) / span;
-        return SampledPdfType(math::Vector<T, SpectrumSampleCount>::filled(pdf_value));
-    }
-
-    SampledSpectrumType sample_rgb_illuminant_spectrum(
-        const radiometry::RGBSigmoidPolynomialNormalized<T>& rsp,
-        const SampledWavelengthType& wavelengths
-    ) const {
-        radiometry::RGBIlluminantSpectrumDistribution<
-            T,
-            radiometry::RGBSigmoidPolynomialNormalized,
-            Illuminant
-        > spectrum(rsp, m_scene_illuminant);
-        return spectrum.sample(wavelengths);
-    }
-
-    static radiometry::RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
-        const radiometry::RGB<T>& rgb
-    ) {
-        auto optim_res = radiometry::optimize_albedo_rgb_sigmoid_polynomial(
-            rgb,
-            radiometry::constant::sRGB<T>,
-            radiometry::constant::CIE_D65_ilum<T>
-        );
-        auto coeff = optim_res.normalized_coeffs;
-        return radiometry::RGBSigmoidPolynomialNormalized<T>{coeff};
-    }
-
-    static radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> create_albedo_spectrum(
-        const radiometry::RGB<T>& rgb
-    ) {
-        return radiometry::RGBAlbedoSpectrumDistribution<
-            T,
-            radiometry::RGBSigmoidPolynomialNormalized
-        >(optimize_rgb_to_rsp(rgb));
+        auto background = radiometry::constant::get_swatch_reflectance<T>(m_background_reflectance);
+        return background.sample(wavelengths) * m_scene_illuminant.sample(wavelengths);
     }
 };
 

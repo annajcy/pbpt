@@ -79,6 +79,7 @@ public:
 
 template<typename Derived, typename T>
 class ProjectiveCamera : public Camera<Derived, T> {
+    friend class Camera<Derived, T>;
 protected:
     CameraProjection<T> m_projection{};
 
@@ -89,6 +90,17 @@ public:
 
     const CameraProjection<T>& projection() const {
         return m_projection;
+    }
+
+protected:
+    math::Vector<int, 2> film_resolution_impl() const {
+        const auto viewport = m_projection.clip_to_viewport();
+        const auto& mat = viewport.matrix();
+        auto width_value = mat.at(0, 0) * T(2);
+        auto height_value = mat.at(1, 1) * T(2);
+        const int width = std::max(1, static_cast<int>(std::lround(static_cast<double>(width_value))));
+        const int height = std::max(1, static_cast<int>(std::lround(static_cast<double>(height_value))));
+        return math::Vector<int, 2>(width, height);
     }
 };
 
