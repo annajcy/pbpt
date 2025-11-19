@@ -1,0 +1,6 @@
+conan build . \
+            -s build_type=Release \
+            -s compiler.cppstd=17 \
+            -c tools.system.package_manager:mode=install \
+            -c tools.system.package_manager:sudo=True \
+            --build=missing
