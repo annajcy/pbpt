@@ -37,7 +37,7 @@ public:
     };
 
 private:
-    using PixelFilterType = camera::BoxFilter<T>;
+    using PixelFilterType = camera::TentFilter<T>;
     using Illuminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
     using SensorResponse = radiometry::constant::XYZSpectrumType<T>;
     using PixelSensorType = camera::PixelSensor<T, Illuminant, Illuminant, SensorResponse>;

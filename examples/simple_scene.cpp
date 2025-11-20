@@ -42,6 +42,6 @@ int main() {
     };
 
     pbpt::scene::SimpleScene<T> scene(camera, scene_objects, pbpt::radiometry::constant::SwatchReflectance::Black);
-    scene.render("output/simple_scene.exr");
+    scene.render("output/simple_scene_tent.exr");
     return 0;
 }
