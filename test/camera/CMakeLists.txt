@@ -18,3 +18,7 @@ add_test(NAME test_pixel_sensor COMMAND test_pixel_sensor)
 add_executable(test_rgb_film test_rgb_film.cpp)
 target_link_libraries(test_rgb_film PRIVATE pbpt gtest::gtest)
 add_test(NAME test_rgb_film COMMAND test_rgb_film)
+
+add_executable(test_pixel_filter test_pixel_filter.cpp)
+target_link_libraries(test_pixel_filter PRIVATE pbpt gtest::gtest)
+add_test(NAME test_pixel_filter COMMAND test_pixel_filter)

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "camera/film.hpp"
+#include "camera/pixel_filter.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "camera/projective_camera.hpp"
 #include "math/vector.hpp"
@@ -36,13 +37,14 @@ public:
     };
 
 private:
+    using PixelFilterType = camera::BoxFilter<T>;
     using Illuminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
     using SensorResponse = radiometry::constant::XYZSpectrumType<T>;
     using PixelSensorType = camera::PixelSensor<T, Illuminant, Illuminant, SensorResponse>;
     using FilmType = camera::RGBFilm<T, PixelSensorType>;
     using CameraType = camera::ThinLensPerspectiveCamera<T>;
 
-    static constexpr int SpectrumSampleCount = 20;
+    static constexpr int SpectrumSampleCount = 10;
     using SampledSpectrumType = radiometry::SampledSpectrum<T, SpectrumSampleCount>;
     using SampledWavelengthType = radiometry::SampledWavelength<T, SpectrumSampleCount>;
     using SampledPdfType = radiometry::SampledPdf<T, SpectrumSampleCount>;
@@ -50,6 +52,7 @@ private:
     using SceneObjectAlbedoSpectrumDistributionType = radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>;
 
     CameraType m_camera{};
+    PixelFilterType m_pixel_filter{};
 
     std::vector<SceneObject> m_scene_objects{};
     radiometry::constant::SwatchReflectance m_background_reflectance{radiometry::constant::SwatchReflectance::Cyan};
@@ -61,8 +64,10 @@ public:
     SimpleScene(
         const camera::ThinLensPerspectiveCamera<T>& camera,
         const std::vector<SceneObject> &scene_objects,
-        radiometry::constant::SwatchReflectance background_reflectance = radiometry::constant::SwatchReflectance::Cyan
+        radiometry::constant::SwatchReflectance background_reflectance = radiometry::constant::SwatchReflectance::Cyan,
+        PixelFilterType pixel_filter = PixelFilterType{}
     ) : m_camera(camera),
+        m_pixel_filter(pixel_filter),
         m_scene_objects(scene_objects),
         m_background_reflectance(background_reflectance) {
         for (const auto& obj : m_scene_objects) {
@@ -98,14 +103,13 @@ public:
 
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                math::Point<T, 2> p_film(
-                    static_cast<T>(x) + T(0.5),
-                    static_cast<T>(y) + T(0.5)
-                );
-                auto sample = camera::CameraSample<T>::create_thinlens_sample(p_film, lens_sample);
-                auto ray = m_camera.generate_ray(sample);
-                auto spectrum = trace_ray(ray, wavelengths);
-                film.template add_sample<SpectrumSampleCount>(math::Point<int, 2>(x, y), spectrum, wavelengths, pdf, T(1));
+                math::Point<int, 2> pixel(x, y);
+                for (const auto& filtered_sample : m_pixel_filter.get_camera_samples(pixel, 2, 2)) {
+                    auto sample = camera::CameraSample<T>::create_thinlens_sample(filtered_sample.film_position, lens_sample);
+                    auto ray = m_camera.generate_ray(sample);
+                    auto spectrum = trace_ray(ray, wavelengths);
+                    film.template add_sample<SpectrumSampleCount>(pixel, spectrum, wavelengths, pdf, filtered_sample.weight);
+                }
                 progress_bar.update(std::cout);
             }
         }
@@ -121,19 +125,15 @@ private:
     ) const {
         T closest = std::numeric_limits<T>::infinity();
         std::optional<geometry::SurfaceInteraction<T>> closest_hit{};
-        std::vector<std::reference_wrapper<const shape::TransformedShape<T, shape::Sphere>>> m_spheres;
-        for (const auto& obj : m_scene_objects) {
-            m_spheres.push_back(std::cref(obj.sphere));
-        }
 
         int shape_index = -1;
-        for (const auto& sphere : m_spheres) {
-            if (auto hit = sphere.get().intersect(ray)) {
+        for (const auto& obj : m_scene_objects) {
+            if (auto hit = obj.sphere.intersect(ray)) {
                 const auto& [si, t_hit] = *hit;
                 if (t_hit < closest) {
                     closest = t_hit;
                     closest_hit = si;
-                    shape_index = &sphere - &m_spheres[0];
+                    shape_index = &obj - &m_scene_objects[0];
                 }
             }
         }

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 #include "camera/projective_camera.hpp"
