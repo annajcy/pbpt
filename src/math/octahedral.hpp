@@ -8,19 +8,40 @@
 
 namespace pbpt::math {
 
+/**
+ * @brief Compact encoding of a unit 3D direction using octahedral projection.
+ *
+ * The vector is mapped from the unit sphere to a 2D octahedron,
+ * then quantized into two 16-bit integers. This is useful for
+ * storing normals or directions in G-buffers or other compressed
+ * representations.
+ *
+ * @tparam T Floating-point scalar type used during encode/decode.
+ */
 template <typename T>
 class OctahedralVector {
 private:
+    /// Quantized x component in octahedral space.
     std::uint16_t m_x_encoded{};
+    /// Quantized y component in octahedral space.
     std::uint16_t m_y_encoded{};
 
 public:
+    /**
+     * @brief Encodes a unit-length direction vector.
+     *
+     * The input vector is assumed to be normalized; it is projected
+     * using octahedral mapping and each component is stored in 16 bits.
+     */
     explicit OctahedralVector(const Vector<T, 3>& v) {
         Vector<T, 2> p = encode_direction(v);
         m_x_encoded = quantize(p[0]);
         m_y_encoded = quantize(p[1]);
     }
 
+    /**
+     * @brief Decodes the stored representation back to a unit vector.
+     */
     Vector<T, 3> decode() const {
         T x = dequantize(m_x_encoded);
         T y = dequantize(m_y_encoded);

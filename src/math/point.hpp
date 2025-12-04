@@ -11,6 +11,16 @@
 
 namespace pbpt::math {
 
+/**
+ * @brief Geometric point in N-dimensional space.
+ *
+ * A `Point` behaves like a `Tuple` of coordinates but has point
+ * semantics: adding a vector translates the point, and subtracting
+ * two points yields a displacement vector.
+ *
+ * @tparam T Scalar type.
+ * @tparam N Dimension.
+ */
 template <typename T, int N>
 class Point : public Tuple<Point, T, N> {
 private:
@@ -20,6 +30,12 @@ private:
 public:
     using Base::Base;
 
+    /// Constructs a point from a vector of coordinates.
+    /**
+     * @brief Constructs a point from a vector of coordinates.
+     *
+     * This simply copies the components of @p vec into the point.
+     */
     static constexpr auto from_vector(const Vector<T, N>& vec) {
         Point<T, N> p;
         for (int i = 0; i < N; ++i)
@@ -27,11 +43,12 @@ public:
         return p;
     }
 
+    /// Converts this point to a `Vector<T,N>` with the same coordinates.
     constexpr auto to_vector() const {
         return Vector<T, N>::from_array(this->to_array());
     }
 
-    // Point + Vector = Point
+    /// Translates the point by a vector and returns the result.
     template <typename U>
     constexpr auto operator+(const Vector<U, N>& v) const {
         using R = std::common_type_t<T, U>;
@@ -41,7 +58,7 @@ public:
         return out;
     }
 
-    // Point - Vector = Point
+    /// Subtracts a vector from the point and returns the result.
     template <typename U>
     constexpr auto operator-(const Vector<U, N>& v) const {
         using R = std::common_type_t<T, U>;
@@ -51,8 +68,9 @@ public:
         return out;
     }
 
-    // Point - Point = Vector
+    /// Returns the displacement vector from another point to this point.
     template <typename U>
+    /// Translates this point in-place by a vector.
     constexpr auto operator-(const Point<U, N>& p) const {
         using R = std::common_type_t<T, U>;
         Vector<R, N> v;
@@ -62,6 +80,7 @@ public:
     }
 
     template <typename U>
+    /// Subtracts a vector from this point in-place.
     constexpr auto& operator+=(const Vector<U, N>& v) {
         for (int i = 0; i < N; ++i)
             this->m_data[i] += static_cast<T>(v[i]);
@@ -69,6 +88,7 @@ public:
     }
 
     template <typename U>
+    /// Squared Euclidean distance to another point.
     constexpr auto& operator-=(const Vector<U, N>& v) {
         for (int i = 0; i < N; ++i)
             this->m_data[i] -= static_cast<T>(v[i]);
@@ -76,6 +96,7 @@ public:
     }
 
     template <typename U>
+    /// Euclidean distance to another point.
     constexpr auto distance_squared(const Point<U, N>& other) const {
         using R = std::common_type_t<T, U>;
         R sum   = R(0);
@@ -87,11 +108,13 @@ public:
     }
 
     template <typename U>
+    /// Midpoint between this point and another point.
     constexpr auto distance(const Point<U, N>& other) const {
         using R = std::common_type_t<T, U>;
         return std::sqrt(static_cast<promote_int_to_float_t<R>>(distance_squared(other)));
     }
 
+    /// Midpoint between this point and another point.
     template <typename U>
     constexpr auto mid(const Point<U, N>& other) const {
         using R = std::common_type_t<T, U>;
@@ -102,6 +125,7 @@ public:
     }
 
     template<typename U>
+    /// Arithmetic midpoint of a non-empty set of points.
     static constexpr auto mid(const std::vector<Point<U, N>>& points) {
         using R = std::common_type_t<T, U>;
         assert_if([&points]() { return points.empty(); }, "Cannot compute midpoint of empty point array");

@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Convenience helpers for sampled spectra and RGB-to-spectrum mapping.
+ */
 #pragma once
 
 #include "radiometry/color.hpp"
@@ -10,7 +14,7 @@
 
 namespace pbpt::radiometry {
 
-//Sampled wavelength and pdf creation functions
+/// Create N uniformly spaced wavelength samples between lambda_min and lambda_max.
 template<typename T, int N>
 SampledWavelength<T, N> create_wavelength_samples_uniform() {
     math::Vector<T, N> values{};
@@ -24,6 +28,7 @@ SampledWavelength<T, N> create_wavelength_samples_uniform() {
     return SampledWavelength<T, N>(values);
 }
 
+/// Create a uniform wavelength PDF over [lambda_min, lambda_max].
 template<typename T, int N>
 SampledPdf<T, N> create_wavelength_pdf_uniform() {
     const T span = radiometry::lambda_max<T> - radiometry::lambda_min<T>;
@@ -31,6 +36,13 @@ SampledPdf<T, N> create_wavelength_pdf_uniform() {
     return SampledPdf<T, N>(math::Vector<T, N>::filled(pdf_value));
 }
 
+/**
+ * @brief Optimize a smooth sigmoid-polynomial spectrum to match an RGB color.
+ *
+ * Finds coefficients of an @c RGBSigmoidPolynomialNormalized that best
+ * reproduce the given RGB in the standard sRGB color space under the
+ * CIE D65 illuminant.
+ */
 template<typename T>
 radiometry::RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
     const radiometry::RGB<T>& rgb
@@ -44,6 +56,13 @@ radiometry::RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
     return radiometry::RGBSigmoidPolynomialNormalized<T>{coeff};
 }
 
+/**
+ * @brief Create an albedo spectrum from an RGB color using the fitted model.
+ *
+ * The resulting @c RGBAlbedoSpectrumDistribution encodes a reflectance
+ * spectrum whose perceived color matches the given RGB (approximately)
+ * under the reference illuminant.
+ */
 template<typename T>
 radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> create_albedo_spectrum(
     const radiometry::RGB<T>& rgb

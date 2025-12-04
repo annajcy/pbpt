@@ -7,9 +7,22 @@
 
 namespace pbpt::math {
 
+/**
+ * @brief CRTP mixin that adds vector-style operations to Tuple-like types.
+ *
+ * This template provides arithmetic operators, length, normalization
+ * and dot product for any `Derived<T,N>` that stores its data in
+ * `Tuple<Derived,T,N>`. It is used as a base for `Vector`, `Normal`
+ * and `Homogeneous`.
+ *
+ * @tparam Derived CRTP derived template (e.g. Vector).
+ * @tparam T       Scalar type.
+ * @tparam N       Dimension.
+ */
 template <template <typename, int> typename Derived, typename T, int N>
 class VectorOps : public Tuple<Derived, T, N> {
 protected:
+    /// Base tuple type that stores the underlying array.
     using Base = Tuple<Derived, T, N>;
     using Base::m_data;
     
@@ -17,6 +30,7 @@ public:
     using Base::Base;
     using Base::operator-;
 
+    /// Component-wise addition-assignment with another vector-like object.
     template <typename U>
     constexpr auto& operator+=(const Derived<U, N>& rhs) {
         for (int i = 0; i < N; i++)
@@ -24,6 +38,7 @@ public:
         return *this;
     }
 
+    /// Component-wise subtraction-assignment with another vector-like object.
     template <typename U>
     constexpr auto& operator-=(const Derived<U, N>& rhs) {
         for (int i = 0; i < N; i++)
@@ -31,6 +46,7 @@ public:
         return *this;
     }
 
+    /// Multiplies all components by a scalar in-place.
     template <typename U>
     constexpr auto& operator*=(const U& rhs) {
         for (int i = 0; i < N; i++)
@@ -38,6 +54,7 @@ public:
         return *this;
     }
 
+    /// Divides all components by a scalar in-place (checking for zero).
     template <typename U>
     constexpr auto& operator/=(const U& rhs) {
         assert_if([&rhs]() { return is_equal(rhs, 0.0); }, "Division by zero in vector division");
@@ -46,6 +63,7 @@ public:
         return *this;
     }
 
+    /// Component-wise multiplication-assignment with another vector-like object.
     template <typename U>
     constexpr auto& operator*=(const Derived<U, N>& rhs) {
         for (int i = 0; i < N; i++)
@@ -53,6 +71,7 @@ public:
         return *this;
     }
 
+    /// Component-wise division-assignment with another vector-like object.
     template <typename U>
     constexpr auto& operator/=(const Derived<U, N>& rhs) {
         for (int i = 0; i < N; i++) {
@@ -62,6 +81,7 @@ public:
         return *this;
     }
 
+    /// Squared Euclidean length of the vector.
     constexpr auto length_squared() const {
         auto result = T(0);
         for (int i = 0; i < N; i++)
@@ -69,8 +89,15 @@ public:
         return result;
     }
 
+    /// Euclidean length (norm) of the vector.
     constexpr auto length() const { return std::sqrt(static_cast<promote_int_to_float_t<T>>(length_squared())); }
 
+    /**
+     * @brief Returns a normalized copy of the vector.
+     *
+     * The result has unit length. An assertion guards against
+     * normalizing the zero vector.
+     */
     constexpr auto normalized() const {
         using R             = promote_int_to_float_t<T>;
         Derived<R, N> result{};
@@ -81,10 +108,12 @@ public:
         return result;
     }
 
+    /// Returns true if the vector is approximately of unit length.
     constexpr bool is_normalized() const { 
         return is_equal(length(), T(1.0)); 
     }
 
+    /// Dot product with another vector-like object.
     template <typename U>
     constexpr auto dot(const Derived<U, N>& rhs) const {
         using R  = std::common_type_t<T, U>;
@@ -94,6 +123,7 @@ public:
         return result;
     }
 
+    /// Product of all components.
     constexpr T product() const {
         T result = 1;
         for (int i = 0; i < N; i++)
@@ -101,6 +131,7 @@ public:
         return result;
     }
 
+    /// Component-wise addition; returns a new vector.
     template <typename U>
     constexpr auto operator+(const Derived<U, N>& rhs) const {
         using R = std::common_type_t<T, U>;
@@ -111,6 +142,7 @@ public:
         return result;
     }
 
+    /// Component-wise subtraction; returns a new vector.
     template <typename U>
     constexpr auto operator-(const Derived<U, N>& rhs) const {
         using R = std::common_type_t<T, U>;
@@ -121,12 +153,14 @@ public:
         return result;
     }
 
+    /// Scalar multiplication from the left (friend).
     template <typename U>
         requires std::is_arithmetic_v<U>
     friend constexpr auto operator*(U value, const Derived<T, N>& rhs) {
         return rhs * value;
     }
 
+    /// Scalar multiplication; returns a new vector.
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr auto operator*(U value) const {
@@ -138,6 +172,7 @@ public:
         return result;
     }
 
+    /// Scalar division; returns a new vector (checking for zero).
     template <typename U>
     constexpr auto operator/(U value) const {
         using R = std::common_type_t<T, U>;
@@ -149,6 +184,7 @@ public:
         return result;
     }
 
+    /// Component-wise multiplication with another vector-like object.
     template <typename U>
     constexpr auto operator*(const Derived<U, N>& rhs) const {
         using R = std::common_type_t<T, U>;
@@ -159,6 +195,7 @@ public:
         return result;
     }
 
+    /// Component-wise division with another vector-like object.
     template <typename U>
     constexpr auto operator/(const Derived<U, N>& rhs) const {
         using R = std::common_type_t<T, U>;
@@ -169,6 +206,11 @@ public:
         return result;
     }
 
+    /**
+     * @brief Component-wise reciprocal (1/x_i) with floating-point promotion.
+     *
+     * An assertion guards against zero components.
+     */
     constexpr auto inv() const {
         using R = promote_int_to_float_t<T>;
         Derived<R, N> result{};

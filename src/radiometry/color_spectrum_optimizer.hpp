@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Optimization utilities for fitting RGB colors to smooth spectra.
+ */
 #pragma once
 
 #include <array>
@@ -13,12 +17,56 @@
 
 namespace pbpt::radiometry {
 
+/**
+ * @brief Result of optimizing RGB sigmoid polynomial coefficients.
+ *
+ * Contains the LAB error vector between target and fitted color and
+ * the normalized polynomial coefficients that define the spectrum.
+ *
+ * @tparam T Scalar type.
+ */
 template<typename T>
 struct RGBSigmoidPolynomialOptimizationResult {
+    /// LAB difference between target color and fitted color (L*, a*, b*).
     math::Vector<T, 3> error;
+    /// Normalized sigmoid-polynomial coefficients that define the fitted spectrum.
     std::array<T, 3> normalized_coeffs;
 };
 
+/**
+ * @brief Fits an albedo RGB sigmoid-polynomial spectrum to a target RGB color.
+ *
+ * The optimization works in CIE LAB space:
+ * - The target RGB color is converted to XYZ and then to LAB using the
+ *   provided RGB color space and its white point.
+ * - A parametric reflectance spectrum is defined by a normalized
+ *   RGB sigmoid polynomial with three coefficients.
+ * - For a given coefficient vector, the corresponding reflectance is
+ *   converted to XYZ under the reference illuminant and then to LAB.
+ * - The LAB difference between target and current color is used as
+ *   the 3D error vector.
+ *
+ * A simple Newton-style iteration is performed: the Jacobian matrix
+ * of partial derivatives of the LAB error with respect to the three
+ * coefficients is approximated by symmetric finite differences. The
+ * resulting 3x3 linear system is solved and the coefficients are
+ * updated by a scaled step. Iteration stops when all LAB errors are
+ * below @p error_threshold or when @p max_iterations is reached.
+ *
+ * @tparam T                  Scalar type.
+ * @tparam LuminantSpectrumType Spectrum type used for the reference illuminant.
+ * @param target_rgb          Target RGB color to match.
+ * @param color_space         RGB color space describing primaries and white.
+ * @param reference_luminant_spectrum Illuminant used to light the reflectance.
+ * @param max_iterations      Maximum number of Newton iterations.
+ * @param learning_rate       Step size scaling applied to the Newton update.
+ * @param delta_x             Finite-difference step for Jacobian estimation.
+ * @param error_threshold     Per-channel LAB error threshold for convergence.
+ * @param initial_guess       Initial coefficients for the sigmoid polynomial.
+ * @param verbose             If true, prints iteration diagnostics to stdout.
+ *
+ * @return Optimization result containing the final LAB error and coefficients.
+ */
 template<typename T, typename LuminantSpectrumType>
 inline RGBSigmoidPolynomialOptimizationResult<T> optimize_albedo_rgb_sigmoid_polynomial(
     const RGB<T>& target_rgb, 
@@ -126,12 +174,31 @@ inline RGBSigmoidPolynomialOptimizationResult<T> optimize_albedo_rgb_sigmoid_pol
     return RGBSigmoidPolynomialOptimizationResult<T>{error, coeffs};
 }
 
+/**
+ * @brief RGB value scaled into a displayable range plus an overall factor.
+ *
+ * Useful for representing unbounded RGB triplets by factoring out a
+ * positive scale and storing a bounded RGB color.
+ */
 template <typename T>
 struct ScaledRGB {
+    /// Bounded RGB color after scaling.
     RGB<T> rgb{};
+    /// Positive scale factor such that rgb * scale reconstructs the original color.
     T scale = T(1);
 };
 
+/**
+ * @brief Factorizes an unbounded RGB color into a bounded RGB and a scale.
+ *
+ * The maximum channel component is used to define a scale factor so
+ * that the scaled RGB components remain within a comfortable range
+ * (here the maximum becomes 0.5). The original color is recovered as
+ *   rgb_scaled * scale.
+ *
+ * @param rgb Input (potentially unbounded) RGB color.
+ * @return ScaledRGB containing a bounded RGB value and a positive scale.
+ */
 template<typename T>
 inline ScaledRGB<T> scale_unbounded_rgb(const RGB<T>& rgb) {
     T max_component = std::max({rgb.r(), rgb.g(), rgb.b()});

@@ -36,6 +36,8 @@ option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" OFF)
 option(PBPT_FLOAT_64BIT "Use double precision floating point" OFF)
 option(PBPT_INT_64BIT "Use 64-bit integer type" OFF)
 
+set(PBPT_BUILD_DOCUMENTATION ON CACHE BOOL "Build the Doxygen documentation" FORCE)
+
 if(PBPT_FLOAT_64BIT)
   add_definitions("-DPBPT_FLOAT_64BIT")
   message(STATUS "Using double precision floating point.")

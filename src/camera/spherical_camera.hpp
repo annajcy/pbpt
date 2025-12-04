@@ -1,6 +1,11 @@
+/**
+ * @file
+ * @brief Spherical (environment) camera that maps directions to a 2D image.
+ */
 #pragma once
 
 #include <utility>
+
 #include "camera.hpp"
 #include "geometry/ray.hpp"
 #include "geometry/spherical.hpp"
@@ -10,32 +15,69 @@
 
 namespace pbpt::camera {
 
+/**
+ * @brief Mapping used by the spherical camera.
+ *
+ * - EqualRectangular: image coordinates map linearly to spherical angles
+ *   (theta, phi), like a standard latitude-longitude environment map.
+ * - EqualArea: image coordinates are warped so that each pixel covers
+ *   approximately equal area on the unit sphere.
+ */
 enum class SphericalCameraMapping {
     EqualRectangular,
     EqualArea
 };
 
+/**
+ * @brief Spherical camera that generates rays covering the full sphere.
+ *
+ * The spherical camera maps film coordinates to directions on the unit
+ * sphere. Depending on the selected mapping, the sampling may be uniform
+ * in angle (equirectangular) or approximately uniform in solid angle
+ * (equal-area).
+ *
+ * @tparam T Scalar type (e.g. float or double).
+ */
 template<typename T>
 class SphericalCamera : public Camera<SphericalCamera<T>, T> {
     friend class Camera<SphericalCamera<T>, T>;
 
 private:
+    /// Mapping from film coordinates to directions.
     SphericalCameraMapping m_mapping{SphericalCameraMapping::EqualRectangular};
+    /// Film resolution in pixels (width, height).
     math::Vector<int, 2> m_film_resolution{1920, 960};
 
 public:
+    /**
+     * @brief Construct a spherical camera.
+     *
+     * @param film_resolution Film resolution (width, height).
+     * @param mapping         Mapping from image plane to sphere.
+     */
     SphericalCamera(
         const math::Vector<T, 2>& film_resolution,
         SphericalCameraMapping mapping = SphericalCameraMapping::EqualRectangular)
         : m_mapping(mapping), m_film_resolution(film_resolution) {}
 
+    /// Get the current spherical mapping mode.
     SphericalCameraMapping mapping() const {
         return m_mapping;
     }
 
-    
-
 private:
+    /**
+     * @brief Generate a ray for the spherical camera.
+     *
+     * The algorithm:
+     * 1. Normalize film coordinates to [0, 1] to obtain uv.
+     * 2. For EqualRectangular: convert uv to spherical angles
+     *    theta = pi * u, phi = 2 * pi * v, then to a direction vector.
+     * 3. For EqualArea: warp uv to an equal-area square and then map to
+     *    a direction on the unit sphere.
+     * 4. Swap y and z components so that the camera's up and forward
+     *    directions match the chosen convention.
+     */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         math::Point<T, 2> uv = math::Point<T, 2>(
             sample.p_film.x() / static_cast<T>(m_film_resolution.x()),
@@ -55,6 +97,7 @@ private:
         return geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), dir);
     }
 
+    /// Generate ray differentials by perturbing the film sample position.
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
@@ -71,10 +114,11 @@ private:
         return geometry::RayDifferential<T, 3>(main_ray, {ray_x, ray_y});
     }
 
+    /// Return the film resolution in pixels.
     math::Vector<int, 2> film_resolution_impl() const {
         return m_film_resolution;
     }
 };
 
 
-};
+}; // namespace pbpt::camera

@@ -11,6 +11,22 @@
 
 namespace pbpt::utils {
 
+/**
+ * @brief Write a floating-point RGB image to an OpenEXR file.
+ *
+ * The film object is sampled via `film.get_pixel_rgb(Point<int,2>)`
+ * for each pixel in a scanline order. The result is stored in a
+ * contiguous float buffer and written as three FLOAT channels (R,G,B)
+ * using the OpenEXR library.
+ *
+ * @tparam FilmType Type exposing `get_pixel_rgb(Point<int,2>) -> RGB-like`.
+ * @param film        Source film or framebuffer to sample.
+ * @param output_path Target file path for the EXR image.
+ * @param width       Image width in pixels.
+ * @param height      Image height in pixels.
+ *
+ * @throws std::runtime_error if writing the EXR file fails.
+ */
 template<typename FilmType>
 void write_exr(
     const FilmType& film,

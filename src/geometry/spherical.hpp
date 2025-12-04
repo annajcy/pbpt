@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Spherical coordinate helpers and equal-area mappings.
+ */
 #pragma once
 
 #include <algorithm>
@@ -15,6 +19,11 @@ using namespace pbpt::math;
 
 namespace pbpt::geometry {
 
+/**
+ * @brief Wrap an angle into the [0, 2π) range.
+ *
+ * Repeatedly adds or subtracts 2π until the value lies in [0, 2π).
+ */
 template<typename T>
 inline constexpr T wrap_angle_2pi(T phi) {
     if (is_less(phi, T(0))) phi += T(2) * pi_v<T>;
@@ -24,28 +33,36 @@ inline constexpr T wrap_angle_2pi(T phi) {
 }
 
 /**
- * @class SphericalPoint
- * @brief N维球坐标点类
- * @details 球坐标系表示：
- * - 2D: (r, φ) - 半径和方位角
- * - 3D: (r, θ, φ) - 半径、极角、方位角
- * - ND: (r, θ₁, θ₂, ..., θₙ₋₂, φ) - 半径、N-2个极角和方位角
+ * @brief Point expressed in N-dimensional spherical coordinates.
  *
- * 角度约定：
- * - θᵢ ∈ [0, π] for i = 1, ..., N-2 (极角)
- * - φ ∈ [0, 2π) (方位角，角度向量的最后一个元素)
+ * Spherical coordinates are stored as:
+ * - 2D: (r, phi)         – radius and azimuth angle
+ * - 3D: (r, theta, phi)  – radius, polar angle, azimuth angle
+ * - ND: (r, theta_1, ..., theta_{N-2}, phi)
+ *
+ * Angle conventions:
+ * - Each polar angle theta_i is in [0, pi].
+ * - The last angle phi is the azimuth in [0, 2*pi).
+ *
+ * @tparam T Scalar type.
+ * @tparam N Dimension of the embedding Euclidean space.
  */
 template <typename T, int N>
 class SphericalPoint {
 public:
-    Vector<T, N - 1> m_spherical;  // N-1个角度
-    T                m_radius;     // 半径
+    /// Angular parameters (N-1 angles: N-2 polar angles and one azimuth).
+    Vector<T, N - 1> m_spherical;
+    /// Radial distance from the origin.
+    T                m_radius;
 
+    /// Construct from a Cartesian point.
     static constexpr auto from_cartesian(const Point<T, N>& cartesian) {
         return SphericalPoint(cartesian);
     }
 
+    /// Construct from angles and radius.
     constexpr SphericalPoint(const Vector<T, N - 1>& spherical, T radius) : m_spherical(spherical), m_radius(radius) {}
+    /// Construct from Cartesian coordinates, converting to spherical form.
     constexpr SphericalPoint(const Point<T, N>& cartesian) {
         m_radius = cartesian.to_vector().length();
 
@@ -67,6 +84,7 @@ public:
         }
     }
 
+    /// Convert back to Cartesian coordinates.
     constexpr Point<T, N> to_cartesian() const {
         if (m_radius == 0) {
             return Point<T, N>::zeros();
@@ -92,10 +110,14 @@ public:
         return Point<T, N>::from_vector(result);
     }
 
+    /// Get the radius.
     constexpr T radius() const { return m_radius; }
+    /// Get angle i (0-based).
     constexpr T angle(int i) const { return m_spherical[i]; }
+    /// Get the full angle vector.
     constexpr const Vector<T, N - 1>& angles() const { return m_spherical; }
 
+    /// Get the azimuth angle (last angle).
     constexpr T azimuth() const {
         static_assert(N >= 2, "Azimuth angle only exists for N >= 2");
         return m_spherical[N - 2];
@@ -158,54 +180,64 @@ private:
     }
 };
 
+/// Cosine of the polar angle for a 3D direction (z component).
 template<typename T>
 inline constexpr auto cos_theta(const Vector<T, 3>& v) {
     return v.z();
 } 
 
+/// Cosine squared of the polar angle.
 template <typename T>
 inline constexpr auto cos_theta_sq(const Vector<T, 3>& v) {
     return v.z() * v.z();
 }
 
+/// Sine squared of the polar angle.
 template<typename T>
 inline constexpr auto sin_theta_sq(const Vector<T, 3>& v) {
     return std::max(T(0), T(1) - cos_theta_sq(v));
 }
 
+/// Sine of the polar angle.
 template<typename T>
 inline constexpr auto sin_theta(const Vector<T, 3>& v) {
     return std::sqrt(sin_theta_sq(v));
 }
 
+/// Tangent of the polar angle.
 template <typename T>
 inline constexpr auto tan_theta(const Vector<T, 3>& v) {
     return sin_theta(v) / cos_theta(v);
 }
 
+/// Tangent squared of the polar angle.
 template <typename T>
 inline constexpr auto tan_theta_sq(const Vector<T, 3>& v) {
     return sin_theta_sq(v) / cos_theta_sq(v);
 }
 
+/// Azimuth angle of a 3D direction in [0, 2*pi).
 template<typename T>
 inline constexpr auto phi(const Vector<T, 3>& v) {
     auto p = std::atan2(v.y(), v.x());
     return wrap_angle_2pi(p);
 }
 
+/// Sine of the azimuth angle.
 template<typename T>
 inline constexpr auto sin_phi(const Vector<T, 3>& v) {
     auto s_th = sin_theta(v);
     return is_zero(s_th) ? T(0) : std::clamp(v.y() / s_th, T(-1), T(1));
 }
 
+/// Cosine of the azimuth angle.
 template<typename T>
 inline constexpr auto cos_phi(const Vector<T, 3>& v) {
     auto s_th = sin_theta(v);
     return is_zero(s_th) ? T(1) : std::clamp(v.x() / s_th, T(-1), T(1));
 }
 
+/// Cosine of the azimuth difference between two directions.
 template<typename T>
 inline constexpr auto cos_delta_phi(const Vector<T, 3>& a, const Vector<T, 3>& b) {
     auto axy = a.x() * a.x() + a.y() * a.y();
@@ -216,6 +248,12 @@ inline constexpr auto cos_delta_phi(const Vector<T, 3>& a, const Vector<T, 3>& b
     );
 }
 
+/**
+ * @brief Warp a 2D point into the unit square with equal-area tiling.
+ *
+ * Points outside [0,1]^2 are mirrored back into the square so that the
+ * mapping preserves area when combined with @c equal_area_square_to_sphere.
+ */
 template<typename T>
 inline constexpr auto warp_equal_area_square(math::Point<T, 2> uv) {
     if (uv.x() < 0) {
@@ -235,6 +273,13 @@ inline constexpr auto warp_equal_area_square(math::Point<T, 2> uv) {
     return uv;
 }
 
+/**
+ * @brief Map a point in [0,1]^2 to the unit sphere with equal-area property.
+ *
+ * The mapping is designed so that each region of the unit square has the
+ * same area on the unit sphere, which is useful for stratified sampling
+ * of directions.
+ */
 template<typename T>
 inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p) {
     T u = 2 * p.x() - 1, v = 2 * p.y() - 1;
@@ -256,6 +301,11 @@ inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p)
     );
 }
 
+/**
+ * @brief Signed area of a spherical triangle on the unit sphere.
+ *
+ * Uses a robust formula based on the vertices' dot and cross products.
+ */
 template<typename T>
 inline constexpr T spherical_triangle_area(
     const Vector<T, 3>& a,
@@ -268,6 +318,12 @@ inline constexpr T spherical_triangle_area(
     ));
 }
 
+/**
+ * @brief Area of a spherical polygon on the unit sphere.
+ *
+ * The polygon is assumed to be defined by vertices on the unit sphere
+ * in counter-clockwise order. It is triangulated fan-wise from vertex 0.
+ */
 template<typename T>
 constexpr T spherical_polygon_area(
     const std::vector<Vector<T, 3>>& vertices
@@ -281,7 +337,9 @@ constexpr T spherical_polygon_area(
     return area;
 }
 
+/// 2D spherical point (radius and azimuth) using the default scalar type.
 using Sphere2 = SphericalPoint<Float, 2>;
+/// 3D spherical point (radius, polar and azimuth) using the default scalar type.
 using Sphere3 = SphericalPoint<Float, 3>;
 
 }  // namespace pbpt::geometry

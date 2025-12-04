@@ -10,6 +10,15 @@
 
 namespace pbpt::math {
 
+/**
+ * @brief Fixed-size mathematical vector with arithmetic operations.
+ *
+ * `Vector` is a thin wrapper over `VectorOps` that provides a
+ * convenient alias for numeric vectors in N dimensions.
+ *
+ * @tparam T Scalar type.
+ * @tparam N Dimension.
+ */
 template <typename T, int N>
 class Vector : public VectorOps<Vector, T, N> {
 private:
@@ -19,6 +28,9 @@ public:
     using Base::Base;
 };
 
+/**
+ * @brief 3D cross product between two vectors.
+ */
 template <typename T>
 constexpr auto cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
     return Vector<T, 3>(
@@ -28,6 +40,13 @@ constexpr auto cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
     );
 }
 
+/**
+ * @brief Angle between two normalized 3D vectors.
+ *
+ * Uses a numerically stable formulation based on the length of
+ * v1 ± v2 rather than directly calling arccos on the dot product.
+ * Both inputs must be normalized.
+ */
 template <typename T>
 constexpr promote_int_to_float_t<T> angle_between(const Vector<T, 3>& v1, const Vector<T, 3>& v2) {
     assert_if([&v1, &v2]() { return v1.is_all_zero() || v2.is_all_zero(); }, "Cannot compute angle between zero vectors");
@@ -40,6 +59,13 @@ constexpr promote_int_to_float_t<T> angle_between(const Vector<T, 3>& v1, const 
     }
 }
 
+/**
+ * @brief Builds an orthonormal basis {v2, v3} around a unit vector v1.
+ *
+ * Given a normalized direction v1, this function returns two
+ * perpendicular unit vectors v2 and v3 that, together with v1,
+ * form a right-handed coordinate system.
+ */
 template <std::floating_point T>
 constexpr std::pair<Vector<T, 3>, Vector<T, 3>> coordinate_system(const Vector<T, 3>& v1) {
     assert_if([&v1]() { return !v1.is_normalized(); }, "Input vector to coordinate_system_stable() must be normalized");

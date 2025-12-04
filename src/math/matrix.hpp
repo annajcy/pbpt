@@ -12,14 +12,32 @@
 #include "vector.hpp"
 
 namespace pbpt::math {
+
+/**
+ * @brief Forward declaration of a fixed-size dense matrix.
+ *
+ * See the full `Matrix` definition later in this file for details.
+ */
 template <typename T, int R, int C>
     requires std::is_floating_point_v<T> && (R > 0) && (C > 0)
 class Matrix;
 
 template <typename T, int N>
+/**
+ * @brief Non-owning strided view over a contiguous vector of elements.
+ *
+ * A `VectorView` behaves like a fixed-size `Vector<T,N>` but only
+ * stores a pointer and a stride; it never allocates or owns memory.
+ * It is typically used to expose rows or columns of a matrix.
+ *
+ * @tparam T Element type.
+ * @tparam N Number of elements visible through the view.
+ */
 class VectorView {
 protected:
+    /// Pointer to the first element in the underlying storage.
     const T* m_start_ptr;
+    /// Stride (in elements) between consecutive entries.
     int      m_stride;
 
 public:
@@ -27,20 +45,33 @@ public:
     /// @warning The caller must ensure that the referenced data remains valid for the lifetime of this view.
     /// @param start Pointer to the first element (must not be nullptr)
     /// @param stride Distance between consecutive elements in the view
+    /**
+     * @brief Constructs a view from a start pointer and stride.
+     *
+     * The caller is responsible for ensuring the lifetime of the
+     * underlying data, and that at least N elements are addressable
+     * with the given stride.
+     */
     [[nodiscard]] constexpr VectorView(const T* start, int stride) 
         : m_start_ptr(start), m_stride(stride) {
         assert_if_ex<std::invalid_argument>([&]() { return start == nullptr; }, 
                                            "VectorView requires non-null data pointer");
     }
 
+    /// Returns element @p i without bounds checking.
     constexpr const T& operator[](int i) const { return m_start_ptr[i * m_stride]; }
+    /// Returns element @p i without bounds checking (mutable).
     constexpr T&       operator[](int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
 
+    /// Returns element @p i (same as operator[]).
     constexpr const T& at(int i) const { return m_start_ptr[i * m_stride]; }
+    /// Returns element @p i (same as operator[]; mutable).
     constexpr T&       at(int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
 
+    /// Number of elements in the view.
     constexpr int dims() const noexcept { return N; }
 
+    /// Dot product between this view and a full vector.
     constexpr T dot(const Vector<T, N>& rhs) const {
         T result = 0;
         for (int i = 0; i < N; ++i)
@@ -48,6 +79,7 @@ public:
         return result;
     }
 
+    /// Dot product between two views.
     constexpr T dot(const VectorView<T, N>& rhs) const {
         T result = 0;
         for (int i = 0; i < N; ++i)
@@ -55,6 +87,7 @@ public:
         return result;
     }
 
+    /// Copies the view contents into an owning `Vector<T,N>`.
     constexpr Vector<T, N> to_vector() const {
         Vector<T, N> result;
         for (int i = 0; i < N; ++i)
@@ -62,24 +95,28 @@ public:
         return result;
     }
 
+    /// Assigns from an owning vector.
     constexpr VectorView& operator=(const Vector<T, N>& other) {
         for (int i = 0; i < N; ++i)
             (*this)[i] = other[i];
         return *this;
     }
 
+    /// Assigns from another view with the same layout.
     constexpr VectorView& operator=(const VectorView<T, N>& other) {
         for (int i = 0; i < N; ++i)
             (*this)[i] = other[i];
         return *this;
     }
 
+    /// Visits each element with its index (const).
     template <std::invocable<const T&, int> F>
     void visit(F func) const {
         for (int i = 0; i < N; ++i)
             func((*this)[i], i);
     }
 
+    /// Visits each element with its index (mutable).
     template <std::invocable<T&, int> F>
     void visit(F func) {
         for (int i = 0; i < N; ++i)
@@ -88,29 +125,47 @@ public:
 };
 
 template <typename T, int R, int C, int ViewR, int ViewC>
+/**
+ * @brief Non-owning rectangular view into a matrix.
+ *
+ * Provides a window of size ViewR x ViewC into an existing
+ * `Matrix<T,R,C>`, exposing rows and columns as `VectorView`s.
+ */
 class MatrixView {
 protected:
+    /// Reference to the original matrix that owns the data.
     const Matrix<T, R, C>& m_original;
+    /// Row index of the top-left element of the view.
     int                    m_row_start{};
+    /// Column index of the top-left element of the view.
     int                    m_col_start{};
 
 public:
+    /// View type for a row inside the submatrix.
     using RowView = VectorView<T, ViewC>;
+    /// View type for a column inside the submatrix.
     using ColView = VectorView<T, ViewR>;
 
+    /// Constructs a view at the given row/column offset in the original.
     constexpr MatrixView(const Matrix<T, R, C>& original, int row_start, int col_start)
         : m_original(original), m_row_start(row_start), m_col_start(col_start) {}
 
+    /// Returns the element at (r, c) inside the view (const).
     constexpr const T& at(int r, int c) const { return m_original.at(m_row_start + r, m_col_start + c); }
 
+    /// Returns a row-view for row r (const).
     constexpr const RowView operator[](int r) const { return RowView(&(*this).at(r, 0), 1); }
 
+    /// Returns a row-view for row r (mutable).
     constexpr RowView operator[](int r) { return RowView(&(*this).at(r, 0), 1); }
 
+    /// Returns a row-view for row r (const).
     constexpr const RowView row(int r) const { return RowView(&(*this).at(r, 0), 1); }
 
+    /// Returns a column-view for column c (mutable).
     constexpr ColView col(int c) { return ColView(&(*this).at(0, c), ViewC); }
 
+    /// Copies the view contents into an owning matrix of size ViewR x ViewC.
     constexpr Matrix<T, ViewR, ViewC> to_matrix() const {
         Matrix<T, ViewR, ViewC> result;
         for (int i = 0; i < ViewR; ++i) {
@@ -121,10 +176,12 @@ public:
         return result;
     }
 
+    /// Returns a mutable reference to the element at (r, c).
     constexpr T& at(int r, int c) {
         return const_cast<T&>(this->m_original.at(this->m_row_start + r, this->m_col_start + c));
     }
 
+    /// Assigns from another matrix of the same view size.
     constexpr MatrixView& operator=(const Matrix<T, ViewR, ViewC>& other) {
         for (int i = 0; i < ViewR; ++i) {
             for (int j = 0; j < ViewC; ++j) {
@@ -134,6 +191,7 @@ public:
         return *this;
     }
 
+    /// Visits all elements in the view (mutable).
     template<std::invocable<T&, int, int> F>
     void visit(F func) {
         for (int i = 0; i < ViewR; ++i) {
@@ -143,6 +201,7 @@ public:
         }
     }
 
+    /// Visits all elements in the view (const).
     template<std::invocable<const T&, int, int> F>
     void visit(F func) const {
         for (int i = 0; i < ViewR; ++i) {
@@ -155,19 +214,36 @@ public:
 
 template <typename T, int R, int C>
     requires std::is_floating_point_v<T> && (R > 0) && (C > 0)
+/**
+ * @brief Dense column-major matrix with fixed compile-time size.
+ *
+ * Provides basic linear algebra operations such as addition,
+ * scalar and matrix multiplication, determinants, inversion and
+ * Gaussian elimination routines. The matrix elements are stored
+ * in a contiguous `std::array`.
+ *
+ * @tparam T Floating-point element type.
+ * @tparam R Number of rows.
+ * @tparam C Number of columns.
+ */
 class Matrix {
 private:
     std::array<T, R * C> m_data{};
 
 public:
+    /// Alias for a rectangular submatrix view.
     template <int ViewR, int ViewC>
     using MatView = MatrixView<T, R, C, ViewR, ViewC>;
+    /// Alias for a non-owning row view.
     using RowView = VectorView<T, C>;
+    /// Alias for a non-owning column view.
     using ColView = VectorView<T, R>;
 
     // Static factory methods (unified with Vector design)
+    /// Returns a matrix with all entries initialized to zero.
     static constexpr Matrix zeros() noexcept { return Matrix{}; }
     
+    /// Returns a matrix with all entries initialized to @p value.
     static constexpr Matrix filled(T value) noexcept {
         Matrix result{};
         for (int i = 0; i < R * C; ++i)
@@ -175,8 +251,12 @@ public:
         return result;
     }
     
+    /// Returns a matrix with all entries equal to one.
     static constexpr Matrix ones() noexcept { return filled(T(1)); }
     
+    /**
+     * @brief Returns the identity matrix (only defined for square matrices).
+     */
     static constexpr Matrix identity() noexcept
         requires(R == C)
     {
@@ -187,12 +267,18 @@ public:
         return result;
     }
 
+    /**
+     * @brief Constructs a matrix from a flat array in row-major order.
+     */
     static constexpr Matrix from_array(const std::array<T, R * C>& arr) noexcept {
         Matrix result{};
         result.m_data = arr;
         return result;
     }
 
+    /**
+     * @brief Constructs a matrix with random entries using `rand<T>()`.
+     */
     static auto random() {
         Matrix result{};
         for (int i = 0; i < R * C; ++i) {
@@ -204,6 +290,11 @@ public:
     // Constructors
     constexpr Matrix() noexcept = default;
 
+    /**
+     * @brief Constructs a matrix from column vectors.
+     *
+     * Expects exactly C column vectors of type `Vector<T,R>`.
+     */
     template <typename... Vecs>
         requires(sizeof...(Vecs) == C && (std::is_convertible_v<Vecs, Vector<T, R>> && ...))
     constexpr explicit Matrix(Vecs&&... col_vecs) noexcept {
@@ -217,11 +308,21 @@ public:
          ...);
     }
 
+    /**
+     * @brief Constructs a matrix from a flat list of R*C scalar values.
+     *
+     * Values are stored in row-major order.
+     */
     template <std::convertible_to<T>... Vals>
         requires(sizeof...(Vals) == R * C && (std::is_arithmetic_v<std::remove_cvref_t<Vals>> && ...))
     constexpr Matrix(Vals&&... vals) noexcept : m_data{static_cast<T>(std::forward<Vals>(vals))...} {}
 
     // Copy/conversion constructor from different matrix types
+    /**
+     * @brief Converting copy-constructor from another Matrix type.
+     *
+     * Copies all elements from @p other, converting them to type @p T.
+     */
     template <typename U>
         requires std::convertible_to<U, T>
     constexpr Matrix(const Matrix<U, R, C>& other) noexcept {
@@ -231,37 +332,56 @@ public:
     }
 
     // Accessors with improved error handling
+    /// Returns the element at (row, column) with bounds checking (const).
     constexpr const T& at(int x, int y) const {
         assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; }, 
                                        "Matrix index out of range");
         return m_data[x * C + y];
     }
 
+    /// Returns the element at (row, column) with bounds checking (mutable).
     constexpr T& at(int x, int y) {
         assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; }, 
                                        "Matrix index out of range");
         return m_data[x * C + y];
     }
 
+    /// Returns a view of the r-th row.
     constexpr RowView operator[](int r) { return RowView(&(*this).at(r, 0), 1); }
+    /// Returns a view of the r-th row (const).
     constexpr const RowView operator[](int r) const { return RowView(&(*this).at(r, 0), 1); }
 
+    /// Returns a view of the r-th row.
     constexpr RowView row(int r) { return RowView(&(*this).at(r, 0), 1); }
+    /// Returns a view of the r-th row (const).
     constexpr const RowView row(int r) const { return RowView(&(*this).at(r, 0), 1); }
 
+    /// Returns a view of the c-th column.
     constexpr ColView col(int c) { return ColView(&(*this).at(0, c), C); }
+    /// Returns a view of the c-th column (const).
     constexpr const ColView col(int c) const { return ColView(&(*this).at(0, c), C); }
 
+    /// Number of rows.
     constexpr int row_dims() const noexcept { return R; }
+    /// Number of columns.
     constexpr int col_dims() const noexcept { return C; }
+    /// Total number of stored elements.
     constexpr int dims() const noexcept { return R * C; }  // Total elements (unified with Vector)
 
+    /// Pointer to the underlying contiguous storage (const).
     const T* data() const noexcept { return m_data.data(); }
+    /// Pointer to the underlying contiguous storage (mutable).
     T*       data() noexcept { return m_data.data(); }
     
+    /// Returns a copy of the underlying array storage.
     constexpr std::array<T, R * C> to_array() const noexcept { return m_data; }
 
     // Unified comparison operators
+    /**
+     * @brief Element-wise equality comparison with another matrix.
+     *
+     * Uses a floating-point aware comparison for each entry.
+     */
     template <typename U>
     constexpr bool operator==(const Matrix<U, R, C>& rhs) const noexcept {
         // Use std::ranges::equal with custom comparator for floating-point comparison
@@ -271,6 +391,7 @@ public:
                                  });
     }
 
+    /// Logical negation of operator==.
     template <typename U>
     constexpr bool operator!=(const Matrix<U, R, C>& rhs) const noexcept { 
         return !(*this == rhs); 
@@ -285,6 +406,7 @@ public:
     }
 
     // Assignment operators with type safety
+    /// Adds another matrix to this one in-place.
     template <typename U>
     constexpr Matrix& operator+=(const Matrix<U, R, C>& rhs) noexcept {
         for (int i = 0; i < R * C; ++i)
@@ -292,6 +414,7 @@ public:
         return *this;
     }
 
+    /// Subtracts another matrix from this one in-place.
     template <typename U>
     constexpr Matrix& operator-=(const Matrix<U, R, C>& rhs) noexcept {
         for (int i = 0; i < R * C; ++i)
@@ -299,6 +422,7 @@ public:
         return *this;
     }
 
+    /// Multiplies all entries by a scalar in-place.
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr Matrix& operator*=(const U& scalar) noexcept {
@@ -307,6 +431,7 @@ public:
         return *this;
     }
 
+    /// Divides all entries by a scalar in-place (asserting non-zero divisor).
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr Matrix& operator/=(const U& scalar) noexcept {
@@ -317,6 +442,7 @@ public:
         return *this;
     }
 
+    /// Returns the transposed copy of this matrix.
     constexpr Matrix<T, C, R> transposed() const noexcept {
         Matrix<T, C, R> result{};
         for (int i = 0; i < R; ++i) {
@@ -327,6 +453,9 @@ public:
         return result;
     }
 
+    /**
+     * @brief Transposes this matrix in-place (square matrices only).
+     */
     constexpr Matrix& transpose() noexcept
         requires(R == C)
     {
@@ -339,6 +468,12 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Determinant of a square matrix.
+     *
+     * Uses specialized formulas for small sizes and a Laplace
+     * expansion in the general case.
+     */
     constexpr T determinant() const
         requires(R == C)
     {
@@ -368,6 +503,14 @@ public:
         }
     }
 
+    /**
+     * @brief Returns the inverse of this matrix (square matrices only).
+     *
+     * Uses hard-coded fast paths for 1x1, 2x2, 3x3 and 4x4 matrices
+     * and a general cofactor-based method otherwise.
+     *
+     * Throws if the matrix is singular.
+     */
     constexpr Matrix inversed() const
         requires(R == C)
     {
@@ -401,6 +544,9 @@ public:
         }
     }
 
+    /**
+     * @brief In-place inversion via the adjugate matrix (square matrices only).
+     */
     constexpr Matrix& inverse()
         requires(R == C)
     {
@@ -421,6 +567,7 @@ public:
         return *this;
     }
 
+    /// Returns a view of a submatrix starting at (row_start, col_start).
     template <int ViewR, int ViewC>
     constexpr Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) {
         assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; }, 
@@ -428,6 +575,7 @@ public:
         return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
 
+    /// Returns a const view of a submatrix starting at (row_start, col_start).
     template <int ViewR, int ViewC>
     constexpr const Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) const {
         assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; }, 
@@ -581,6 +729,7 @@ private:
 public:
 
     // Arithmetic operators with type promotion
+    /// Matrix addition with type promotion.
     template <typename U>
     constexpr auto operator+(const Matrix<U, R, C>& rhs) const noexcept {
         using ResultType = std::common_type_t<T, U>;
@@ -592,6 +741,7 @@ public:
         return result;
     }
 
+    /// Matrix subtraction with type promotion.
     template <typename U>
     constexpr auto operator-(const Matrix<U, R, C>& rhs) const noexcept {
         using ResultType = std::common_type_t<T, U>;
@@ -603,6 +753,7 @@ public:
         return result;
     }
 
+    /// Unary minus: returns a matrix with all entries negated.
     constexpr Matrix operator-() const noexcept {
         Matrix result{};
         for (int i = 0; i < R * C; ++i)
@@ -610,6 +761,7 @@ public:
         return result;
     }
 
+    /// Scalar multiplication with type promotion.
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr auto operator*(const U& scalar) const noexcept {
@@ -622,12 +774,14 @@ public:
         return result;
     }
 
+    /// Scalar multiplication from the left (friend, commutative with `operator*` above).
     template <typename U>
         requires std::is_arithmetic_v<U>
     friend constexpr auto operator*(const U& scalar, const Matrix<T, R, C>& mat) noexcept {
         return mat * scalar;
     }
 
+    /// Scalar division with type promotion.
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr auto operator/(const U& scalar) const noexcept {
@@ -642,6 +796,7 @@ public:
         return result;
     }
 
+    /// Matrix–vector product with type promotion.
     template <typename U>
     constexpr auto operator*(const Vector<U, C>& rhs) const noexcept {
         using ResultType = std::common_type_t<T, U>;
@@ -652,6 +807,7 @@ public:
         return result;
     }
 
+    /// Matrix–homogeneous-vector product with type promotion.
     template <typename U>
     constexpr auto operator*(const Homogeneous<U, C>& rhs) const noexcept {
         using ResultType = std::common_type_t<T, U>;
@@ -662,6 +818,7 @@ public:
         return result;
     }
 
+    /// Matrix–matrix product with type promotion.
     template <typename U, int M>
     constexpr auto operator*(const Matrix<U, C, M>& rhs) const noexcept {
         using ResultType = std::common_type_t<T, U>;
@@ -674,6 +831,7 @@ public:
         return result;
     }
 
+    /// Returns true if all entries are (approximately) zero.
     constexpr bool is_all_zero() const {
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
@@ -684,6 +842,7 @@ public:
         return true;
     }
 
+    /// Returns true if the matrix is (approximately) the identity.
     constexpr bool is_identity() const
         requires(R == C)
     {
@@ -698,6 +857,7 @@ public:
         return true;
     }
 
+    /// Returns true if any entry is NaN (floating-point matrices only).
     constexpr bool has_nan() const {
         if constexpr (std::is_floating_point_v<T>) {
             for (int r = 0; r < R; ++r) {
@@ -711,6 +871,7 @@ public:
     }
 
     // Apply function to each element (unified with Vector design)
+    /// Visits each matrix element with its (row, col) indices (mutable).
     template <std::invocable<T&, int, int> F>
     constexpr void visit(F&& f) {
         for (int r = 0; r < R; ++r) {
@@ -720,6 +881,7 @@ public:
         }
     }
 
+    /// Visits each matrix element with its (row, col) indices (const).
     template <std::invocable<const T&, int, int> F>
     constexpr void visit(F&& f) const {
         for (int r = 0; r < R; ++r) {
@@ -730,6 +892,7 @@ public:
     }
 
     // elementary row operations
+    /// Swaps two rows in-place; returns *this.
     constexpr Matrix<T, R, C>& swap_rows(int r1, int r2) {
         assert_if_ex<std::out_of_range>(
             r1 < 0 || r1 >= R || r2 < 0 || r2 >= R, 
@@ -742,6 +905,7 @@ public:
         return *this;
     }
 
+    /// Scales a row by the given scalar; returns *this.
     constexpr Matrix<T, R, C>& scale_row(int r, T scalar) {
         assert_if_ex<std::out_of_range>(
             r < 0 || r >= R, 
@@ -754,6 +918,7 @@ public:
         return *this;
     }
 
+    /// Adds a scaled source row to a destination row; returns *this.
     constexpr Matrix<T, R, C>& add_scaled_row(int dest_r, int src_r, T scalar) {
         assert_if_ex<std::out_of_range>(
             dest_r < 0 || dest_r >= R || src_r < 0 || src_r >= R, 
@@ -766,6 +931,7 @@ public:
         return *this;
     }
 
+    /// Swaps two columns in-place; returns *this.
     constexpr Matrix<T, R, C>& swap_cols(int c1, int c2) {
         assert_if_ex<std::out_of_range>(
             c1 < 0 || c1 >= C || c2 < 0 || c2 >= C, 
@@ -777,6 +943,7 @@ public:
         return *this;
     }
 
+    /// Scales a column by the given scalar; returns *this.
     constexpr Matrix<T, R, C>& scale_col(int c, T scalar) {
         assert_if_ex<std::out_of_range>(
             c < 0 || c >= C, 
@@ -788,6 +955,7 @@ public:
         return *this;
     }
 
+    /// Adds a scaled source column to a destination column; returns *this.
     constexpr Matrix<T, R, C>& add_scaled_col(int dest_c, int src_c, T scalar) {
         assert_if_ex<std::out_of_range>(
             dest_c < 0 || dest_c >= C || src_c < 0 || src_c >= C, 
@@ -800,6 +968,7 @@ public:
     }
 
     //helpers: find index of max abs value in row/col
+    /// Returns index and value of maximum absolute entry in a column slice.
     constexpr std::pair<int, T> argmax_abs_in_col(int c, int start_row = 0, int end_row = R) const {
         assert_if_ex<std::out_of_range>(
             c < 0 || c >= C, 
@@ -820,6 +989,7 @@ public:
         return {max_index, max_value};
     }
 
+    /// Returns index and value of maximum absolute entry in a row slice.
     constexpr std::pair<int, T> argmax_abs_in_row(int r, int start_col = 0, int end_col = C) const {
         assert_if_ex<std::out_of_range>(
             r < 0 || r >= R, 
@@ -839,15 +1009,33 @@ public:
         }
         return {max_index, max_value};
     }
-
+    
+    /**
+     * @brief Result of Gaussian elimination in row echelon form.
+     *
+     * Contains the transformed matrix, its rank, the number of row
+     * swaps performed and the accumulated inverse scale factor used
+     * during elimination (useful for determinant computation).
+     */
     struct EchelonResult {
+        /// Matrix in (reduced) row echelon form.
         Matrix<T, R, C> matrix;
+        /// Rank of the original matrix.
         int rank{};
+        /// Number of row swaps performed (for determinant sign).
         int row_swaps{};
+        /// Inverse of the product of all scaling factors used.
         T total_scale_inv{1}; // the inverse of the product of all scaling factors used
     };
 
     //transform to row echelon form and reduced row echelon form, return rank and number of row swaps
+    /**
+     * @brief Transforms the matrix to row echelon form in-place.
+     *
+     * Uses Gaussian elimination with partial pivoting and returns
+     * the resulting echelon matrix together with its rank and the
+     * accumulated scaling information.
+     */
     constexpr EchelonResult ref_inplace() {
         int r = 0;
         int swaps = 0;
@@ -867,11 +1055,15 @@ public:
         return {(*this), r, swaps, total_scale_inv};
     } 
 
+    /// Returns a copy of this matrix in row echelon form.
     constexpr EchelonResult ref() const {
         Matrix<T, R, C> temp = *this;
         return temp.ref_inplace();
     }
 
+    /**
+     * @brief Transforms the matrix to reduced row echelon form in-place.
+     */
     constexpr EchelonResult rref_inplace() {
         int r = 0;
         int swaps = 0;
@@ -892,23 +1084,29 @@ public:
         return {(*this), r, swaps, total_scale_inv};
     }
 
+    /// Returns a copy of this matrix in reduced row echelon form.
     constexpr EchelonResult rref() const {
         Matrix<T, R, C> temp = *this;
         return temp.rref_inplace();
     }
 
     // functions
+    /// Returns the rank of the matrix computed via row echelon form.
     int rank() const {
         Matrix<T, R, C> temp = *this;
         return temp.ref_inplace().rank;
     }
 
+    /// Returns true if the matrix is invertible (square matrices only).
     bool is_invertible() const requires(R == C) {
         Matrix<T, R, C> temp = *this;
         auto [mat, rank, swaps, _] = temp.ref_inplace();
         return rank == R;
     }
 
+    /**
+     * @brief Inverse computed via augmented RREF (returned as a new matrix).
+     */
     Matrix<T, R, C> inversed_rref() const requires(R == C) {
         Matrix<T, R, 2 * C> augmented{};
         // Create augmented matrix [A | I]
@@ -928,6 +1126,9 @@ public:
         return result;
     }
 
+    /**
+     * @brief In-place inversion via the augmented RREF method.
+     */
     Matrix<T, R, C>& inverse_rref() requires(R == C) {
         Matrix<T, R, 2 * C> augmented{};
         // Create augmented matrix [A | I]
@@ -946,6 +1147,12 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Determinant computed via row echelon form.
+     *
+     * Uses ref_inplace() and accounts for row swaps and scaling to
+     * reconstruct the determinant.
+     */
     T determinant_ref() const requires(R == C) {
         Matrix<T, R, C> temp = *this;
         auto [mat, rank, swaps, total_scale_inv] = temp.ref_inplace();

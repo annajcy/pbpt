@@ -19,15 +19,33 @@
 
 namespace pbpt::shape {
 
+/**
+ * @brief Sphere shape supporting partial spheres and analytic sampling.
+ *
+ * The sphere can be restricted in z and azimuth (phi) to represent
+ * spherical caps or wedges. It implements all `Shape` interface
+ * methods such as area, bounds, ray intersection and sampling.
+ *
+ * @tparam T Scalar type.
+ */
 template<typename T>
 class Sphere : public Shape<Sphere<T>, T> {
     friend class Shape<Sphere<T>, T>;
 
 public:
+    /**
+     * @brief Detailed information about a ray–sphere intersection.
+     *
+     * Stores the hit point, the parametric distance along the ray and
+     * the azimuth angle phi in [0, 2*pi].
+     */
     template<typename U>
     struct IntersectionResult {
+        /// Hit point in render space.
         math::Point<U, 3> p_hit;
+        /// Parametric distance along the ray where the hit occurs.
         U t_hit;
+        /// Azimuthal angle of the hit point around the z-axis.
         U phi;
     };
 
@@ -38,12 +56,22 @@ private:
     T m_phi_max{};
 
 public:
+    /**
+     * @brief Constructs a full sphere of the given radius.
+     */
     Sphere(T radius) : m_radius(radius) {
         m_z_min = -radius;
         m_z_max = radius;
         m_phi_max = static_cast<T>(2 * math::pi_v<T>);
     }
 
+    /**
+     * @brief Constructs a partial sphere.
+     *
+     * The sphere is truncated in z to [z_min, z_max] and in azimuth
+     * to [0, phi_max]. Input z-limits are clamped to [-radius, radius]
+     * and swapped if needed so that z_min <= z_max.
+     */
     Sphere(T radius, T z_min, T z_max, T phi_max)
         : m_radius(radius),
           m_z_min(std::clamp(z_min, -radius, radius)),
@@ -55,15 +83,21 @@ public:
         }
     }
 
+    /// Minimum z of the spherical segment.
     T z_min() const { return m_z_min; }
+    /// Maximum z of the spherical segment.
     T z_max() const { return m_z_max; }
+    /// Maximum azimuth angle in radians (<= 2*pi).
     T phi_max() const { return m_phi_max; }
+    /// Sphere radius.
     T radius() const { return m_radius; }
 
+    /// Polar angle corresponding to z_min.
     T z_min_theta() const {
         return std::acos(std::clamp(m_z_min / m_radius, static_cast<T>(-1), static_cast<T>(1)));
     }
 
+    /// Polar angle corresponding to z_max.
     T z_max_theta() const {
         return std::acos(std::clamp(m_z_max / m_radius, static_cast<T>(-1), static_cast<T>(1)));
     }
@@ -251,10 +285,12 @@ private:
         ); 
     }
 
+    /// Surface area of the (partial) sphere.
     T area_impl() const {
         return m_phi_max * m_radius * (m_z_max - m_z_min);  
     }
 
+    /// Samples a point uniformly on the sphere surface.
     std::optional<ShapeSample<T>> sample_on_shape_impl(
         const math::Point<T, 2>& u_sample
     ) const {

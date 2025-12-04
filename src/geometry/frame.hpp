@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Local orthonormal frames used for shading and scattering.
+ */
 #pragma once
 
 #include <concepts>
@@ -10,8 +14,16 @@ using namespace pbpt::math;
 
 namespace pbpt::geometry {
 
-/// @brief 正交局部坐标系 Frame，用于 BSDF、Shading、Scattering 等局部空间操作
-/// 保证 [t, b, n] 是单位正交基，默认构造为右手系（t × b = n）
+/**
+ * @brief Orthonormal local coordinate frame.
+ *
+ * Represents a right-handed or left-handed basis [t, b, n] where t is
+ * tangent, b is bitangent and n is the normal. The frame also stores
+ * transforms between local and world coordinates, which are useful for
+ * converting directions in BRDF/BSDF evaluations.
+ *
+ * @tparam T Scalar type.
+ */
 template <typename T>
 class Frame {
 private:
@@ -22,9 +34,16 @@ private:
 public:
     constexpr Frame() = default;
 
-    /// @brief 以法线 n 构造局部坐标系（右手系）
-    /// @param n 局部空间中的 n 轴，通常是法线方向
-    /// @param flip_handedness 若为 true，则构造左手系（t × b = -n）
+    /**
+     * @brief Build a local frame from a normal.
+     *
+     * By default a right-handed frame is constructed such that
+     * t × b = n. Passing @p flip_to_left_handedness = true yields a
+     * left-handed frame instead (t × b = -n).
+     *
+     * @param n Local-space normal direction.
+     * @param flip_to_left_handedness Whether to construct a left-handed frame.
+     */
     constexpr explicit Frame(const Vector<T, 3>& n, bool flip_to_left_handedness = false) {
         m_n = n.normalized();
         const Vector<T, 3> up = (std::abs(m_n.x()) > T(0.99)) ? Vector<T, 3>(T(0), T(1), T(0))
@@ -35,8 +54,12 @@ public:
         update_tranform();
     }
 
-    /// @brief 基于已知的 tangent 和 normal 构造局部坐标系
-    /// 默认会自动修正手性使其为右手系（若需左手系，可设 flip_handedness = true）
+    /**
+     * @brief Build a frame from a given tangent and normal.
+     *
+     * The bitangent is computed as n × t, and handedness can be flipped
+     * by setting @p flip_to_left_handedness to true.
+     */
     constexpr Frame(const Vector<T, 3>& tangent, const Vector<T, 3>& normal, bool flip_to_left_handedness = false) {
         m_t = tangent.normalized();
         m_n = normal.normalized();
@@ -45,10 +68,15 @@ public:
         update_tranform();
     }
 
+    /// Tangent vector.
     constexpr const Vector<T, 3>& t() const { return m_t; }
+    /// Bitangent vector.
     constexpr const Vector<T, 3>& b() const { return m_b; }
+    /// Normal vector.
     constexpr const Vector<T, 3>& n() const { return m_n; }
+    /// Transform from local frame coordinates to world space.
     constexpr const Transform<T>& local_to_world() const { return m_local_to_world; }
+    /// Transform from world space to local frame coordinates.
     constexpr const Transform<T>& world_to_local() const { return m_world_to_local; }
 
 private:
@@ -59,6 +87,7 @@ private:
     }
 };
 
+/// Frame alias using the library's default floating-point type.
 using Fra = Frame<Float>;
 
 }  // namespace pbpt::geometry

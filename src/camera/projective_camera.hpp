@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Projective camera models (orthographic, perspective, thin-lens).
+ */
 #pragma once
 
 #include <cmath>
@@ -13,14 +17,35 @@
 
 namespace pbpt::camera {
 
+/**
+ * @brief Camera-space projection utilities.
+ *
+ * Encapsulates the standard graphics pipeline transforms:
+ * camera space -> clip space -> viewport (raster) space. It also provides
+ * helper factories for orthographic and perspective projections.
+ *
+ * @tparam T Scalar type (e.g. float or double).
+ */
 template<typename T>
 class CameraProjection {
 private:
+    /// Transform from clip space to viewport (raster) coordinates.
     geometry::Transform<T> m_clip_to_viewport{};
+    /// Transform from camera space to clip space.
     geometry::Transform<T> m_camera_to_clip{};
+    /// Precomputed transform from camera space directly to viewport space.
     geometry::Transform<T> m_camera_to_viewport{};
 
 public:
+    /**
+     * @brief Construct a projection from camera-to-clip and clip-to-viewport.
+     *
+     * The camera-to-viewport transform is computed as
+     * `clip_to_viewport * camera_to_clip`.
+     *
+     * @param camera_to_clip   Transform from camera space to clip space.
+     * @param clip_to_viewport Transform from clip space to viewport space.
+     */
     CameraProjection(
         const geometry::Transform<T>& camera_to_clip, 
         const geometry::Transform<T>& clip_to_viewport
@@ -28,36 +53,65 @@ public:
         m_camera_to_viewport = m_clip_to_viewport * m_camera_to_clip;
     }
 
+    /// Get the camera-to-clip transform.
     geometry::Transform<T> camera_to_clip() const {
         return m_camera_to_clip;
     }
 
+    /// Get the clip-to-viewport transform.
     geometry::Transform<T> clip_to_viewport() const {
         return m_clip_to_viewport;
     }
 
+    /// Get the camera-to-viewport transform.
     geometry::Transform<T> camera_to_viewport() const {
         return m_camera_to_viewport;
     }
 
+    /// Get the inverse transform: viewport-to-clip.
     geometry::Transform<T> viewport_to_clip() const {
         return m_clip_to_viewport.inversed();
     }
 
+    /// Get the inverse transform: clip-to-camera.
     geometry::Transform<T> clip_to_camera() const {
         return m_camera_to_clip.inversed();
     }
 
+    /// Get the inverse transform: viewport-to-camera.
     geometry::Transform<T> viewport_to_camera() const {
         return m_camera_to_viewport.inversed();
     }
 
+    /**
+     * @brief Map a 2D viewport coordinate into camera space at z = 0.
+     *
+     * @param p 2D viewport coordinate.
+     * @return 3D point in camera space on the z = 0 plane.
+     */
     math::Point<T, 3> apply_viewport_to_camera(const math::Point<T, 2>& p) const {
         math::Homogeneous<T, 4> hp = math::Homogeneous<T, 4>::from_point(math::Point<T, 3>(p.x(), p.y(), 0.0));
         auto hc = viewport_to_camera().transform_homogeneous(hp);
         return hc.to_point();
     }
 
+    /**
+     * @brief Build an orthographic projection.
+     *
+     * The view volume is defined by left/right, bottom/top and near/far
+     * planes in camera space, and the viewport transform maps the clip
+     * cube to a raster of given width and height.
+     *
+     * @param left   Left plane in camera x.
+     * @param right  Right plane in camera x.
+     * @param bottom Bottom plane in camera y.
+     * @param top    Top plane in camera y.
+     * @param near   Near plane in camera z.
+     * @param far    Far plane in camera z.
+     * @param width  Viewport width in pixels.
+     * @param height Viewport height in pixels.
+     * @return CameraProjection representing this orthographic setup.
+     */
     static CameraProjection<T> orthographic(
         T left, T right, T bottom, T top, T near, T far, 
         T width, T height
@@ -67,6 +121,21 @@ public:
         return CameraProjection<T>(camera_to_clip, clip_to_viewport);
     }
 
+    /**
+     * @brief Build a perspective projection.
+     *
+     * This uses a vertical field of view `fov_y_rad` (in radians),
+     * aspect ratio, and near/far clipping planes, followed by a viewport
+     * transform to raster coordinates.
+     *
+     * @param fov_y_rad Vertical field of view in radians.
+     * @param aspect_xy Aspect ratio (width / height).
+     * @param near      Near plane in camera z.
+     * @param far       Far plane in camera z.
+     * @param width     Viewport width in pixels.
+     * @param height    Viewport height in pixels.
+     * @return CameraProjection representing this perspective setup.
+     */
     static CameraProjection<T> perspective(
         T fov_y_rad, T aspect_xy, T near, T far, 
         T width, T height
@@ -77,22 +146,49 @@ public:
     }
 };
 
+/**
+ * @brief Base class for projective cameras (orthographic, perspective).
+ *
+ * This class combines the generic `Camera` interface with a
+ * `CameraProjection` object that defines how camera space maps to
+ * clip space and viewport space.
+ *
+ * @tparam Derived Concrete camera type.
+ * @tparam T       Scalar type (e.g. float or double).
+ */
 template<typename Derived, typename T>
 class ProjectiveCamera : public Camera<Derived, T> {
     friend class Camera<Derived, T>;
 protected:
+    /// Projection used by this camera.
     CameraProjection<T> m_projection{};
 
 public:
+    /**
+     * @brief Construct a projective camera with the given projection.
+     *
+     * @param projection CameraProjection defining the projection.
+     */
     ProjectiveCamera(
         const CameraProjection<T>& projection
     ) : m_projection(projection) {}
 
+    /// Get the camera projection.
     const CameraProjection<T>& projection() const {
         return m_projection;
     }
 
 protected:
+    /**
+     * @brief Implementation of film resolution query.
+     *
+     * The resolution is derived from the viewport transform, assuming
+     * that the viewport matrix scales the clip space cube to pixel
+     * coordinates. The width and height are inferred from the diagonal
+     * elements of the viewport transform.
+     *
+     * @return 2D vector (width, height) in pixels.
+     */
     math::Vector<int, 2> film_resolution_impl() const {
         const auto viewport = m_projection.clip_to_viewport();
         const auto& mat = viewport.matrix();
@@ -104,6 +200,12 @@ protected:
     }
 };
 
+/**
+ * @brief Helper for creating an orthographic projection from film parameters.
+ *
+ * The physical film size defines the extents in x and y; near/far specify
+ * depth range, and `film_resolution` gives the raster size.
+ */
 template<typename T>
 inline CameraProjection<T> create_orthographic_projection(
     const math::Vector<int, 2>& film_resolution,
@@ -122,6 +224,13 @@ inline CameraProjection<T> create_orthographic_projection(
     );
 }
 
+/**
+ * @brief Helper for creating a perspective projection from film parameters.
+ *
+ * The vertical field of view is computed from the film height and
+ * near plane distance so that the film edges align with the frustum
+ * at the near plane.
+ */
 template<typename T>
 inline CameraProjection<T> create_perspective_projection(
     const math::Vector<int, 2>& film_resolution,
@@ -140,12 +249,32 @@ inline CameraProjection<T> create_perspective_projection(
     );
 }
 
+/**
+ * @brief Ideal orthographic (pinhole) camera.
+ *
+ * Rays are cast with a constant direction along +z and origins located
+ * at the back-projected film positions. There is no perspective foreshortening.
+ *
+ * @tparam T Scalar type (e.g. float or double).
+ */
 template<typename T>
 class OrthographicCamera : public ProjectiveCamera<OrthographicCamera<T>, T> {
     friend class Camera<OrthographicCamera<T>, T>;
     friend class ProjectiveCamera<OrthographicCamera<T>, T>;
 
 public:
+    /**
+     * @brief Construct an orthographic camera from explicit bounds and resolution.
+     *
+     * @param left         Left plane in camera x.
+     * @param right        Right plane in camera x.
+     * @param bottom       Bottom plane in camera y.
+     * @param top          Top plane in camera y.
+     * @param near         Near plane in camera z.
+     * @param far          Far plane in camera z.
+     * @param resolution_x Film resolution in x (pixels).
+     * @param resolution_y Film resolution in y (pixels).
+     */
     OrthographicCamera(
         T left, T right, T bottom, T top, T near, T far, 
         T resolution_x, T resolution_y
@@ -154,6 +283,14 @@ public:
         resolution_x, resolution_y)
     ) { }
 
+    /**
+     * @brief Construct an orthographic camera from film parameters.
+     *
+     * @param film_resolution   Film resolution (width, height) in pixels.
+     * @param film_physical_size Physical film size in x and y.
+     * @param near              Near plane in camera z.
+     * @param far               Far plane in camera z.
+     */
     OrthographicCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
@@ -163,12 +300,14 @@ public:
     ) {}
 
 private:
+    /// Generate a primary ray for an orthographic camera.
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto origin = this->m_projection.apply_viewport_to_camera(sample.p_film);
         auto direction = math::Vector<T, 3>(0, 0, 1);
         return geometry::Ray<T, 3>(origin, direction);
     }
 
+    /// Generate ray differentials by perturbing the film sample position.
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
@@ -186,12 +325,30 @@ private:
     }
 };
 
+/**
+ * @brief Ideal perspective (pinhole) camera.
+ *
+ * Rays originate at the camera origin and pass through film points
+ * back-projected into camera space using the perspective projection.
+ *
+ * @tparam T Scalar type (e.g. float or double).
+ */
 template<typename T>
 class PerspectiveCamera : public ProjectiveCamera<PerspectiveCamera<T>, T> {
     friend class Camera<PerspectiveCamera<T>, T>;
     friend class ProjectiveCamera<PerspectiveCamera<T>, T>;
 
 public:
+    /**
+     * @brief Construct a perspective camera from explicit frustum and resolution.
+     *
+     * @param fov_y_rad    Vertical field of view in radians.
+     * @param aspect_xy    Aspect ratio (width / height).
+     * @param near         Near plane in camera z.
+     * @param far          Far plane in camera z.
+     * @param resolution_x Film resolution in x (pixels).
+     * @param resolution_y Film resolution in y (pixels).
+     */
     PerspectiveCamera(
         const T fov_y_rad,
         const T aspect_xy,
@@ -204,6 +361,18 @@ public:
         resolution_x, resolution_y)
     ) { }
 
+    /**
+     * @brief Construct a perspective camera from film parameters.
+     *
+     * The field of view is derived from the film height and near plane
+     * distance so that the film edges align with the frustum at the
+     * near plane.
+     *
+     * @param film_resolution   Film resolution (width, height) in pixels.
+     * @param film_physical_size Physical film size in x and y.
+     * @param near              Near plane in camera z.
+     * @param far               Far plane in camera z.
+     */
     PerspectiveCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
@@ -213,12 +382,14 @@ public:
     ) {}
 
 private:
+    /// Generate a primary ray for a perspective camera.
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto origin = math::Point<T, 3>(0, 0, 0);
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
         return geometry::Ray<T, 3>(origin, p_camera);
     }
 
+    /// Generate ray differentials by perturbing the film sample position.
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
         
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
@@ -239,17 +410,42 @@ private:
 
 // Thin Lens Cameras
 
+/**
+ * @brief Orthographic camera with a finite circular aperture (thin lens).
+ *
+ * Instead of originating rays from a fixed point behind the film, this
+ * camera simulates depth of field by sampling points on a circular lens
+ * and focusing rays on a plane at a given focal distance.
+ *
+ * @tparam T Scalar type (e.g. float or double).
+ */
 template<typename T>
 class ThinLensOrthographicCamera : public ProjectiveCamera<ThinLensOrthographicCamera<T>, T> {
     friend class Camera<ThinLensOrthographicCamera<T>, T>;
     friend class ProjectiveCamera<ThinLensOrthographicCamera<T>, T>;
 
 private:
+    /// Lens radius controlling aperture size (larger radius -> shallower depth of field).
     T m_lens_radius{0};
+    /// Distance from the lens to the focal plane along +z.
     T m_focal_distance{1};
 
 public:
 
+    /**
+     * @brief Construct a thin-lens orthographic camera from explicit bounds.
+     *
+     * @param left          Left plane in camera x.
+     * @param right         Right plane in camera x.
+     * @param bottom        Bottom plane in camera y.
+     * @param top           Top plane in camera y.
+     * @param near          Near plane in camera z.
+     * @param far           Far plane in camera z.
+     * @param resolution_x  Film resolution in x (pixels).
+     * @param resolution_y  Film resolution in y (pixels).
+     * @param lens_radius   Radius of the circular lens aperture.
+     * @param focal_distance Distance from lens to focal plane along +z.
+     */
     ThinLensOrthographicCamera(
         T left, T right, T bottom, T top, T near, T far, 
         T resolution_x, T resolution_y,
@@ -259,6 +455,16 @@ public:
         resolution_x, resolution_y)
     ), m_lens_radius(lens_radius), m_focal_distance(focal_distance) { }
 
+    /**
+     * @brief Construct a thin-lens orthographic camera from film parameters.
+     *
+     * @param film_resolution    Film resolution (width, height) in pixels.
+     * @param film_physical_size Physical film size in x and y.
+     * @param near               Near plane in camera z.
+     * @param far                Far plane in camera z.
+     * @param lens_radius        Radius of the circular lens aperture.
+     * @param focal_distance     Distance from lens to focal plane along +z.
+     */
     ThinLensOrthographicCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
@@ -270,6 +476,16 @@ public:
         m_focal_distance(focal_distance) {}
     
 private:
+    /**
+     * @brief Generate a ray using a thin-lens orthographic model.
+     *
+     * The algorithm:
+     * 1. Cast a pinhole ray from the film point with direction +z.
+     * 2. Intersect this ray with a plane at z = focal_distance to find
+     *    the focus point.
+     * 3. Sample a point on the lens disk and shoot a ray from the lens
+     *    point to the focus point.
+     */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
         auto pinhole_ray = geometry::Ray<T, 3>(p_camera, math::Vector<T, 3>(0, 0, 1));
@@ -282,6 +498,7 @@ private:
         return geometry::Ray<T, 3>(origin, direction);
     }
 
+    /// Generate ray differentials by perturbing the film sample position.
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
        
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
@@ -300,16 +517,39 @@ private:
     }
 };
 
+/**
+ * @brief Perspective camera with a finite circular aperture (thin lens).
+ *
+ * This model adds depth of field to a pinhole perspective camera by
+ * sampling points on a circular lens aperture and focusing on a plane
+ * at `focal_distance`.
+ *
+ * @tparam T Scalar type (e.g. float or double).
+ */
 template<typename T>
 class ThinLensPerspectiveCamera : public ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>{
     friend class Camera<ThinLensPerspectiveCamera<T>, T>;
     friend class ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>;
 
 private:
+    /// Lens radius controlling aperture size (larger radius -> shallower depth of field).
     T m_lens_radius{0};
+    /// Distance from the lens to the focal plane along +z.
     T m_focal_distance{1};
     
 public:
+    /**
+     * @brief Construct a thin-lens perspective camera from explicit frustum.
+     *
+     * @param fov_y_rad     Vertical field of view in radians.
+     * @param aspect_xy     Aspect ratio (width / height).
+     * @param near          Near plane in camera z.
+     * @param far           Far plane in camera z.
+     * @param resolution_x  Film resolution in x (pixels).
+     * @param resolution_y  Film resolution in y (pixels).
+     * @param lens_radius   Radius of the circular lens aperture.
+     * @param focal_distance Distance from lens to focal plane along +z.
+     */
     ThinLensPerspectiveCamera(
         const T fov_y_rad,
         const T aspect_xy,
@@ -324,6 +564,19 @@ public:
     ), m_lens_radius(lens_radius), m_focal_distance(focal_distance) { }
 
 
+    /**
+     * @brief Construct a thin-lens perspective camera from film parameters.
+     *
+     * The perspective projection is derived from the film size and near
+     * plane; depth of field is controlled by lens_radius and focal_distance.
+     *
+     * @param film_resolution    Film resolution (width, height) in pixels.
+     * @param film_physical_size Physical film size in x and y.
+     * @param near               Near plane in camera z.
+     * @param far                Far plane in camera z.
+     * @param lens_radius        Radius of the circular lens aperture.
+     * @param focal_distance     Distance from lens to focal plane along +z.
+     */
     ThinLensPerspectiveCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
@@ -335,6 +588,17 @@ public:
         m_focal_distance(focal_distance) {}
 
 private:
+    /**
+     * @brief Generate a ray using a thin-lens perspective model.
+     *
+     * The algorithm:
+     * 1. Compute the pinhole direction from the origin through the
+     *    back-projected film point in camera space.
+     * 2. Intersect this ray with a plane at z = focal_distance to
+     *    obtain the focus point.
+     * 3. Sample a point on a disk of radius m_lens_radius in the lens
+     *    plane (z = 0) and shoot a ray from that point to the focus point.
+     */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
         auto p_lens = math::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
@@ -346,6 +610,7 @@ private:
         return geometry::Ray<T, 3>(origin, direction);
     }
 
+    /// Generate ray differentials by perturbing the film sample position.
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
   
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);

@@ -13,53 +13,106 @@
 
 namespace pbpt::shape {
 
+/**
+ * @brief Result of sampling a point on a shape surface.
+ *
+ * Stores the sampled position, shading normal, texture coordinates
+ * and the PDF with respect to the sampling domain (area or solid angle).
+ *
+ * @tparam T Scalar type.
+ */
 template<typename T>
 struct ShapeSample {
+    /// Sampled point on the surface (render space).
     math::Point<T, 3> point;
+    /// Outward-facing surface normal at the sampled point.
     math::Normal<T, 3> normal;
+    /// Parametric texture coordinates associated with the sample.
     math::Point<T, 2> uv;
+    /// Probability density of the sample.
     T pdf{};
 };
 
+/**
+ * @brief CRTP base class for geometric shapes.
+ *
+ * A `Shape` exposes a unified interface for area, bounding boxes,
+ * normal cones, ray intersection and surface sampling while letting
+ * derived shapes implement the actual geometry logic via `*_impl`
+ * methods.
+ *
+ * @tparam Derived Concrete shape type (CRTP).
+ * @tparam T       Scalar type.
+ */
 template<typename Derived, typename T>
 class Shape {
 public:
+    /// Returns a reference to the derived shape (non-const).
     constexpr Derived& as_derived() noexcept {
         return static_cast<Derived&>(*this);
     }
 
+    /// Returns a reference to the derived shape (const).
     constexpr const Derived& as_derived() const noexcept {
         return static_cast<const Derived&>(*this);
     }
 
+    /// Total surface area of the shape.
     T area() const {
         return as_derived().area_impl();
     }
 
+    /// Axis-aligned bounding box of the shape in render space.
     geometry::Bounds<T, 3> bounding_box() const {
         return as_derived().bounding_box_impl();
     }
 
+    /// Bounding cone that contains all surface normals of the shape.
     geometry::DirectionalCone<T> normal_bounding_cone() const {
         return as_derived().normal_bounding_cone_impl();
     }
 
+    /**
+     * @brief Tests whether a ray intersects the shape.
+     *
+     * @return Optional parametric distance t in [t_min, t_max] if an
+     *         intersection exists, or std::nullopt otherwise.
+     */
     std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {
         return as_derived().is_intersected_impl(ray);
     }
 
+    /**
+     * @brief Computes a full surface interaction with the shape.
+     *
+     * When an intersection exists, returns the surface interaction
+     * (position, normal, UV, etc.) together with the hit distance t.
+     */
     std::optional<std::pair<geometry::SurfaceInteraction<T>, T>> intersect(
         const geometry::Ray<T, 3>& ray
     ) const {
         return as_derived().intersect_impl(ray);
     }
 
+    /**
+     * @brief Samples a point uniformly (or according to some strategy) on the shape.
+     *
+     * @param u_sample 2D sample in [0,1]^2.
+     * @return Optional shape sample and its area-domain PDF.
+     */
     std::optional<ShapeSample<T>> sample_on_shape(
         const math::Point<T, 2>& u_sample
     ) const {
         return as_derived().sample_on_shape_impl(u_sample);
     }
 
+    /**
+     * @brief Samples the shape with respect to solid angle from a reference point.
+     *
+     * @param reference Reference point in render space (e.g. shading point).
+     * @param u_sample  2D sample in [0,1]^2.
+     * @return Optional shape sample and its solid-angle PDF.
+     */
     std::optional<ShapeSample<T>> sample_on_solid_angle(
         const math::Point<T, 3>& reference,
         const math::Point<T, 2>& u_sample
@@ -68,30 +121,55 @@ public:
     }
 };
 
+/**
+ * @brief Shape wrapper that applies a rigid transform around another shape.
+ *
+ * The underlying `ShapeType<T>` is defined in its own object space.
+ * `TransformedShape` exposes the same interface but in render space,
+ * forwarding all queries and sampling through the stored transforms.
+ *
+ * @tparam T         Scalar type.
+ * @tparam ShapeType Concrete shape template to wrap (e.g. Sphere).
+ */
 template<typename T, template<typename> class ShapeType>
 class TransformedShape : public Shape<TransformedShape<T, ShapeType>, T> {
     friend class Shape<TransformedShape<T, ShapeType>, T>;
 
 private:
+    /// Underlying shape defined in object space.
     ShapeType<T> m_shape;
+    /// Transform from render space to object space.
     geometry::Transform<T> m_render_to_object{};
+    /// Transform from object space to render space.
     geometry::Transform<T> m_object_to_render{};
 
 public:
-
+    /**
+     * @brief Wraps an object-space shape with a render-to-object transform.
+     *
+     * @param shape           Underlying shape in its own object space.
+     * @param object_to_render Transform from object space to render space.
+     */
     TransformedShape(
         const ShapeType<T>& shape,
         const geometry::Transform<T>& object_to_render
     ) : m_shape(shape), m_object_to_render(object_to_render), m_render_to_object(object_to_render.inversed()) {}
 
+    /// Returns the transform from render space to object space.
     const geometry::Transform<T>& render_to_object_transform() const {
         return m_render_to_object;
     }
 
+    /// Returns the transform from object space to render space.
     const geometry::Transform<T>& object_to_render_transform() const {
         return m_object_to_render;
     }
 
+    /**
+     * @brief Updates the transforms when a new render-to-object transform is provided.
+     *
+     * The inverse is recomputed so that both directions stay consistent.
+     */
     void update_transform(const geometry::Transform<T>& new_render_to_object) {
         m_render_to_object = new_render_to_object;
         m_object_to_render = new_render_to_object.inversed();
