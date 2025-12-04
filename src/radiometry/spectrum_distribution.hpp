@@ -266,6 +266,7 @@ private:
     /// Temperature of the emitter in kelvin.
     T m_temperature;
 
+public:
     constexpr T max_wavelength() const {
         return black_body_max_wavelength(m_temperature);
     }
