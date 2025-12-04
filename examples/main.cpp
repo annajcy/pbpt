@@ -119,10 +119,6 @@ int main() {
     std::cout << "Frame t: " << frame.t() << std::endl;
     std::cout << "Frame b: " << frame.b() << std::endl;
     std::cout << "Frame n: " << frame.n() << std::endl;
-    
-    auto L = radiometry::Radiance<Float>(1.0);
-    auto irrad = L * radiometry::SolidAngle<Float>(1.0);
-    std::cout << "Irradiance: " << irrad << std::endl;
 
     math::RandomGenerator<double, 2> rng2d(42);
     radiometry::UniformHemisphereDomain<double> hemisphere{};
@@ -180,14 +176,6 @@ int main() {
 
     spectrum *= 2.0f;
     std::cout << "RGB Spectrum after multiplication: " << spectrum << "\n";
-
-    radiometry::SpectralRadiance<float> spec_rad(10.0f);
-    std::cout << "Spectral Radiance: " << spec_rad << std::endl;
-    radiometry::WaveLength<float> delta_lambda(3.0f); 
-    std::cout << "Delta Wavelength: " << delta_lambda << std::endl;
-
-    auto ttt = spec_rad * delta_lambda;
-    std::cout << "Spectral Radiance * Delta Wavelength: " << ttt << std::endl;
 
     radiometry::BlackBodySpectrumDistribution<double> black_body_spectrum(2856.0);
     auto sampled_spectrum = black_body_spectrum.sample<4>(

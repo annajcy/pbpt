@@ -15,7 +15,6 @@
 #include "color_space.hpp"
 #include "color_spectrum_optimizer.hpp"
 #include "radiometric_integrals.hpp"
-#include "radiometry_units.hpp"
 #include "sampled_spectrum.hpp"
 #include "spectrum_distribution.hpp"
 #include "spectrum_loader.hpp"

@@ -12,7 +12,6 @@
 #include "math/utils.hpp"
 #include "math/vector.hpp"
 
-#include "radiometry/radiometry_units.hpp"
 #include "radiometry/spectrum_distribution.hpp"
 #include "sampled_spectrum.hpp"
 #include "constant/xyz_spectrum.hpp"
