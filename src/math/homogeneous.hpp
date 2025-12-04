@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Homogeneous coordinate type built on top of vector operations.
+ */
 #pragma once
 
 #include <stdexcept>
@@ -207,7 +211,9 @@ public:
     }
 };
 
+/// @brief 4D homogeneous coordinate using the project's default Float.
 using Homo4 = Homogeneous<Float, 4>;
+/// @brief 3D homogeneous coordinate using the project's default Float.
 using Homo3 = Homogeneous<Float, 3>;
 
 }  // namespace pbpt::math

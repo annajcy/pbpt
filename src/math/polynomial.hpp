@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Polynomial evaluation utilities implemented via Horner's rule.
+ */
 #pragma once
 
 #include <cmath>

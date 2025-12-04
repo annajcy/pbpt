@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Octahedral encoding and decoding of unit 3D directions.
+ */
 #pragma once
 
 #include <cstdint>

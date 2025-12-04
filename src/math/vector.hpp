@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Fixed-size vector type and geometric helpers (cross product, bases).
+ */
 #pragma once
 
 #include "function.hpp"
@@ -81,14 +85,22 @@ constexpr std::pair<Vector<T, 3>, Vector<T, 3>> coordinate_system(const Vector<T
     return {v2.normalized(), v3.normalized()};
 }
 
+/// @brief 1D vector using the project's default Float type.
 using Vec1 = Vector<Float, 1>;
+/// @brief 2D vector using the project's default Float type.
 using Vec2 = Vector<Float, 2>;
+/// @brief 3D vector using the project's default Float type.
 using Vec3 = Vector<Float, 3>;
+/// @brief 4D vector using the project's default Float type.
 using Vec4 = Vector<Float, 4>;
 
+/// @brief 1D vector using the project's default Int type.
 using Vec1i = Vector<Int, 1>;
+/// @brief 2D vector using the project's default Int type.
 using Vec2i = Vector<Int, 2>;
+/// @brief 3D vector using the project's default Int type.
 using Vec3i = Vector<Int, 3>;
+/// @brief 4D vector using the project's default Int type.
 using Vec4i = Vector<Int, 4>;
 
 }  // namespace pbpt::math

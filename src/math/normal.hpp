@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Surface normal vector type and helpers.
+ */
 #pragma once
 
 #include "operator.hpp"
@@ -79,8 +83,11 @@ public:
 template <typename T, int N>
 auto cross(const Normal<T, N>&, const Normal<T, N>&) = delete;
 
+/// @brief 2D surface normal using the project's default Float type.
 using Normal2 = Normal<Float, 2>;
+/// @brief 3D surface normal using the project's default Float type.
 using Normal3 = Normal<Float, 3>;
+/// @brief 4D surface normal using the project's default Float type.
 using Normal4 = Normal<Float, 4>;
 
 };  // namespace pbpt::math

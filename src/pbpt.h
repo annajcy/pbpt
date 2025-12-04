@@ -5,7 +5,6 @@
 
 #include "camera/camera.h"
 #include "geometry/geometry.h"
-#include "integrator/integrator.h"
 #include "math/math.h"
 #include "radiometry/radiometry.h"
 #include "scene/scene.hpp"

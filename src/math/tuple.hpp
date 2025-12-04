@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief CRTP base for fixed-size numeric tuples shared by vectors, points and normals.
+ */
 #pragma once
 
 #include <array>

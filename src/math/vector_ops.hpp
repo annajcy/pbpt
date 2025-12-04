@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief CRTP mixin that adds vector-style arithmetic operations to Tuple-like types.
+ */
 #pragma once
 
 #include <cmath>

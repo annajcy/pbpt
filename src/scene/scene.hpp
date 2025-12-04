@@ -28,11 +28,22 @@
 
 namespace pbpt::scene {
 
+/**
+ * @brief Minimal sphere-based scene with spectral rendering support.
+ *
+ * Provides a helper to set up a thin-lens camera, simple objects, and render
+ * them to an EXR image using the project's radiometric pipeline.
+ */
 template<typename T>
 class SimpleScene {
 public:
+    /**
+     * @brief Renderable scene primitive consisting of a sphere and an albedo.
+     */
     struct SceneObject {
+        /// Sphere geometry with transform.
         shape::TransformedShape<T, shape::Sphere> sphere;
+        /// RGB albedo used to derive spectral reflectance.
         radiometry::RGB<T> rgb_albedo;
     };
 
@@ -61,6 +72,11 @@ private:
     Illuminant m_scene_illuminant{radiometry::constant::CIE_D65_ilum<T>};
 
 public:
+    /**
+     * @brief Construct a simple scene with a camera and a set of spheres.
+     *
+     * Precomputes spectral albedo distributions for each scene object.
+     */
     SimpleScene(
         const camera::ThinLensPerspectiveCamera<T>& camera,
         const std::vector<SceneObject> &scene_objects,
@@ -77,6 +93,10 @@ public:
         }
     }
 
+    /**
+     * @brief Render the scene to an EXR file.
+     * @param output_path Destination path (default: `scene.exr`).
+     */
     void render(const std::filesystem::path& output_path = std::filesystem::path("scene.exr")) const {
         auto resolution = m_camera.film_resolution();
         math::Vector<T, 2> physical_size(

@@ -1,3 +1,9 @@
+/**
+ * @file shape.hpp
+ * @brief Geometric shape interface and transformed shape wrapper.
+ * 
+ */
+
 #pragma once
 
 #include <optional>

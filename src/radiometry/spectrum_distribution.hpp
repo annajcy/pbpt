@@ -267,10 +267,17 @@ private:
     T m_temperature;
 
 public:
+    /**
+     * @brief Peak wavelength of the stored black-body spectrum.
+     * @return Wavelength in nanometers.
+     */
     constexpr T max_wavelength() const {
         return black_body_max_wavelength(m_temperature);
     }
 
+    /**
+     * @brief Maximum spectral radiance value at the peak wavelength.
+     */
     constexpr T max_value() const {
         return black_body(m_temperature, max_wavelength());
     }

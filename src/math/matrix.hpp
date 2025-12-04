@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Fixed-size matrices and non-owning views (rows, columns and submatrices).
+ */
 #pragma once
 
 #include <array>
@@ -1165,13 +1169,22 @@ public:
     
 };
 
+/// @brief 2x2 matrix using the project's default Float type.
 using Mat2   = Matrix<Float, 2, 2>;
+/// @brief 3x3 matrix using the project's default Float type.
 using Mat3   = Matrix<Float, 3, 3>;
+/// @brief 4x4 matrix using the project's default Float type.
 using Mat4   = Matrix<Float, 4, 4>;
+/// @brief 3x4 matrix using the project's default Float type.
 using Mat3x4 = Matrix<Float, 3, 4>;
+/// @brief 4x3 matrix using the project's default Float type.
 using Mat4x3 = Matrix<Float, 4, 3>;
 
-// slove least mean square problem: find M that minimizes ||M * A - B||
+/**
+ * @brief Solve the least-mean-square problem `||M * A - B||`.
+ *
+ * Computes `(B * A^T) * (A * A^T)^{-1}` using matrix inversion via RREF.
+ */
 template <typename T, int N, int ConstraintsCount>
 inline constexpr Matrix<T, N, N> solve_LMS(
     const Matrix<T, N, ConstraintsCount>& A, 

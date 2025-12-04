@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Formatting helpers for math types (vectors, points, normals, matrices).
+ */
 #pragma once
 
 #include <string>
@@ -16,6 +20,12 @@ namespace pbpt::math {
 // Tuple-based types (Vector, Point, Normal, Homogeneous)
 // =============================================================================
 
+/**
+ * @brief Returns a readable name for tuple-based math types.
+ *
+ * Distinguishes between Vector, Point, Normal and Homogeneous instantiations
+ * to produce a string such as `Vector<float, 3>`.
+ */
 template <template <typename, int> typename Derived, typename T, int N>
 std::string tuple_name() { 
     if constexpr (std::is_same_v<Derived<T, N>, Vector<T, N>>) {
@@ -31,6 +41,10 @@ std::string tuple_name() {
     }
 }
 
+/**
+ * @brief Format a tuple-based math type with type info and fixed precision.
+ * @return String of the form `Vector<T, N>(v0, v1, ...)`.
+ */
 template <template <typename, int> typename Derived, typename T, int N>
 std::string to_string(const Tuple<Derived, T, N>& t) {
     std::ostringstream oss;
@@ -47,6 +61,9 @@ std::string to_string(const Tuple<Derived, T, N>& t) {
 // Matrix types
 // =============================================================================
 
+/**
+ * @brief Format a matrix with type info and multi-line layout.
+ */
 template <typename T, int R, int C>
 std::string to_string(const Matrix<T, R, C>& m) {
     std::ostringstream oss;
@@ -69,6 +86,9 @@ std::string to_string(const Matrix<T, R, C>& m) {
 // OctahedralVector type
 // =============================================================================
 
+/**
+ * @brief Format an octahedral vector and its decoded XYZ components.
+ */
 template <typename T>
 std::string to_string(const OctahedralVector<T>& oct) {
     std::ostringstream oss;
@@ -84,6 +104,9 @@ std::string to_string(const OctahedralVector<T>& oct) {
 // Extended formatting functions with custom precision
 // =============================================================================
 
+/**
+ * @brief Format a tuple with caller-provided decimal precision.
+ */
 template <template <typename, int> typename Derived, typename T, int N>
 std::string to_string_precision(const Tuple<Derived, T, N>& t, int precision) {
     std::ostringstream oss;
@@ -96,6 +119,9 @@ std::string to_string_precision(const Tuple<Derived, T, N>& t, int precision) {
     return oss.str();
 }
 
+/**
+ * @brief Format a matrix with caller-provided decimal precision.
+ */
 template <typename T, int R, int C>
 std::string to_string_precision(const Matrix<T, R, C>& m, int precision) {
     std::ostringstream oss;
@@ -119,6 +145,9 @@ std::string to_string_precision(const Matrix<T, R, C>& m, int precision) {
 // Compact formatting functions (without type information)
 // =============================================================================
 
+/**
+ * @brief Compact tuple formatter without type information.
+ */
 template <template <typename, int> typename Derived, typename T, int N>
 std::string to_string_compact(const Tuple<Derived, T, N>& t) {
     std::ostringstream oss;
@@ -131,6 +160,9 @@ std::string to_string_compact(const Tuple<Derived, T, N>& t) {
     return oss.str();
 }
 
+/**
+ * @brief Compact single-line matrix formatter.
+ */
 template <typename T, int R, int C>
 std::string to_string_compact(const Matrix<T, R, C>& m) {
     std::ostringstream oss;
@@ -148,16 +180,25 @@ std::string to_string_compact(const Matrix<T, R, C>& m) {
     return oss.str();
 }
 
+/**
+ * @brief Stream insertion for tuple-based math types.
+ */
 template <template <typename, int> typename Derived, typename T, int N>
 std::ostream& operator<<(std::ostream& os, const Tuple<Derived, T, N>& t) {
     return os << to_string(t);
 }
 
+/**
+ * @brief Stream insertion for matrices.
+ */
 template <typename T, int R, int C>
 std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& m) {
     return os << to_string(m);
 }
 
+/**
+ * @brief Stream insertion for octahedral vectors.
+ */
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const OctahedralVector<T>& oct) {
     return os << to_string(oct);

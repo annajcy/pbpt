@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Geometric point type built on top of Tuple and Vector.
+ */
 #pragma once
 
 #include <array>
@@ -140,6 +144,9 @@ public:
 };
 
 // Vector + Point = Point
+/**
+ * @brief Translate a point by a vector.
+ */
 template <typename U, typename T, int N>
     requires(N > 0)
 constexpr auto operator+(const Vector<U, N>& v, const Point<T, N>& p) {
@@ -147,13 +154,21 @@ constexpr auto operator+(const Vector<U, N>& v, const Point<T, N>& p) {
 }
 
 // Aliases
+/// @brief 1D point using the project's default Float type.
 using Pt1  = Point<Float, 1>;
+/// @brief 2D point using the project's default Float type.
 using Pt2  = Point<Float, 2>;
+/// @brief 3D point using the project's default Float type.
 using Pt3  = Point<Float, 3>;
+/// @brief 4D point using the project's default Float type.
 using Pt4  = Point<Float, 4>;
+/// @brief 1D point using the project's default Int type.
 using Pt1i = Point<Int, 1>;
+/// @brief 2D point using the project's default Int type.
 using Pt2i = Point<Int, 2>;
+/// @brief 3D point using the project's default Int type.
 using Pt3i = Point<Int, 3>;
+/// @brief 4D point using the project's default Int type.
 using Pt4i = Point<Int, 4>;
 
 } // namespace pbpt::math

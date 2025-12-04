@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Aggregate header that includes all math components.
+ */
 #pragma once
 
 // Auto-generated file - includes all headers in math

@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Sampling routines for 1D/2D intervals, disks, spheres and hemispheres.
+ */
 #pragma once
 
 #include "point.hpp"

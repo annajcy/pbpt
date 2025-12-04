@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief Wrapper over std::mt19937 for generating N-dimensional uniform and normal samples.
+ */
 #pragma once
 
 #include <concepts>

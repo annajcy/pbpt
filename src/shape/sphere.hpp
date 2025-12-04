@@ -1,3 +1,7 @@
+/**
+ * @file sphere.hpp
+ * @brief Sphere shape implementation.
+ */
 #pragma once
 
 #include <algorithm>
