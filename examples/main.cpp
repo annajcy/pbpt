@@ -12,6 +12,7 @@
 #include "math/vector.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/swatch_reflectances_spectrum.hpp"
+#include "radiometry/radiometric_integrals.hpp"
 #include "shape/shape.hpp"
 
 #include "pbpt.h"
@@ -139,20 +140,20 @@ int main() {
 
     std::cout << "Estimated: " << res_disk << ", Expected: " << pi_v<double> << "\n";
 
-    radiometry::ProjectedHemisphereDomain<double> proj_hemi{};
+    radiometry::CosineWeightedHemisphereDomain<double> proj_hemi{};
     auto res_proj_hemi = radiometry::integrate<double>(proj_hemi, [&n](const math::Vector<double, 3>& wi) {
         return 1.0f;
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res_proj_hemi << ", Expected: " << pi_v<double> << "\n";
 
-    radiometry::ParallelogramAreaDomain<double> para{
+    radiometry::UniformParallelogramAreaDomain<double> para{
         math::Point<double, 3>(-1.0, 4.0, -1.0), 
         math::Vector<double, 3>(2.0, 0.0, 0.0), 
         math::Vector<double, 3>(0.0, 0.0, 2.0)
     };
 
-    std::cout << "PDF: " << para.pdf() << ", Area: " << para.area() << "\n";
+    std::cout << "PDF: " << para.pdf(para.sample_one(rng2d)) << ", Area: " << para.area() << "\n";
 
     auto shading_p = math::Point<double, 3>(0.0, 0.0, 0.0);
     auto shading_p_normal = math::Normal3(0.0, 1.0, 0.0);

@@ -249,23 +249,6 @@ inline math::Point<T, 3> sample_uniform_hemisphere(const math::Point<T, 2>& uv, 
 }
 
 /**
- * @brief Sample a point uniformly distributed on a hemisphere using concentric disk mapping.
- * This method first samples a point on a unit disk using concentric mapping, then computes the z-coordinate
- * to ensure the point lies on the hemisphere.
- * @tparam T Numeric type.
- * @param uv 2D point with coordinates in [0, 1] used for sampling.
- * @param radius Radius of the hemisphere.
- * @return math::Point<T, 3> Sampled point on the hemisphere.
- */
-template<typename T>
-math::Point<T, 3> sample_uniform_hemisphere_concentric(const math::Point<T, 2>& uv, T radius = 1.0) {
-    auto d = math::sample_uniform_disk_concentric(uv);
-    auto r2 = d.x() * d.x() + d.y() * d.y();
-    auto z = std::sqrt(std::max(T(0), T(1) - r2));
-    return math::Point<T, 3>{radius * d.x(), radius * d.y(), radius * z};
-}
-
-/**
  * @brief Compute the probability density function for uniform hemisphere sampling.
  * The PDF is the reciprocal of the surface area of the hemisphere.
  * @tparam T Numeric type.
@@ -275,6 +258,58 @@ math::Point<T, 3> sample_uniform_hemisphere_concentric(const math::Point<T, 2>& 
 template<typename T>
 inline T sample_uniform_hemisphere_pdf(T radius = 1.0) {
     return 1.0 / (2.0 * math::pi_v<T> * radius * radius);
+}
+
+/**
+ * @brief Sample a point with cosine-weighted distribution on a hemisphere using concentric disk mapping.
+ * This corresponds to **Malley's Method**.
+ * * The algorithm works in two steps:
+ * 1. Uniformly sample a point (u, v) on the unit disk using concentric mapping.
+ * 2. Project this point vertically onto the hemisphere: z = sqrt(1 - u^2 - v^2).
+ * * According to Malley's method, this geometric projection generates sample directions 
+ * with a probability density proportional to the cosine of the zenith angle (theta).
+ * This is perfect for importance sampling Lambertian (diffuse) surfaces, as it exactly 
+ * cancels out the cosine term in the rendering equation.
+ *
+ * PDF(omega) = cos(theta) / pi
+ *
+ * @tparam T Numeric type.
+ * @param uv 2D point with coordinates in [0, 1] used for sampling.
+ * @param radius Radius of the hemisphere (usually 1.0 for direction sampling).
+ * @return math::Point<T, 3> Sampled point on the hemisphere.
+ */
+template<typename T>
+math::Point<T, 3> sample_cosine_weighted_hemisphere(const math::Point<T, 2>& uv, T radius = 1.0) {
+    auto d = math::sample_uniform_disk_concentric(uv);
+    auto r2 = d.x() * d.x() + d.y() * d.y();
+    auto z = std::sqrt(std::max(T(0), T(1) - r2));
+    return math::Point<T, 3>{radius * d.x(), radius * d.y(), radius * z};
+}
+
+/**
+ * @brief Compute the probability density function (PDF) for cosine-weighted hemisphere sampling.
+ * * The PDF with respect to solid angle is proportional to the cosine of the zenith angle theta:
+ * p(omega) = cos(theta) / pi
+ * * Ideally, this function pairs with any sampler that generates a cosine-weighted distribution 
+ * (like sample_cosine_hemisphere_concentric).
+ * * @tparam T Numeric type.
+ * @param p The point on the hemisphere to evaluate the PDF at.
+ * @param radius Radius of the hemisphere (default 1.0).
+ * @return T Probability density function value (w.r.t solid angle).
+ */
+template<typename T>
+inline T sample_cosine_weighted_hemisphere_pdf(const math::Point<T, 3>& p, T radius = 1.0) {
+    // Calculate cos(theta). For a point on a sphere, z = r * cos(theta).
+    // Therefore, cos(theta) = z / r.
+    T cos_theta = p.z() / radius;
+
+    // The distribution is only defined for the upper hemisphere (z >= 0).
+    if (cos_theta < 0) {
+        return T(0);
+    }
+
+    // p(omega) = cos(theta) / pi
+    return cos_theta / math::pi_v<T>;
 }
 
 /**
