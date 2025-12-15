@@ -39,6 +39,9 @@ add_executable(test_octahedral test_octahedral.cpp)
 target_link_libraries(test_octahedral PRIVATE pbpt gtest::gtest)
 add_test(NAME test_octahedral COMMAND test_octahedral)
 
+add_executable(test_sampling test_sampling.cpp)
+target_link_libraries(test_sampling PRIVATE pbpt gtest::gtest)
+add_test(NAME test_sampling COMMAND test_sampling)
 
 
 

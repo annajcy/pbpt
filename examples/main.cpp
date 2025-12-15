@@ -12,7 +12,7 @@
 #include "math/vector.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/swatch_reflectances_spectrum.hpp"
-#include "radiometry/radiometric_integrals.hpp"
+#include "integrator/integrator.hpp"
 #include "shape/shape.hpp"
 
 #include "pbpt.h"
@@ -122,32 +122,32 @@ int main() {
     std::cout << "Frame n: " << frame.n() << std::endl;
 
     math::RandomGenerator<double, 2> rng2d(42);
-    radiometry::UniformHemisphereDomain<double> hemisphere{};
+    integrator::UniformHemisphereDomain<double> hemisphere{};
 
     math::Normal3 norm(0.0f, 0.0f, 1.0f);
     int sample_count = 10000;
     auto n = norm.to_vector();
-    auto res = radiometry::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
+    auto res = integrator::integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
         return 1.0 * n.dot(wi);
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res << ", Expected: " << pi_v<double> << "\n";
 
-    radiometry::UniformDiskDomain<double> disk{};
-    auto res_disk = radiometry::integrate<double>(disk, [](const math::Point<double, 2>& p) {
+    integrator::UniformDiskDomain<double> disk{};
+    auto res_disk = integrator::integrate<double>(disk, [](const math::Point<double, 2>& p) {
         return 1.0f;
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res_disk << ", Expected: " << pi_v<double> << "\n";
 
-    radiometry::CosineWeightedHemisphereDomain<double> proj_hemi{};
-    auto res_proj_hemi = radiometry::integrate<double>(proj_hemi, [&n](const math::Vector<double, 3>& wi) {
+    integrator::CosineWeightedHemisphereDomain<double> proj_hemi{};
+    auto res_proj_hemi = integrator::integrate<double>(proj_hemi, [&n](const math::Vector<double, 3>& wi) {
         return 1.0f;
     }, sample_count, rng2d);
 
     std::cout << "Estimated: " << res_proj_hemi << ", Expected: " << pi_v<double> << "\n";
 
-    radiometry::UniformParallelogramAreaDomain<double> para{
+    integrator::UniformParallelogramAreaDomain<double> para{
         math::Point<double, 3>(-1.0, 4.0, -1.0), 
         math::Vector<double, 3>(2.0, 0.0, 0.0), 
         math::Vector<double, 3>(0.0, 0.0, 2.0)
@@ -158,7 +158,7 @@ int main() {
     auto shading_p = math::Point<double, 3>(0.0, 0.0, 0.0);
     auto shading_p_normal = math::Normal3(0.0, 1.0, 0.0);
 
-    auto res_para = radiometry::integrate<double>(para, [&shading_p, &shading_p_normal](const radiometry::SurfaceInfo<double>& surface) {
+    auto res_para = integrator::integrate<double>(para, [&shading_p, &shading_p_normal](const integrator::SurfaceInfo<double>& surface) {
         auto [p, normal] = surface;
         auto n = normal.to_vector();
         auto pn = shading_p_normal.to_vector();

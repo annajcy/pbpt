@@ -7,4 +7,5 @@
 #include "geometry/geometry.h"
 #include "math/math.h"
 #include "radiometry/radiometry.h"
+#include "integrator/integrator.h"
 #include "scene/scene.hpp"

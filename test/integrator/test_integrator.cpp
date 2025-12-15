@@ -3,11 +3,11 @@
 #include <vector>
 
 #include "pbpt.h"
-#include "radiometry/radiometric_integrals.hpp"
+#include "integrator/integrator.hpp"
 
-namespace pbpt::radiometry::testing {
+namespace pbpt::integrator::testing {
 
-TEST(RadiometricIntegrals, UniformHemisphereIntegral_Cosine)
+TEST(Radiometric, UniformHemisphereIntegral_Cosine)
 {
     math::RandomGenerator<double, 2> rng2d(123);
     UniformHemisphereDomain<double> hemisphere;
@@ -19,7 +19,7 @@ TEST(RadiometricIntegrals, UniformHemisphereIntegral_Cosine)
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
-TEST(RadiometricIntegrals, CosineWeightedHemisphereIntegral_Cosine)
+TEST(Radiometric, CosineWeightedHemisphereIntegral_Cosine)
 {
     math::RandomGenerator<double, 2> rng2d(789);
     CosineWeightedHemisphereDomain<double> proj_hemi;
@@ -31,7 +31,7 @@ TEST(RadiometricIntegrals, CosineWeightedHemisphereIntegral_Cosine)
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
-TEST(RadiometricIntegrals, HemisphereCosineVarianceComparison)
+TEST(Radiometric, HemisphereCosineVarianceComparison)
 {
     math::Normal3 n(0.0, 0.0, 1.0);
     const auto n_vec = n.to_vector();
@@ -68,7 +68,7 @@ TEST(RadiometricIntegrals, HemisphereCosineVarianceComparison)
     EXPECT_LT(var_cosine, var_uniform * 0.7); // cosine-weighted should reduce variance noticeably
 }
 
-TEST(RadiometricIntegrals, UniformDiskIntegral_Constant)
+TEST(Radiometric, UniformDiskIntegral_Constant)
 {
     math::RandomGenerator<double, 2> rng2d(456);
     UniformDiskDomain<double> disk;
@@ -79,7 +79,7 @@ TEST(RadiometricIntegrals, UniformDiskIntegral_Constant)
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
-TEST(RadiometricIntegrals, ParallelogramAreaIntegral)
+TEST(Radiometric, ParallelogramAreaIntegral)
 {
     math::RandomGenerator<double, 2> rng2d(321);
     UniformParallelogramAreaDomain<double> para{
