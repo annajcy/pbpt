@@ -15,6 +15,7 @@
 #include "radiometry/spectrum_distribution.hpp"
 #include "sampled_spectrum.hpp"
 #include "constant/xyz_spectrum.hpp"
+#include "constant/lambda.hpp"
 
 namespace pbpt::radiometry {
 
@@ -94,7 +95,7 @@ inline constexpr Color<T> project_spectrum(
     const ResponseSpectrum<ResponseSpectrumType>& response
 ) {
     T r{}, g{}, b{};
-    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+    for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
         r += spectrum.at(lambda) * response.r().at(lambda);
         g += spectrum.at(lambda) * response.g().at(lambda);
         b += spectrum.at(lambda) * response.b().at(lambda);
@@ -116,7 +117,7 @@ inline constexpr Color<T> project_illuminant(
 ) {
     T r{}, g{}, b{};
     T g_integral{};
-    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+    for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
         g_integral += illuminant.at(lambda) * response.g().at(lambda);
         r += illuminant.at(lambda) * response.r().at(lambda);
         g += illuminant.at(lambda) * response.g().at(lambda);
@@ -149,7 +150,7 @@ inline constexpr Color<T> project_reflectance(
 ) {
     T r{}, g{}, b{};
     T g_integral{};
-    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+    for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
         g_integral += illuminant.at(lambda) * response.g().at(lambda);
         r += reflectance.at(lambda) * illuminant.at(lambda) * response.r().at(lambda);
         g += reflectance.at(lambda) * illuminant.at(lambda) * response.g().at(lambda);
@@ -182,7 +183,7 @@ inline constexpr Color<T> project_emission(
 ) {
     T r{}, g{}, b{};
     T g_integral{};
-    for (int lambda = lambda_min<int>; lambda <= lambda_max<int>; ++lambda) {
+    for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
         g_integral += illuminant.at(lambda) * response.g().at(lambda);
         r += emission.at(lambda) * response.r().at(lambda);
         g += emission.at(lambda) * response.g().at(lambda);

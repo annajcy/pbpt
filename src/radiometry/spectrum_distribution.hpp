@@ -13,18 +13,10 @@
 
 #include "math/function.hpp"
 #include "math/polynomial.hpp"
-
 #include "sampled_spectrum.hpp"
+#include "constant/lambda.hpp"
 
 namespace pbpt::radiometry {
-
-/// Minimum wavelength (in nm) used by default tabular spectra.
-template <typename T>
-constexpr T lambda_min = 360;
-
-/// Maximum wavelength (in nm) used by default tabular spectra.
-template <typename T>
-constexpr T lambda_max = 830;
 
 /**
  * @brief CRTP base class for spectra parameterized by wavelength.
@@ -84,7 +76,7 @@ template<typename D1, typename T1, typename D2, typename T2>
 inline auto inner_product(const SpectrumDistribution<D1, T1>& d1, const SpectrumDistribution<D2, T2>& d2) {
     using R = std::common_type_t<T1, T2>;
     R result{};
-    for (int i = lambda_min<int>; i <= lambda_max<int>; ++i) {
+    for (int i = constant::lambda_min<int>; i <= constant::lambda_max<int>; ++i) {
         result += d1.at(i) * d2.at(i);
     }
     return result;

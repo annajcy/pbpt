@@ -1,3 +1,4 @@
+#include <format>
 #include <vector>
 
 #include "camera/projective_camera.hpp"
@@ -6,12 +7,13 @@
 #include "radiometry/color.hpp"
 #include "scene/scene.hpp"
 #include "shape/sphere.hpp"
+#include "utils/info.hpp"
 
 int main() {
     using T = double;
 
-    pbpt::math::Vector<int, 2> resolution(1920, 1080);
-    pbpt::math::Vector<T, 2> film_size(T(2 * 0.0192f), T(2 * 0.0108f));
+    pbpt::math::Vector<int, 2> resolution(800, 600);
+    pbpt::math::Vector<T, 2> film_size(T(2 * resolution.x() * 1e-5), T(2 * resolution.y() * 1e-5)); // 20 microns per pixel
     pbpt::camera::ThinLensPerspectiveCamera<T> camera(
         resolution,
         film_size,
@@ -41,7 +43,8 @@ int main() {
         {spheres[2], pbpt::radiometry::RGB<T>(T(0.1f), T(0.1f), T(0.9f))}  
     };
 
+    std::cout << pbpt::utils::system_info_string() << std::endl;
     pbpt::scene::SimpleScene<T> scene(camera, scene_objects, pbpt::radiometry::constant::SwatchReflectance::Black);
-    scene.render("output/simple_scene_tent.exr");
+    scene.render(std::format("output/simple_scene_tent_{}.exr", pbpt::utils::current_datetime_string()));
     return 0;
 }

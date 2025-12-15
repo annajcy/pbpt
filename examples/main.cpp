@@ -264,13 +264,13 @@ int main() {
     constexpr int round_N = 1000;
     for (int i = 0; i < round_N; i ++) {
         math::RandomGenerator<double, sample_N> rng;
-        auto wl_r = rng.generate_uniform(radiometry::lambda_min<double>, radiometry::lambda_max<double>);
+        auto wl_r = rng.generate_uniform(radiometry::constant::lambda_min<double>, radiometry::constant::lambda_max<double>);
         auto wl = radiometry::SampledWavelength<double, sample_N>(math::Vector<double, sample_N>::from_array(wl_r));
 
         auto xyz = radiometry::XYZ<double>::from_sampled_spectrum(
             D65.sample(wl),
             wl,
-            radiometry::SampledPdf<double, sample_N>(math::Vector<double, sample_N>::filled(1 / (radiometry::lambda_max<double> - radiometry::lambda_min<double>)))
+            radiometry::SampledPdf<double, sample_N>(math::Vector<double, sample_N>::filled(1 / (radiometry::constant::lambda_max<double> - radiometry::constant::lambda_min<double>)))
         );
 
         //std::cout << "XYZ from Sampled Spectrum: " << xyz * 100 / xyz.y() << std::endl;

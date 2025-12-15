@@ -14,6 +14,8 @@
 #include "spectrum_distribution.hpp"
 #include "color.hpp"
 #include "color_space.hpp"
+#include "constant/illuminant_spectrum.hpp"
+#include "constant/standard_color_spaces.hpp"
 
 namespace pbpt::radiometry {
 
@@ -203,6 +205,44 @@ template<typename T>
 inline ScaledRGB<T> scale_unbounded_rgb(const RGB<T>& rgb) {
     T max_component = std::max({rgb.r(), rgb.g(), rgb.b()});
     return ScaledRGB<T>{rgb / (2 * max_component), 2 * max_component};
+}
+
+
+/**
+ * @brief Optimize a smooth sigmoid-polynomial spectrum to match an RGB color.
+ *
+ * Finds coefficients of an @c RGBSigmoidPolynomialNormalized that best
+ * reproduce the given RGB in the standard sRGB color space under the
+ * CIE D65 illuminant.
+ */
+template<typename T>
+radiometry::RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
+    const radiometry::RGB<T>& rgb
+) {
+    auto optim_res = radiometry::optimize_albedo_rgb_sigmoid_polynomial(
+        rgb,
+        radiometry::constant::sRGB<T>,
+        radiometry::constant::CIE_D65_ilum<T>
+    );
+    auto coeff = optim_res.normalized_coeffs;
+    return radiometry::RGBSigmoidPolynomialNormalized<T>{coeff};
+}
+
+/**
+ * @brief Create an albedo spectrum from an RGB color using the fitted model.
+ *
+ * The resulting @c RGBAlbedoSpectrumDistribution encodes a reflectance
+ * spectrum whose perceived color matches the given RGB (approximately)
+ * under the reference illuminant.
+ */
+template<typename T>
+radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> create_albedo_spectrum(
+    const radiometry::RGB<T>& rgb
+) {
+    return radiometry::RGBAlbedoSpectrumDistribution<
+        T,
+        radiometry::RGBSigmoidPolynomialNormalized
+    >(optimize_rgb_to_rsp(rgb));
 }
 
 }

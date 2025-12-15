@@ -11,6 +11,7 @@
 #include "camera/pixel_filter.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "camera/projective_camera.hpp"
+#include "math/random_generator.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
 #include "radiometry/color_spectrum_optimizer.hpp"
@@ -20,7 +21,6 @@
 #include "radiometry/constant/xyz_spectrum.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 #include "radiometry/spectrum_distribution.hpp"
-#include "radiometry/function.hpp"
 #include "shape/shape.hpp"
 #include "shape/sphere.hpp"
 #include "utils/exr_writer.hpp"
@@ -55,7 +55,7 @@ private:
     using FilmType = camera::RGBFilm<T, PixelSensorType>;
     using CameraType = camera::ThinLensPerspectiveCamera<T>;
 
-    static constexpr int SpectrumSampleCount = 10;
+    static constexpr int SpectrumSampleCount = 6;
     using SampledSpectrumType = radiometry::SampledSpectrum<T, SpectrumSampleCount>;
     using SampledWavelengthType = radiometry::SampledWavelength<T, SpectrumSampleCount>;
     using SampledPdfType = radiometry::SampledPdf<T, SpectrumSampleCount>;
@@ -111,8 +111,18 @@ public:
 
         FilmType film(resolution, physical_size, pixel_sensor);
         const math::Point<T, 2> lens_sample(T(0.5), T(0.5));
-        const auto wavelengths = radiometry::create_wavelength_samples_uniform<T, SpectrumSampleCount>();
-        const auto pdf = radiometry::create_wavelength_pdf_uniform<T, SpectrumSampleCount>();
+        
+
+        math::RandomGenerator<T, 1> rng;
+
+        const auto wavelengths = radiometry::sample_visible_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
+        const auto pdf = radiometry::sample_visible_wavelengths_pdf(wavelengths);
+
+        std::cout << "wavelengths: " << wavelengths << std::endl;
+        std::cout << "pdf: " << pdf << std::endl;
+
+        // const auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
+        // const auto pdf = radiometry::sample_uniform_wavelengths_pdf(wavelengths);
 
         const int width = resolution.x();
         const int height = resolution.y();
