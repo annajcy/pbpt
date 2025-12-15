@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include <concepts>
 #include <random>
 
 namespace pbpt::math {
@@ -37,7 +36,7 @@ public:
     /**
      * @brief Generates a vector of N uniform samples in [min, max].
      */
-    std::array<T, N> generate_uniform(T min, T max) {
+    std::array<T, N> generate_uniform(T min = T(0), T max = T(1)) {
         std::uniform_real_distribution<T> dist(min, max);
         std::array<T, N> result;
         for (auto& val : result) {
@@ -49,13 +48,53 @@ public:
     /**
      * @brief Generates a vector of N normal samples with given mean and stddev.
      */
-    std::array<T, N> generate_normal(T mean, T stddev) {
+    std::array<T, N> generate_normal(T mean = T(0), T stddev = T(1)) {
         std::normal_distribution<T> dist(mean, stddev);
         std::array<T, N> result;
         for (auto& val : result) {
             val = dist(engine);
         }
         return result;
+    }
+};
+
+/**
+ * @brief Specialization of RandomGenerator for 1D sampling.
+ *
+ * Provides a simpler interface for generating single scalar samples.
+ *
+ * @tparam T Scalar type.
+ */
+
+template <typename T>
+class RandomGenerator<T, 1> {
+private:
+    /// Underlying Mersenne Twister engine.
+    std::mt19937 engine{};
+public:
+    /// Number of components generated per call.
+    static constexpr int dimensions = 1;
+
+    /// Constructs a generator seeded from `std::random_device`.
+    RandomGenerator() : engine(std::random_device{}()) {}
+
+    /// Constructs a generator with an explicit seed.
+    RandomGenerator(unsigned int seed) : engine(seed) {}
+
+    /**
+     * @brief Generates a single uniform sample in [min, max].
+     */
+    T generate_uniform(T min = T(0), T max = T(1)) {
+        std::uniform_real_distribution<T> dist(min, max);
+        return dist(engine);
+    }
+
+    /**
+     * @brief Generates a single normal sample with given mean and stddev.
+     */
+    T generate_normal(T mean = T(0), T stddev = T(1)) {
+        std::normal_distribution<T> dist(mean, stddev);
+        return dist(engine);
     }
 };
 

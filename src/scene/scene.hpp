@@ -130,7 +130,7 @@ public:
                     math::RandomGenerator<T, 1> rng;
                     // const auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
                     // const auto pdf = radiometry::sample_uniform_wavelengths_pdf(wavelengths);
-                    const auto wavelengths = radiometry::sample_visible_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
+                    const auto wavelengths = radiometry::sample_visible_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1)));
                     const auto pdf = radiometry::sample_visible_wavelengths_pdf(wavelengths);
                     auto spectrum = trace_ray(ray, wavelengths);
                     film.template add_sample<SpectrumSampleCount>(pixel, spectrum, wavelengths, pdf, filtered_sample.weight);
