@@ -43,8 +43,8 @@ int main() {
         {spheres[2], pbpt::radiometry::RGB<T>(T(0.1f), T(0.1f), T(0.9f))}  
     };
 
-    std::cout << pbpt::utils::system_info_string() << std::endl;
+    std::cout << to_string(pbpt::utils::system_info()) << std::endl;
     pbpt::scene::SimpleScene<T> scene(camera, scene_objects, pbpt::radiometry::constant::SwatchReflectance::Black);
-    scene.render(std::format("output/simple_scene_tent_{}.exr", pbpt::utils::current_datetime_string()));
+    scene.render(std::format("output/simple_scene_tent_{}.exr", to_string(pbpt::utils::current_datetime())));
     return 0;
 }

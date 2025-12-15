@@ -55,7 +55,7 @@ private:
     using FilmType = camera::RGBFilm<T, PixelSensorType>;
     using CameraType = camera::ThinLensPerspectiveCamera<T>;
 
-    static constexpr int SpectrumSampleCount = 6;
+    static constexpr int SpectrumSampleCount = 4;
     using SampledSpectrumType = radiometry::SampledSpectrum<T, SpectrumSampleCount>;
     using SampledWavelengthType = radiometry::SampledWavelength<T, SpectrumSampleCount>;
     using SampledPdfType = radiometry::SampledPdf<T, SpectrumSampleCount>;
@@ -111,18 +111,8 @@ public:
 
         FilmType film(resolution, physical_size, pixel_sensor);
         const math::Point<T, 2> lens_sample(T(0.5), T(0.5));
-        
 
-        math::RandomGenerator<T, 1> rng;
-
-        const auto wavelengths = radiometry::sample_visible_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
-        const auto pdf = radiometry::sample_visible_wavelengths_pdf(wavelengths);
-
-        std::cout << "wavelengths: " << wavelengths << std::endl;
-        std::cout << "pdf: " << pdf << std::endl;
-
-        // const auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
-        // const auto pdf = radiometry::sample_uniform_wavelengths_pdf(wavelengths);
+       
 
         const int width = resolution.x();
         const int height = resolution.y();
@@ -137,6 +127,11 @@ public:
                 for (const auto& filtered_sample : m_pixel_filter.get_camera_samples(pixel, 2, 2)) {
                     auto sample = camera::CameraSample<T>::create_thinlens_sample(filtered_sample.film_position, lens_sample);
                     auto ray = m_camera.generate_ray(sample);
+                    math::RandomGenerator<T, 1> rng;
+                    // const auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
+                    // const auto pdf = radiometry::sample_uniform_wavelengths_pdf(wavelengths);
+                    const auto wavelengths = radiometry::sample_visible_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
+                    const auto pdf = radiometry::sample_visible_wavelengths_pdf(wavelengths);
                     auto spectrum = trace_ray(ray, wavelengths);
                     film.template add_sample<SpectrumSampleCount>(pixel, spectrum, wavelengths, pdf, filtered_sample.weight);
                 }

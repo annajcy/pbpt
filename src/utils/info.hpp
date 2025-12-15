@@ -3,6 +3,7 @@
 #include <array>
 #include <chrono>
 #include <ctime>
+#include <format>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -28,22 +29,6 @@
 #endif
 
 namespace pbpt::utils {
-
-inline std::string current_datetime_string() {
-    const auto now = std::chrono::system_clock::now();
-    const std::time_t time = std::chrono::system_clock::to_time_t(now);
-
-    std::tm tm{};
-#if defined(_WIN32)
-    localtime_s(&tm, &time);
-#else
-    localtime_r(&time, &tm);
-#endif
-
-    std::array<char, 20> buffer{};
-    const std::size_t written = std::strftime(buffer.data(), buffer.size(), "%Y-%m-%d %H:%M:%S", &tm);
-    return written > 0 ? std::string(buffer.data(), written) : std::string{};
-}
 
 struct DateTime {
     int year{};
@@ -75,20 +60,16 @@ inline DateTime current_datetime() {
     return dt;
 }
 
+inline std::string to_string(const DateTime &dt) {
+    return std::format("{:04}-{:02}-{:02}_{:02}:{:02}:{:02}",
+        dt.year, dt.month, dt.day,
+        dt.hour, dt.minute, dt.second);
+}
+
 inline std::string datetime_string(const DateTime &dt) {
-    char buffer[20];
-    std::snprintf(
-        buffer,
-        sizeof(buffer),
-        "%04d-%02d-%02d %02d:%02d:%02d",
-        dt.year,
-        dt.month,
-        dt.day,
-        dt.hour,
-        dt.minute,
-        dt.second
-    );
-    return std::string(buffer);
+    return std::format("{:04}-{:02}-{:02}_{:02}:{:02}:{:02}",
+        dt.year, dt.month, dt.day,
+        dt.hour, dt.minute, dt.second);
 }
 
 inline void trim_in_place(std::string &value) {
@@ -314,12 +295,9 @@ inline SystemInfo system_info() {
     return info;
 }
 
-inline std::string system_info_string() {
-    const auto info = system_info();
-
+inline std::string to_string(const SystemInfo &info) {
     std::string result;
     result.reserve(128);
-    result.append("Date: ").append(datetime_string(info.datetime)).append("\n");
     result.append("OS: ").append(info.os);
     result.append(" (").append(info.architecture).append(")\n");
     result.append("CPU: ").append(info.cpu);
