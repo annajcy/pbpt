@@ -14,7 +14,7 @@
 #include "math/random_generator.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
-#include "radiometry/color_spectrum_optimizer.hpp"
+#include "radiometry/color_spectrum_lut.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
 #include "radiometry/constant/swatch_reflectances_spectrum.hpp"

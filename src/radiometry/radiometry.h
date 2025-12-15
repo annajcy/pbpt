@@ -14,7 +14,7 @@
 #include "color.hpp"
 #include "color_space.hpp"
 #include "color_spectrum_optimizer.hpp"
-#include "rgb_to_spectrum_lut.hpp"
+#include "color_spectrum_lut.hpp"
 #include "sampled_spectrum.hpp"
 #include "spectrum_distribution.hpp"
 #include "spectrum_loader.hpp"

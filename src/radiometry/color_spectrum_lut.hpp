@@ -124,15 +124,13 @@ public:
     }
 };
 
-namespace rgb2spec_data {
-
+///sRGB to spectrum lookup table data generated from PBRT's rgb2spec
 extern const int sRGBToSpectrumTable_Res;
 extern const float sRGBToSpectrumTable_Scale[64];
 extern const float sRGBToSpectrumTable_Data[3][64][64][64][3];
 
 /// Access the global sRGB rgb2spec lookup table.
 inline const RGBToSpectrumLUT& srgb_to_spectrum_table() {
-    using namespace rgb2spec_data;
     static_assert(RGBToSpectrumLUT::res == 64, "Unexpected LUT resolution.");
     static const RGBToSpectrumLUT lut(sRGBToSpectrumTable_Scale, &sRGBToSpectrumTable_Data);
     return lut;
@@ -146,6 +144,20 @@ inline RGBSigmoidPolynomialNormalized<T> lookup_srgb_to_rsp(const RGB<T>& rgb) {
     return srgb_to_spectrum_table().lookup(rgb);
 }
 
+/**
+ * @brief Create an albedo spectrum from an sRGB color using the fitted model by lookup LUT and interpolation.
+ *
+ * The resulting @c RGBAlbedoSpectrumDistribution encodes a reflectance
+ * spectrum whose perceived color matches the given RGB (approximately)
+ * under the reference illuminant.
+ */
+template<typename T>
+radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum(
+    const radiometry::RGB<T>& rgb
+) {
+    return radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(
+        lookup_srgb_to_rsp(rgb)
+    );
 }
 
 }  // namespace pbpt::radiometry

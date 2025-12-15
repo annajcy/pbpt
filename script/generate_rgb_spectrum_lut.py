@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--namespace",
-        default="pbpt::radiometry::rgb2spec_data",
+        default="pbpt::radiometry",
         help="Namespace to wrap generated symbols into.",
     )
     args = parser.parse_args(argv)
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         // Source: {args.input}
         // Data originates from PBRT's rgb2spec optimization (Apache-2.0).
 
-        #include "radiometry/rgb_to_spectrum_lut.hpp"
+        #include "radiometry/color_spectrum_lut.hpp"
 
         """
     )

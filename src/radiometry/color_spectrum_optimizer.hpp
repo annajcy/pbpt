@@ -14,7 +14,6 @@
 #include "spectrum_distribution.hpp"
 #include "color.hpp"
 #include "color_space.hpp"
-#include "rgb_to_spectrum_lut.hpp"
 #include "constant/illuminant_spectrum.hpp"
 #include "constant/standard_color_spaces.hpp"
 
@@ -230,24 +229,7 @@ radiometry::RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
 }
 
 /**
- * @brief Create an albedo spectrum from an RGB color using the fitted model by lookup LUT and interpolation.
- *
- * The resulting @c RGBAlbedoSpectrumDistribution encodes a reflectance
- * spectrum whose perceived color matches the given RGB (approximately)
- * under the reference illuminant.
- */
-template<typename T>
-radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum(
-    const radiometry::RGB<T>& rgb
-) {
-    return radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(
-        radiometry::rgb2spec_data::lookup_srgb_to_rsp(rgb)
-    );
-}
-
-
-/**
- * @brief Create an albedo spectrum from an RGB color using the fitted model by optimization.
+ * @brief Create an albedo spectrum from an sRGB color using the fitted model by optimization.
  *
  * The resulting @c RGBAlbedoSpectrumDistribution encodes a reflectance
  * spectrum whose perceived color matches the given RGB (approximately)

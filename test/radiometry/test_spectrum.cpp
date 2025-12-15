@@ -705,7 +705,7 @@ TEST_F(SpectrumTest, RGBToSpectrumLookupMatchesRGB) {
     auto srgb = sRGB<double>;
 
     auto check_match = [&](const RGB<double>& target) {
-        auto rsp = pbpt::radiometry::rgb2spec_data::lookup_srgb_to_rsp(target);
+        auto rsp = pbpt::radiometry::lookup_srgb_to_rsp(target);
         RGBAlbedoSpectrumDistribution<double, RGBSigmoidPolynomialNormalized> albedo(rsp);
         auto xyz = XYZ<double>::from_reflectance(albedo, D65);
         auto reconstructed = srgb.to_rgb(xyz);
