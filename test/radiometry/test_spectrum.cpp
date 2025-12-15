@@ -700,6 +700,26 @@ TEST_F(SpectrumTest, RGBOptimizationPipeline) {
     EXPECT_NEAR(rgb_from_optimized.b(), target_rgb.b(), 1e-2);
 }
 
+TEST_F(SpectrumTest, RGBToSpectrumLookupMatchesRGB) {
+    auto D65 = CIE_D65_ilum<double>;
+    auto srgb = sRGB<double>;
+
+    auto check_match = [&](const RGB<double>& target) {
+        auto rsp = pbpt::radiometry::rgb2spec_data::lookup_srgb_to_rsp(target);
+        RGBAlbedoSpectrumDistribution<double, RGBSigmoidPolynomialNormalized> albedo(rsp);
+        auto xyz = XYZ<double>::from_reflectance(albedo, D65);
+        auto reconstructed = srgb.to_rgb(xyz);
+
+        EXPECT_NEAR(reconstructed.r(), target.r(), 1.5e-2);
+        EXPECT_NEAR(reconstructed.g(), target.g(), 1.5e-2);
+        EXPECT_NEAR(reconstructed.b(), target.b(), 1.5e-2);
+    };
+
+    check_match(RGB<double>(0.25, 0.6, 0.1));
+    check_match(RGB<double>(0.8, 0.25, 0.55));
+    check_match(RGB<double>(0.5, 0.5, 0.5));
+}
+
 TEST_F(SpectrumTest, UnboundedRGBSpectrumWorkflow) {
     // Test unbounded RGB spectrum workflow from function_test.cpp
     auto D65 = CIE_D65_ilum<double>;

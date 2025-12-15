@@ -88,7 +88,7 @@ public:
         m_background_reflectance(background_reflectance) {
         for (const auto& obj : m_scene_objects) {
             m_sphere_albedo_spectra.emplace_back(
-                radiometry::create_albedo_spectrum(obj.rgb_albedo)
+                radiometry::create_srgb_albedo_spectrum(obj.rgb_albedo)
             );
         }
     }

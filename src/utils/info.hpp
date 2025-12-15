@@ -61,13 +61,7 @@ inline DateTime current_datetime() {
 }
 
 inline std::string to_string(const DateTime &dt) {
-    return std::format("{:04}-{:02}-{:02}_{:02}:{:02}:{:02}",
-        dt.year, dt.month, dt.day,
-        dt.hour, dt.minute, dt.second);
-}
-
-inline std::string datetime_string(const DateTime &dt) {
-    return std::format("{:04}-{:02}-{:02}_{:02}:{:02}:{:02}",
+    return std::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
         dt.year, dt.month, dt.day,
         dt.hour, dt.minute, dt.second);
 }
