@@ -7,7 +7,7 @@
 #include "radiometry/color.hpp"
 #include "scene/scene.hpp"
 #include "shape/sphere.hpp"
-#include "utils/info.hpp"
+#include "utils/system_info.hpp"
 
 int main() {
     using T = double;
