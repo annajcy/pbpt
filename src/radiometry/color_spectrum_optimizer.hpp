@@ -216,16 +216,16 @@ inline ScaledRGB<T> scale_unbounded_rgb(const RGB<T>& rgb) {
  * CIE D65 illuminant.
  */
 template<typename T>
-radiometry::RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
-    const radiometry::RGB<T>& rgb
+RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
+    const RGB<T>& rgb
 ) {
-    auto optim_res = radiometry::optimize_albedo_rgb_sigmoid_polynomial(
+    auto optim_res = optimize_albedo_rgb_sigmoid_polynomial(
         rgb,
-        radiometry::constant::sRGB<T>,
-        radiometry::constant::CIE_D65_ilum<T>
+        constant::sRGB<T>,
+        constant::CIE_D65_ilum<T>
     );
     auto coeff = optim_res.normalized_coeffs;
-    return radiometry::RGBSigmoidPolynomialNormalized<T>{coeff};
+    return RGBSigmoidPolynomialNormalized<T>{coeff};
 }
 
 /**
@@ -236,10 +236,10 @@ radiometry::RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
  * under the reference illuminant.
  */
 template<typename T>
-radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum_by_optimization(
-    const radiometry::RGB<T>& rgb
+RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum_by_optimization(
+    const RGB<T>& rgb
 ) {
-    return radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(
+    return RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized>(
         optimize_rgb_to_rsp(rgb)
     );
 }

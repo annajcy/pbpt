@@ -152,10 +152,10 @@ inline RGBSigmoidPolynomialNormalized<T> lookup_srgb_to_rsp(const RGB<T>& rgb) {
  * under the reference illuminant.
  */
 template<typename T>
-radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum(
-    const radiometry::RGB<T>& rgb
+RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum(
+    const RGB<T>& rgb
 ) {
-    return radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(
+    return RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized>(
         lookup_srgb_to_rsp(rgb)
     );
 }
