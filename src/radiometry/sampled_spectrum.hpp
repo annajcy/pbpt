@@ -5,6 +5,7 @@
 #pragma once
 
 #include <array>
+#include <algorithm>
 #include <cmath>
 #include <utility>
 #include "math/sampling.hpp"
@@ -167,7 +168,8 @@ inline SampledPdf<T, N> sample_uniform_wavelengths_pdf(const SampledWavelength<T
  */
 template<typename T>
 inline T sample_visible_wavelengths(T u) {
-    return T(538) - T(138.888889) * std::atanh(T(0.85691062) - T(1.82750197) * u);
+    T lambda = T(538) - T(138.888889) * std::atanh(T(0.85691062) - T(1.82750197) * u);
+    return std::clamp(lambda, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
 }
 
 /**

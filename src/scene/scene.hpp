@@ -135,8 +135,8 @@ public:
                     auto spectrum = trace_ray(ray, wavelengths);
                     film.template add_sample<SpectrumSampleCount>(pixel, spectrum, wavelengths, pdf, filtered_sample.weight);
                 }
-                progress_bar.update(std::cout);
             }
+            progress_bar.update(std::cout, width);
         }
 
         progress_bar.finish(std::cout);
