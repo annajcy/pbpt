@@ -46,6 +46,23 @@ private:
     RenderSpace m_render_space{RenderSpace::CameraWorld};
 
 public:
+    /// Create from a camera-to-world transform.
+    static RenderTransform<T> from_camera_to_world(
+        const geometry::Transform<T>& camera_to_world, 
+        RenderSpace space = RenderSpace::CameraWorld
+    ) {
+        return RenderTransform<T>(camera_to_world, space);
+    }
+
+    /// Create from a world-to-camera transform.
+    static RenderTransform<T> from_world_to_camera(
+        const geometry::Transform<T>& world_to_camera, 
+        RenderSpace space = RenderSpace::CameraWorld
+    ) {
+        return RenderTransform<T>(world_to_camera.inversed(), space);
+    }
+
+public:
     /**
      * @brief Construct render transforms from a camera-to-world transform.
      *

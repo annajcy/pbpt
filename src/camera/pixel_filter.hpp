@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <vector>
 #include "math/point.hpp"
@@ -38,7 +39,7 @@ public:
         math::Point<T, 2> film_position;
         /// Offset from the pixel center in film coordinates.
         math::Vector<T, 2> offset;
-        /// Monte Carlo weight, typically f(x) / q(x).
+        /// Monte Carlo weight, typically f(x) / q(x) where f(x) is the reconstruction filter and q(x) is the sampling PDF.
         T weight;
     };
 
@@ -145,7 +146,10 @@ public:
      * @param v_sample_count Number of samples in the v direction.
      * @return Vector of UV points in [0, 1)^2.
      */
-    std::vector<math::Point<T, 2>> get_uv_samples(int u_sample_count, int v_sample_count) const {
+    std::vector<math::Point<T, 2>> get_uv_samples(
+        int u_sample_count, 
+        int v_sample_count
+    ) const {
         std::vector<math::Point<T, 2>> uvs;
         double u_stride = 1.0 / static_cast<T>(u_sample_count);
         double v_stride = 1.0 / static_cast<T>(v_sample_count);
@@ -155,6 +159,31 @@ public:
                 T u_coord = 0.5 * u_stride + static_cast<T>(u) * u_stride;
                 T v_coord = 0.5 * v_stride + static_cast<T>(v) * v_stride;
                 uvs.emplace_back(u_coord, v_coord);
+            }
+        }
+        return uvs;
+    }
+
+    /**
+    * @brief Generate a regular grid of UV samples over [0, 1)^2.
+    *
+    * The samples correspond to the centers of a @p USampleCount by
+    * @p VSampleCount grid in UV space.
+    *
+    * @tparam USampleCount Number of samples in the u direction.
+    * @tparam VSampleCount Number of samples in the v direction.
+    * @return Array of UV points in [0, 1)^2.
+    */
+    template<int USampleCount, int VSampleCount>
+    std::array<math::Point<T, 2>, USampleCount * VSampleCount> get_uv_samples() const {
+        std::array<math::Point<T, 2>, USampleCount * VSampleCount> uvs{};
+        double u_stride = 1.0 / static_cast<T>(USampleCount);
+        double v_stride = 1.0 / static_cast<T>(VSampleCount);
+        for (int v = 0; v < VSampleCount; ++v) {
+            for (int u = 0; u < USampleCount; ++u) {
+                T u_coord = 0.5 * u_stride + static_cast<T>(u) * u_stride;
+                T v_coord = 0.5 * v_stride + static_cast<T>(v) * v_stride;
+                uvs[v * USampleCount + u] = math::Point<T, 2>(u_coord, v_coord);
             }
         }
         return uvs;
@@ -182,6 +211,25 @@ public:
         samples.reserve(uvs.size());
         for (const auto& uv : uvs) {
             samples.push_back(sample_film_position(pixel, uv));
+        }
+        return samples;
+    }
+
+    /**
+     * @brief Generate multiple filtered camera samples within a pixel.
+     * @tparam USampleCount  Number of samples in the u direction.
+     * @tparam VSampleCount  Number of samples in the v direction.
+     * @param pixel           Integer pixel coordinates.
+     * @return Array of filtered camera samples for the pixel.
+     */
+    template<int USampleCount, int VSampleCount>
+    std::array<FilteredCameraSample, USampleCount * VSampleCount> get_camera_samples(
+        const math::Point<int, 2>& pixel
+    ) const {
+        std::array<FilteredCameraSample, USampleCount * VSampleCount> samples;
+        auto uvs = get_uv_samples<USampleCount, VSampleCount>();
+        for (int i = 0; i < USampleCount * VSampleCount; ++i) {
+            samples[i] = sample_film_position(pixel, uvs[i]);
         }
         return samples;
     }
@@ -349,5 +397,8 @@ public:
         return (T(1) - ax) * (T(1) - ay);
     }
 };
+
+
+//TODO: Add GaussianFilter
 
 }

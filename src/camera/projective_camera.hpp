@@ -89,8 +89,8 @@ public:
      * @param p 2D viewport coordinate.
      * @return 3D point in camera space on the z = 0 plane.
      */
-    math::Point<T, 3> apply_viewport_to_camera(const math::Point<T, 2>& p) const {
-        math::Homogeneous<T, 4> hp = math::Homogeneous<T, 4>::from_point(math::Point<T, 3>(p.x(), p.y(), 0.0));
+    math::Point<T, 3> apply_viewport_to_camera(const math::Point<T, 2>& p, T viewport_depth = T{0.0}) const {
+        math::Homogeneous<T, 4> hp = math::Homogeneous<T, 4>::from_point(math::Point<T, 3>(p.x(), p.y(), viewport_depth));
         auto hc = viewport_to_camera().transform_homogeneous(hp);
         return hc.to_point();
     }
@@ -169,9 +169,7 @@ public:
      *
      * @param projection CameraProjection defining the projection.
      */
-    ProjectiveCamera(
-        const CameraProjection<T>& projection
-    ) : m_projection(projection) {}
+    ProjectiveCamera(const CameraProjection<T>& projection) : m_projection(projection) {}
 
     /// Get the camera projection.
     const CameraProjection<T>& projection() const {
@@ -296,14 +294,18 @@ public:
         const math::Vector<T, 2>& film_physical_size,
         T near, T far
     ) : ProjectiveCamera<OrthographicCamera<T>, T>(
-        create_orthographic_projection(film_resolution, film_physical_size, near, far)
+        create_orthographic_projection(
+            film_resolution, 
+            film_physical_size, 
+            near, far
+        )
     ) {}
 
 private:
     /// Generate a primary ray for an orthographic camera.
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto origin = this->m_projection.apply_viewport_to_camera(sample.p_film);
-        auto direction = math::Vector<T, 3>(0, 0, 1);
+        auto direction = math::Vector<T, 3>(0, 0, -1);
         return geometry::Ray<T, 3>(origin, direction);
     }
 
@@ -470,10 +472,13 @@ public:
         const math::Vector<T, 2>& film_physical_size,
         T near, T far, T lens_radius, T focal_distance
     ) : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
-            create_orthographic_projection(film_resolution, film_physical_size, near, far)
-        ), 
-        m_lens_radius(lens_radius), 
-        m_focal_distance(focal_distance) {}
+            create_orthographic_projection(
+                film_resolution, 
+                film_physical_size, 
+                near, far
+            )
+        ), m_lens_radius(lens_radius), 
+            m_focal_distance(focal_distance) {}
     
 private:
     /**
@@ -487,13 +492,19 @@ private:
      *    point to the focus point.
      */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
+        // 1. 获取视口映射点 (位于近平面，但这不重要，我们只需要它的 x 和 y)
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
-        auto pinhole_ray = geometry::Ray<T, 3>(p_camera, math::Vector<T, 3>(0, 0, 1));
-        T t = m_focal_distance / pinhole_ray.direction().z();
-        auto p_focus = pinhole_ray.at(t);
 
+        // 2. [优化] 直接构造焦点
+        // 正交投影特性：焦点产生的 X,Y 与胶片点一致。
+        // 焦平面深度：严格位于 Z = -m_focal_distance
+        auto p_focus = math::Point<T, 3>(p_camera.x(), p_camera.y(), -m_focal_distance);
+
+        // 3. 采样透镜 (Lens)
         auto p_lens = math::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
+
+        // 4. 生成射线
         auto direction = (p_focus - origin).normalized();
         return geometry::Ray<T, 3>(origin, direction);
     }
@@ -604,7 +615,7 @@ private:
         auto p_lens = math::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
         auto pinhole_ray = geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), p_camera);
-        T t = m_focal_distance / pinhole_ray.direction().z();
+        T t = -m_focal_distance / pinhole_ray.direction().z();
         auto p_focus = pinhole_ray.at(t);
         auto direction = (p_focus - origin).normalized();
         return geometry::Ray<T, 3>(origin, direction);

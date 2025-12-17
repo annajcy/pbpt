@@ -1,4 +1,6 @@
-# Physically Based Path Tracer (PBPT)
+# PBPT: A Physically Based Path Tracer 
+
+**WIP**
 
 Yet another pbrt, but with a focus on modern C++ and extensibility.
 

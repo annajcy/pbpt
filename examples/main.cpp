@@ -12,7 +12,7 @@
 #include "math/vector.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/swatch_reflectances_spectrum.hpp"
-#include "integrator/integrator.hpp"
+#include "integrator/domain.hpp"
 #include "shape/shape.hpp"
 
 #include "pbpt.h"
@@ -153,7 +153,7 @@ int main() {
         math::Vector<double, 3>(0.0, 0.0, 2.0)
     };
 
-    std::cout << "PDF: " << para.pdf(para.sample_one(rng2d)) << ", Area: " << para.area() << "\n";
+    std::cout << "PDF: " << para.pdf(para.sample(rng2d)) << ", Area: " << para.area() << "\n";
 
     auto shading_p = math::Point<double, 3>(0.0, 0.0, 0.0);
     auto shading_p_normal = math::Normal3(0.0, 1.0, 0.0);

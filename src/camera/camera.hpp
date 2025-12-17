@@ -12,8 +12,8 @@ namespace pbpt::camera {
  * @brief Sample on the film plane and (optionally) the lens.
  *
  * This structure encodes where a ray should intersect the virtual film
- * (`p_film`) in raster coordinates and, for thin-lens cameras, where on
- * the lens aperture the ray should originate (`p_lens`).
+ * (p_film) in raster coordinates and, for thin-lens cameras, where on
+ * the lens aperture the ray should originate (p_lens).
  *
  * @tparam T Scalar type (e.g. float or double).
  */

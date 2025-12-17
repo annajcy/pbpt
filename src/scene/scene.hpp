@@ -11,6 +11,7 @@
 #include "camera/pixel_filter.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "camera/projective_camera.hpp"
+#include "geometry/transform.hpp"
 #include "math/random_generator.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
@@ -97,7 +98,10 @@ public:
      * @brief Render the scene to an EXR file.
      * @param output_path Destination path (default: `scene.exr`).
      */
-    void render(const std::filesystem::path& output_path = std::filesystem::path("scene.exr")) const {
+    void render(
+        const std::filesystem::path& output_path = std::filesystem::path("scene.exr"), 
+        const geometry::Transform<T>& camera_to_render = geometry::Transform<T>::identity()
+    ) const {
         auto resolution = m_camera.film_resolution();
         math::Vector<T, 2> physical_size(
             static_cast<T>(resolution.x()),
@@ -112,8 +116,6 @@ public:
         FilmType film(resolution, physical_size, pixel_sensor);
         const math::Point<T, 2> lens_sample(T(0.5), T(0.5));
 
-       
-
         const int width = resolution.x();
         const int height = resolution.y();
         std::cout << "Starting render: " << width << "x" << height << " pixels." << std::endl;
@@ -124,9 +126,10 @@ public:
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 math::Point<int, 2> pixel(x, y);
-                for (const auto& filtered_sample : m_pixel_filter.get_camera_samples(pixel, 2, 2)) {
+                for (const auto& filtered_sample : m_pixel_filter.template get_camera_samples<2, 2>(pixel)) {
                     auto sample = camera::CameraSample<T>::create_thinlens_sample(filtered_sample.film_position, lens_sample);
                     auto ray = m_camera.generate_ray(sample);
+                    ray = camera_to_render.transform_ray(ray);
                     math::RandomGenerator<T, 1> rng;
                     // const auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, SpectrumSampleCount>(rng.generate_uniform(0, T(1))[0]);
                     // const auto pdf = radiometry::sample_uniform_wavelengths_pdf(wavelengths);

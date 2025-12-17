@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "pbpt.h"
-#include "integrator/integrator.hpp"
+#include "integrator/domain.hpp"
 
 namespace pbpt::integrator::testing {
 

@@ -16,6 +16,7 @@
 #include "geometry/transform.hpp"
 #include "math/normal.hpp"
 #include "math/point.hpp"
+#include "camera/render_transform.hpp"
 
 namespace pbpt::shape {
 
@@ -160,6 +161,22 @@ public:
         const ShapeType<T>& shape,
         const geometry::Transform<T>& object_to_render
     ) : m_shape(shape), m_object_to_render(object_to_render), m_render_to_object(object_to_render.inversed()) {}
+
+    /**
+     * @brief Wraps an object-space shape with a render transform.
+     *
+     * @param shape            Underlying shape in its own object space.
+     * @param object_to_world  Transform from object space to world space.
+     * @param render_transform RenderTransform defining render-to-world.
+     */
+    TransformedShape(
+        const ShapeType<T>& shape,
+        const geometry::Transform<T>& object_to_world,
+        const camera::RenderTransform<T>& render_transform
+    ) : m_shape(shape) {
+        m_object_to_render = render_transform.world_to_render() * object_to_world;
+        m_render_to_object = m_object_to_render.inversed();
+    }
 
     /// Returns the transform from render space to object space.
     const geometry::Transform<T>& render_to_object_transform() const {
