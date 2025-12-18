@@ -91,7 +91,7 @@ TEST_F(InteractionTest, SurfaceInteractionConstruction) {
     EXPECT_EQ(si.point(), midpoint());
 
     // 验证基本访问器
-    EXPECT_EQ(si.dir(), wo);
+    EXPECT_EQ(si.wo(), wo);
     EXPECT_EQ(si.n(), n);
     EXPECT_EQ(si.uv(), uv);
     EXPECT_EQ(si.dpdu(), dpdu);

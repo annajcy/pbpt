@@ -7,7 +7,6 @@
 #pragma once
 
 #include <optional>
-#include <utility>
 
 #include "geometry/bounds.hpp"
 #include "geometry/directional_cone.hpp"
@@ -19,6 +18,12 @@
 #include "camera/render_transform.hpp"
 
 namespace pbpt::shape {
+
+template<typename T>
+struct IntersectionRecord {
+    geometry::SurfaceInteraction<T> interaction;
+    T t{};
+};
 
 /**
  * @brief Result of sampling a point on a shape surface.
@@ -95,7 +100,7 @@ public:
      * When an intersection exists, returns the surface interaction
      * (position, normal, UV, etc.) together with the hit distance t.
      */
-    std::optional<std::pair<geometry::SurfaceInteraction<T>, T>> intersect(
+    std::optional<IntersectionRecord<T>> intersect(
         const geometry::Ray<T, 3>& ray
     ) const {
         return as_derived().intersect_impl(ray);
@@ -105,26 +110,52 @@ public:
      * @brief Samples a point uniformly (or according to some strategy) on the shape.
      *
      * @param u_sample 2D sample in [0,1]^2.
-     * @return Optional shape sample and its area-domain PDF.
+     * @return Shape sample and its area-domain PDF.
      */
-    std::optional<ShapeSample<T>> sample_on_shape(
+    ShapeSample<T> sample_on_shape(
         const math::Point<T, 2>& u_sample
     ) const {
         return as_derived().sample_on_shape_impl(u_sample);
     }
 
     /**
+     * @brief Computes the PDF for sampling a given surface point on the shape.
+     *
+     * @param p_surface Surface point in object space.
+     * @return PDF value with respect to area measure.
+     */
+    T sample_on_shape_pdf(
+        const math::Point<T, 3>& p_surface
+    ) const {
+        return as_derived().sample_on_shape_pdf_impl(p_surface);
+    }
+
+    /**
      * @brief Samples the shape with respect to solid angle from a reference point.
      *
-     * @param reference Reference point in render space (e.g. shading point).
+     * @param reference Reference point in object space (e.g. shading point).
      * @param u_sample  2D sample in [0,1]^2.
-     * @return Optional shape sample and its solid-angle PDF.
+     * @return Shape sample and its solid-angle PDF.
      */
-    std::optional<ShapeSample<T>> sample_on_solid_angle(
+    ShapeSample<T> sample_on_solid_angle(
         const math::Point<T, 3>& reference,
         const math::Point<T, 2>& u_sample
     ) const {
         return as_derived().sample_on_solid_angle_impl(reference, u_sample);
+    }
+
+    /**
+     * @brief Computes the PDF for sampling a given surface point with respect to solid angle.
+     *
+     * @param reference Reference point in object space (e.g. shading point).
+     * @param p_surface Surface point in object space.
+     * @return PDF value with respect to solid angle measure.
+     */
+    T sample_on_solid_angle_pdf(
+        const math::Point<T, 3>& reference,
+        const math::Point<T, 3>& p_surface
+    ) const {
+        return as_derived().sample_on_solid_angle_pdf_impl(reference, p_surface);
     }
 };
 
@@ -138,13 +169,13 @@ public:
  * @tparam T         Scalar type.
  * @tparam ShapeType Concrete shape template to wrap (e.g. Sphere).
  */
-template<typename T, template<typename> class ShapeType>
+template<typename T, typename ShapeType>
 class TransformedShape : public Shape<TransformedShape<T, ShapeType>, T> {
     friend class Shape<TransformedShape<T, ShapeType>, T>;
 
 private:
     /// Underlying shape defined in object space.
-    ShapeType<T> m_shape;
+    ShapeType m_shape;
     /// Transform from render space to object space.
     geometry::Transform<T> m_render_to_object{};
     /// Transform from object space to render space.
@@ -158,7 +189,7 @@ public:
      * @param object_to_render Transform from object space to render space.
      */
     TransformedShape(
-        const ShapeType<T>& shape,
+        const ShapeType& shape,
         const geometry::Transform<T>& object_to_render
     ) : m_shape(shape), m_object_to_render(object_to_render), m_render_to_object(object_to_render.inversed()) {}
 
@@ -170,7 +201,7 @@ public:
      * @param render_transform RenderTransform defining render-to-world.
      */
     TransformedShape(
-        const ShapeType<T>& shape,
+        const ShapeType& shape,
         const geometry::Transform<T>& object_to_world,
         const camera::RenderTransform<T>& render_transform
     ) : m_shape(shape) {
@@ -210,70 +241,99 @@ private:
 
     std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
         auto ray_object = m_render_to_object.transform_ray(ray);
-        const Shape<ShapeType<T>, T>& shape_iface = m_shape;
+        const Shape<ShapeType, T>& shape_iface = m_shape;
         return shape_iface.is_intersected(ray_object);
     }
 
-    std::optional<std::pair<geometry::SurfaceInteraction<T>, T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<IntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
         auto ray_object = m_render_to_object.transform_ray(ray);
 
-        const Shape<ShapeType<T>, T>& shape_iface = m_shape;
+        const Shape<ShapeType, T>& shape_iface = m_shape;
         auto result = shape_iface.intersect(ray_object);
         if (!result.has_value())
             return std::nullopt;
 
         auto [si_object, t_hit] = result.value();
         auto si_render = m_object_to_render.transform_surface_interaction(si_object);
-        return std::make_optional(std::make_pair(si_render, t_hit));
+        return std::make_optional(IntersectionRecord<T>{si_render, t_hit});
     }
 
     T area_impl() const {
         return m_shape.area();
     }
 
-    std::optional<ShapeSample<T>> sample_on_shape_impl(
+    ShapeSample<T> sample_on_shape_impl(
         const math::Point<T, 2>& u_sample
     ) const {
-        const Shape<ShapeType<T>, T>& shape_iface = m_shape;
-        auto sample_opt = shape_iface.sample_on_shape(u_sample);
-        if (!sample_opt.has_value())
-            return std::nullopt;
-
-        auto sample_object = sample_opt.value();
+        const Shape<ShapeType, T>& shape_iface = m_shape;
+        auto sample_object = shape_iface.sample_on_shape(u_sample);
         auto point_render = m_object_to_render.transform_point(sample_object.point);
         auto normal_render = m_object_to_render.transform_normal(sample_object.normal).normalized();
 
-        return std::make_optional(ShapeSample<T>{
+        return ShapeSample<T>{
             point_render,
             normal_render,
             sample_object.uv,
             sample_object.pdf
-        });
+        };
     }
 
-    std::optional<ShapeSample<T>> sample_on_solid_angle_impl(
+    /**
+     * @brief Computes the PDF for sampling a given surface point on the shape.
+     * 
+     * @param p_surface Surface point in render space.
+     * @return PDF value with respect to area measure.
+     */
+    T sample_on_shape_pdf_impl(
+        const math::Point<T, 3>& p_surface
+    ) const {
+        auto p_object = m_render_to_object.transform_point(p_surface);
+        const Shape<ShapeType, T>& shape_iface = m_shape;
+        return shape_iface.sample_on_shape_pdf(p_object);
+    }
+
+    /// Samples the shape with respect to solid angle from a reference point.
+    ShapeSample<T> sample_on_solid_angle_impl(
         const math::Point<T, 3>& reference,
         const math::Point<T, 2>& u_sample
     ) const {
-        const Shape<ShapeType<T>, T>& shape_iface = m_shape;
-        auto sample_opt = shape_iface.sample_on_solid_angle(
+        const Shape<ShapeType, T>& shape_iface = m_shape;
+        auto sample_object = shape_iface.sample_on_solid_angle(
             m_render_to_object.transform_point(reference),
             u_sample
         );
-        if (!sample_opt.has_value())
-            return std::nullopt;
-
-        auto sample_object = sample_opt.value();
         auto point_render = m_object_to_render.transform_point(sample_object.point);
         auto normal_render = m_object_to_render.transform_normal(sample_object.normal).normalized();
 
-        return std::make_optional(ShapeSample<T>{
+        return ShapeSample<T>{
             point_render,
             normal_render,
             sample_object.uv,
             sample_object.pdf
-        });
+        };
     }
+
+    /**
+     * @brief Computes the PDF for sampling a given surface point with respect to solid angle.
+     * 
+     * @param reference  Reference point in render space.
+     * @param p_surface Surface point in render space.
+     * @return T 
+     */
+    T sample_on_solid_angle_pdf_impl(
+        const math::Point<T, 3>& reference,
+        const math::Point<T, 3>& p_surface
+    ) const {
+        auto reference_object = m_render_to_object.transform_point(reference);
+        auto p_object = m_render_to_object.transform_point(p_surface);
+        const Shape<ShapeType, T>& shape_iface = m_shape;
+        return shape_iface.sample_on_solid_angle_pdf(
+            reference_object,
+            p_object
+        );
+    }
+
+
 };
 
 };

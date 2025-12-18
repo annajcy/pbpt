@@ -8,6 +8,15 @@ using luminantD50Range = TabularSpectrumRange<300, 830>;
 using luminantD65Range = TabularSpectrumRange<300, 830>;
 using luminantARange   = TabularSpectrumRange<300, 830>;
 
+template<typename T>
+using CIED50SpectrumType = TabularSpectrumDistribution<T, luminantD50Range::LMinValue, luminantD50Range::LMaxValue>;
+
+template<typename T>
+using CIED65SpectrumType = TabularSpectrumDistribution<T, luminantD65Range::LMinValue, luminantD65Range::LMaxValue>;
+
+template<typename T>
+using CIESpectrumAType   = TabularSpectrumDistribution<T, luminantARange::LMinValue, luminantARange::LMaxValue>;
+
 template <typename T>
 inline static constexpr TabularSpectrumDistribution<T, luminantD65Range::LMinValue, luminantD65Range::LMaxValue> CIE_D65_ilum(
     0.03410, 0.36014, 0.68618, 1.01222, 1.33826, 1.66430, 1.99034, 2.31638, 2.64242, 2.96846, 3.29450, 4.98865, 6.68280,

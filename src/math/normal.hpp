@@ -5,9 +5,8 @@
 #pragma once
 
 #include "operator.hpp"
-#include "tuple.hpp"
 #include "vector.hpp"
-#include "vector_ops.hpp"
+#include "vector_base.hpp"
 
 namespace pbpt::math {
 
@@ -23,13 +22,24 @@ namespace pbpt::math {
  * @tparam N Dimension of the normal.
  */
 template <typename T, int N>
-class Normal : public VectorOps<Normal, T, N> {
+class Normal : public VectorBase<Normal, T, N> {
 private:
-    using Base = VectorOps<Normal, T, N>;
+    using Base = VectorBase<Normal, T, N>;
     using Base::m_data;
 
 public:
     using Base::Base;
+
+    /// Dot product with a direction vector.
+    template <typename U>
+    constexpr auto dot(const Vector<U, N>& rhs) const {
+        using R = std::common_type_t<T, U>;
+        R result = 0;
+        for (int i = 0; i < N; ++i) {
+            result += static_cast<R>((*this)[i]) * static_cast<R>(rhs[i]);
+        }
+        return result;
+    }
     
     /// Constructs a normal from a plain vector by copying components.
     static constexpr auto from_vector(const Vector<T, N>& vec) {

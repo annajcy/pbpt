@@ -5,12 +5,10 @@
 #pragma once
 
 #include "function.hpp"
-#include "tuple.hpp"
-#include "vector_ops.hpp"
+#include "vector_base.hpp"
 
 #include <cmath>
 #include <concepts>
-#include <type_traits>
 
 namespace pbpt::math {
 
@@ -24,9 +22,9 @@ namespace pbpt::math {
  * @tparam N Dimension.
  */
 template <typename T, int N>
-class Vector : public VectorOps<Vector, T, N> {
+class Vector : public VectorBase<Vector, T, N> {
 private:
-    using Base = VectorOps<Vector, T, N>;
+    using Base = VectorBase<Vector, T, N>;
 
 public:
     using Base::Base;

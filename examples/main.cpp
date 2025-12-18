@@ -8,11 +8,13 @@
 #include "camera/projective_camera.hpp"
 #include "geometry/interaction.hpp"
 #include "geometry/ray.hpp"
+#include "light/light.hpp"
 #include "math/normal.hpp"
 #include "math/vector.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/swatch_reflectances_spectrum.hpp"
 #include "integrator/domain.hpp"
+#include "radiometry/spectrum_distribution.hpp"
 #include "shape/shape.hpp"
 
 #include "pbpt.h"
@@ -468,7 +470,7 @@ int main() {
     auto rgb_black_encoded = radiometry::encode_to_nonlinear_srgb(rgb_black);
     std::cout << "Black Swatch Reflectance sRGB (gamma encoded): " << rgb_black_encoded << std::endl;
 
-    shape::TransformedShape<double, shape::Sphere> sphere_shape(
+    shape::TransformedShape<double, shape::Sphere<double>> sphere_shape(
         shape::Sphere(1.0),
         geometry::Transform<double>::translate(math::Vec3{1.0, 2.0, 3.0})
     );
@@ -485,7 +487,7 @@ int main() {
         std::cout << "Ray does not intersect Transformed Sphere Shape." << std::endl;
     }
 
-    shape::TransformedShape<double, shape::Sphere> sphere_shape1(
+    shape::TransformedShape<double, shape::Sphere<double>> sphere_shape1(
         shape::Sphere(1.0),
         geometry::Transform<double>::translate(math::Vec3{1.2, 2.2, 3.0})
     );
@@ -500,7 +502,7 @@ int main() {
     }
 
 
-    shape::TransformedShape<double, shape::Sphere> sphere_shape_tangent(
+    shape::TransformedShape<double, shape::Sphere<double>> sphere_shape_tangent(
         shape::Sphere(1.0),
         geometry::Transform<double>::translate(math::Vec3{1.0, 2.0, 3.0})
     );
@@ -514,7 +516,7 @@ int main() {
         std::cout << "Ray does not intersect Transformed Sphere Shape." << std::endl;
     }
 
-    shape::TransformedShape<double, shape::Sphere> sphere_shape_miss(
+    shape::TransformedShape<double, shape::Sphere<double>> sphere_shape_miss(
         shape::Sphere(1.0),
         geometry::Transform<double>::translate(math::Vec3{1.0, 2.0, 3.0})
     );
@@ -528,7 +530,7 @@ int main() {
         std::cout << "Ray does not intersect Transformed Sphere Shape." << std::endl;
     }
 
-    shape::TransformedShape<double, shape::Sphere> sphere_shape_in_sphere(
+    shape::TransformedShape<double, shape::Sphere<double>> sphere_shape_in_sphere(
         shape::Sphere(1.0),
         geometry::Transform<double>::translate(math::Vec3{1.0, 2.0, 3.0})
     );
@@ -542,7 +544,7 @@ int main() {
         std::cout << "Ray does not intersect Transformed Sphere Shape." << std::endl;
     }
 
-    shape::TransformedShape<double, shape::Sphere> sphere_shape_on_sphere(
+    shape::TransformedShape<double, shape::Sphere<double>> sphere_shape_on_sphere(
         shape::Sphere(1.0),
         geometry::Transform<double>::translate(math::Vec3{1.0, 2.0, 3.0})
     );
@@ -575,6 +577,11 @@ int main() {
     } else {
         std::cout << "Ray does not intersect Transformed Sphere Shape." << std::endl;
     }
+
+    pbpt::light::AreaLight<double, pbpt::shape::Sphere<double>, radiometry::TabularSpectrumDistribution<double, pbpt::radiometry::constant::luminantD65Range::LMinValue, pbpt::radiometry::constant::luminantD65Range::LMaxValue>> area_light(
+        sphere_shape,
+        radiometry::constant::CIE_D65_ilum<double>
+    );
 
     return 0;
 }

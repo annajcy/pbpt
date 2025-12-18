@@ -19,7 +19,7 @@ using pbpt::shape::TransformedShape;
 
 using SphereD = Sphere<double>;
 using SphereShapeInterface = Shape<SphereD, double>;
-using TransformedSphereD = TransformedShape<double, Sphere>;
+using TransformedSphereD = TransformedShape<double, Sphere<double>>;
 using TransformedSphereShapeInterface = Shape<TransformedSphereD, double>;
 
 class SphereTest : public ::testing::Test {
@@ -139,7 +139,7 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
     EXPECT_NEAR(p.y(), 0.0, 1e-12);
     EXPECT_NEAR(p.z(), 0.0, 1e-12);
 
-    auto wo = interaction.dir();
+    auto wo = interaction.wo();
     EXPECT_NEAR(wo.x(), 1.0, 1e-12);
     EXPECT_NEAR(wo.y(), 0.0, 1e-12);
     EXPECT_NEAR(wo.z(), 0.0, 1e-12);
@@ -189,28 +189,26 @@ TEST_F(SphereTest, SampleOnShapeProducesConsistentValues) {
     Point<double, 2> u_sample(0.0, 0.0);
     auto sample_opt = shape_iface.sample_on_shape(u_sample);
 
-    ASSERT_TRUE(sample_opt.has_value());
-    const auto& sample = sample_opt.value();
+    const auto& sample = sample_opt;
 
     EXPECT_DOUBLE_EQ(sample.point.x(), 0.0);
     EXPECT_DOUBLE_EQ(sample.point.y(), 0.0);
-    EXPECT_DOUBLE_EQ(sample.point.z(), 1.0);
+    EXPECT_DOUBLE_EQ(sample.point.z(), -1.0);
 
     auto normal_vec = sample.normal.to_vector();
     EXPECT_DOUBLE_EQ(normal_vec.x(), 0.0);
     EXPECT_DOUBLE_EQ(normal_vec.y(), 0.0);
-    EXPECT_DOUBLE_EQ(normal_vec.z(), 1.0);
+    EXPECT_DOUBLE_EQ(normal_vec.z(), -1.0);
 
     EXPECT_DOUBLE_EQ(sample.uv.x(), 0.0);
-    EXPECT_DOUBLE_EQ(sample.uv.y(), 1.0);
+    EXPECT_DOUBLE_EQ(sample.uv.y(), 0.0);
 
     auto expected_pdf = 1.0 / shape_iface.area();
     EXPECT_NEAR(sample.pdf, expected_pdf, 1e-12);
 
     Point<double, 2> uv_sample(0.5, 0.5);
     sample_opt = shape_iface.sample_on_shape(uv_sample);
-    ASSERT_TRUE(sample_opt.has_value());
-    const auto& sample2 = sample_opt.value();
+    const auto& sample2 = sample_opt;
     EXPECT_NEAR(sample2.point.x(), -1.0, 1e-12);
     EXPECT_NEAR(sample2.point.y(), 0.0, 1e-12);
     EXPECT_NEAR(sample2.point.z(), 0.0, 1e-12);
@@ -221,16 +219,6 @@ TEST_F(SphereTest, SampleOnShapeProducesConsistentValues) {
     EXPECT_NEAR(sample2.uv.x(), 0.5, 1e-12);
     EXPECT_NEAR(sample2.uv.y(), 0.5, 1e-12);
     EXPECT_NEAR(sample2.pdf, expected_pdf, 1e-12);
-}
-
-TEST_F(SphereTest, SampleOnShapeRespectsPhiClamp) {
-    SphereD partial(1.0, -1.0, 1.0, static_cast<double>(pi_v<double> / 2.0));
-    const SphereShapeInterface& shape_iface = partial;
-
-    Point<double, 2> u_sample(0.5, 0.5);  // maps to phi = pi which exceeds phi_max = pi/2
-    auto sample_opt = shape_iface.sample_on_shape(u_sample);
-
-    EXPECT_FALSE(sample_opt.has_value());
 }
 
 class TransformedSphereTest : public ::testing::Test {
@@ -315,7 +303,7 @@ TEST_F(TransformedSphereTest, IntersectProducesRenderSpaceSurfaceInteraction) {
     EXPECT_NEAR(normal.y(), 0.0, 1e-12);
     EXPECT_NEAR(normal.z(), 0.0, 1e-12);
 
-    auto wo = interaction.dir();
+    auto wo = interaction.wo();
     EXPECT_NEAR(wo.x(), 1.0, 1e-12);
     EXPECT_NEAR(wo.y(), 0.0, 1e-12);
     EXPECT_NEAR(wo.z(), 0.0, 1e-12);
@@ -396,8 +384,8 @@ TEST_F(TransformedSphereTest, ExampleScenariosMatchManualExperiment) {
     Ray<double, 3> ray_tangent(Point<double, 3>(1.0, 1.0, 2.0), Vector<double, 3>(0.0, 1.0, 0.0));
     auto hit_tangent = transformed.intersect(ray_tangent);
     ASSERT_TRUE(hit_tangent.has_value());
-    EXPECT_NEAR(hit_tangent->second, 1.0, 1e-12);
-    auto n_tangent = hit_tangent->first.n().to_vector();
+    EXPECT_NEAR(hit_tangent->t, 1.0, 1e-12);
+    auto n_tangent = hit_tangent->interaction.n().to_vector();
     EXPECT_NEAR(n_tangent.x(), 0.0, 1e-12);
     EXPECT_NEAR(n_tangent.y(), 0.0, 1e-12);
     EXPECT_NEAR(n_tangent.z(), -1.0, 1e-12);
@@ -408,12 +396,12 @@ TEST_F(TransformedSphereTest, ExampleScenariosMatchManualExperiment) {
     Ray<double, 3> ray_inside(Point<double, 3>(1.0, 2.0, 3.0), Vector<double, 3>(0.0, 1.0, 0.0));
     auto hit_inside = transformed.intersect(ray_inside);
     ASSERT_TRUE(hit_inside.has_value());
-    EXPECT_NEAR(hit_inside->second, 1.0, 1e-12);
-    auto p_inside = hit_inside->first.point();
+    EXPECT_NEAR(hit_inside->t, 1.0, 1e-12);
+    auto p_inside = hit_inside->interaction.point();
     EXPECT_NEAR(p_inside.x(), 1.0, 1e-12);
     EXPECT_NEAR(p_inside.y(), 3.0, 1e-12);
     EXPECT_NEAR(p_inside.z(), 3.0, 1e-12);
-    auto n_inside = hit_inside->first.n().to_vector();
+    auto n_inside = hit_inside->interaction.n().to_vector();
     EXPECT_NEAR(n_inside.x(), 0.0, 1e-12);
     EXPECT_NEAR(n_inside.y(), 1.0, 1e-12);
     EXPECT_NEAR(n_inside.z(), 0.0, 1e-12);
@@ -421,7 +409,7 @@ TEST_F(TransformedSphereTest, ExampleScenariosMatchManualExperiment) {
     Ray<double, 3> ray_surface(Point<double, 3>(1.0, 1.0, 3.0), Vector<double, 3>(0.0, -1.0, 0.0));
     auto hit_surface = transformed.intersect(ray_surface);
     ASSERT_TRUE(hit_surface.has_value());
-    EXPECT_NEAR(hit_surface->second, 0.0, 1e-12);
+    EXPECT_NEAR(hit_surface->t, 0.0, 1e-12);
 
     const auto origin_on_surface = ray_surface.origin();
     Vector<double, 3> tiny_offset(1e-6, 1e-6, 1e-6);

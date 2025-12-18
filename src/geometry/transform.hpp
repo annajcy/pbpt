@@ -393,7 +393,7 @@ public:
         return SurfaceInteraction<T>(
             transform.transform_point(si.p_lower()),
             transform.transform_point(si.p_upper()),
-            transform.transform_vector(si.dir()),
+            transform.transform_vector(si.wo()),
             n,
             si.uv(), 
             transform.transform_vector(si.dpdu()),
@@ -401,6 +401,13 @@ public:
             transform.transform_normal(si.dndu()),
             transform.transform_normal(si.dndv())
         );
+    }
+
+    constexpr auto transform_volume(const T area) const {
+        // Scale area by the determinant of the upper-left 3x3 matrix
+        Matrix<T, 3, 3> linear_part = m_mat.template view<3, 3>(0, 0).to_matrix();
+        T scale_factor = std::abs(linear_part.determinant());
+        return area * scale_factor;
     }
 };
 

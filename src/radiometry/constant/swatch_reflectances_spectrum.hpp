@@ -39,6 +39,9 @@ enum class SwatchReflectance : int {
 
 inline static constexpr int swatch_reflectances_count = 24;
 
+template<typename T>
+using SwatchReflectanceSpectrumType = PiecewiseLinearSpectrumDistribution<T>;
+
 template <typename T>
 inline static PiecewiseLinearSpectrumDistribution<T> swatch_reflectances[swatch_reflectances_count] = {
     // Dark skin

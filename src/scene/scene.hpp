@@ -43,7 +43,7 @@ public:
      */
     struct SceneObject {
         /// Sphere geometry with transform.
-        shape::TransformedShape<T, shape::Sphere> sphere;
+        shape::TransformedShape<T, shape::Sphere<T>> sphere;
         /// RGB albedo used to derive spectral reflectance.
         radiometry::RGB<T> rgb_albedo;
     };

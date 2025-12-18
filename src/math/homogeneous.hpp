@@ -12,7 +12,7 @@
 #include "point.hpp"
 #include "utils.hpp"
 #include "vector.hpp"
-#include "vector_ops.hpp"
+#include "vector_base.hpp"
 
 namespace pbpt::math {
 
@@ -27,9 +27,9 @@ namespace pbpt::math {
  * @tparam N Dimension of the homogeneous coordinate (spatial dimension is N-1).
  */
 template <typename T, int N>
-class Homogeneous : public VectorOps<Homogeneous, T, N> {
+class Homogeneous : public VectorBase<Homogeneous, T, N> {
 private:
-    using Base = VectorOps<Homogeneous, T, N>;
+    using Base = VectorBase<Homogeneous, T, N>;
     using Base::m_data;
 
 public:

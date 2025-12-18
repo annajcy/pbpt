@@ -4,10 +4,10 @@
 
 namespace pbpt::radiometry::constant {
 
-using luminantD50Range = TabularSpectrumRange<300, 830>;
-using luminantD65Range = TabularSpectrumRange<300, 830>;
-using luminantARange   = TabularSpectrumRange<300, 830>;
 using XYZRange         = TabularSpectrumRange<360, 830>;
+
+template <typename T>
+using CIEXYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue>;
 
 template <typename T>
 inline static constexpr T CIE_Y_integral = 106.856895;

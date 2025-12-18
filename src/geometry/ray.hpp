@@ -7,7 +7,6 @@
 #include <array>
 #include <type_traits>
 
-#include "math/function.hpp"
 #include "math/utils.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
@@ -287,18 +286,6 @@ public:
     }
     
 };
-
-/**
- * @brief Compute a conservative t_max for a ray of length @p dist.
- *
- * The returned value is slightly smaller than @p dist by an amount
- * proportional to a small gamma factor, which helps avoid "overshooting"
- * due to floating-point error when tracing to a known distance.
- */
-template <typename T>
-inline T safe_ray_tmax(T dist) {
-    return dist * (T(1) - gamma<T>(3));
-}
 
 /// Double-precision 2D ray differential.
 using RayDiff2 = RayDifferential<double, 2>;

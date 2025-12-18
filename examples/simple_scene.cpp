@@ -40,13 +40,13 @@ int main() {
 
     pbpt::camera::RenderTransform<T> render_transform{
         camera_to_world.inversed(),
-        pbpt::camera::RenderSpace::CameraWorld
+        pbpt::camera::RenderSpace::World
     };
 
     T offset_x = T(0.5f);
     T offset_y = T(1.0f);
 
-    std::vector<pbpt::shape::TransformedShape<T, pbpt::shape::Sphere>> spheres;
+    std::vector<pbpt::shape::TransformedShape<T, pbpt::shape::Sphere<T>>> spheres;
     spheres.emplace_back(
         pbpt::shape::Sphere<T>(T(0.7f)),
         pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(-2.0f) + offset_x, T(0.0f) + offset_y, T(5.0f))),

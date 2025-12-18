@@ -179,7 +179,7 @@ private:
         return std::make_optional(result_opt->t_hit);
     }
 
-    std::optional<std::pair<geometry::SurfaceInteraction<T>, T>> intersect_impl(
+    std::optional<IntersectionRecord<T>> intersect_impl(
         const geometry::Ray<T, 3>& ray
     ) const {
         auto result_opt = is_intersected(ray);
@@ -188,7 +188,7 @@ private:
         }
 
         auto intersection = get_surface_interaction(ray, result_opt.value());
-        return std::make_optional(std::make_pair(intersection, result_opt->t_hit));
+        return std::make_optional(IntersectionRecord<T>{intersection, result_opt->t_hit});
     }
 
     geometry::SurfaceInteraction<T> get_surface_interaction(
@@ -294,46 +294,78 @@ private:
         return m_phi_max * m_radius * (m_z_max - m_z_min);  
     }
 
-    /// Samples a point uniformly on the sphere surface.
-    std::optional<ShapeSample<T>> sample_on_shape_impl(
+   /// Samples a point uniformly on the PARTIAL sphere surface directly.
+    ShapeSample<T> sample_on_shape_impl(
         const math::Point<T, 2>& u_sample
     ) const {
-        math::Point<T, 3> p = math::sample_uniform_sphere(u_sample, m_radius);
-        if (p.z() < m_z_min || p.z() > m_z_max) {
-            return std::nullopt;
-        }
-        math::Vector<T, 3> p_error = math::gamma<T>(5) * math::Vector<T, 3>(
-            std::abs(p.x()),
-            std::abs(p.y()),
-            std::abs(p.z())
-        );
+        // 1. 直接映射 u[0] 到 z 的范围 [z_min, z_max]
+        T z = m_z_min + u_sample.x() * (m_z_max - m_z_min);
 
+        // 2. 直接映射 u[1] 到 phi 的范围 [0, phi_max]
+        T phi = u_sample.y() * m_phi_max;
+
+        // 3. 计算对应的平面半径
+        // 注意：防止浮点误差导致根号下为负
+        T z_sq = z * z;
+        T r_sq = m_radius * m_radius;
+        // 这里的 max 是为了鲁棒性，防止 z 稍微超出一点点导致 nan
+        T r_xy = std::sqrt(std::max(static_cast<T>(0), r_sq - z_sq));
+
+        // 4. 计算 x, y
+        T x = r_xy * std::cos(phi);
+        T y = r_xy * std::sin(phi);
+
+        math::Point<T, 3> p(x, y, z);
+
+        // 5. 计算法线
+        // 对于球体，法线就是从球心指向表面点的归一化向量
         math::Normal<T, 3> n = math::Normal<T, 3>::from_vector(
             (p - math::Point<T, 3>(0, 0, 0)).normalized()
         );
 
-        T theta = std::acos(std::clamp(p.z() / m_radius, static_cast<T>(-1), static_cast<T>(1)));
-        T phi = std::atan2(p.y(), p.x());
-        if (phi < static_cast<T>(0)) {
-            phi += static_cast<T>(2 * math::pi_v<T>);
-        }
-
-        if (phi > m_phi_max) {
-            return std::nullopt;
-        }
-
+        // 6. 计算 UV (用于纹理映射)
+        // 既然我们已经有了准确的 phi 和 z，可以直接算，不需要像原来那样反推
         T u = phi / m_phi_max;
+        T theta = std::acos(std::clamp(z / m_radius, static_cast<T>(-1), static_cast<T>(1)));
         T v = (theta - z_min_theta()) / (z_max_theta() - z_min_theta());
+
         ShapeSample<T> sample{};
         sample.point = p;
         sample.normal = n;
         sample.uv = math::Point<T, 2>(u, v);
+        
+        // PDF 依然是 1 / Area，因为我们在有效面积上是均匀采样的
         sample.pdf = static_cast<T>(1) / area_impl();
-        return std::make_optional(sample);
+
+        return sample;
     }
 
-    
+    T sample_on_shape_pdf_impl(
+        const math::Point<T, 3>& p_surface
+    ) const {
+        // Check if the point is on the valid spherical segment
+        T r_sq = p_surface.x() * p_surface.x() + p_surface.y() * p_surface.y() + p_surface.z() * p_surface.z();
+        T r = std::sqrt(r_sq);
+        if (std::abs(r - m_radius) > epsilon_v<T>) {
+            return static_cast<T>(0);
+        }
+        if (p_surface.z() < m_z_min || p_surface.z() > m_z_max) {
+            return static_cast<T>(0);
+        }
+        T phi = std::atan2(p_surface.y(), p_surface.x());
+        if (phi < static_cast<T>(0)) {
+            phi += static_cast<T>(2 * math::pi_v<T>);
+        }
+        if (phi > m_phi_max) {
+            return static_cast<T>(0);
+        }
 
+        return static_cast<T>(1) / area_impl();
+    }
+
+    //TODO: implement solid angle sampling
+
+    //TODO: implement solid angle pdf
 };
 
 };
