@@ -6,3 +6,6 @@ target_link_libraries(main PRIVATE pbpt)
 
 add_executable(simple_scene simple_scene.cpp)
 target_link_libraries(simple_scene PRIVATE pbpt)
+
+add_executable(light_scene light_scene.cpp)
+target_link_libraries(light_scene PRIVATE pbpt)

@@ -123,7 +123,11 @@ TEST(AreaLightTest, SampleLightAndPdfMatchExpectedForNorthPoleSample) {
     T pdf_eval = light.sample_light_pdf(ref, sample.wi);
     EXPECT_NEAR(pdf_eval, expected_pdf, T(1e-5));
 
-    auto emission = light.emission_spectrum<N>(wavelengths);
+    auto emission = light.emission_spectrum<N>(
+        wavelengths,
+        sample.visibility_tester.dst_point(),
+        -sample.wi
+    );
     expect_constant_spectrum(emission, T(5));
     EXPECT_FALSE(light.is_delta_light());
 }

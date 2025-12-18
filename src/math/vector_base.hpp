@@ -117,7 +117,7 @@ public:
         return is_equal(length(), T(1.0)); 
     }
 
-    /// Dot product with another vector-like object.
+    /// Dot product with the same type of object.
     template <typename U>
     constexpr auto dot(const Derived<U, N>& rhs) const {
         using R  = std::common_type_t<T, U>;

@@ -95,20 +95,24 @@ public:
     template<typename NormalInteractionType>
     T sample_light_pdf(
         const NormalInteractionType& ref_point,
-        const math::Vector<T, 3>& wi_light
+        const math::Vector<T, 3>& wi
     ) const {
         return as_derived().sample_light_pdf_impl(
             ref_point,
-            wi_light
+            wi
         );
     }
 
     template<int N>
     radiometry::SampledSpectrum<T, N> emission_spectrum(
-        const radiometry::SampledWavelength<T, N>& sampled_wavelengths
+        const radiometry::SampledWavelength<T, N>& sampled_wavelengths,
+        const math::Point<T, 3>& point,
+        const math::Vector<T, 3>& w_exit
     ) const {
         return as_derived().emission_spectrum_impl(
-            sampled_wavelengths
+            sampled_wavelengths,
+            point,
+            w_exit
         );
     }
 
@@ -158,17 +162,22 @@ private:
             shape_sample.point
         );
 
-        // Compute emitted radiance along wi
+        
         math::Vector<T, 3> ref_to_light = (shape_sample.point - ref_point.point());
         T distance_squared = ref_to_light.length_squared();
         T distance = std::sqrt(distance_squared);
         math::Vector<T, 3> wi = ref_to_light / distance;
+
+        // Compute cosine term at light source
         T cos_theta_light = shape_sample.normal.dot(-wi);
 
+        // If light is facing away, return no contribution
         if (cos_theta_light <= T(0)) {
             return std::nullopt;    
         }
 
+        // Compute emitted radiance along wi.
+        // For now the power spectrum is assumed to be spatially/directionally uniform.
         radiometry::SampledSpectrum<T, N> radiance = m_power_spectrum.sample(sampled_wavelengths);
 
         // Compute PDF wrt solid angle at ref point
@@ -208,12 +217,14 @@ private:
 
     template<int N>
     radiometry::SampledSpectrum<T, N> emission_spectrum_impl(
-        const radiometry::SampledWavelength<T, N>& sampled_wavelengths
+        const radiometry::SampledWavelength<T, N>& sampled_wavelengths,
+        const math::Point<T, 3>& point,
+        const math::Vector<T, 3>& w_exit
     ) const {
         return m_power_spectrum.sample(sampled_wavelengths);
     }
 
-     bool is_delta_light_impl() const {
+    bool is_delta_light_impl() const {
         return false;
     }
 
