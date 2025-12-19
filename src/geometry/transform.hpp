@@ -387,19 +387,46 @@ public:
      * the normal is also flipped.
      */
     constexpr auto transform_surface_interaction(const SurfaceInteraction<T>& si) const {
-        auto transform = *this;
-        auto n = transform.transform_normal(si.n());
-        if (transform.is_swaps_handedness()) n = -n;
+        // 缓存 transform，避免拷贝开销（如果 *this 是轻量级句柄则无所谓）
+        // 但注意：transform_normal 等方法通常只需要读取成员
+        
+        // 1. 基础变换
+        auto n = this->transform_normal(si.n());
+        auto shading_n = this->transform_normal(si.shading_n());
+        
+        auto dndu = this->transform_normal(si.dndu());
+        auto dndv = this->transform_normal(si.dndv());
+        auto shading_dndu = this->transform_normal(si.shading_dndu());
+        auto shading_dndv = this->transform_normal(si.shading_dndv());
+
+        // 2. 处理手性翻转 (Flip Handedness)
+        // 这是一个非常关键的步骤 
+        if (this->is_swaps_handedness()) {
+            n = -n;
+            shading_n = -shading_n;
+            
+            // --- 修正点：微分也要翻转 ---
+            dndu = -dndu;
+            dndv = -dndv;
+            shading_dndu = -shading_dndu;
+            shading_dndv = -shading_dndv;
+        }
+
         return SurfaceInteraction<T>(
-            transform.transform_point(si.p_lower()),
-            transform.transform_point(si.p_upper()),
-            transform.transform_vector(si.wo()),
+            this->transform_point(si.p_lower()),
+            this->transform_point(si.p_upper()),
+            this->transform_vector(si.wo()),
             n,
+            shading_n,
             si.uv(), 
-            transform.transform_vector(si.dpdu()),
-            transform.transform_vector(si.dpdv()),
-            transform.transform_normal(si.dndu()),
-            transform.transform_normal(si.dndv())
+            this->transform_vector(si.dpdu()),      // Vector 变换不需要手动翻转，矩阵乘法会自动处理
+            this->transform_vector(si.dpdv()),
+            dndu,                                   // 传入修正后的值
+            dndv,
+            this->transform_vector(si.shading_dpdu()),
+            this->transform_vector(si.shading_dpdv()),
+            shading_dndu,                           // 传入修正后的值
+            shading_dndv
         );
     }
 

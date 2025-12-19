@@ -449,6 +449,30 @@ inline T sample_uniform_triangle_pdf(
     return 1.0 / area;
 }
 
+
+template<typename T>
+inline math::Point<T, 3> sample_uniform_triangle_barycentric(
+    const math::Point<T, 2>& uv
+) {
+    // 1. Sample the first barycentric coordinate b1 (associated with v1).
+    // The sqrt pushes samples towards smaller values where the triangle is wider.
+    T b1 = 1.0 - std::sqrt(uv.x());
+
+    // 2. Sample the second barycentric coordinate b2 (associated with v2).
+    // Sample uniformly within the remaining vertical height.
+    T b2 = uv.y() * (1.0 - b1);
+
+    // 3. Compute the remaining barycentric coordinate b0 (associated with v0).
+    T b0 = 1.0 - b1 - b2;
+
+    return math::Point<T, 3>(b0, b1, b2);
+}
+
+template<typename T>
+inline T sample_uniform_triangle_barycentric_pdf(const math::Point<T, 3>& barycentric) {
+    return T(2);
+}
+
 /**
  * @brief Generates a stratifed array of N samples in [0, 1).
  *

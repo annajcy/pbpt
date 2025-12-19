@@ -15,12 +15,25 @@ using pbpt::math::Point;
 using pbpt::math::Vector;
 using pbpt::shape::Shape;
 using pbpt::shape::Sphere;
-using pbpt::shape::TransformedShape;
 
 using SphereD = Sphere<double>;
 using SphereShapeInterface = Shape<SphereD, double>;
-using TransformedSphereD = TransformedShape<double, Sphere<double>>;
-using TransformedSphereShapeInterface = Shape<TransformedSphereD, double>;
+
+namespace {
+
+SphereD make_sphere(double radius) {
+    return SphereD(Transform<double>::identity(), false, radius);
+}
+
+SphereD make_partial_sphere(double radius, double z_min, double z_max, double phi_max) {
+    return SphereD(Transform<double>::identity(), false, radius, z_min, z_max, phi_max);
+}
+
+SphereD make_sphere_with_transform(const Transform<double>& object_to_render, double radius) {
+    return SphereD(object_to_render, false, radius);
+}
+
+}  // namespace
 
 class SphereTest : public ::testing::Test {
 protected:
@@ -29,7 +42,7 @@ protected:
 };
 
 TEST_F(SphereTest, BoundingBoxMatchesFullSphere) {
-    SphereD sphere(1.0);
+    auto sphere = make_sphere(1.0);
 
     auto bounds = sphere.bounding_box();
 
@@ -43,7 +56,7 @@ TEST_F(SphereTest, BoundingBoxMatchesFullSphere) {
 }
 
 TEST_F(SphereTest, AreaMatchesFullSphere) {
-    SphereD sphere(2.0);
+    auto sphere = make_sphere(2.0);
 
     const SphereShapeInterface& shape_iface = sphere;
     auto expected_area = static_cast<double>(4.0) * pi_v<double> * sphere.radius() * sphere.radius();
@@ -52,7 +65,7 @@ TEST_F(SphereTest, AreaMatchesFullSphere) {
 }
 
 TEST_F(SphereTest, AreaRespectsPhiAndZClamps) {
-    SphereD partial(1.5, -0.25, 1.0, static_cast<double>(pi_v<double> / 2.0));
+    auto partial = make_partial_sphere(1.5, -0.25, 1.0, static_cast<double>(pi_v<double> / 2.0));
 
     const SphereShapeInterface& shape_iface = partial;
     auto expected_area =
@@ -62,7 +75,7 @@ TEST_F(SphereTest, AreaRespectsPhiAndZClamps) {
 }
 
 TEST_F(SphereTest, AreaRespectsHemisphericalClamp) {
-    SphereD hemisphere(3.0, 0.0, 3.0, static_cast<double>(2 * pi_v<double>));
+    auto hemisphere = make_partial_sphere(3.0, 0.0, 3.0, static_cast<double>(2 * pi_v<double>));
 
     const SphereShapeInterface& shape_iface = hemisphere;
     auto expected_area = static_cast<double>(2.0) * pi_v<double> * hemisphere.radius() * hemisphere.radius();
@@ -71,7 +84,7 @@ TEST_F(SphereTest, AreaRespectsHemisphericalClamp) {
 }
 
 TEST_F(SphereTest, RayHitsSphereReturnsClosestIntersection) {
-    SphereD sphere(1.0);
+    auto sphere = make_sphere(1.0);
     Point<double, 3> origin(0.0, 0.0, -3.0);
     Vector<double, 3> direction(0.0, 0.0, 1.0);
     Ray<double, 3> ray(origin, direction);
@@ -84,7 +97,7 @@ TEST_F(SphereTest, RayHitsSphereReturnsClosestIntersection) {
 }
 
 TEST_F(SphereTest, RayUsesSecondRootWhenFirstBelowTMin) {
-    SphereD sphere(1.0);
+    auto sphere = make_sphere(1.0);
     Point<double, 3> origin(0.0, 0.0, -3.0);
     Vector<double, 3> direction(0.0, 0.0, 1.0);
     Ray<double, 3> ray(origin, direction, 10.0, 2.5);  // Ignore the first root at t=2
@@ -97,7 +110,7 @@ TEST_F(SphereTest, RayUsesSecondRootWhenFirstBelowTMin) {
 }
 
 TEST_F(SphereTest, RayMissesClampedZRange) {
-    SphereD hemisphere(1.0, 0.0, 1.0, static_cast<double>(2 * pi_v<double>));
+    auto hemisphere = make_partial_sphere(1.0, 0.0, 1.0, static_cast<double>(2 * pi_v<double>));
     Point<double, 3> origin(0.0, 0.0, -3.0);
     Vector<double, 3> direction(0.0, 0.0, 1.0);
     Ray<double, 3> ray(origin, direction);
@@ -109,7 +122,7 @@ TEST_F(SphereTest, RayMissesClampedZRange) {
 }
 
 TEST_F(SphereTest, RayMissesClampedPhiRange) {
-    SphereD partial(1.0, -1.0, 1.0, static_cast<double>(pi_v<double> / 2.0));
+    auto partial = make_partial_sphere(1.0, -1.0, 1.0, static_cast<double>(pi_v<double> / 2.0));
     Point<double, 3> origin(-3.0, 0.0, 0.0);
     Vector<double, 3> direction(1.0, 0.0, 0.0);
     Ray<double, 3> ray(origin, direction);
@@ -121,7 +134,7 @@ TEST_F(SphereTest, RayMissesClampedPhiRange) {
 }
 
 TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
-    SphereD sphere(1.0);
+    auto sphere = make_sphere(1.0);
     Point<double, 3> origin(2.0, 0.0, 0.0);
     Vector<double, 3> direction(-1.0, 0.0, 0.0);
     Ray<double, 3> ray(origin, direction);
@@ -183,7 +196,7 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
 }
 
 TEST_F(SphereTest, SampleOnShapeProducesConsistentValues) {
-    SphereD sphere(1.0);
+    auto sphere = make_sphere(1.0);
     const SphereShapeInterface& shape_iface = sphere;
 
     Point<double, 2> u_sample(0.0, 0.0);
@@ -221,18 +234,17 @@ TEST_F(SphereTest, SampleOnShapeProducesConsistentValues) {
     EXPECT_NEAR(sample2.pdf, expected_pdf, 1e-12);
 }
 
-class TransformedSphereTest : public ::testing::Test {
+class SphereTransformTest : public ::testing::Test {
 protected:
     void SetUp() override {}
     void TearDown() override {}
 };
 
-TEST_F(TransformedSphereTest, BoundingBoxReflectsInverseTranslation) {
-    SphereD base_sphere(1.0);
+TEST_F(SphereTransformTest, BoundingBoxReflectsTranslation) {
     auto object_to_render = Transform<double>::translate(Vector<double, 3>(-2.0, 0.0, 0.0));
-    TransformedSphereD transformed(base_sphere, object_to_render);
+    auto sphere = make_sphere_with_transform(object_to_render, 1.0);
 
-    auto bbox = transformed.bounding_box();
+    auto bbox = sphere.bounding_box();
 
     EXPECT_DOUBLE_EQ(bbox.min().x(), -3.0);
     EXPECT_DOUBLE_EQ(bbox.min().y(), -1.0);
@@ -243,49 +255,43 @@ TEST_F(TransformedSphereTest, BoundingBoxReflectsInverseTranslation) {
     EXPECT_DOUBLE_EQ(bbox.max().z(), 1.0);
 }
 
-TEST_F(TransformedSphereTest, RayIntersectionAccountsForRenderToObjectTransform) {
-    SphereD base_sphere(1.0);
+TEST_F(SphereTransformTest, RayIntersectionAccountsForRenderToObjectTransform) {
     auto object_to_render = Transform<double>::translate(Vector<double, 3>(0.0, 0.0, 5.0));
-    TransformedSphereD transformed(base_sphere, object_to_render);
+    auto sphere = make_sphere_with_transform(object_to_render, 1.0);
     Point<double, 3> origin(0.0, 0.0, 0.0);
     Vector<double, 3> direction(0.0, 0.0, 1.0);
     Ray<double, 3> ray(origin, direction);
 
-    const TransformedSphereShapeInterface& shape_iface = transformed;
+    const SphereShapeInterface& shape_iface = sphere;
     auto t_hit = shape_iface.is_intersected(ray);
 
     ASSERT_TRUE(t_hit.has_value());
     EXPECT_NEAR(t_hit.value(), 4.0, 1e-10);
 }
 
-TEST_F(TransformedSphereTest, UpdateTransformRefreshesInverseAndBoundingBox) {
-    SphereD base_sphere(1.0);
-    TransformedSphereD transformed(base_sphere, Transform<double>::identity());
+TEST_F(SphereTransformTest, StoresTransformsAndBoundingBox) {
+    auto object_to_render = Transform<double>::translate(Vector<double, 3>(1.0, 0.0, 0.0));
+    auto sphere = make_sphere_with_transform(object_to_render, 1.0);
 
-    transformed.update_transform(Transform<double>::translate(Vector<double, 3>(-1.0, 0.0, 0.0)));
+    auto expected_render_to_object = object_to_render.inversed();
+    EXPECT_TRUE(sphere.render_to_object_transform() == expected_render_to_object);
+    EXPECT_TRUE(sphere.object_to_render_transform() == object_to_render);
 
-    auto expected_render_to_object = Transform<double>::translate(Vector<double, 3>(-1.0, 0.0, 0.0));
-    auto expected_object_to_render = Transform<double>::translate(Vector<double, 3>(1.0, 0.0, 0.0));
-
-    EXPECT_TRUE(transformed.render_to_object_transform() == expected_render_to_object);
-    EXPECT_TRUE(transformed.object_to_render_transform() == expected_object_to_render);
-
-    auto bbox = transformed.bounding_box();
+    auto bbox = sphere.bounding_box();
 
     EXPECT_DOUBLE_EQ(bbox.min().x(), 0.0);
     EXPECT_DOUBLE_EQ(bbox.max().x(), 2.0);
 }
 
-TEST_F(TransformedSphereTest, IntersectProducesRenderSpaceSurfaceInteraction) {
-    SphereD base_sphere(1.0);
+TEST_F(SphereTransformTest, IntersectProducesRenderSpaceSurfaceInteraction) {
     auto object_to_render = Transform<double>::translate(Vector<double, 3>(0.0, 2.0, 0.0));
-    TransformedSphereD transformed(base_sphere, object_to_render);
+    auto sphere = make_sphere_with_transform(object_to_render, 1.0);
 
     Point<double, 3> origin(2.0, 2.0, 0.0);
     Vector<double, 3> direction(-1.0, 0.0, 0.0);
     Ray<double, 3> ray(origin, direction);
 
-    const TransformedSphereShapeInterface& shape_iface = transformed;
+    const SphereShapeInterface& shape_iface = sphere;
     auto result = shape_iface.intersect(ray);
 
     ASSERT_TRUE(result.has_value());
@@ -310,23 +316,23 @@ TEST_F(TransformedSphereTest, IntersectProducesRenderSpaceSurfaceInteraction) {
 
     auto dpdu = interaction.dpdu();
     EXPECT_NEAR(dpdu.x(), 0.0, 1e-12);
-    EXPECT_NEAR(dpdu.y(), base_sphere.phi_max(), 1e-12);
+    EXPECT_NEAR(dpdu.y(), sphere.phi_max(), 1e-12);
     EXPECT_NEAR(dpdu.z(), 0.0, 1e-12);
 
     auto dpdv = interaction.dpdv();
     EXPECT_NEAR(dpdv.x(), 0.0, 1e-12);
     EXPECT_NEAR(dpdv.y(), 0.0, 1e-12);
-    EXPECT_NEAR(dpdv.z(), -(base_sphere.z_max_theta() - base_sphere.z_min_theta()), 1e-12);
+    EXPECT_NEAR(dpdv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
 
     auto dndu = interaction.dndu().to_vector();
     EXPECT_NEAR(dndu.x(), 0.0, 1e-12);
-    EXPECT_NEAR(dndu.y(), base_sphere.phi_max(), 1e-12);
+    EXPECT_NEAR(dndu.y(), sphere.phi_max(), 1e-12);
     EXPECT_NEAR(dndu.z(), 0.0, 1e-12);
 
     auto dndv = interaction.dndv().to_vector();
     EXPECT_NEAR(dndv.x(), 0.0, 1e-12);
     EXPECT_NEAR(dndv.y(), 0.0, 1e-12);
-    EXPECT_NEAR(dndv.z(), -(base_sphere.z_max_theta() - base_sphere.z_min_theta()), 1e-12);
+    EXPECT_NEAR(dndv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
 
     auto expected_error = pbpt::math::gamma<double>(5) * 1.0;
     EXPECT_NEAR(interaction.p_lower().x(), p.x() - expected_error, 1e-12);
@@ -337,10 +343,10 @@ TEST_F(TransformedSphereTest, IntersectProducesRenderSpaceSurfaceInteraction) {
     EXPECT_NEAR(interaction.p_upper().z(), p.z(), 1e-12);
 }
 
-TEST_F(TransformedSphereTest, ExampleScenariosMatchManualExperiment) {
-    SphereD unit_sphere(1.0);
+TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
+    auto unit_sphere = make_sphere(1.0);
     auto translate = Transform<double>::translate(Vector<double, 3>(1.0, 2.0, 3.0));
-    TransformedSphereD transformed(unit_sphere, translate);
+    auto transformed = make_sphere_with_transform(translate, 1.0);
 
     auto bbox = transformed.bounding_box();
     EXPECT_DOUBLE_EQ(bbox.min().x(), 0.0);
@@ -367,7 +373,7 @@ TEST_F(TransformedSphereTest, ExampleScenariosMatchManualExperiment) {
     EXPECT_NEAR(n_a.z(), -1.0, 1e-12);
 
     auto translate_b = Transform<double>::translate(Vector<double, 3>(1.2, 2.2, 3.0));
-    TransformedSphereD transformed_b(unit_sphere, translate_b);
+    auto transformed_b = make_sphere_with_transform(translate_b, 1.0);
     auto hit_b = transformed_b.intersect(ray_a);
     ASSERT_TRUE(hit_b.has_value());
     const auto& [intr_b, t_b] = hit_b.value();

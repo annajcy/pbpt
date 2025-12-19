@@ -61,15 +61,15 @@ TEST(AreaLightTest, SampleLightReturnsNulloptWhenBackfacing) {
     using T = float;
     constexpr int N = 4;
 
-    shape::Sphere<T> sphere(1);
-    shape::TransformedShape<T, shape::Sphere<T>> transformed_sphere(
-        sphere,
-        geometry::Transform<T>::identity()
+    shape::Sphere<T> sphere(
+        geometry::Transform<T>::identity(),
+        false,
+        T(1)
     );
 
     radiometry::ConstantSpectrumDistribution<T> power(T(3));
     AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
-        transformed_sphere,
+        sphere,
         power
     );
 
@@ -85,15 +85,15 @@ TEST(AreaLightTest, SampleLightAndPdfMatchExpectedForNorthPoleSample) {
     using T = float;
     constexpr int N = 4;
 
-    shape::Sphere<T> sphere(1);
-    shape::TransformedShape<T, shape::Sphere<T>> transformed_sphere(
-        sphere,
-        geometry::Transform<T>::identity()
+    shape::Sphere<T> sphere(
+        geometry::Transform<T>::identity(),
+        false,
+        T(1)
     );
 
     radiometry::ConstantSpectrumDistribution<T> power(T(5));
     AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
-        transformed_sphere,
+        sphere,
         power
     );
 
@@ -136,15 +136,15 @@ TEST(AreaLightTest, VisibilityTesterReferencesSampledPointAndRespectsOcclusion) 
     using T = float;
     constexpr int N = 4;
 
-    shape::Sphere<T> sphere(1);
-    shape::TransformedShape<T, shape::Sphere<T>> transformed_sphere(
-        sphere,
-        geometry::Transform<T>::identity()
+    shape::Sphere<T> sphere(
+        geometry::Transform<T>::identity(),
+        false,
+        T(1)
     );
 
     radiometry::ConstantSpectrumDistribution<T> power(T(1));
     AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
-        transformed_sphere,
+        sphere,
         power
     );
 

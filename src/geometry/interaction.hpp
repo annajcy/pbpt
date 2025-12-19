@@ -141,23 +141,27 @@ class NormalInteractionBase : public Interaction<T, Derived> {
 protected:
     /// Geometric surface normal (Render Space).
     math::Normal<T, 3> m_n;
+    math::Normal<T, 3> m_shading_n;
 
 public:
     NormalInteractionBase(
         const math::Point<T, 3>& p_lower,
         const math::Point<T, 3>& p_upper,
         const math::Vector<T, 3>& wo,
-        const math::Normal<T, 3>& n
-    ) : Interaction<T, Derived>(p_lower, p_upper, wo), m_n(n) {}
+        const math::Normal<T, 3>& n,
+        const math::Normal<T, 3>& shading_n
+    ) : Interaction<T, Derived>(p_lower, p_upper, wo), m_n(n), m_shading_n(shading_n) {}
 
     NormalInteractionBase(
         const math::Point<T, 3>& p,
         const math::Vector<T, 3>& wo,
         const math::Normal<T, 3>& n,
+        const math::Normal<T, 3>& shading_n,
         const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0}
-    ) : Interaction<T, Derived>(p, wo, error_margin), m_n(n) {}
+    ) : Interaction<T, Derived>(p, wo, error_margin), m_n(n), m_shading_n(shading_n) {}
 
     const math::Normal<T, 3>& n() const { return m_n; }
+    const math::Normal<T, 3>& shading_n() const { return m_shading_n; }
 
     // --- Shared Implementation for Ray Spawning ---
 
@@ -183,6 +187,11 @@ public:
         // (if the target is another surface)
         return Ray<T, 3>(o, dir, safe_ray_tmax(dist));
     }
+
+    void filp_normals() {
+        m_n = -m_n;
+        m_shading_n = -m_shading_n;
+    }
 };
 
 // -----------------------------------------------------------------------------
@@ -200,15 +209,17 @@ public:
         const math::Point<T, 3>& p_lower,
         const math::Point<T, 3>& p_upper,
         const math::Vector<T, 3>& wo,
-        const math::Normal<T, 3>& n
-    ) : NormalInteractionBase<T, NormalInteraction<T>>(p_lower, p_upper, wo, n) {}
+        const math::Normal<T, 3>& n,
+        const math::Normal<T, 3>& shading_n 
+    ) : NormalInteractionBase<T, NormalInteraction<T>>(p_lower, p_upper, wo, n, shading_n) {}
 
     NormalInteraction(
         const math::Point<T, 3>& p,
         const math::Vector<T, 3>& wo,
         const math::Normal<T, 3>& n,
+        const math::Normal<T, 3>& shading_n,
         const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0}
-    ) : NormalInteractionBase<T, NormalInteraction<T>>(p, wo, n, error_margin) {}
+    ) : NormalInteractionBase<T, NormalInteraction<T>>(p, wo, n, shading_n, error_margin) {}
 };
 
 /**
@@ -227,6 +238,11 @@ protected:
     math::Normal<T, 3> m_dndu;
     math::Normal<T, 3> m_dndv;
 
+    math::Vector<T, 3> m_shading_dpdu;
+    math::Vector<T, 3> m_shading_dpdv;
+    math::Normal<T, 3> m_shading_dndu;
+    math::Normal<T, 3> m_shading_dndv;
+
 public:
     // Constructor 1: Full details
     SurfaceInteraction(
@@ -234,27 +250,37 @@ public:
         const math::Point<T, 3>& p_upper,
         const math::Vector<T, 3>& wo,
         const math::Normal<T, 3>& n,
+        const math::Normal<T, 3>& shading_n,
         const math::Point<T, 2>& uv,
         const math::Vector<T, 3>& dpdu,
         const math::Vector<T, 3>& dpdv,
         const math::Normal<T, 3>& dndu,
-        const math::Normal<T, 3>& dndv
-    ) : NormalInteractionBase<T, SurfaceInteraction<T>>(p_lower, p_upper, wo, n),
-        m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
+        const math::Normal<T, 3>& dndv,
+        const math::Vector<T, 3>& shading_dpdu,
+        const math::Vector<T, 3>& shading_dpdv,
+        const math::Normal<T, 3>& shading_dndu,
+        const math::Normal<T, 3>& shading_dndv
+    ) : NormalInteractionBase<T, SurfaceInteraction<T>>(p_lower, p_upper, wo, n, shading_n),
+        m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv), m_shading_dpdu(shading_dpdu), m_shading_dpdv(shading_dpdv), m_shading_dndu(shading_dndu), m_shading_dndv(shading_dndv) {}
 
     // Constructor 2: Central point + margin
     SurfaceInteraction(
         const math::Point<T, 3>& p,
         const math::Vector<T, 3>& wo,
         const math::Normal<T, 3>& n,
+        const math::Normal<T, 3>& shading_n,
         const math::Point<T, 2>& uv,
         const math::Vector<T, 3>& dpdu,
         const math::Vector<T, 3>& dpdv,
         const math::Normal<T, 3>& dndu,
         const math::Normal<T, 3>& dndv,
+        const math::Vector<T, 3>& shading_dpdu,
+        const math::Vector<T, 3>& shading_dpdv,
+        const math::Normal<T, 3>& shading_dndu,
+        const math::Normal<T, 3>& shading_dndv,
         const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0}
-    ) : NormalInteractionBase<T, SurfaceInteraction<T>>(p, wo, n, error_margin),
-        m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
+    ) : NormalInteractionBase<T, SurfaceInteraction<T>>(p, wo, n, shading_n, error_margin),
+        m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv), m_shading_dpdu(shading_dpdu), m_shading_dpdv(shading_dpdv), m_shading_dndu(shading_dndu), m_shading_dndv(shading_dndv) {}
 
     // Constructor 3: Simplified for light sources (NEE) 
     // Constructs a full SurfaceInteraction but with zero derivatives.
@@ -277,6 +303,10 @@ public:
     const math::Vector<T, 3>& dpdv() const { return m_dpdv; }
     const math::Normal<T, 3>& dndu() const { return m_dndu; }
     const math::Normal<T, 3>& dndv() const { return m_dndv; }
+    const math::Vector<T, 3>& shading_dpdu() const { return m_shading_dpdu; }
+    const math::Vector<T, 3>& shading_dpdv() const { return m_shading_dpdv; }
+    const math::Normal<T, 3>& shading_dndu() const { return m_shading_dndu; }
+    const math::Normal<T, 3>& shading_dndv() const { return m_shading_dndv; }
 };
 
 } // namespace pbpt::geometry

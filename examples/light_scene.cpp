@@ -45,48 +45,58 @@ int main() {
 
     // Floor (large sphere).
     scene_objects.push_back({
-        pbpt::shape::TransformedShape<T, pbpt::shape::Sphere<T>>(
-            pbpt::shape::Sphere<T>(T(100.0)),
-            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0), T(-100.7), T(6.0))),
-            render_transform
+        pbpt::shape::Sphere<T>(
+            render_transform.object_to_render_from_object_to_world(
+                pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0), T(-100.7), T(6.0)))
+            ),
+            false,
+            T(100.0)
         ),
         pbpt::radiometry::RGB<T>(T(0.8), T(0.8), T(0.8))
     });
 
     // Three diffuse spheres.
     scene_objects.push_back({
-        pbpt::shape::TransformedShape<T, pbpt::shape::Sphere<T>>(
-            pbpt::shape::Sphere<T>(T(0.7)),
-            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(-2.0), T(0.0), T(5.0))),
-            render_transform
+        pbpt::shape::Sphere<T>(
+            render_transform.object_to_render_from_object_to_world(
+                pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(-2.0), T(0.0), T(5.0)))
+            ),
+            false,
+            T(0.7)
         ),
         pbpt::radiometry::RGB<T>(T(0.9), T(0.1), T(0.1))
     });
 
     scene_objects.push_back({
-        pbpt::shape::TransformedShape<T, pbpt::shape::Sphere<T>>(
-            pbpt::shape::Sphere<T>(T(0.7)),
-            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0), T(0.5), T(5.0))),
-            render_transform
+        pbpt::shape::Sphere<T>(
+            render_transform.object_to_render_from_object_to_world(
+                pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0), T(0.5), T(5.0)))
+            ),
+            false,
+            T(0.7)
         ),
         pbpt::radiometry::RGB<T>(T(0.1), T(0.9), T(0.1))
     });
 
     scene_objects.push_back({
-        pbpt::shape::TransformedShape<T, pbpt::shape::Sphere<T>>(
-            pbpt::shape::Sphere<T>(T(0.7)),
-            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(2.0), T(0.0), T(5.0))),
-            render_transform
+        pbpt::shape::Sphere<T>(
+            render_transform.object_to_render_from_object_to_world(
+                pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(2.0), T(0.0), T(5.0)))
+            ),
+            false,
+            T(0.7)
         ),
         pbpt::radiometry::RGB<T>(T(0.1), T(0.1), T(0.9))
     });
 
     // Emissive sphere area light with CIE D65 spectrum.
     pbpt::scene::LightScene<T>::SceneAreaLight area_light{
-        pbpt::shape::TransformedShape<T, pbpt::shape::Sphere<T>>(
-            pbpt::shape::Sphere<T>(T(0.6)),
-            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0), T(3.0), T(4.0))),
-            render_transform
+        pbpt::shape::Sphere<T>(
+            render_transform.object_to_render_from_object_to_world(
+                pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0), T(3.0), T(4.0)))
+            ),
+            false,
+            T(0.6)
         ),
         // The CIE D65 table is roughly normalized to Y=100; using 1.0 keeps
         // brightness in a similar range to the existing simple_scene example.

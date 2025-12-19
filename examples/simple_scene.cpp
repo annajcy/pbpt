@@ -7,7 +7,7 @@
 #include "math/function.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
-#include "scene/scene.hpp"
+#include "scene/simple_scene.hpp"
 #include "shape/sphere.hpp"
 #include "utils/system_info.hpp"
 
@@ -46,21 +46,27 @@ int main() {
     T offset_x = T(0.5f);
     T offset_y = T(1.0f);
 
-    std::vector<pbpt::shape::TransformedShape<T, pbpt::shape::Sphere<T>>> spheres;
+    std::vector<pbpt::shape::Sphere<T>> spheres;
     spheres.emplace_back(
-        pbpt::shape::Sphere<T>(T(0.7f)),
-        pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(-2.0f) + offset_x, T(0.0f) + offset_y, T(5.0f))),
-        render_transform
+        render_transform.object_to_render_from_object_to_world(
+            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(-2.0f) + offset_x, T(0.0f) + offset_y, T(5.0f)))
+        ),
+        false,
+        T(0.7f)
     ); // red sphere
     spheres.emplace_back(
-        pbpt::shape::Sphere<T>(T(0.7f)),
-        pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0f) + offset_x, T(0.5f) + offset_y, T(5.0f))),
-        render_transform
+        render_transform.object_to_render_from_object_to_world(
+            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0f) + offset_x, T(0.5f) + offset_y, T(5.0f)))
+        ),
+        false,
+        T(0.7f)
     ); // green sphere
     spheres.emplace_back(
-        pbpt::shape::Sphere<T>(T(0.7f)),
-        pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(2.0f) + offset_x, T(0.0f) + offset_y, T(5.0f))),
-        render_transform
+        render_transform.object_to_render_from_object_to_world(
+            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(2.0f) + offset_x, T(0.0f) + offset_y, T(5.0f)))
+        ),
+        false,
+        T(0.7f)
     ); // blue sphere
 
     std::vector<pbpt::scene::SimpleScene<T>::SceneObject> scene_objects {

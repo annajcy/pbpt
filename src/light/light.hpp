@@ -125,28 +125,27 @@ template<typename T, typename ShapeType, typename PowerSpectrumType>
 class AreaLight : public Light<T, AreaLight<T, ShapeType, PowerSpectrumType>> {
     friend class Light<T, AreaLight<T, ShapeType, PowerSpectrumType>>;
 private:
-    const shape::TransformedShape<T, ShapeType>& m_transformed_shape;
+    const ShapeType m_shape;
     PowerSpectrumType m_power_spectrum;
 
 public:
     AreaLight(
-        const shape::TransformedShape<T, ShapeType>& transformed_shape,
+        const ShapeType& shape,
         const PowerSpectrumType& power_spectrum
-    ) : m_transformed_shape(transformed_shape), m_power_spectrum(power_spectrum) {}
+    ) : m_shape(shape), m_power_spectrum(power_spectrum) {}
 
-    const shape::TransformedShape<T, ShapeType>& transform_shape() const {
-        return m_transformed_shape;
+    const ShapeType& shape() const {
+        return m_shape;
     }
 
 private:
     geometry::Transform<T> render_to_light_transform_impl() const {
-        return m_transformed_shape.render_to_object_transform();
+        return m_shape.render_to_object_transform();
     }
 
     geometry::Transform<T> light_to_render_transform_impl() const {
-        return m_transformed_shape.object_to_render_transform();
+        return m_shape.object_to_render_transform();
     }
-
 
     template<int N, typename NormalInteractionType>
     std::optional<LightSampleResult<T, N, NormalInteractionType>> sample_light_impl(
@@ -155,7 +154,7 @@ private:
         const math::Point<T, 2>& u_sample
     ) {
         // Sample a point on the light source
-        shape::ShapeSample<T> shape_sample = m_transformed_shape.sample_on_shape(u_sample);
+        shape::ShapeSample<T> shape_sample = m_shape.sample_on_shape(u_sample);
 
         VisibilityTester<T, NormalInteractionType> visibility_tester(
             ref_point,
@@ -198,7 +197,7 @@ private:
     ) const {
        
         auto ray = ref_point.spawn_ray(wi);
-        auto intersection_opt = m_transformed_shape.intersect(ray);
+        auto intersection_opt = m_shape.intersect(ray);
         if (!intersection_opt.has_value()) {
             return T(0);
         }
@@ -210,7 +209,7 @@ private:
         if (cos_theta_light <= T(0)) {
             return T(0);
         }
-        T pdf_area = m_transformed_shape.sample_on_shape_pdf(intersection.interaction.point());
+        T pdf_area = m_shape.sample_on_shape_pdf(intersection.interaction.point());
         T pdf_solid_angle = distance_squared * pdf_area / cos_theta_light;
         return pdf_solid_angle;
     }

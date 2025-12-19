@@ -7,6 +7,36 @@ namespace pbpt::geometry::testing{
 
 class InteractionTest : public ::testing::Test {
 protected:
+    template<typename T>
+    SurfaceInteraction<T> make_surface_interaction_with_shading(
+        const math::Point<T, 3>& p_lower_in,
+        const math::Point<T, 3>& p_upper_in,
+        const math::Vector<T, 3>& wo_in,
+        const math::Normal<T, 3>& n_in,
+        const math::Point<T, 2>& uv_in,
+        const math::Vector<T, 3>& dpdu_in,
+        const math::Vector<T, 3>& dpdv_in,
+        const math::Normal<T, 3>& dndu_in,
+        const math::Normal<T, 3>& dndv_in
+    ) const {
+        return SurfaceInteraction<T>(
+            p_lower_in,
+            p_upper_in,
+            wo_in,
+            n_in,
+            n_in,
+            uv_in,
+            dpdu_in,
+            dpdv_in,
+            dndu_in,
+            dndv_in,
+            dpdu_in,
+            dpdv_in,
+            dndu_in,
+            dndv_in
+        );
+    }
+
     void SetUp() override {
         // 创建测试用的点和方向
         p_lower = Pt3(Float(0.9), Float(1.9), Float(2.9));
@@ -26,7 +56,9 @@ protected:
     }
 
     SurfaceInteraction<Float> make_surface_interaction() const {
-        return SurfaceInteraction<Float>(p_lower, p_upper, wo, n, uv, dpdu, dpdv, dndu, dndv);
+        return make_surface_interaction_with_shading<Float>(
+            p_lower, p_upper, wo, n, uv, dpdu, dpdv, dndu, dndv
+        );
     }
 
     Pt3 p_lower;
@@ -154,7 +186,9 @@ TEST_F(InteractionTest, DifferentNormalDirections) {
     Vec3 wi(0, 0, 1);  // 固定入射方向
     
     for (const auto& normal : normals) {
-        SurfaceInteraction<Float> si(p_lower, p_upper, wo, normal, uv, dpdu, dpdv, dndu, dndv);
+        SurfaceInteraction<Float> si = make_surface_interaction_with_shading<Float>(
+            p_lower, p_upper, wo, normal, uv, dpdu, dpdv, dndu, dndv
+        );
         Ray<Float, 3> ray = si.spawn_ray(wi);
         
         // 所有情况都应该产生有效的射线
@@ -182,7 +216,9 @@ TEST_F(InteractionTest, NumericalStability) {
         Float(3.0) + Float(1e-4)
     );
 
-    SurfaceInteraction<Float> si(small_lower, small_upper, wo, n, uv, dpdu, dpdv, dndu, dndv);
+    SurfaceInteraction<Float> si = make_surface_interaction_with_shading<Float>(
+        small_lower, small_upper, wo, n, uv, dpdu, dpdv, dndu, dndv
+    );
 
     Vec3 wi(0, 0, 1);
     Ray<Float, 3> ray = si.spawn_ray(wi);
@@ -231,7 +267,9 @@ TEST_F(InteractionTest, CrossTypeSurfaceInteractionRays) {
     Vector<double, 3> dpdu2(1, 0, 0), dpdv2(0, 1, 0);
     Normal<double, 3> dndu2(0, 0, 0), dndv2(0, 0, 0);
     
-    SurfDouble si2(p2_lower, p2_upper, wo2, n2, uv2, dpdu2, dpdv2, dndu2, dndv2);
+    SurfDouble si2 = make_surface_interaction_with_shading<double>(
+        p2_lower, p2_upper, wo2, n2, uv2, dpdu2, dpdv2, dndu2, dndv2
+    );
     EXPECT_EQ(si2.p_lower(), p2_lower);
     EXPECT_EQ(si2.p_upper(), p2_upper);
     

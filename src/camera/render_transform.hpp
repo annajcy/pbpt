@@ -125,6 +125,18 @@ public:
     }
 
     /**
+     * @brief Convert an object-to-world transform into object-to-render.
+     *
+     * Useful for building shapes in world space while shading in the chosen
+     * render space.
+     */
+    geometry::Transform<T> object_to_render_from_object_to_world(
+        const geometry::Transform<T>& object_to_world
+    ) const {
+        return world_to_render() * object_to_world;
+    }
+
+    /**
      * @brief Change the render space in-place.
      *
      * This recomputes internal transforms while preserving the original
