@@ -937,4 +937,69 @@ TEST_F(SpectrumTest, MultipleIlluminantSamplingAdvanced) {
     }
 }
 
+// =============================================================================
+// MultipliedSpectrumDistribution Lifetime Tests
+// =============================================================================
+
+TEST_F(SpectrumTest, MultipliedSpectrumOwnsRvalueRvalueOperands) {
+    using S = ConstantSpectrumDistribution<float>;
+
+    auto product = S(2.0f) * S(3.0f);
+
+    EXPECT_NE(product.s1.owned, nullptr);
+    EXPECT_EQ(product.s1.ref, product.s1.owned.get());
+    EXPECT_NE(product.s2.owned, nullptr);
+    EXPECT_EQ(product.s2.ref, product.s2.owned.get());
+
+    EXPECT_FLOAT_EQ(product.at(500.0f), 6.0f);
+}
+
+TEST_F(SpectrumTest, MultipliedSpectrumOwnsOnlyRvalueSide) {
+    using S = ConstantSpectrumDistribution<float>;
+
+    S a(2.0f);
+    S b(3.0f);
+
+    {
+        auto product = S(2.0f) * b;
+        EXPECT_NE(product.s1.owned, nullptr);
+        EXPECT_EQ(product.s2.owned, nullptr);
+        EXPECT_EQ(product.s2.ref, &b);
+        EXPECT_FLOAT_EQ(product.at(500.0f), 6.0f);
+    }
+
+    {
+        auto product = a * S(3.0f);
+        EXPECT_EQ(product.s1.owned, nullptr);
+        EXPECT_EQ(product.s1.ref, &a);
+        EXPECT_NE(product.s2.owned, nullptr);
+        EXPECT_FLOAT_EQ(product.at(500.0f), 6.0f);
+    }
+}
+
+TEST_F(SpectrumTest, MultipliedSpectrumReferencesBothLvalues) {
+    using S = ConstantSpectrumDistribution<float>;
+
+    S a(2.0f);
+    S b(3.0f);
+
+    auto product = a * b;
+    EXPECT_EQ(product.s1.owned, nullptr);
+    EXPECT_EQ(product.s1.ref, &a);
+    EXPECT_EQ(product.s2.owned, nullptr);
+    EXPECT_EQ(product.s2.ref, &b);
+    EXPECT_FLOAT_EQ(product.at(500.0f), 6.0f);
+}
+
+TEST_F(SpectrumTest, MultipliedSpectrumOwnsTemporaryConstantTimesD65) {
+    using S = ConstantSpectrumDistribution<float>;
+    const auto& d65 = CIE_D65_ilum<float>;
+
+    auto product = S(2.0f) * d65;
+    EXPECT_NE(product.s1.owned, nullptr);
+    EXPECT_EQ(product.s2.owned, nullptr);
+
+    EXPECT_NEAR(product.at(560.0f), 2.0f * d65.at(560.0f), 1e-5f);
+}
+
 }

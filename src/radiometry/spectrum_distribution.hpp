@@ -9,6 +9,7 @@
 #include <iostream>
 #include <type_traits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "math/function.hpp"
@@ -139,19 +140,32 @@ public:
     constexpr T at_impl(T lambda) const { return s1.get().at(lambda) * s2.get().at(lambda); }
 };
 
-/// Helper operator to multiply two distributions with explicit template arguments.
-template<class D1, class T1, class D2, class T2>
-auto operator*(D1&& a, D2&& b) {
-  using R = std::common_type_t<T1,T2>;
-  using A = std::decay_t<D1>; using B = std::decay_t<D2>;
-  return MultipliedSpectrumDistribution<R, A, B>(std::forward<D1>(a), std::forward<D2>(b));
-}
-
 /// Multiply two @c SpectrumDistribution objects to get a spectrum product.
 template<typename D1, typename T1, typename D2, typename T2>
 inline auto operator*(const SpectrumDistribution<D1, T1>& s1, const SpectrumDistribution<D2, T2>& s2) {
     using R = std::common_type_t<T1, T2>;
     return MultipliedSpectrumDistribution<R, D1, D2>(static_cast<const D1&>(s1), static_cast<const D2&>(s2));
+}
+
+/// Overload for rvalue-lvalue multiplication to avoid dangling references.
+template<typename D1, typename T1, typename D2, typename T2>
+inline auto operator*(SpectrumDistribution<D1, T1>&& s1, const SpectrumDistribution<D2, T2>& s2) {
+    using R = std::common_type_t<T1, T2>;
+    return MultipliedSpectrumDistribution<R, D1, D2>(std::move(static_cast<D1&>(s1)), static_cast<const D2&>(s2));
+}
+
+/// Overload for lvalue-rvalue multiplication to avoid dangling references.
+template<typename D1, typename T1, typename D2, typename T2>
+inline auto operator*(const SpectrumDistribution<D1, T1>& s1, SpectrumDistribution<D2, T2>&& s2) {
+    using R = std::common_type_t<T1, T2>;
+    return MultipliedSpectrumDistribution<R, D1, D2>(static_cast<const D1&>(s1), std::move(static_cast<D2&>(s2)));
+}
+
+/// Overload for rvalue-rvalue multiplication to avoid dangling references.
+template<typename D1, typename T1, typename D2, typename T2>
+inline auto operator*(SpectrumDistribution<D1, T1>&& s1, SpectrumDistribution<D2, T2>&& s2) {
+    using R = std::common_type_t<T1, T2>;
+    return MultipliedSpectrumDistribution<R, D1, D2>(std::move(static_cast<D1&>(s1)), std::move(static_cast<D2&>(s2)));
 }
 
 /**

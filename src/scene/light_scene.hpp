@@ -168,16 +168,10 @@ public:
 
 private:
     auto make_area_light() const {
-        using IntensitySpectrum = radiometry::ConstantSpectrumDistribution<T>;
-        using D65Spectrum = radiometry::constant::CIED65SpectrumType<T>;
-        using PowerSpectrum = radiometry::MultipliedSpectrumDistribution<T, IntensitySpectrum, D65Spectrum>;
+        auto power_spectrum = radiometry::ConstantSpectrumDistribution<T>(m_area_light.intensity)
+                              * radiometry::constant::CIE_D65_ilum<T>;
 
-        PowerSpectrum power_spectrum(
-            IntensitySpectrum(m_area_light.intensity),
-            radiometry::constant::CIE_D65_ilum<T>
-        );
-
-        return light::AreaLight<T, shape::Sphere<T>, PowerSpectrum>(
+        return light::AreaLight<T, shape::Sphere<T>, decltype(power_spectrum)>(
             m_area_light.sphere,
             power_spectrum
         );
