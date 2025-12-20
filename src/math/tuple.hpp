@@ -73,7 +73,7 @@ public:
     /// Constructs a tuple from N scalar arguments.
     template<typename ...Args>
         requires(sizeof...(Args) == N)
-    explicit constexpr Tuple(Args&&... args) : m_data{ static_cast<T>(args)... } {}
+    constexpr Tuple(Args&&... args) : m_data{ static_cast<T>(args)... } {}
 
     /**
      * @brief Converting copy-constructor from another Tuple-like type.

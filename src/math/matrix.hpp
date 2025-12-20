@@ -291,9 +291,6 @@ public:
         return result;
     }
 
-    // Constructors
-    constexpr Matrix() noexcept = default;
-
     /**
      * @brief Constructs a matrix from column vectors.
      *
@@ -301,16 +298,54 @@ public:
      */
     template <typename... Vecs>
         requires(sizeof...(Vecs) == C && (std::is_convertible_v<Vecs, Vector<T, R>> && ...))
-    constexpr explicit Matrix(Vecs&&... col_vecs) noexcept {
+    constexpr static Matrix from_cols(Vecs&&... col_vecs) {
         int col_index = 0;
+        Matrix<T, R, C> result;
         (([&] {
              for (int row_index = 0; row_index < R; ++row_index) {
-                 (*this)[row_index][col_index] = col_vecs[row_index];
+                 result[row_index][col_index] = col_vecs[row_index];
              }
              ++col_index;
          })(),
          ...);
+        return result;  
     }
+
+    /**
+     * @brief Constructs a matrix from row vectors.
+     *
+     * Expects exactly R row vectors of type `Vector<T,C>`.
+     */
+    template<typename... Vecs>
+        requires(sizeof...(Vecs) == R && (std::is_convertible_v<Vecs, Vector<T, C>> && ...))
+    constexpr static Matrix from_rows(Vecs&&... row_vecs) {
+        int row_index = 0;
+        Matrix<T, R, C> result;
+        (([&] {
+             for (int col_index = 0; col_index < C; ++col_index) {
+                 result[row_index][col_index] = row_vecs[col_index];
+             }
+             ++row_index;
+         })(),
+         ...);
+        return result;  
+    }
+
+    /**
+     * @brief Constructs a matrix from a flat list of R*C scalar values.
+     *
+     * Values are stored in row-major order.
+     */
+    template <std::convertible_to<T>... Vals>
+        requires(sizeof...(Vals) == R * C && (std::is_arithmetic_v<std::remove_cvref_t<Vals>> && ...))
+    constexpr static Matrix from_vals(Vals&&... vals) noexcept {
+        Matrix<T, R, C> result;
+        result.m_data = {static_cast<T>(std::forward<Vals>(vals))...};
+        return result;
+    }
+
+    // Constructors
+    constexpr Matrix() noexcept = default;
 
     /**
      * @brief Constructs a matrix from a flat list of R*C scalar values.

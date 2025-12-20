@@ -75,9 +75,9 @@ int main() {
     // Area light: small triangle in front of the rectangle emitting forward (+Z).
     std::vector<int> light_indices = {0, 1, 2};
     std::vector<pbpt::math::Point<T, 3>> light_positions = {
-        pbpt::math::Point<T, 3>{-0.5, 1.2, 2.5},
-        pbpt::math::Point<T, 3>{ 0.5, 1.2, 2.5},
-        pbpt::math::Point<T, 3>{ 0.0, 1.8, 2.5}
+        {-0.5, 1.2, 2.5},
+        { 0.5, 1.2, 2.5},
+        { 0.0, 1.8, 2.5}
     };
     std::vector<pbpt::math::Normal<T, 3>> light_normals(3, pbpt::math::Normal<T, 3>(0, 0, 1));
     meshes.push_back(std::make_unique<pbpt::shape::TriangleMesh<T>>(

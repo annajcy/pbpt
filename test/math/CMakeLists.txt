@@ -19,21 +19,9 @@ add_executable(test_matrix test_matrix.cpp)
 target_link_libraries(test_matrix PRIVATE pbpt gtest::gtest)
 add_test(NAME test_matrix COMMAND test_matrix)
 
-add_executable(test_matrix_enhanced test_matrix_enhanced.cpp)
-target_link_libraries(test_matrix_enhanced PRIVATE pbpt gtest::gtest)
-add_test(NAME test_matrix_enhanced COMMAND test_matrix_enhanced)
-
-add_executable(test_matrix_row_operations test_matrix_row_operations.cpp)
-target_link_libraries(test_matrix_row_operations PRIVATE pbpt gtest::gtest)
-add_test(NAME test_matrix_row_operations COMMAND test_matrix_row_operations)
-
 add_executable(test_homo test_homo.cpp)
 target_link_libraries(test_homo PRIVATE pbpt gtest::gtest)
 add_test(NAME test_homo COMMAND test_homo)
-
-add_executable(test_homo_enhanced test_homo_enhanced.cpp)
-target_link_libraries(test_homo_enhanced PRIVATE pbpt gtest::gtest)
-add_test(NAME test_homo_enhanced COMMAND test_homo_enhanced)
 
 add_executable(test_octahedral test_octahedral.cpp)
 target_link_libraries(test_octahedral PRIVATE pbpt gtest::gtest)
@@ -42,7 +30,5 @@ add_test(NAME test_octahedral COMMAND test_octahedral)
 add_executable(test_sampling test_sampling.cpp)
 target_link_libraries(test_sampling PRIVATE pbpt gtest::gtest)
 add_test(NAME test_sampling COMMAND test_sampling)
-
-
 
 

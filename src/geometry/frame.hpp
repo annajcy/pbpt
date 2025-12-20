@@ -82,7 +82,13 @@ public:
 private:
 
     constexpr void update_tranform() {
-        m_local_to_world = Transform<T>::from_mat3x3(Matrix<T, 3, 3>(m_t, m_b, m_n));
+        m_local_to_world = Transform<T>::from_mat3x3(
+            Matrix<T, 3, 3>::from_cols(
+                m_t, 
+                m_b, 
+                m_n
+            )
+        );
         m_world_to_local = m_local_to_world.inversed();
     }
 };

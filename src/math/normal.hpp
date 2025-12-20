@@ -88,7 +88,18 @@ public:
         }
         return *this;
     }
+
+    //dot product with vector 
+    template <typename U>
+    constexpr auto dot(const Vector<U, N>& rhs) {
+        return this->to_vector().dot(rhs);
+    }
 };
+
+template <typename T, typename U, int N>
+constexpr auto dot(const Vector<T, N>& lhs, const Normal<U, N>& rhs) {
+    return lhs.dot(rhs.to_vector());
+}
 
 template <typename T, int N>
 auto cross(const Normal<T, N>&, const Normal<T, N>&) = delete;

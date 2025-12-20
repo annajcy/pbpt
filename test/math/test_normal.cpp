@@ -86,6 +86,31 @@ TEST_F(NormalTest, VectorConversion) {
     static_assert(std::is_same_v<decltype(v_from_normal), Vec3>);
 }
 
+TEST_F(NormalTest, DotProductWithVector) {
+    Normal3 n(1.0, 2.0, 3.0);
+    Vec3 v(4.0, 5.0, 6.0);
+
+    auto normal_dot = n.dot(v);
+    EXPECT_DOUBLE_EQ(normal_dot, 32.0);
+
+    auto free_dot = dot(v, n);
+    EXPECT_DOUBLE_EQ(free_dot, 32.0);
+
+    const Normal3 n_const(1.0, -2.0, 0.5);
+    Vec3 v2(2.0, 3.0, 4.0);
+    auto const_dot = n_const.dot(v2);
+    EXPECT_DOUBLE_EQ(const_dot, -2.0);
+
+    Normal<float, 3> n_mixed(1.0f, 2.0f, 3.0f);
+    Vector<double, 3> v_mixed(0.5, 1.5, -2.0);
+    auto mixed_dot = n_mixed.dot(v_mixed);
+    static_assert(std::is_same_v<decltype(mixed_dot), double>);
+    EXPECT_DOUBLE_EQ(mixed_dot, -2.5);
+
+    auto mixed_free = dot(v_mixed, n_mixed);
+    EXPECT_DOUBLE_EQ(mixed_free, -2.5);
+}
+
 TEST_F(NormalTest, FaceForward) {
     Normal3 n(0.0, 0.0, 1.0);  // Normal pointing in +Z direction
     

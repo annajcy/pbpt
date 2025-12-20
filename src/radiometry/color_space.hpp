@@ -57,15 +57,19 @@ public:
         XYZ<T> g_chroma = XYZ<T>::from_xyY(g_xy);
         XYZ<T> b_chroma = XYZ<T>::from_xyY(b_xy);
 
-        math::Matrix<T, 3, 3> M{
-            r_chroma, g_chroma, b_chroma
-        };
+        math::Matrix<T, 3, 3> M = math::Matrix<T, 3, 3>::from_cols(
+            r_chroma, 
+            g_chroma, 
+            b_chroma
+        );
 
         math::Vector<T, 3> s = M.inversed() * m_white_point;
 
-        m_rgb_to_xyz = math::Matrix<T, 3, 3>{
-            s.x() * r_chroma, s.y() * g_chroma, s.z() * b_chroma
-        };
+        m_rgb_to_xyz = math::Matrix<T, 3, 3>::from_cols( 
+            s.x() * r_chroma, 
+            s.y() * g_chroma, 
+            s.z() * b_chroma
+        );
 
         m_xyz_to_rgb = m_rgb_to_xyz.inversed();
     }
