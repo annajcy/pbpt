@@ -23,14 +23,18 @@ TEST(FrameTest, ConstructFromNormalRightHanded) {
     EXPECT_NEAR(cross_tb.z(), f.n().z(), kEps);
 }
 
-TEST(FrameTest, ConstructFromNormalLeftHanded) {
-    Vec3d normal(0.0, 1.0, 0.0);
-    Frame<double> f(normal, true);
-    // Left-handed: cross(t, b) == -n
+TEST(FrameTest, ConstructFromNormalMinusZ) {
+    Vec3d normal(0.0, 0.0, -1.0);
+    Frame<double> f(normal);
+    // Ensure basis vectors are orthonormal in the special-case branch.
+    EXPECT_NEAR(f.n().dot(normal.normalized()), 1.0, kEps);
+    EXPECT_NEAR(f.t().dot(f.n()), 0.0, kEps);
+    EXPECT_NEAR(f.b().dot(f.n()), 0.0, kEps);
+    EXPECT_NEAR(f.t().dot(f.b()), 0.0, kEps);
     Vec3d cross_tb = cross(f.t(), f.b());
-    EXPECT_NEAR(cross_tb.x(), -f.n().x(), kEps);
-    EXPECT_NEAR(cross_tb.y(), -f.n().y(), kEps);
-    EXPECT_NEAR(cross_tb.z(), -f.n().z(), kEps);
+    EXPECT_NEAR(cross_tb.x(), f.n().x(), kEps);
+    EXPECT_NEAR(cross_tb.y(), f.n().y(), kEps);
+    EXPECT_NEAR(cross_tb.z(), f.n().z(), kEps);
 }
 
 TEST(FrameTest, ConstructFromTangentAndNormal) {
@@ -56,19 +60,19 @@ TEST(FrameTest, ConstructFromTangentAndNormal) {
     EXPECT_NEAR(cross_tb.z(), f.n().z(), kEps);
 }
 
-TEST(FrameTest, LocalToWorldAndWorldToLocal) {
+TEST(FrameTest, LocalToRenderAndRenderToLocal) {
     Vec3d normal(1.0, 1.0, 1.0);
     Frame<double> f(normal);
     Vec3d localVec(2.0, 3.0, 4.0);
-    // Convert local to world
-    Vec3d world = f.local_to_world().transform_vector(localVec);
-    // Manual computation: world = t*2 + b*3 + n*4
+    // Convert local to render
+    Vec3d render = f.to_render(localVec);
+    // Manual computation: render = t*2 + b*3 + n*4
     Vec3d manual = f.t() * 2.0 + f.b() * 3.0 + f.n() * 4.0;
-    EXPECT_NEAR(world.x(), manual.x(), kEps);
-    EXPECT_NEAR(world.y(), manual.y(), kEps);
-    EXPECT_NEAR(world.z(), manual.z(), kEps);
+    EXPECT_NEAR(render.x(), manual.x(), kEps);
+    EXPECT_NEAR(render.y(), manual.y(), kEps);
+    EXPECT_NEAR(render.z(), manual.z(), kEps);
     // Convert back to local
-    Vec3d back = f.world_to_local().transform_vector(world);
+    Vec3d back = f.to_local(render);
     EXPECT_NEAR(back.x(), localVec.x(), kEps);
     EXPECT_NEAR(back.y(), localVec.y(), kEps);
     EXPECT_NEAR(back.z(), localVec.z(), kEps);
@@ -94,34 +98,29 @@ TEST(FrameTest, BasisVectorsNormalized) {
     }
 }
 
-TEST(FrameTest, HandednessConsistency) {
+TEST(FrameTest, RightHandedConsistency) {
     Vec3d normal(0.0, 0.0, 1.0);
     
     // Right-handed frame
-    Frame<double> f_right(normal, false);
+    Frame<double> f_right(normal);
     Vec3d cross_right = cross(f_right.t(), f_right.b());
     EXPECT_NEAR(cross_right.dot(f_right.n()), 1.0, kEps);
-    
-    // Left-handed frame
-    Frame<double> f_left(normal, true);
-    Vec3d cross_left = cross(f_left.t(), f_left.b());
-    EXPECT_NEAR(cross_left.dot(f_left.n()), -1.0, kEps);
 }
 
 TEST(FrameTest, TransformInverseProperty) {
     Vec3d normal(0.2, 0.6, 0.8);
     Frame<double> f(normal);
     
-    // Test that local_to_world and world_to_local are inverses
-    auto comp1 = f.local_to_world() * f.world_to_local();
-    auto comp2 = f.world_to_local() * f.local_to_world();
+    // Test that local_to_render and render_to_local are inverses
+    auto comp1 = f.local_to_render_transform() * f.render_to_local_transform();
+    auto comp2 = f.render_to_local_transform() * f.local_to_render_transform();
     
     EXPECT_TRUE(comp1.is_identity());
     EXPECT_TRUE(comp2.is_identity());
 }
 
 TEST(FrameTest, EdgeCaseNormalAlmostX) {
-    // Test when normal is very close to (1,0,0) - should use (0,1,0) as up
+    // Test when normal is very close to the x-axis.
     Vec3d normal(0.999, 0.0, 0.0);
     Frame<double> f(normal);
     
@@ -146,18 +145,6 @@ TEST(FrameTest, TangentNormalConstructor) {
     EXPECT_NEAR(f.b().z(), expected_b.z(), kEps);
 }
 
-TEST(FrameTest, TangentNormalLeftHanded) {
-    Vec3d tangent(1.0, 0.0, 0.0);
-    Vec3d normal(0.0, 1.0, 0.0);
-    Frame<double> f(tangent, normal, true);
-    
-    // For left-handed, bitangent should be -cross(normal, tangent)
-    Vec3d expected_b = -cross(normal, tangent);
-    EXPECT_NEAR(f.b().x(), expected_b.x(), kEps);
-    EXPECT_NEAR(f.b().y(), expected_b.y(), kEps);
-    EXPECT_NEAR(f.b().z(), expected_b.z(), kEps);
-}
-
 TEST(FrameTest, MultipleVectorTransformation) {
     Vec3d normal(0.0, 0.0, 1.0);
     Frame<double> f(normal);
@@ -171,8 +158,8 @@ TEST(FrameTest, MultipleVectorTransformation) {
     };
     
     for (const auto& local_vec : local_vectors) {
-        Vec3d world_vec = f.local_to_world().transform_vector(local_vec);
-        Vec3d back_to_local = f.world_to_local().transform_vector(world_vec);
+        Vec3d render_vec = f.to_render(local_vec);
+        Vec3d back_to_local = f.to_local(render_vec);
         
         EXPECT_NEAR(back_to_local.x(), local_vec.x(), kEps);
         EXPECT_NEAR(back_to_local.y(), local_vec.y(), kEps);
@@ -196,4 +183,4 @@ TEST(FrameTest, FloatTypeCompatibility) {
     EXPECT_NEAR(f_float.n().length(), 1.0f, kEpsf);
 }
 
-} // namespace pbpt::math::testing
+} // namespace pbpt::geometry::testing

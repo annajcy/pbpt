@@ -411,35 +411,6 @@ public:
     // -----------------------------------------------------------------------
     // Solid Angle Sampling Implementation
     // -----------------------------------------------------------------------
-    
-    T sample_on_solid_angle_pdf_impl(
-        const math::Point<T, 3>& ref,
-        const math::Point<T, 3>& p_surface
-    ) const {
-        // PDF = Distance^2 / (Area * |cos_theta|)
-        // 这实际上是将 Area PDF 转换到了 Solid Angle Measure
-        auto idx = get_indices();
-        const auto& p0 = m_mesh.positions()[idx[0]];
-        const auto& p1 = m_mesh.positions()[idx[1]];
-        const auto& p2 = m_mesh.positions()[idx[2]];
-
-        // 简单的 1/SolidAngle 估算比较难，通常我们反向转换 Area PDF
-        T dist_sq = (p_surface - ref).length_squared();
-        if (dist_sq == 0) return 0;
-        
-        // 计算几何法线
-        auto n = math::cross(p1 - p0, p2 - p0).normalized();
-        if (m_mesh.should_flip_normal()) n = -n;
-
-        // 夹角余弦
-        auto wi = (p_surface - ref).normalized();
-        T abs_cos_theta = std::abs(n.dot(-wi));
-        
-        if (abs_cos_theta < 1e-8f) return 0;
-
-        return dist_sq / (area_impl() * abs_cos_theta);
-    }
-
     ShapeSample<T> sample_on_solid_angle_impl(
         const math::Point<T, 3>& ref,
         const math::Point<T, 2>& u_sample
@@ -470,6 +441,35 @@ public:
         
         return ss;
     }
+
+    T sample_on_solid_angle_pdf_impl(
+        const math::Point<T, 3>& ref,
+        const math::Point<T, 3>& p_surface
+    ) const {
+        // PDF = Distance^2 / (Area * |cos_theta|)
+        // 这实际上是将 Area PDF 转换到了 Solid Angle Measure
+        auto idx = get_indices();
+        const auto& p0 = m_mesh.positions()[idx[0]];
+        const auto& p1 = m_mesh.positions()[idx[1]];
+        const auto& p2 = m_mesh.positions()[idx[2]];
+
+        // 简单的 1/SolidAngle 估算比较难，通常我们反向转换 Area PDF
+        T dist_sq = (p_surface - ref).length_squared();
+        if (dist_sq == 0) return 0;
+        
+        // 计算几何法线
+        auto n = math::cross(p1 - p0, p2 - p0).normalized();
+        if (m_mesh.should_flip_normal()) n = -n;
+
+        // 夹角余弦
+        auto wi = (p_surface - ref).normalized();
+        T abs_cos_theta = std::abs(n.dot(-wi));
+        
+        if (abs_cos_theta < 1e-8f) return 0;
+
+        return dist_sq / (area_impl() * abs_cos_theta);
+    }
+
 };
 
 } // namespace pbpt::shape
