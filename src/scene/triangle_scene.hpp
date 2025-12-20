@@ -13,13 +13,14 @@
 #include "camera/render_transform.hpp"
 #include "geometry/interaction.hpp"
 #include "geometry/transform.hpp"
-#include "light/light.hpp"
+#include "light/solid_angle_area_light.hpp"
 #include "math/random_generator.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
 #include "radiometry/color_spectrum_lut.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
+#include "shape/sphere.hpp"
 #include "shape/triangle.hpp"
 #include "utils/exr_writer.hpp"
 #include "utils/progress_bar.hpp"
@@ -28,10 +29,10 @@
 namespace pbpt::scene {
 
 /**
- * @brief Minimal triangle-based test scene with a single triangle area light.
+ * @brief Minimal triangle-based test scene with a single spherical area light.
  *
  * Templated so callers can pick float/double. Construct with camera,
- * a list of triangle objects, and an area light triangle, then call render().
+ * a list of triangle objects, and a spherical area light, then call render().
  */
 template <typename T>
 class TriangleScene {
@@ -42,7 +43,7 @@ public:
     };
 
     struct SceneAreaLight {
-        pbpt::shape::Triangle<T> triangle;
+        pbpt::shape::Sphere<T> sphere;
         T intensity{T(1)};
     };
 
@@ -66,7 +67,7 @@ private:
         int skip_index{-1};
 
         bool is_intersected(const pbpt::geometry::Ray<T, 3>& ray) const {
-            if (area_light && area_light->triangle.is_intersected(ray).has_value()) {
+            if (area_light && area_light->sphere.is_intersected(ray).has_value()) {
                 return true;
             }
 
@@ -167,8 +168,8 @@ private:
         auto power_spectrum = pbpt::radiometry::ConstantSpectrumDistribution<T>(m_area_light.intensity)
                               * pbpt::radiometry::constant::CIE_D65_ilum<T>;
 
-        return pbpt::light::AreaLight<T, pbpt::shape::Triangle<T>, decltype(power_spectrum)>(
-            m_area_light.triangle,
+        return pbpt::light::SolidAngleAreaLight<T, pbpt::shape::Sphere<T>, decltype(power_spectrum)>(
+            m_area_light.sphere,
             power_spectrum
         );
     }
@@ -197,7 +198,7 @@ private:
             }
         }
 
-        if (auto hit = m_area_light.triangle.intersect(ray)) {
+        if (auto hit = m_area_light.sphere.intersect(ray)) {
             const auto& [si, t_hit] = *hit;
             if (t_hit < closest) {
                 closest = t_hit;

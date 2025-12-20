@@ -8,6 +8,7 @@
 #include "radiometry/color.hpp"
 #include "scene/triangle_scene.hpp"
 #include "shape/triangle.hpp"
+#include "shape/sphere.hpp"
 #include "utils/system_info.hpp"
 
 namespace {
@@ -138,25 +139,19 @@ int main() {
         scene_objects.push_back({pbpt::shape::Triangle<T>(*meshes.back(), 1), pbpt::radiometry::RGB<T>(T(0.1), T(0.8), T(0.1))});
     }
 
-    // Ceiling light: single emitting triangle
-    std::vector<int> light_indices = {0, 1, 2};
-    std::vector<pbpt::math::Point<T, 3>> light_positions = {
-        pbpt::math::Point<T, 3>(-0.3, y1 - T(0.001), z0 + T(1.2)),
-        pbpt::math::Point<T, 3>( 0.3, y1 - T(0.001), z0 + T(1.2)),
-        pbpt::math::Point<T, 3>( 0.0, y1 - T(0.001), z0 + T(1.8))
-    };
-    std::vector<pbpt::math::Normal<T, 3>> light_normals(3, pbpt::math::Normal<T, 3>(0, -1, 0));
-    meshes.push_back(std::make_unique<pbpt::shape::TriangleMesh<T>>(
-        pbpt::geometry::Transform<T>::identity(),
-        light_indices,
-        light_positions,
-        light_normals
-    ));
-    pbpt::shape::Triangle<T> area_light_triangle(*meshes.back(), 0);
-
+    // Sphere area light at the center of the box.
+    const pbpt::math::Vector<T, 3> light_center(
+        (x0 + x1) / T(2),
+        (y0 + y1) / T(2),
+        (z0 + z1) / T(2)
+    );
     pbpt::scene::TriangleScene<T>::SceneAreaLight area_light{
-        area_light_triangle,
-        T(15.0)
+        pbpt::shape::Sphere<T>(
+            pbpt::geometry::Transform<T>::translate(light_center),
+            false,
+            T(0.1)
+        ),
+        T(5.0)
     };
 
     std::cout << pbpt::utils::to_string(pbpt::utils::system_info()) << std::endl;

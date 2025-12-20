@@ -6,6 +6,7 @@
 #include "geometry/transform.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
+#include "shape/sphere.hpp"
 #include "shape/triangle.hpp"
 #include "utils/system_info.hpp"
 
@@ -72,30 +73,20 @@ int main() {
         triangles.emplace_back(*meshes.back(), i);
     }
 
-    // Area light: small triangle in front of the rectangle emitting forward (+Z).
-    std::vector<int> light_indices = {0, 1, 2};
-    std::vector<pbpt::math::Point<T, 3>> light_positions = {
-        {-0.5, 1.2, 2.5},
-        { 0.5, 1.2, 2.5},
-        { 0.0, 1.8, 2.5}
-    };
-    std::vector<pbpt::math::Normal<T, 3>> light_normals(3, pbpt::math::Normal<T, 3>(0, 0, 1));
-    meshes.push_back(std::make_unique<pbpt::shape::TriangleMesh<T>>(
-        render_transform.object_to_render_from_object_to_world(pbpt::geometry::Transform<T>::identity()),
-        light_indices,
-        light_positions,
-        light_normals
-    ));
-
-    pbpt::shape::Triangle<T> area_light_triangle(*meshes.back(), 0);
-
     std::vector<pbpt::scene::TriangleScene<T>::SceneObject> scene_objects{
         {triangles[0], pbpt::radiometry::RGB<T>(T(0.8), T(0.2), T(0.2))},
         {triangles[1], pbpt::radiometry::RGB<T>(T(0.2), T(0.8), T(0.8))}
     };
 
+    // Area light: small emissive sphere in front of the rectangle.
     pbpt::scene::TriangleScene<T>::SceneAreaLight area_light{
-        area_light_triangle,
+        pbpt::shape::Sphere<T>(
+            render_transform.object_to_render_from_object_to_world(
+                pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0), T(1.4), T(3.0)))
+            ),
+            false,
+            T(0.4)
+        ),
         T(3.0)
     };
 

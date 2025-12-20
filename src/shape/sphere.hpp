@@ -343,9 +343,9 @@ private:
         T cos_alpha = (d_c * d_c + m_radius * m_radius - ds * ds) / (2 * d_c * m_radius);
         T sin_alpha = std::sqrt(std::max(T(0), T(1) - cos_alpha * cos_alpha));
 
-        // 6. Construct Coordinate System for Ref -> Center
-        // The cone is oriented along the vector from Ref to Center (which is -p_ref_obj)
-        auto w_z = (math::Point<T, 3>(0, 0, 0) - p_ref_obj).normalized();
+        // 6. Construct Coordinate System for Center -> Ref
+        // The surface normal should be oriented from center to the hit point.
+        auto w_z = (p_ref_obj - math::Point<T, 3>(0, 0, 0)).normalized();
         auto [w_x, w_y] = math::coordinate_system(w_z); // Assuming you have this helper
 
         // 7. Compute Surface Normal and Point in Object Space
