@@ -77,7 +77,6 @@ constexpr std::pair<Vector<T, 3>, Vector<T, 3>> coordinate_system(const Vector<T
     const T b    = v1.x() * v1.y() * a;
 
     Vector<T, 3> v2(T(1) + sign * v1.x() * v1.x() * a, sign * b, -sign * v1.x());
-
     Vector<T, 3> v3(b, sign + v1.y() * v1.y() * a, -v1.y());
 
     return {v2.normalized(), v3.normalized()};

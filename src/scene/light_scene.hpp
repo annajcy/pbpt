@@ -13,7 +13,7 @@
 #include "camera/projective_camera.hpp"
 #include "geometry/interaction.hpp"
 #include "geometry/transform.hpp"
-#include "light/light.hpp"
+#include "light/area_light.hpp"
 #include "math/random_generator.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"

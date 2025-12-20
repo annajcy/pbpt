@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "geometry/interaction.hpp"
-#include "light/light.hpp"
+#include "light/area_light.hpp"
 #include "math/function.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 #include "radiometry/spectrum_distribution.hpp"
