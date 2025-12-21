@@ -37,23 +37,37 @@ int main() {
     // Camera setup
     pbpt::math::Vector<int, 2> resolution(800, 800);
     pbpt::math::Vector<T, 2> film_size(
-        T(2 * resolution.x() * 1e-5),
-        T(2 * resolution.y() * 1e-5)
-    );  // 20 microns per pixel
+        T(resolution.x() * 2e-5),
+        T(resolution.y() * 2e-5)
+    );  // 10 microns per pixel (narrower FOV)
+
+    // Camera looking down +Z, box in front
+    const bool enable_depth_of_field = true;
+    const int samples_per_pixel = 4;
+    const pbpt::math::Point<T, 3> camera_eye(T(0), T(1), T(1.5));
+    const pbpt::math::Point<T, 3> camera_target(T(0), T(1), T(4));
+    T lens_radius{}, focal_distance{};
+
+    if (enable_depth_of_field) {
+        lens_radius = 0.2;
+        focal_distance = 2.5;  // focus on the box
+    } else {
+        lens_radius = T(0);
+        focal_distance = T(1);
+    }
 
     pbpt::camera::ThinLensPerspectiveCamera<T> camera(
         resolution,
         film_size,
         T(-0.01),
         T(-100.0),
-        T(0.0),
-        T(1.0)
+        lens_radius,
+        focal_distance
     );
 
-    // Camera looking down +Z, box in front
     auto world_to_camera = pbpt::geometry::Transform<T>::look_at(
-        pbpt::math::Point<T, 3>(T(0), T(1), T(0)),  // eye slightly above floor
-        pbpt::math::Point<T, 3>(T(0), T(1), T(4)),  // look at box center
+        camera_eye,     // move closer for tighter framing
+        camera_target,  // look at box center
         pbpt::math::Vector<T, 3>(T(0), T(1), T(0))
     );
 
@@ -139,11 +153,33 @@ int main() {
         scene_objects.push_back({pbpt::shape::Triangle<T>(*meshes.back(), 1), pbpt::radiometry::RGB<T>(T(0.1), T(0.8), T(0.1))});
     }
 
+    // Stanford bunny mesh (OBJ)
+    {
+        auto bunny_transform =
+            pbpt::geometry::Transform<T>::translate(pbpt::math::Vector<T, 3>(T(0.0), T(0.0), T(4.0)))
+            * pbpt::geometry::Transform<T>::scale(T(8.0));
+
+        meshes.push_back(std::make_unique<pbpt::shape::TriangleMesh<T>>(
+            bunny_transform,
+            "asset/model/stanford_bunny.obj",
+            false
+        ));
+
+        const auto& bunny_mesh = *meshes.back();
+        int bunny_triangles = static_cast<int>(bunny_mesh.indices().size() / 3);
+        for (int i = 0; i < bunny_triangles; ++i) {
+            scene_objects.push_back({
+                pbpt::shape::Triangle<T>(bunny_mesh, i),
+                pbpt::radiometry::RGB<T>(T(0.75), T(0.75), T(0.75))
+            });
+        }
+    }
+
     // Sphere area light at the center of the box.
     const pbpt::math::Vector<T, 3> light_center(
         (x0 + x1) / T(2),
         (y0 + y1) / T(2),
-        (z0 + z1) / T(2)
+        z0
     );
     pbpt::scene::TriangleScene<T>::SceneAreaLight area_light{
         pbpt::shape::Sphere<T>(
@@ -151,7 +187,7 @@ int main() {
             false,
             T(0.1)
         ),
-        T(5.0)
+        T(10.0)
     };
 
     std::cout << pbpt::utils::to_string(pbpt::utils::system_info()) << std::endl;
@@ -159,7 +195,8 @@ int main() {
     pbpt::scene::TriangleScene<T> scene(camera, scene_objects, area_light);
     scene.render(
         std::format("output/cornell_box_{}.exr", pbpt::utils::to_string(pbpt::utils::current_datetime())),
-        render_transform.camera_to_render()
+        render_transform.camera_to_render(),
+        samples_per_pixel
     );
 
     return 0;

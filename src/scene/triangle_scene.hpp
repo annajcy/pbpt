@@ -113,7 +113,8 @@ public:
 
     void render(
         const std::filesystem::path& output_path = std::filesystem::path("triangle_scene.exr"),
-        const pbpt::geometry::Transform<T>& camera_to_render = pbpt::geometry::Transform<T>::identity()
+        const pbpt::geometry::Transform<T>& camera_to_render = pbpt::geometry::Transform<T>::identity(),
+        int samples_per_pixel = 1
     ) const {
         auto resolution = m_camera.film_resolution();
         pbpt::math::Vector<T, 2> physical_size(
@@ -127,7 +128,11 @@ public:
         );
 
         FilmType film(resolution, physical_size, pixel_sensor);
-        const pbpt::math::Point<T, 2> lens_sample(T(0.5), T(0.5));
+        const int spp = samples_per_pixel > 0 ? samples_per_pixel : 1;
+        pbpt::math::RandomGenerator<T, 2> film_rng;
+        pbpt::math::RandomGenerator<T, 2> lens_rng;
+        pbpt::math::RandomGenerator<T, 1> spectrum_rng;
+        pbpt::math::RandomGenerator<T, 2> light_rng;
 
         const int width = resolution.x();
         const int height = resolution.y();
@@ -139,20 +144,26 @@ public:
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 pbpt::math::Point<int, 2> pixel(x, y);
-                for (const auto& filtered_sample : m_pixel_filter.template get_camera_samples<2, 2>(pixel)) {
-                    auto sample =
-                        pbpt::camera::CameraSample<T>::create_thinlens_sample(filtered_sample.film_position, lens_sample);
+                for (int s = 0; s < spp; ++s) {
+                    const pbpt::math::Point<T, 2> film_uv =
+                        pbpt::math::Point<T, 2>::from_array(film_rng.generate_uniform(T(0), T(1)));
+                    const auto filtered_sample = m_pixel_filter.sample_film_position(pixel, film_uv);
+                    const pbpt::math::Point<T, 2> lens_sample =
+                        pbpt::math::Point<T, 2>::from_array(lens_rng.generate_uniform(T(0), T(1)));
+
+                    auto sample = pbpt::camera::CameraSample<T>::create_thinlens_sample(
+                        filtered_sample.film_position,
+                        lens_sample
+                    );
                     auto ray = m_camera.generate_ray(sample);
                     ray = camera_to_render.transform_ray(ray);
 
-                    pbpt::math::RandomGenerator<T, 1> rng1d;
                     auto wavelengths = pbpt::radiometry::sample_visible_wavelengths_stratified<T, SpectrumSampleCount>(
-                        rng1d.generate_uniform(T(0), T(1))
+                        spectrum_rng.generate_uniform(T(0), T(1))
                     );
                     auto pdf = pbpt::radiometry::sample_visible_wavelengths_pdf(wavelengths);
 
-                    pbpt::math::RandomGenerator<T, 2> rng2d;
-                    auto spectrum = trace_ray(ray, wavelengths, rng2d);
+                    auto spectrum = trace_ray(ray, wavelengths, light_rng);
                     film.template add_sample<SpectrumSampleCount>(pixel, spectrum, wavelengths, pdf, filtered_sample.weight);
                 }
             }
@@ -182,7 +193,7 @@ private:
     ) const {
         T closest = std::numeric_limits<T>::infinity();
         std::optional<pbpt::geometry::SurfaceInteraction<T>> closest_hit{};
-        bool hit_light = false;
+        // bool hit_light = false;
         int shape_index = -1;
 
         for (int i = 0; i < static_cast<int>(m_scene_objects.size()); ++i) {
@@ -192,29 +203,29 @@ private:
                 if (t_hit < closest) {
                     closest = t_hit;
                     closest_hit = si;
-                    hit_light = false;
+                    //hit_light = false;
                     shape_index = i;
                 }
             }
         }
 
-        if (auto hit = m_area_light.sphere.intersect(ray)) {
-            const auto& [si, t_hit] = *hit;
-            if (t_hit < closest) {
-                closest = t_hit;
-                closest_hit = si;
-                hit_light = true;
-                shape_index = -1;
-            }
-        }
+        // if (auto hit = m_area_light.sphere.intersect(ray)) {
+        //     const auto& [si, t_hit] = *hit;
+        //     if (t_hit < closest) {
+        //         closest = t_hit;
+        //         closest_hit = si;
+        //         hit_light = true;
+        //         shape_index = -1;
+        //     }
+        // }
 
         if (!closest_hit.has_value()) {
             return shade_background(wavelengths);
         }
 
-        if (hit_light) {
-            return shade_emissive(closest_hit.value(), ray, wavelengths);
-        }
+        // if (hit_light) {
+        //     return shade_emissive(closest_hit.value(), ray, wavelengths);
+        // }
 
         return shade_diffuse(closest_hit.value(), ray, wavelengths, shape_index, rng2d);
     }

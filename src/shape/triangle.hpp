@@ -6,8 +6,14 @@
 
 #include <array>
 #include <cmath>
+#include <functional>
+#include <fstream>
 #include <memory>
 #include <optional>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "geometry/bounds.hpp"
@@ -20,6 +26,8 @@
 #include "math/sampling.hpp" // 需要包含采样相关的数学工具
 #include "math/vector.hpp"
 #include "shape.hpp"
+
+#include "utils/obj_loader.hpp"
 
 namespace pbpt::shape {
 
@@ -84,8 +92,6 @@ std::optional<TriangleIntersectionResult<T>> intersect_triangle_geometry(
     );
 }
 
-// --- Triangle Mesh (Data Container) ---
-
 template<typename T>
 class TriangleMesh {
 private:
@@ -102,7 +108,26 @@ private:
     bool m_is_swap_handedness;
     bool m_should_flip_normal; // Pre-calculated XOR result
 
+    TriangleMesh(
+        const geometry::Transform<T>& object_to_render,
+        const utils::ObjMeshData<T>& mesh_data,
+        bool is_reverse_orientation
+    ) : TriangleMesh(
+            object_to_render,
+            mesh_data.indices,
+            mesh_data.positions,
+            mesh_data.normals,
+            mesh_data.uvs,
+            is_reverse_orientation
+        ) {}
+
 public:
+    TriangleMesh(
+        const geometry::Transform<T>& object_to_render,
+        const std::string& obj_path,
+        bool is_reverse_orientation = false
+    ) : TriangleMesh(object_to_render, utils::load_obj_mesh<T>(obj_path), is_reverse_orientation) {}
+
     TriangleMesh(
         const geometry::Transform<T>& object_to_render,
         const std::vector<int>& indices,
