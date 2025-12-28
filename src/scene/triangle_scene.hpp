@@ -13,7 +13,7 @@
 #include "camera/render_transform.hpp"
 #include "geometry/interaction.hpp"
 #include "geometry/transform.hpp"
-#include "light/solid_angle_area_light.hpp"
+#include "light/area_light.hpp"
 #include "math/random_generator.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
@@ -179,9 +179,10 @@ private:
         auto power_spectrum = pbpt::radiometry::ConstantSpectrumDistribution<T>(m_area_light.intensity)
                               * pbpt::radiometry::constant::CIE_D65_ilum<T>;
 
-        return pbpt::light::SolidAngleAreaLight<T, pbpt::shape::Sphere<T>, decltype(power_spectrum)>(
+        return pbpt::light::AreaLight<T, pbpt::shape::Sphere<T>, decltype(power_spectrum)>(
             m_area_light.sphere,
-            power_spectrum
+            power_spectrum,
+            pbpt::light::AreaLightSamplingDomain::SolidAngle
         );
     }
 

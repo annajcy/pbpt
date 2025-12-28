@@ -3,6 +3,8 @@
 #include "geometry/interaction.hpp"
 #include "light/area_light.hpp"
 #include "math/function.hpp"
+#include "aggregate/aggregate.hpp"
+#include "geometry/transform.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 #include "radiometry/spectrum_distribution.hpp"
 #include "shape/sphere.hpp"
@@ -21,20 +23,6 @@ geometry::NormalInteraction<T> make_ref_interaction(const math::Point<T, 3>& p) 
     );
 }
 
-struct NeverOccluded {
-    template <typename Ray>
-    bool is_intersected(const Ray&) const {
-        return false;
-    }
-};
-
-struct AlwaysOccluded {
-    template <typename Ray>
-    bool is_intersected(const Ray&) const {
-        return true;
-    }
-};
-
 template <typename T, int N>
 void expect_constant_spectrum(const radiometry::SampledSpectrum<T, N>& s, T expected) {
     for (int i = 0; i < N; ++i) {
@@ -50,9 +38,17 @@ TEST(VisibilityTesterTest, UnoccludedDependsOnAggregateHit) {
     auto ref = make_ref_interaction<T>(math::Point<T, 3>(0, 0, 0));
     math::Point<T, 3> dst(0, 0, 1);
 
+    shape::Sphere<T> blocking_sphere(geometry::Transform<T>::translate(math::Vector<T, 3>(0, 0, 0.5f)), false, T(0.4));
+    shape::Primitive<T> blocking_prim(std::move(blocking_sphere), 0);
+    aggregate::LinearAggregate<T> agg({blocking_prim});
+
     VisibilityTester<T, geometry::NormalInteraction<T>> tester(ref, dst);
-    EXPECT_TRUE(tester.is_unoccluded(NeverOccluded{}));
-    EXPECT_FALSE(tester.is_unoccluded(AlwaysOccluded{}));
+    EXPECT_FALSE(tester.is_unoccluded(agg));  // blocked
+
+    shape::Sphere<T> away_sphere(geometry::Transform<T>::translate(math::Vector<T, 3>(5, 0, 0)), false, T(1));
+    shape::Primitive<T> away_prim(std::move(away_sphere), 1);
+    aggregate::LinearAggregate<T> clear_agg({away_prim});
+    EXPECT_TRUE(tester.is_unoccluded(clear_agg));  // clear line of sight
     EXPECT_FLOAT_EQ(tester.dst_point().z(), 1.0f);
     EXPECT_FLOAT_EQ(tester.src_interaction().point().z(), 0.0f);
 }
@@ -132,6 +128,40 @@ TEST(AreaLightTest, SampleLightAndPdfMatchExpectedForNorthPoleSample) {
     EXPECT_FALSE(light.is_delta_light());
 }
 
+TEST(AreaLightTest, SolidAngleSamplingUsesSolidAnglePdf) {
+    using T = float;
+    constexpr int N = 4;
+
+    shape::Sphere<T> sphere(
+        geometry::Transform<T>::identity(),
+        false,
+        T(1)
+    );
+
+    radiometry::ConstantSpectrumDistribution<T> power(T(2));
+    AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
+        sphere,
+        power,
+        AreaLightSamplingDomain::SolidAngle
+    );
+
+    auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, N>(T(0.25));
+    auto ref = make_ref_interaction<T>(math::Point<T, 3>(0, 0, 3));
+
+    auto solid_angle_sample_opt = light.sample_light_on_solid_angle<N>(wavelengths, ref, math::Point<T, 2>(0, 0));
+    ASSERT_TRUE(solid_angle_sample_opt.has_value());
+    const auto& solid_angle_sample = solid_angle_sample_opt.value();
+    expect_constant_spectrum(solid_angle_sample.radiance, T(2));
+
+    T pdf_eval = light.sample_light_on_solid_angle_pdf(ref, solid_angle_sample.wi);
+    EXPECT_NEAR(pdf_eval, solid_angle_sample.pdf, T(1e-5));
+
+    auto light_api_sample_opt = light.sample_light<N>(wavelengths, ref, math::Point<T, 2>(0, 0));
+    ASSERT_TRUE(light_api_sample_opt.has_value());
+    EXPECT_NEAR(light_api_sample_opt->pdf, solid_angle_sample.pdf, T(1e-5));
+    EXPECT_NEAR(light.sample_light_pdf(ref, solid_angle_sample.wi), solid_angle_sample.pdf, T(1e-5));
+}
+
 TEST(AreaLightTest, VisibilityTesterReferencesSampledPointAndRespectsOcclusion) {
     using T = float;
     constexpr int N = 4;
@@ -165,8 +195,12 @@ TEST(AreaLightTest, VisibilityTesterReferencesSampledPointAndRespectsOcclusion) 
     EXPECT_NEAR(tester.dst_point().y(), T(0), T(1e-6));
     EXPECT_NEAR(tester.dst_point().z(), T(1), T(1e-6));
 
-    EXPECT_TRUE(tester.is_unoccluded(NeverOccluded{}));
-    EXPECT_FALSE(tester.is_unoccluded(AlwaysOccluded{}));
+    // Build a clear aggregate so visibility passes.
+    shape::Sphere<T> far_sphere(geometry::Transform<T>::translate(math::Vector<T, 3>(10, 0, 0)), false, T(1));
+    shape::Primitive<T> far_prim(std::move(far_sphere), 2);
+    aggregate::LinearAggregate<T> clear_agg({far_prim});
+
+    EXPECT_TRUE(tester.is_unoccluded(clear_agg));
 }
 
 }  // namespace pbpt::light::testing

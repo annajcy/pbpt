@@ -1,0 +1,71 @@
+#pragma once
+
+#include <optional>
+#include <utility>
+#include <variant>
+#include "geometry/ray.hpp"
+#include "shape.hpp" 
+#include "shape_type.hpp"
+
+namespace pbpt::shape {
+
+template<typename T>
+struct PrimitiveIntersectionRecord {
+    IntersectionRecord<T> intersection;
+    int material_id{-1};
+};
+
+/**
+ * @brief Represents a geometric instance in the scene.
+ * Holds the geometry (Shape) and the material ID.
+ */
+template<typename T>
+class Primitive {
+private:
+    // 直接持有 AnyShape，管理生命周期
+    // 或者是 std::shared_ptr<ShapeBase> 如果你想用虚函数
+    // 鉴于你的风格，这里推荐持有 Variant
+    AnyShape<T> m_shape; 
+    int m_material_id{-1};
+
+public:
+    // 构造函数：移动 shape 进来
+    template <typename ConcreteShape>
+    Primitive(ConcreteShape&& shape, int material_id)
+        : m_shape(std::forward<ConcreteShape>(shape)), m_material_id(material_id) {}
+
+    std::optional<PrimitiveIntersectionRecord<T>> intersect(const geometry::Ray<T, 3>& ray) const {
+        // 使用 std::visit 分发给具体的 Shape
+        auto rec = std::visit([&](const auto& s) -> std::optional<IntersectionRecord<T>> { 
+            return s.intersect(ray); 
+        }, m_shape);
+
+        if (!rec) return std::nullopt;
+
+        PrimitiveIntersectionRecord<T> wrapped;
+        wrapped.intersection = *rec;
+        wrapped.material_id = m_material_id;
+        return wrapped;
+    }
+
+    std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {
+        return std::visit([&](const auto& s) -> std::optional<T> { 
+            return s.is_intersected(ray); 
+        }, m_shape);
+    }
+
+    template<typename Func>
+    void visit_shape(Func&& visitor) const {
+        std::visit(visitor, m_shape);
+    }
+
+
+
+    int material_id() const { return m_material_id; }
+};
+
+// 场景通常就是一个 Primitive 的列表
+template<typename T>
+using ScenePrimitives = std::vector<Primitive<T>>;
+
+}  // namespace pbpt::shape

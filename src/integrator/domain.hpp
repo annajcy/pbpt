@@ -11,7 +11,8 @@
 #include "math/normal.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
-#include "math/sampling.hpp"
+#include "sampler/2d.hpp"
+#include "sampler/3d.hpp"
 
 namespace pbpt::integrator {
 
@@ -80,12 +81,12 @@ private:
     template<typename RNG>
     math::Vector<T, 3> sample_impl(RNG& rng2d) const {
         auto uv = math::Point<T, 2>::from_array(rng2d.generate_uniform(T(0), T(1))); // uv ∈ [0,1]^2
-        auto dir = math::sample_uniform_hemisphere(uv).to_vector();
+        auto dir = sampler::sample_uniform_hemisphere(uv).to_vector();
         return dir;
     }
 
     constexpr T pdf_impl(const math::Vector<T, 3>& sample) const {
-        return math::sample_uniform_hemisphere_pdf<T>();
+        return sampler::sample_uniform_hemisphere_pdf<T>();
     }
 };
 
@@ -99,7 +100,7 @@ private:
     template<typename RNG>
     math::Vector<T, 3> sample_impl(RNG& rng2d) const {
         auto uv = math::Point<T, 2>::from_array(rng2d.generate_uniform(T(0), T(1))); // uv ∈ [0,1]^2
-        auto dir = math::sample_cosine_weighted_hemisphere(uv).to_vector();
+        auto dir = sampler::sample_cosine_weighted_hemisphere(uv).to_vector();
         return dir;
     }
 
@@ -107,7 +108,7 @@ private:
         const math::Vector<T, 3>& sample
     ) const {
         auto p = math::Point<T, 3>(sample);
-        return math::sample_cosine_weighted_hemisphere_pdf(p);
+        return sampler::sample_cosine_weighted_hemisphere_pdf(p);
     }
 };
 
@@ -122,7 +123,7 @@ private:
     template<typename RNG>
     math::Point<T, 2> sample_impl(RNG& rng2d) const {
         auto u01 = math::Point<T, 2>::from_array(rng2d.generate_uniform(0, 1));
-        auto point = math::sample_uniform_disk_concentric(u01);
+        auto point = sampler::sample_uniform_disk_concentric(u01);
         return point;
     }
 

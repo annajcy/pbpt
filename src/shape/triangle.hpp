@@ -23,8 +23,8 @@
 #include "math/function.hpp"
 #include "math/normal.hpp"
 #include "math/point.hpp"
-#include "math/sampling.hpp" // 需要包含采样相关的数学工具
 #include "math/vector.hpp"
+#include "sampler/3d.hpp"
 #include "shape.hpp"
 
 #include "utils/obj_loader.hpp"
@@ -192,6 +192,7 @@ private:
 public:
     Triangle(const TriangleMesh<T>& mesh, int triangle_index) 
         : m_mesh(mesh), m_triangle_index(triangle_index) {}
+
 
     // --- Helpers ---
     std::array<int, 3> get_indices() const {
@@ -400,7 +401,7 @@ public:
         const auto& p2 = m_mesh.positions()[idx[2]];
 
         // Uniform Area Sampling
-        auto b = math::sample_uniform_triangle_barycentric(u_sample); // b0, b1, b2
+        auto b = sampler::sample_uniform_triangle_barycentric(u_sample); // b0, b1, b2
         auto p_vec = b[0] * p0.to_vector() + b[1] * p1.to_vector() + b[2] * p2.to_vector();
         auto p = math::Point<T, 3>::from_vector(p_vec);
 

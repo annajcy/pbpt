@@ -8,7 +8,7 @@
 #include <cmath>
 #include <vector>
 #include "math/point.hpp"
-#include "math/sampling.hpp"
+#include "sampler/2d.hpp"
 #include "math/vector.hpp"
 
 namespace pbpt::camera {
@@ -290,7 +290,7 @@ public:
      * @return Offset in [-r, r] × [-r, r].
      */
     math::Vector<T, 2> sample_offset_impl(const math::Point<T, 2>& uv) const {
-        return math::sample_uniform_2d(
+        return sampler::sample_uniform_2d(
             uv, 
             math::Vector<T, 2>(-m_filter_radius, m_filter_radius), 
             math::Vector<T, 2>(-m_filter_radius, m_filter_radius)
@@ -304,7 +304,7 @@ public:
      * @return Probability density for @p offset.
      */
     T sample_offset_pdf_impl(const math::Vector<T, 2>& offset) const {
-        return math::sample_uniform_2d_pdf(
+        return sampler::sample_uniform_2d_pdf(
             math::Point<T, 2>(offset.x(), offset.y()),
             math::Vector<T, 2>(-m_filter_radius, m_filter_radius),
             math::Vector<T, 2>(-m_filter_radius, m_filter_radius)
@@ -359,7 +359,7 @@ public:
      * @return Offset sampled from the tent distribution.
      */
     math::Vector<T, 2> sample_offset_impl(const math::Point<T, 2>& uv) const {
-        return math::sample_tent_2d(
+        return sampler::sample_tent_2d(
             uv, 
             m_filter_radius, 
             m_filter_radius
@@ -373,7 +373,7 @@ public:
      * @return Probability density for @p offset.
      */
     T sample_offset_pdf_impl(const math::Vector<T, 2>& offset) const {
-        return math::sample_tent_2d_pdf(
+        return sampler::sample_tent_2d_pdf(
             math::Point<T, 2>(offset.x(), offset.y()), 
             m_filter_radius, 
             m_filter_radius

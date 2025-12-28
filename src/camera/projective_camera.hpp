@@ -9,7 +9,7 @@
 #include "geometry/ray.hpp"
 #include "geometry/transform.hpp"
 
-#include "math/sampling.hpp"
+#include "sampler/2d.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
 
@@ -501,7 +501,7 @@ private:
         auto p_focus = math::Point<T, 3>(p_camera.x(), p_camera.y(), -m_focal_distance);
 
         // 3. 采样透镜 (Lens)
-        auto p_lens = math::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
+        auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
 
         // 4. 生成射线
@@ -612,7 +612,7 @@ private:
      */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
-        auto p_lens = math::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
+        auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
         auto pinhole_ray = geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), p_camera);
         T t = -m_focal_distance / pinhole_ray.direction().z();

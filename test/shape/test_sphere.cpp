@@ -121,6 +121,40 @@ TEST_F(SphereTest, RayMissesClampedZRange) {
     EXPECT_FALSE(t_hit.has_value());
 }
 
+TEST_F(SphereTest, SampleOnShapeReturnsPointOnSphereAndPdf) {
+    auto sphere = make_sphere(1.0);
+    math::Point<double, 2> u_sample{0.3, 0.7};
+
+    auto ss = sphere.sample_on_shape(u_sample);
+
+    EXPECT_NEAR((ss.point - math::Point<double, 3>(0, 0, 0)).length(), 1.0, 1e-6);
+    EXPECT_NEAR(ss.normal.length(), 1.0, 1e-6);
+    EXPECT_GE(ss.uv.x(), 0.0);
+    EXPECT_LE(ss.uv.x(), 1.0);
+    EXPECT_GE(ss.uv.y(), 0.0);
+    EXPECT_LE(ss.uv.y(), 1.0);
+    auto expected_pdf = 1.0 / sphere.area();
+    EXPECT_NEAR(ss.pdf, expected_pdf, 1e-9);
+}
+
+TEST_F(SphereTest, SampleOnSolidAngleMatchesPdfFormula) {
+    auto sphere = make_sphere(1.0);
+    math::Point<double, 3> ref(0, 0, -3);
+    math::Point<double, 2> u_sample{0.25, 0.5};
+
+    auto ss = sphere.sample_on_solid_angle(ref, u_sample);
+
+    double dist = (ref - math::Point<double, 3>(0, 0, 0)).length();
+    double cos_theta_max = std::sqrt(std::max(0.0, 1.0 - (sphere.radius() * sphere.radius()) / (dist * dist)));
+    double expected_pdf = 1.0 / (2.0 * pi_v<double> * (1.0 - cos_theta_max));
+
+    EXPECT_NEAR(ss.pdf, expected_pdf, 1e-6);
+    EXPECT_NEAR((ss.point - math::Point<double, 3>(0, 0, 0)).length(), sphere.radius(), 1e-5);
+
+    auto pdf_eval = sphere.sample_on_solid_angle_pdf(ref, ss.point);
+    EXPECT_NEAR(pdf_eval, expected_pdf, 1e-6);
+}
+
 TEST_F(SphereTest, RayMissesClampedPhiRange) {
     auto partial = make_partial_sphere(1.0, -1.0, 1.0, static_cast<double>(pi_v<double> / 2.0));
     Point<double, 3> origin(-3.0, 0.0, 0.0);

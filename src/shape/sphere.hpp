@@ -17,7 +17,6 @@
 #include "math/function.hpp"
 #include "math/normal.hpp"
 #include "math/point.hpp"
-#include "math/sampling.hpp"
 #include "math/vector.hpp"
 #include "shape.hpp"
 

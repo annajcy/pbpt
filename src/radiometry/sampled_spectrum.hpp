@@ -8,7 +8,8 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
-#include "math/sampling.hpp"
+#include "sampler/1d.hpp"
+#include "sampler/utils.hpp"
 #include "math/vector.hpp"
 #include "radiometry/constant/lambda.hpp"
 
@@ -84,7 +85,7 @@ public:
  */
 template<typename T>
 inline T sample_uniform_wavelength(const T u) {
-    return math::sample_uniform(u, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
+    return sampler::sample_uniform(u, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
 }
 
 /**
@@ -99,7 +100,7 @@ inline T sample_uniform_wavelength(const T u) {
  */
 template <typename T>
 inline T sample_uniform_wavelength_pdf(const T lambda) {
-    return math::sample_uniform_pdf(lambda, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
+    return sampler::sample_uniform_pdf(lambda, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
 }
 
 /**
@@ -131,7 +132,7 @@ inline SampledWavelength<T, N> sample_uniform_wavelengths(const std::array<T, N>
  */
 template<typename T, int N>
 inline SampledWavelength<T, N> sample_uniform_wavelengths_stratified(T u) {
-    auto us = math::generate_strified_array<T, N>(u);
+    auto us = sampler::generate_strified_array<T, N>(u);
     return sample_uniform_wavelengths<T, N>(us);
 }
 
@@ -226,7 +227,7 @@ inline SampledWavelength<T, N> sample_visible_wavelengths(const std::array<T, N>
  */
 template<typename T, int N>
 inline SampledWavelength<T, N> sample_visible_wavelengths_stratified(T u) {
-    auto us = math::generate_strified_array<T, N>(u);
+    auto us = sampler::generate_strified_array<T, N>(u);
     return sample_visible_wavelengths<T, N>(us);
 }
 

@@ -92,6 +92,7 @@ protected:
     math::Vector<T, 3> m_wo;
 
 public:
+    Interaction() = default;
     Interaction(
         const math::Point<T, 3>& p_lower, 
         const math::Point<T, 3>& p_upper, 
@@ -144,6 +145,7 @@ protected:
     math::Normal<T, 3> m_shading_n;
 
 public:
+    NormalInteractionBase() = default;
     NormalInteractionBase(
         const math::Point<T, 3>& p_lower,
         const math::Point<T, 3>& p_upper,
@@ -244,6 +246,7 @@ protected:
     math::Normal<T, 3> m_shading_dndv;
 
 public:
+    SurfaceInteraction() = default;
     // Constructor 1: Full details
     SurfaceInteraction(
         const math::Point<T, 3>& p_lower,
@@ -294,7 +297,7 @@ public:
     ) : NormalInteractionBase<T, SurfaceInteraction<T>>(p, wo, n, error_margin),
         m_uv(uv), 
         m_dpdu({0,0,0}), m_dpdv({0,0,0}), 
-        m_dndu({0,0,0}), m_dndv({0,0,0}) 
+        m_dndu({0,0,0}), m_dndv({0,0,0})
     {}
 
     // --- Accessors ---

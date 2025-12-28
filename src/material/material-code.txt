@@ -1,0 +1,839 @@
+
+
+## bsdf.hpp
+
+```hpp
+#pragma once
+
+#include <algorithm>
+#include <numeric>
+#include <utility>
+#include <vector>
+
+#include "geometry/frame.hpp"
+#include "bxdf_type.hpp"
+#include "sampler/discrete.hpp"
+
+namespace pbpt::material {
+
+template<typename T, int N>
+class BSDF {
+private: 
+    geometry::Frame<T> m_shading_frame;
+    geometry::Frame<T> m_geometric_frame;
+    std::vector<AnyBxDF<T, N>> m_bxdfs;
+
+public:
+    BSDF(
+        const geometry::Frame<T>& shading_frame,
+        const geometry::Frame<T>& geometric_frame,
+        const std::vector<AnyBxDF<T, N>>& bxdfs
+    ) : m_shading_frame(shading_frame), 
+        m_geometric_frame(geometric_frame),
+        m_bxdfs(bxdfs) {}
+
+    // 几何检查：是否在物理几何的同一侧
+    bool is_same_hemisphere(
+        const math::Vector<T, 3>& wo,
+        const math::Vector<T, 3>& wi
+    ) const {
+        T cos_theta_o = m_geometric_frame.n().dot(wo);
+        T cos_theta_i = m_geometric_frame.n().dot(wi);
+        return (cos_theta_o * cos_theta_i) > T(0);
+    }
+
+    // 计算权重的辅助函数 (统一逻辑)
+    // 返回 total_weight
+    T compute_effective_weights(
+        const BxDFTypeFlags flags,
+        const std::vector<T>& custom_weights,
+        std::vector<T>& effective_weights_out
+    ) const {
+        const bool has_custom = !custom_weights.empty() && custom_weights.size() == m_bxdfs.size();
+        effective_weights_out.assign(m_bxdfs.size(), T(0));
+        T total_weight = 0;
+
+        for (size_t i = 0; i < m_bxdfs.size(); ++i) {
+            bool flag_match = false;
+            std::visit([&](const auto& bxdf) {
+                if (bxdf.is_flags_matched(flags)) flag_match = true;
+            }, m_bxdfs[i]);
+
+            if (!flag_match) {
+                effective_weights_out[i] = T(0);
+                continue;
+            }
+
+            const T w = has_custom ? custom_weights[i] : T(1);
+            
+            effective_weights_out[i] = w;
+            total_weight += w;
+        }
+        return total_weight;
+    }
+
+    // Evaluate f()
+    radiometry::SampledSpectrum<T, N> f(
+        const radiometry::SampledWavelength<T, N>& swl,
+        const math::Vector<T, 3>& wo, 
+        const math::Vector<T, 3>& wi,
+        const BxDFTypeFlags flags
+    ) const {
+        radiometry::SampledSpectrum<T, N> result = radiometry::SampledSpectrum<T, N>::filled(0);
+        auto wo_local = m_shading_frame.to_local(wo);
+        auto wi_local = m_shading_frame.to_local(wi);
+        bool is_geo_same = this->is_same_hemisphere(wo, wi);
+
+        for (const auto& bxdf : m_bxdfs) {
+            std::visit([&](const auto& concrete_bxdf) {
+                if (!concrete_bxdf.is_flags_matched(flags)) return;
+
+                bool type_reflect = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Reflection);
+                bool type_transmit = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Transmission);
+                
+                // 防漏光检查
+                if ((is_geo_same && type_reflect) || (!is_geo_same && type_transmit)) {
+                    result += concrete_bxdf.f(swl, wo_local, wi_local);
+                }
+            }, bxdf);
+        }
+        return result;
+    }
+
+    // Evaluate PDF()
+    T pdf(
+        const math::Vector<T, 3>& wo,
+        const math::Vector<T, 3>& wi,
+        const BxDFTypeFlags flags,
+        const std::vector<T>& custom_weights = {}
+    ) const {
+        if (m_bxdfs.empty()) return 0;
+
+        auto wo_local = m_shading_frame.to_local(wo);
+        auto wi_local = m_shading_frame.to_local(wi);
+        bool is_geo_same = this->is_same_hemisphere(wo, wi);
+
+        std::vector<T> weights;
+        T total_weight = compute_effective_weights(flags, custom_weights, weights);
+        
+        if (total_weight == 0) return 0;
+        T inv_total_weight = T(1) / total_weight;
+
+        T final_pdf = 0;
+
+        for (size_t i = 0; i < m_bxdfs.size(); ++i) {
+            if (weights[i] == 0) continue;
+
+            std::visit([&](const auto& concrete_bxdf) {
+                bool type_reflect = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Reflection);
+                bool type_transmit = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Transmission);
+                
+                if ((is_geo_same && type_reflect) || (!is_geo_same && type_transmit)) {
+                    T prob = weights[i] * inv_total_weight;
+                    final_pdf += prob * concrete_bxdf.pdf(wo_local, wi_local);
+                }
+            }, m_bxdfs[i]);
+        }
+        return final_pdf;
+    }
+
+    // Sample BSDF
+    BxDFSampleRecord<T, N> sample_f(
+        const radiometry::SampledWavelength<T, N>& swl,
+        const math::Vector<T, 3>& wo,
+        const math::Point<T, 2>& u_sample,
+        const BxDFTypeFlags flags = BxDFTypeFlags::ANY,
+        const std::vector<T>& custom_weights = {}
+    ) const {
+        BxDFSampleRecord<T, N> result; // valid=false initially
+        if (m_bxdfs.empty()) return result;
+
+        // 1. 计算权重
+        std::vector<T> weights;
+        // 注意：这里不需要 filtered_bxdfs，我们直接用 weights 的索引访问 m_bxdfs
+        compute_effective_weights(flags, custom_weights, weights);
+
+        std::vector<T> cdf_buffer;
+        auto selection = sampler::sample_discrete(weights, cdf_buffer, u_sample.x());
+        if (selection.index == -1) return result; // 采样失败（可能 flags 过滤后为空）
+
+        // 2. 采样选中的 BxDF
+        std::visit([&](const auto& concrete_bxdf) {
+            auto wo_local = m_shading_frame.to_local(wo);
+            
+            // 使用重映射后的 u
+            math::Point<T, 2> remapped_sample(selection.u_remapped, u_sample.y());
+            
+            // 调用 BxDF 的 sample_f
+            auto bxdf_sample = concrete_bxdf.sample_f(swl, wo_local, remapped_sample);
+            
+            if (!bxdf_sample.valid) return; // 子采样失败
+
+            auto wi_world = m_shading_frame.to_render(bxdf_sample.wi);
+            bool is_geo_same = this->is_same_hemisphere(wo, wi_world);
+
+            bool type_reflect = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Reflection);
+            bool type_transmit = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Transmission);
+
+            // 几何一致性检查
+            if (!((is_geo_same && type_reflect) || (!is_geo_same && type_transmit))) {
+                return;
+            }
+
+            result.wi = wi_world;
+            result.sampled_type = bxdf_sample.sampled_type; // 从子采样获取具体类型
+
+            // 3. Specular 处理 (重要修复)
+            if (has_flag(result.sampled_type, BxDFTypeFlags::Specular)) {
+                // 如果是镜面反射，不进行 MIS 混合
+                result.f = bxdf_sample.f;
+                result.pdf = selection.pdf * bxdf_sample.pdf;
+                result.valid = true;
+                return;
+            }
+
+            // 4. Non-Specular 处理 (MIS 混合)
+            // 重新计算混合 PDF (必须传入 custom_weights 以保持一致性)
+            result.pdf = this->pdf(wo, wi_world, flags, custom_weights);
+
+            if (result.pdf > 0) {
+                // 重新计算混合 f (累加所有 component 的贡献)
+                result.f = this->f(swl, wo, wi_world, flags);
+                result.valid = true;
+            } else {
+                result.valid = false;
+            }
+
+        }, m_bxdfs[selection.index]); // 使用索引访问原始 m_bxdfs
+
+        return result;
+    }
+};
+
+} // namespace pbpt::material
+
+```
+
+## bxdf.hpp
+
+```hpp
+#pragma once
+
+#include <variant>
+#include "math/function.hpp"
+#include "math/point.hpp"
+#include "sampler/3d.hpp"
+#include "math/vector.hpp"
+#include "radiometry/sampled_spectrum.hpp"
+
+namespace pbpt::material {
+
+enum class BxDFTypeFlags : int {
+    Unset = 0,
+    // Directional types
+    Reflection = 1 << 0,
+    Transmission = 1 << 1,
+    // Base types
+    Diffuse = 1 << 2,
+    Glossy = 1 << 3,
+    Specular = 1 << 4,
+    // Composite types
+    DiffuseReflection = Diffuse | Reflection,
+    DiffuseTransmission = Diffuse | Transmission,
+    GlossyReflection = Glossy | Reflection,
+    GlossyTransmission = Glossy | Transmission,
+    SpecularReflection = Specular | Reflection,
+    SpecularTransmission = Specular | Transmission,
+
+    ALL = Reflection | Transmission | Diffuse | Glossy | Specular,
+    ANY = ALL + 1  // sentinel meaning "no filtering"
+};
+
+// 重载位运算符
+inline BxDFTypeFlags operator|(BxDFTypeFlags a, BxDFTypeFlags b) {
+    return static_cast<BxDFTypeFlags>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+inline BxDFTypeFlags operator&(BxDFTypeFlags a, BxDFTypeFlags b) {
+    return static_cast<BxDFTypeFlags>(static_cast<int>(a) & static_cast<int>(b));
+}
+
+inline BxDFTypeFlags& operator|=(BxDFTypeFlags& a, BxDFTypeFlags b) {
+    a = a | b;
+    return a;
+}
+
+inline bool has_flag(BxDFTypeFlags value, BxDFTypeFlags flag) {
+    return (static_cast<int>(value) & static_cast<int>(flag)) == static_cast<int>(flag);
+}
+
+template<typename T, int N>
+struct BxDFSampleRecord {
+    radiometry::SampledSpectrum<T, N> f;
+    math::Vector<T, 3> wi;
+    T pdf = 0;
+    bool valid = false; // 必须添加 valid 标志
+    BxDFTypeFlags sampled_type = BxDFTypeFlags::Unset; // 记录采样到的具体类型
+};
+
+template<typename Derived, typename T, int N>
+class BxDF {
+public:
+    Derived& as_derived() { return static_cast<Derived&>(*this); }
+    const Derived& as_derived() const { return static_cast<const Derived&>(*this); }
+
+    BxDFTypeFlags type() const { return as_derived().type_impl(); }
+
+    radiometry::SampledSpectrum<T, N> f(
+        const radiometry::SampledWavelength<T, N>& swl,
+        const math::Vector<T, 3>& wo, 
+        const math::Vector<T, 3>& wi
+    ) const {
+        return as_derived().f_impl(swl, wo, wi);
+    }
+
+    BxDFSampleRecord<T, N> sample_f(
+        const radiometry::SampledWavelength<T, N>& swl,
+        const math::Vector<T, 3>& wo,
+        const math::Point<T, 2>& u_sample
+    ) const {
+        return as_derived().sample_f_impl(swl, wo, u_sample);
+    }
+
+    T pdf(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi) const {
+        return as_derived().pdf_impl(wo, wi); 
+    }
+
+    // 修复：只要有任何位重叠，就认为匹配
+    bool is_flags_matched(BxDFTypeFlags flags) const {
+        if (flags == BxDFTypeFlags::ANY) return true;
+        return has_flag(this->type(), flags);
+    }
+};
+
+} // namespace
+
+```
+
+## bxdf_type.hpp
+
+```hpp
+#pragma once
+
+#include <variant>
+#include "dielectric_bxdf.hpp"
+#include "lambertian_bxdf.hpp"
+
+namespace pbpt::material {
+
+// --- AnyBxDF 定义 ---
+template<typename T, int N>
+using AnyBxDF = std::variant<
+    LambertianBxDF<T, N>,
+    DielectricBxDF<T, N>
+>;
+
+} // namespace pbpt::material
+```
+
+## dielectric_bxdf.hpp
+
+```hpp
+#pragma once
+
+#include "bxdf.hpp"
+#include "utils.hpp"
+
+namespace pbpt::material {
+
+template<typename T, int N>
+class DielectricBxDF : public BxDF<DielectricBxDF<T, N>, T, N> {
+    friend class BxDF<DielectricBxDF<T, N>, T, N>;
+
+private:
+    T m_eta; // 材质的折射率 (例如玻璃 1.5)
+    radiometry::SampledSpectrum<T, N> m_tint_refl;  // 反射颜色 (通常是纯白)
+    radiometry::SampledSpectrum<T, N> m_tint_trans; // 透射颜色 (即玻璃颜色)
+
+public:
+    // 构造函数
+    DielectricBxDF(T eta, 
+                   radiometry::SampledSpectrum<T, N> tint_r = radiometry::SampledSpectrum<T, N>::filled(1),
+                   radiometry::SampledSpectrum<T, N> tint_t = radiometry::SampledSpectrum<T, N>::filled(1))
+        : m_eta(eta), m_tint_refl(tint_r), m_tint_trans(tint_t) {}
+
+private:
+    // 1. 类型：既是反射，又是透射，且都是 Specular
+    BxDFTypeFlags type_impl() const {
+        return BxDFTypeFlags::SpecularReflection | BxDFTypeFlags::SpecularTransmission;
+    }
+
+    // 2. f()：Delta 分布在任何非精确方向的概率密度为 0，值为 0
+    radiometry::SampledSpectrum<T, N> f_impl(
+        const radiometry::SampledWavelength<T, N>&,
+        const math::Vector<T, 3>&, 
+        const math::Vector<T, 3>&
+    ) const {
+        return radiometry::SampledSpectrum<T, N>::filled(0);
+    }
+
+    // 3. pdf()：Delta 分布的 PDF 为 0
+    T pdf_impl(const math::Vector<T, 3>&, const math::Vector<T, 3>&) const {
+        return 0;
+    }
+
+    // 4. sample_f()：核心逻辑
+    BxDFSampleRecord<T, N> sample_f_impl(
+        const radiometry::SampledWavelength<T, N>& swl,
+        const math::Vector<T, 3>& wo,
+        const math::Point<T, 2>& u_sample
+    ) const {
+        BxDFSampleRecord<T, N> record;
+        record.valid = false;
+
+        // 计算菲涅尔反射比 F
+        // wo.z() 在局部空间即 cos_theta_i
+        T F = material::fresnel_dielectric_eval(wo.z(), m_eta);
+
+        // --- 随机决策：反射还是折射？ ---
+        // 我们利用 u_sample.x() 来做这个决策
+        // 这是一个完美的 Importance Sampling：根据能量占比 F 来决定概率
+        
+        if (u_sample.x() < F) {
+            // === 走反射分支 (Reflection) ===
+            
+            // 计算反射方向
+            record.wi = math::Vector<T, 3>(-wo.x(), -wo.y(), wo.z());
+            
+            // 设置类型
+            record.sampled_type = BxDFTypeFlags::SpecularReflection;
+            
+            // 概率 PDF
+            // 我们选反射的概率是 F。
+            // 注意：因为是 Delta 分布，BSDF::sample_f 里的 pdf 实际上是 "Selection Probability" * "Discrete Probability(1.0)"
+            record.pdf = F; 
+            
+            // 计算 f (Throughput / |cos|)
+            // f = Energy / |cos(wi)|
+            // Energy = Input * F * Tint
+            // 所以 f = F * Tint / |wi.z|
+            // 在路径追踪中，我们通常直接返回 throughput weight，但为了符合 f 的定义：
+            record.f = m_tint_refl * F / std::abs(record.wi.z());
+            
+            record.valid = true;
+        } else {
+            // === 走折射分支 (Refraction) ===
+            
+            // 准备折射所需的 eta 比率
+            bool entering = wo.z() > 0;
+            T eta_i = entering ? 1.f : m_eta;
+            T eta_t = entering ? m_eta : 1.f;
+            T eta_ratio = eta_i / eta_t; // Snell's law ratio
+
+            math::Vector<T, 3> wi;
+            // 计算折射方向，如果发生全反射 (refract返回false)，则前面 F 应该已经是 1.0 了
+            // 所以理论上这里 u < F 应该已经进了反射分支。
+            // 加上 check 以防万一浮点误差
+            if (!material::refract(wo, wi, eta_ratio)) {
+                 return record; // Should not happen if F is correct
+            }
+            
+            record.wi = wi;
+            record.sampled_type = BxDFTypeFlags::SpecularTransmission;
+            record.pdf = 1 - F; // 选择折射的概率
+            
+            // 计算 f (Radiance Throughput)
+            // 这里的物理有点深：
+            // 当光线穿过不同介质时，Radiance 会按折射率平方缩放 (L_o = L_i * (eta_t^2 / eta_i^2))
+            // 但是！很多渲染器（包括 PBRT）倾向于在 BxDF 内部处理这个缩放，
+            // 使得 integrator 只需要乘 f * cos / pdf。
+            
+            // 传输系数 ft = (1-F) * Tint
+            // Radiance scaling factor = (eta_t^2 / eta_i^2) ? 
+            // 注意：Radiance 是 flux per unit projected area per unit solid angle.
+            // 立体角压缩了，所以 Radiance 变了。
+            // 对于 Basic Path Tracing，如果不做复杂的双向追踪，我们可以简化理解：
+            // 我们返回的值 乘以 cos / pdf 应该等于 throughput。
+            
+            // Throughput = (1-F) * Tint / (eta_ratio^2) ?? 
+            // 这是一个经典的坑。
+            // 正确的 Radiance Transport (PBRT v3/v4):
+            // f = (1-F) * Tint * (1 / eta_ratio^2) / |cos_theta_t|
+            // 为什么是 1/eta^2 ? 因为 radiance 在更密的介质里更集中。
+            // 当从空气进入玻璃 (eta_ratio = 1/1.5)，eta_ratio < 1, 1/eta^2 > 1。Radiance 增加。
+            
+            T ft = T(1) - F;
+            
+            // 修正系数 (Radiance Scaling)
+            // 如果不需要 radiance scaling (例如只做颜色计算)，可以去掉 eta_factor
+            T eta_factor = (eta_t * eta_t) / (eta_i * eta_i); // eta_t^2 / eta_i^2
+            
+            // 组合：
+            // f = Energy / |cos|
+            // Energy = ft * Tint * eta_factor
+            record.f = m_tint_trans * ft * eta_factor / std::abs(record.wi.z());
+            
+            record.valid = true;
+        }
+        
+        return record;
+    }
+};
+}
+```
+
+## lambertian_bxdf.hpp
+
+```hpp
+#pragma once
+
+#include <variant>
+#include "math/function.hpp"
+#include "math/point.hpp"
+#include "sampler/3d.hpp"
+#include "math/vector.hpp"
+#include "radiometry/sampled_spectrum.hpp"
+#include "bxdf.hpp"
+
+namespace pbpt::material {
+
+// --- Lambertian 实现 ---
+template<typename T, int N>
+class LambertianBxDF : public BxDF<LambertianBxDF<T, N>, T, N> {
+    friend class BxDF<LambertianBxDF<T, N>, T, N>;
+private:
+    radiometry::SampledSpectrum<T, N> m_albedo;
+
+    // 辅助：检查是否同侧
+    bool same_hemisphere(const math::Vector<T, 3>& w, const math::Vector<T, 3>& wp) const {
+        return w.z() * wp.z() > 0;
+    }
+
+public:
+    LambertianBxDF(const radiometry::SampledSpectrum<T, N>& albedo) : m_albedo(albedo) {}
+
+private:
+    BxDFTypeFlags type_impl() const {
+        return BxDFTypeFlags::DiffuseReflection;
+    }
+
+    radiometry::SampledSpectrum<T, N> f_impl(
+        const radiometry::SampledWavelength<T, N>&,
+        const math::Vector<T, 3>& wo, 
+        const math::Vector<T, 3>& wi
+    ) const {
+        if (!same_hemisphere(wo, wi)) return radiometry::SampledSpectrum<T, N>::filled(0);
+        return m_albedo * (1.0 / math::pi_v<T>);
+    };
+
+    BxDFSampleRecord<T, N> sample_f_impl(
+        const radiometry::SampledWavelength<T, N>& swl,
+        const math::Vector<T, 3>& wo,
+        const math::Point<T, 2>& u_sample
+    ) const {
+        // 余弦采样得到的是局部坐标
+        auto wi_p = sampler::sample_cosine_weighted_hemisphere(u_sample);
+        auto wi = wi_p.to_vector();
+        
+        // 如果 wo 在下半球，我们需要翻转 wi 到下半球
+        if (wo.z() < 0) wi.z() *= -1;
+
+        BxDFSampleRecord<T, N> record;
+        record.wi = wi;
+        record.pdf = sampler::sample_cosine_weighted_hemisphere_pdf(wi_p); // cos(theta)/pi
+        record.f = this->f_impl(swl, wo, wi); // 使用 impl 避免虚函数开销
+        record.valid = true;
+        record.sampled_type = type_impl();
+        return record;
+    }
+
+    T pdf_impl(
+        const math::Vector<T, 3>& wo,
+        const math::Vector<T, 3>& wi
+    ) const {
+        if (!same_hemisphere(wo, wi)) return 0;
+        // 注意：这里 wi 是局部坐标，AbsCosTheta 就是 abs(wi.z())
+        return std::abs(wi.z()) * (1.0 / math::pi_v<T>);
+    }
+};
+
+} // namespace
+```
+
+## material.hpp
+
+```hpp
+#pragma once
+
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include "geometry/frame.hpp"
+#include "geometry/interaction.hpp"
+#include "material/bsdf.hpp"
+#include "radiometry/sampled_spectrum.hpp"
+
+namespace pbpt::material {
+
+/**
+ * @brief CRTP helper that provides the public compute_bsdf entry without virtual dispatch.
+ */
+template<typename Derived, typename T, int N>
+class Material {
+public:
+    BSDF<T, N> compute_bsdf(const geometry::SurfaceInteraction<T>& si) const {
+        return as_derived().compute_bsdf_impl(si);
+    }
+
+    Derived& as_derived() {
+        return static_cast<Derived&>(*this);
+    }
+
+    const Derived& as_derived() const {
+        return static_cast<const Derived&>(*this);
+    }
+};
+
+/**
+ * @brief Convenience helpers for building BSDF frames and libraries of materials.
+ */
+namespace detail {
+template<typename T>
+inline geometry::Frame<T> build_shading_frame(const geometry::SurfaceInteraction<T>& si) {
+    const auto shading_n = si.shading_n().to_vector().normalized();
+    const auto dpdu = si.shading_dpdu();
+    if (dpdu.length_squared() > 0) {
+        return geometry::Frame<T>(dpdu, shading_n);
+    }
+    return geometry::Frame<T>(shading_n);
+}
+}  // namespace detail
+
+/**
+ * @brief Construct a BSDF from a surface interaction and a set of lobes.
+ */
+template<typename T, int N>
+inline BSDF<T, N> make_bsdf(
+    const geometry::SurfaceInteraction<T>& si,
+    std::vector<AnyBxDF<T, N>> bxdfs
+) {
+    geometry::Frame<T> shading_frame = detail::build_shading_frame(si);
+    geometry::Frame<T> geometric_frame(si.n().to_vector());
+    return BSDF<T, N>(shading_frame, geometric_frame, std::move(bxdfs));
+}
+
+/**
+ * @brief Diffuse (Lambertian) material implementation.
+ */
+template<typename T, int N>
+class LambertianMaterial : public Material<LambertianMaterial<T, N>, T, N> {
+private:
+    radiometry::SampledSpectrum<T, N> m_albedo;
+
+public:
+    explicit LambertianMaterial(const radiometry::SampledSpectrum<T, N>& albedo)
+        : m_albedo(albedo) {}
+
+    BSDF<T, N> compute_bsdf_impl(const geometry::SurfaceInteraction<T>& si) const {
+        std::vector<AnyBxDF<T, N>> lobes;
+        lobes.emplace_back(LambertianBxDF<T, N>(m_albedo));
+        return make_bsdf(si, std::move(lobes));
+    }
+};
+
+/**
+ * @brief Specular dielectric material (glass-like).
+ */
+template<typename T, int N>
+class DielectricMaterial : public Material<DielectricMaterial<T, N>, T, N> {
+private:
+    T m_eta;
+    radiometry::SampledSpectrum<T, N> m_tint_refl;
+    radiometry::SampledSpectrum<T, N> m_tint_trans;
+
+public:
+    DielectricMaterial(
+        T eta,
+        radiometry::SampledSpectrum<T, N> tint_r = radiometry::SampledSpectrum<T, N>::filled(1),
+        radiometry::SampledSpectrum<T, N> tint_t = radiometry::SampledSpectrum<T, N>::filled(1))
+        : m_eta(eta), m_tint_refl(std::move(tint_r)), m_tint_trans(std::move(tint_t)) {}
+
+    BSDF<T, N> compute_bsdf_impl(const geometry::SurfaceInteraction<T>& si) const {
+        std::vector<AnyBxDF<T, N>> lobes;
+        lobes.emplace_back(DielectricBxDF<T, N>(m_eta, m_tint_refl, m_tint_trans));
+        return make_bsdf(si, std::move(lobes));
+    }
+};
+
+template<typename T, int N>
+using AnyMaterial = std::variant<
+    LambertianMaterial<T, N>,
+    DielectricMaterial<T, N>
+>;
+
+/**
+ * @brief Simple material registry keyed by integer IDs.
+ *
+ * Stores concrete material variants and provides lookup helpers.
+ */
+template<typename T, int N>
+class MaterialLibrary {
+private:
+    std::vector<AnyMaterial<T, N>> m_materials;
+public:
+
+    template<typename Mat>
+    int add_material(Mat material) {
+        m_materials.emplace_back(std::move(material));
+        return static_cast<int>(m_materials.size()) - 1;
+    }
+
+    const AnyMaterial<T, N>& get(int id) const {
+        if (id < 0 || id >= static_cast<int>(m_materials.size())) 
+            throw std::out_of_range("MaterialLibrary: Invalid material ID");
+        return m_materials[static_cast<std::size_t>(id)];
+    }
+
+    AnyMaterial<T, N>& get(int id) {
+        if (id < 0 || id >= static_cast<int>(m_materials.size())) 
+            throw std::out_of_range("MaterialLibrary: Invalid material ID");
+        return m_materials[static_cast<std::size_t>(id)];
+    }
+
+    std::size_t size() const { return m_materials.size(); }
+};
+
+}  // namespace pbpt::material
+
+```
+
+## utils.hpp
+
+```hpp
+#pragma once
+
+#include <algorithm>
+#include <cmath>
+
+#include "math/vector.hpp"
+
+namespace pbpt::material {
+    
+// 计算反射向量 (Local Space, n = (0,0,1))
+template<typename T>
+inline math::Vector<T, 3> reflect(const math::Vector<T, 3>& wo) {
+    return math::Vector<T, 3>(-wo.x(), -wo.y(), wo.z());
+}
+
+// 计算折射向量 (Local Space)
+// 返回 false 表示发生了全反射 (Total Internal Reflection)
+template<typename T>
+inline bool refract(
+    const math::Vector<T, 3>& wo, 
+    math::Vector<T, 3>& wi, 
+    T eta // eta = eta_i / eta_t
+) {
+    // Snell's Law: sin_theta_t^2 = eta^2 * (1 - cos_theta_i^2)
+    T cos_theta_i = wo.z(); // 假设 wo, n 都在上表面，如果不一定需要 flip
+    // 如果是在内部向外射 (cos_theta_i < 0)，逻辑在外部处理好，这里假设标准输入
+    
+    T sin_2_theta_i = std::max(T(0), T(1) - cos_theta_i * cos_theta_i);
+    T sin_2_theta_t = eta * eta * sin_2_theta_i;
+
+    // 全反射 (TIR)
+    if (sin_2_theta_t >= T(1)) return false;
+
+    T cos_theta_t = std::sqrt(std::max(T(0), T(1) - sin_2_theta_t));
+    
+    // 公式: wt = -eta * wi + (eta * cos_theta_i - cos_theta_t) * n
+    // 注意方向：wo 是朝外的，wi 是朝里的(如果不取反)或者朝外的。
+    // PBRT 约定：wi 和 wo 都是朝外离开表面的向量。
+    // 折射光线 wi = {-eta * wo.x, -eta * wo.y, -cos_theta_t}
+    
+    wi = math::Vector<T, 3>(-eta * wo.x(), -eta * wo.y(), -cos_theta_t);
+    return true;
+}
+
+// 菲涅尔方程 (Dielectric) - 计算反射比 F
+template<typename T>
+inline T fr_dielectric(T cos_theta_i, T eta) {
+    cos_theta_i = std::clamp(cos_theta_i, T(-1), T(1));
+    
+    // 如果光从内部射向外部 (cos < 0)，需要交换 eta，并且取反 cos
+    bool entering = cos_theta_i > 0;
+    if (!entering) {
+        eta = 1 / eta; // 交换介质
+        cos_theta_i = std::abs(cos_theta_i);
+    }
+
+    T sin_2_theta_i = std::max(T(0), T(1) - cos_theta_i * cos_theta_i);
+    T sin_2_theta_t = eta * eta * sin_2_theta_i;
+
+    // 全反射
+    if (sin_2_theta_t >= T(1)) return T(1);
+
+    T cos_theta_t = std::sqrt(std::max(T(0), T(1) - sin_2_theta_t));
+
+    T r_parl = ((eta * cos_theta_i) - cos_theta_t) / ((eta * cos_theta_i) + cos_theta_t);
+    T r_perp = ((1 * cos_theta_i) - (eta * cos_theta_t)) / ((1 * cos_theta_i) + (eta * cos_theta_t)); // 1 is eta_incident if we normalized eta
+
+    // 实际上更通用的公式 (assume eta_i = 1, eta_t = eta passed in)
+    // R_perp = (eta_i cos_i - eta_t cos_t) / (eta_i cos_i + eta_t cos_t)
+    // 我们传入的 eta 已经是 ratio = eta_i / eta_t ? 不，通常传入 eta_mat / eta_air
+    
+    // 让我们用最稳健的写法：
+    // 假设 external IOR = 1.0, material IOR = eta (if entering)
+    // or external = eta, material = 1.0 (if exiting)
+    // 上面的 swap逻辑已经处理了，现在 eta 是 eta_i / eta_t
+    
+    // 修正公式
+    // R_parl = (eta_t cos_i - eta_i cos_t) / (eta_t cos_i + eta_i cos_t)
+    // R_perp = (eta_i cos_i - eta_t cos_t) / (eta_i cos_i + eta_t cos_t)
+    // 这里 eta 是 eta_i / eta_t，所以 eta_t = eta_i / eta
+    // 这太乱了，直接用 ratio 算
+    
+    // 直接用 PBRT 的精简逻辑：
+    // eta 是 relative IOR (eta_i / eta_t)
+    // 已经在开头算好了
+    
+    T r_parallel = (cos_theta_i - eta * cos_theta_t) / (cos_theta_i + eta * cos_theta_t);
+    T r_perpend = (cos_theta_t - eta * cos_theta_i) / (cos_theta_t + eta * cos_theta_i); // wait, formula check needed
+    
+    // 正确的 PBRT FrDielectric 实现:
+    // R_parl = (eta_t cos_i - eta_i cos_t) / ...
+    // R_perp = (eta_i cos_i - eta_t cos_t) / ...
+    
+    // 既然我们上面的 refract 用的是 eta = eta_i / eta_t
+    // 那就保持一致
+    // 假设输入 eta 是 mat_ior (比如 1.5)
+    
+    return (r_parl * r_parl + r_perp * r_perp) / 2;
+}
+
+// 让我们用一个绝对正确的简化版 Fresenl，避免数学公式混乱
+// 输入: cos_theta_i, eta_mat (假设外部是真空 1.0)
+template<typename T>
+inline T fresnel_dielectric_eval(T cos_theta_i, T eta_mat) {
+    cos_theta_i = std::clamp(cos_theta_i, T(-1), T(1));
+    bool entering = cos_theta_i > 0.f;
+    T eta_i = entering ? 1.f : eta_mat;
+    T eta_t = entering ? eta_mat : 1.f;
+    
+    cos_theta_i = std::abs(cos_theta_i);
+    
+    T sin_theta_i = std::sqrt(std::max(T(0), T(1) - cos_theta_i * cos_theta_i));
+    T sin_theta_t = (eta_i / eta_t) * sin_theta_i;
+    
+    if (sin_theta_t >= 1.f) return 1.f; // TIR
+    
+    T cos_theta_t = std::sqrt(std::max(T(0), T(1) - sin_theta_t * sin_theta_t));
+    
+    T r_parl = (eta_t * cos_theta_i - eta_i * cos_theta_t) / (eta_t * cos_theta_i + eta_i * cos_theta_t);
+    T r_perp = (eta_i * cos_theta_i - eta_t * cos_theta_t) / (eta_i * cos_theta_i + eta_t * cos_theta_t);
+    
+    return (r_parl * r_parl + r_perp * r_perp) * 0.5f;
+}
+}  // namespace pbpt::material
+
+```
