@@ -55,7 +55,7 @@ private:
     using StandardIlluminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
     using SensorResponse = radiometry::constant::XYZSpectrumType<T>;
     using PixelSensorType = camera::PixelSensor<T, StandardIlluminant, StandardIlluminant, SensorResponse>;
-    using FilmType = camera::RGBFilm<T, PixelSensorType>;
+    using FilmType = camera::HDRFilm<T, PixelSensorType>;
     using CameraType = camera::ThinLensPerspectiveCamera<T>;
 
     static constexpr int SpectrumSampleCount = 4;

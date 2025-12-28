@@ -126,7 +126,7 @@ public:
  * @tparam PixelSensorType Pixel sensor type used to convert spectra to RGB.
  */
 template<typename T, typename PixelSensorType>
-class RGBFilm : public Film<RGBFilm<T, PixelSensorType>, T> {
+class HDRFilm : public Film<HDRFilm<T, PixelSensorType>, T> {
 public:
 
     /**
@@ -198,11 +198,11 @@ public:
      * @param physical_size Physical size of the film.
      * @param pixel_sensor  Pixel sensor used for spectral to RGB conversion.
      */
-    RGBFilm(
+    HDRFilm(
         const math::Vector<int, 2>& resolution,
         const math::Vector<T, 2>& physical_size,
         const PixelSensorType& pixel_sensor
-    ) : Film<RGBFilm<T, PixelSensorType>, T>(resolution, physical_size),
+    ) : Film<HDRFilm<T, PixelSensorType>, T>(resolution, physical_size),
         m_pixel_sensor(pixel_sensor) {
         int width = this->resolution().x();
         int height = this->resolution().y();

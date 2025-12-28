@@ -52,7 +52,7 @@ private:
     using StandardIlluminant = decltype(pbpt::radiometry::constant::CIE_D65_ilum<T>);
     using SensorResponse = pbpt::radiometry::constant::XYZSpectrumType<T>;
     using PixelSensorType = pbpt::camera::PixelSensor<T, StandardIlluminant, StandardIlluminant, SensorResponse>;
-    using FilmType = pbpt::camera::RGBFilm<T, PixelSensorType>;
+    using FilmType = pbpt::camera::HDRFilm<T, PixelSensorType>;
     using CameraType = pbpt::camera::ThinLensPerspectiveCamera<T>;
 
     static constexpr int SpectrumSampleCount = 4;
