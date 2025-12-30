@@ -22,7 +22,6 @@
 #include "radiometry/constant/standard_color_spaces.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 #include "radiometry/spectrum_distribution.hpp"
-#include "shape/shape.hpp"
 #include "shape/sphere.hpp"
 #include "utils/exr_writer.hpp"
 #include "utils/progress_bar.hpp"
@@ -51,7 +50,7 @@ public:
     };
 
 private:
-    using PixelFilterType = camera::TentFilter<T>;
+    using PixelFilterType = camera::GaussianFilter<T>;
     using StandardIlluminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
     using SensorResponse = radiometry::constant::XYZSpectrumType<T>;
     using PixelSensorType = camera::PixelSensor<T, StandardIlluminant, StandardIlluminant, SensorResponse>;

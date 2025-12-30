@@ -161,4 +161,79 @@ inline T sample_uniform_disk_pdf(T radius = 1.0) {
     return 1.0 / (math::pi_v<T> * radius * radius);
 }
 
+/**
+ * @brief Sample a 2D point from a Gaussian distribution with independent X and Y components.
+ * This effectively performs 1D Gaussian sampling on each axis.
+ * * @tparam T Numeric type.
+ * @param uv 2D point with coordinates in [0, 1] used for sampling.
+ * @param mean The center (mean) of the 2D distribution.
+ * @param stddev The standard deviation for x and y dimensions respectively.
+ * @return math::Point<T, 2> Sampled point.
+ */
+template <typename T>
+inline math::Point<T, 2> sample_gaussian_2d(
+    const math::Point<T, 2>& uv,
+    const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
+    const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
+) {
+    // Treat X and Y independently
+    T x = sample_gaussian(uv.x(), mean.x(), stddev.x());
+    T y = sample_gaussian(uv.y(), mean.y(), stddev.y());
+    return math::Point<T, 2>(x, y);
+}
+
+/**
+ * @brief 使用 Box-Muller 变换生成 2D 高斯分布采样。
+ * 先生成标准正态分布 N(0,1)，然后通过 X = mean + stddev * Z 进行线性变换。
+ * * @tparam T Numeric type.
+ * @param u1 Uniform random number in (0, 1].
+ * @param u2 Uniform random number in [0, 1].
+ * @param mean The center (mean) of the 2D distribution.
+ * @param stddev The standard deviation for x and y dimensions respectively.
+ * @return math::Point<T, 2> Sampled point.
+ */
+template <typename T>
+inline math::Point<T, 2> sample_gaussian_2d_box_muller(
+    T u1, T u2,
+    const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
+    const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
+) {
+    // 1. 防止 log(0)
+    if (u1 < 1e-6) u1 = 1e-6;
+
+    // 2. Box-Muller 基础公式生成标准正态分布 Z ~ N(0, 1)
+    T r = std::sqrt(T(-2) * std::log(u1));
+    T theta = T(2) * math::pi_v<T> * u2;
+    
+    T z0 = r * std::cos(theta);
+    T z1 = r * std::sin(theta);
+
+    // 3. 线性变换应用 mean 和 stddev
+    // x = mu_x + sigma_x * z0
+    // y = mu_y + sigma_y * z1
+    return math::Point<T, 2>(
+        mean.x() + stddev.x() * z0,
+        mean.y() + stddev.y() * z1
+    );
+}
+
+/**
+ * @brief Compute the probability density function for the 2D Gaussian distribution.
+ * Since dimensions are independent, PDF(x, y) = PDF(x) * PDF(y).
+ * * @tparam T Numeric type.
+ * @param p The point to evaluate.
+ * @param mean The center (mean) of the 2D distribution.
+ * @param stddev The standard deviation for x and y dimensions respectively.
+ * @return T Probability density.
+ */
+template <typename T>
+inline T sample_gaussian_2d_pdf(
+    const math::Point<T, 2>& p,
+    const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
+    const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
+) {
+    return sample_gaussian_pdf(p.x(), mean.x(), stddev.x()) * 
+            sample_gaussian_pdf(p.y(), mean.y(), stddev.y());
+}
+
 }
