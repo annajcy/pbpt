@@ -36,6 +36,8 @@ private:
     math::Vector<T, 2> m_physical_size{};
 
 public:
+    Film() = default;
+    
     /**
      * @brief Construct a film with given resolution and physical size.
      *
@@ -191,6 +193,8 @@ private:
     std::vector<Pixel> m_pixels;
 
 public:
+    HDRFilm() = default;
+    
     /**
      * @brief Construct an RGB film with a given resolution and sensor.
      *

@@ -5,10 +5,13 @@
 #pragma once
 
 #include <array>
+#include <cctype>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <type_traits>
 #include <memory>
+#include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -327,6 +330,25 @@ private:
 template<typename T>
 class PiecewiseLinearSpectrumDistribution : public SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T> {
     friend class SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T>;
+public:
+    static PiecewiseLinearSpectrumDistribution from_string(const std::string& str) {
+        std::vector<std::pair<T, T>> points;
+        for (int i = 0, c = 0; i < str.size();) {
+            while (i < str.size() && std::isspace(str[i])) i++;
+            for (c = i; c < str.size() && str[c] != ','; c++);
+            std::string point_str = str.substr(i, c - i);
+            size_t sep = point_str.find(':');
+            if (sep == std::string::npos) {
+                throw std::invalid_argument("Invalid point format in PiecewiseLinearSpectrumDistribution");
+            }
+            T lambda = static_cast<T>(std::atof(point_str.substr(0, sep).c_str()));
+            T value  = static_cast<T>(std::atof(point_str.substr(sep + 1).c_str()));
+            points.emplace_back(lambda, value);
+            i = ++c;
+        }
+        return PiecewiseLinearSpectrumDistribution(points);
+    }
+
 private:
     std::vector<std::pair<T, T>> m_points; // (lambda, value)
 
@@ -433,6 +455,9 @@ private:
     std::array<T, TabularSpectrumRange<LambdaMin, LambdaMax>::Count> m_samples;
 
 public:
+    /// Default constructor - initializes all samples to zero.
+    constexpr TabularSpectrumDistribution() : m_samples{} {}
+    
     /// Construct from an array of samples matching the tabular range.
     constexpr TabularSpectrumDistribution(const std::array<T, TabularSpectrumRange<LambdaMin, LambdaMax>::Count>& samples)
         : m_samples(samples) {}

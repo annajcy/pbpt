@@ -35,8 +35,8 @@ private:
     std::vector<shape::Primitive<T>> m_primitives;
 
 public:
-    LinearAggregate(const std::vector<shape::Primitive<T>>& primitives)
-        : m_primitives(primitives) {}
+    LinearAggregate() = default;
+    LinearAggregate(const std::vector<shape::Primitive<T>>& primitives): m_primitives(primitives) {}
 
 private:
     std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {

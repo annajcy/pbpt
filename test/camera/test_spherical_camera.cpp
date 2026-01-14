@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 #include <cmath>
 
-#include "camera/spherical_camera.hpp"
+#include "camera/camera.hpp"
 #include "geometry/ray.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"

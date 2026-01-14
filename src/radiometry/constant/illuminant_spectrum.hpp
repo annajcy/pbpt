@@ -178,4 +178,17 @@ inline static constexpr TabularSpectrumDistribution<T, luminantARange::LMinValue
     260.21700, 260.56700, 260.91400, 261.25900, 261.60200
 );
 
-};  // namespace pbpt::radiometry
+template<typename T>
+auto get_constant_illuminant_spectrum(const std::string& name) {
+    if (name == "CIE_D65") {
+        return CIE_D65_ilum<T>;
+    } else if (name == "CIE_D50") {
+        return CIE_D50_ilum<T>;
+    } else if (name == "CIE_A") {
+        return CIE_A_ilum<T>;
+    } else {
+        throw std::runtime_error("Illuminant spectrum '" + name + "' is not defined.");
+    }
+}
+
+};

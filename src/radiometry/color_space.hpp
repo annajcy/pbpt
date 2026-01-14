@@ -34,6 +34,9 @@ private:
     math::Matrix<T, 3, 3> m_xyz_to_rgb;
 
 public:
+    /// Default constructor - creates an uninitialized color space.
+    RGBColorSpace() = default;
+    
     /**
      * @brief Constructs an RGB color space from primaries and white point.
      *

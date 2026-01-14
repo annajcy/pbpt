@@ -59,13 +59,7 @@ public:
         std::visit(visitor, m_shape);
     }
 
-
-
     int material_id() const { return m_material_id; }
 };
-
-// 场景通常就是一个 Primitive 的列表
-template<typename T>
-using ScenePrimitives = std::vector<Primitive<T>>;
 
 }  // namespace pbpt::shape

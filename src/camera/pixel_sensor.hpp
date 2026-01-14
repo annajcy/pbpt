@@ -56,6 +56,8 @@ private:
     T m_image_ratio{1.0};
 
 public:
+    PixelSensor() = default;
+    
     /**
      * @brief Construct a pixel sensor with an explicit sensor response and calibration.
      *
@@ -128,76 +130,7 @@ public:
                 xyz_output
             );
     }
-
-    /**
-     * @brief Construct a sensor that behaves like an XYZ colorimeter with white balance.
-     *
-     * In this overload the sensor response is set to the CIE XYZ color-matching
-     * functions, and the 3×3 matrix is a white-balance transform that adapts
-     * from the scene illuminant chromaticity to the standard illuminant
-     * chromaticity. Conceptually, this is similar to von Kries chromatic
-     * adaptation: we find a 3×3 transform that maps the white
-     * chromaticity of the scene illuminant to the white chromaticity of
-     * the standard illuminant by scaling and rotating the tristimulus
-     * axes in a linear color space.
-     *
-     * @param scene_illuminant    Spectrum of the scene illuminant.
-     * @param standard_illuminant Spectrum of the reference standard illuminant.
-     * @param color_space         Target RGB color space definition.
-     * @param image_ratio         Global scale factor applied to sensor RGB.
-     */
-    PixelSensor(
-        const SceneIlluminantSpectrumType& scene_illuminant,
-        const StandardIlluminantSpectrumType& standard_illuminant,
-        const radiometry::RGBColorSpace<T>& color_space,
-        T image_ratio = T{1.0}
-    ) : m_scene_illuminant(scene_illuminant),
-        m_standard_illuminant(standard_illuminant),
-        m_sensor_response(
-            radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-                radiometry::constant::CIE_X<T>,
-                radiometry::constant::CIE_Y<T>,
-                radiometry::constant::CIE_Z<T>
-            )
-        ), 
-        m_color_space(color_space),
-        m_image_ratio(image_ratio) {
-            math::Point<T, 2> src_chroma_xy = radiometry::XYZ<T>::from_illuminant(m_scene_illuminant).to_xy();
-            math::Point<T, 2> dst_chroma_xy = radiometry::XYZ<T>::from_illuminant(m_standard_illuminant).to_xy();
-            auto wb_matrix = radiometry::white_balance<T>(src_chroma_xy, dst_chroma_xy);
-            m_sensor_rgb_to_xyz = wb_matrix;
-    }
-
-    /**
-     * @brief Construct a sensor directly aligned with CIE XYZ under a standard illuminant.
-     *
-     * Here the scene illuminant is assumed to be the same as the standard
-     * illuminant and the sensor response is again the CIE XYZ color-matching
-     * functions. The sensor RGB triplet is already an XYZ tristimulus, so
-     * the calibration matrix is simply the 3×3 identity matrix.
-     *
-     * @param standard_illuminant Spectrum of the standard illuminant.
-     * @param color_space         Target RGB color space definition.
-     * @param image_ratio         Global scale factor applied to sensor RGB.
-     */
-    PixelSensor(
-        const StandardIlluminantSpectrumType& standard_illuminant,
-        const radiometry::RGBColorSpace<T>& color_space,
-        T image_ratio = T{1.0}
-    ) : m_scene_illuminant(standard_illuminant),
-        m_standard_illuminant(standard_illuminant),
-        m_sensor_response(
-            radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-                radiometry::constant::CIE_X<T>,
-                radiometry::constant::CIE_Y<T>,
-                radiometry::constant::CIE_Z<T>
-            )
-        ), 
-        m_color_space(color_space),
-        m_image_ratio(image_ratio) {
-            m_sensor_rgb_to_xyz = math::Matrix<T, 3, 3>::identity();
-    }
-
+    
     /**
      * @brief Convert spectral radiance to sensor RGB using full spectra.
      *

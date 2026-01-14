@@ -268,4 +268,40 @@ inline PiecewiseLinearSpectrumDistribution<T>& get_swatch_reflectance(SwatchRefl
     return swatch_reflectances<T>[static_cast<int>(swatch)];
 }
 
+inline SwatchReflectance string_to_swatch_reflectance(const std::string& swatch_name) {
+    if (swatch_name == "Light Skin") return SwatchReflectance::LightSkin;
+    if (swatch_name == "Dark Skin") return SwatchReflectance::DarkSkin;
+    if (swatch_name == "Blue Sky") return SwatchReflectance::BlueSky;
+    if (swatch_name == "Foliage") return SwatchReflectance::Foliage;
+    if (swatch_name == "Bluish Green") return SwatchReflectance::BluishGreen;
+    if (swatch_name == "Orange") return SwatchReflectance::Orange;
+    if (swatch_name == "Purplish Blue") return SwatchReflectance::PurplishBlue;
+    if (swatch_name == "Moderate Red") return SwatchReflectance::ModerateRed;
+    if (swatch_name == "Purple") return SwatchReflectance::Purple;
+    if (swatch_name == "Yellow Green") return SwatchReflectance::YellowGreen;
+    if (swatch_name == "Orange Yellow") return SwatchReflectance::OrangeYellow;
+    if (swatch_name == "Blue") return SwatchReflectance::Blue;
+    if (swatch_name == "Green") return SwatchReflectance::Green;
+    if (swatch_name == "Red") return SwatchReflectance::Red;
+    if (swatch_name == "Yellow") return SwatchReflectance::Yellow;
+    if (swatch_name == "Magenta") return SwatchReflectance::Magenta;
+    if (swatch_name == "Cyan") return SwatchReflectance::Cyan;
+    if (swatch_name == "White") return SwatchReflectance::White;
+    if (swatch_name == "Neutral 8") return SwatchReflectance::Neutral8;
+    if (swatch_name == "Neutral 6.5") return SwatchReflectance::Neutral65;
+    if (swatch_name == "Neutral 5") return SwatchReflectance::Neutral5;
+    if (swatch_name == "Neutral 3.5") return SwatchReflectance::Neutral35;
+    if (swatch_name == "Black") return SwatchReflectance::Black;
+    throw std::invalid_argument("Unknown swatch reflectance name: " + swatch_name);
+}
+
+// Helper function to get swatch reflectance by enum
+template <typename T>
+inline PiecewiseLinearSpectrumDistribution<T>& get_swatch_reflectance(const std::string& swatch_name) {
+    SwatchReflectance swatch = string_to_swatch_reflectance(swatch_name);
+    return get_swatch_reflectance<T>(swatch);
+}
+
+
+
 } // namespace pbpt::radiometry

@@ -178,6 +178,9 @@ public:
         int base = triangle_index * 3;
         return { m_indices[base], m_indices[base + 1], m_indices[base + 2] };
     }
+
+    int triangle_count() const { return m_triangle_count; }
+    int vertex_count() const { return m_vertices_count; } 
 };
 
 // --- Triangle Shape (Lightweight Handle) ---

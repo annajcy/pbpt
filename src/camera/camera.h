@@ -11,7 +11,5 @@
 #include "camera.hpp"
 #include "film.hpp"
 #include "pixel_sensor.hpp"
-#include "projective_camera.hpp"
 #include "render_transform.hpp"
-#include "spherical_camera.hpp"
 #include "pixel_filter.hpp"

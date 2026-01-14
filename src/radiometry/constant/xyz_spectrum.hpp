@@ -2,7 +2,12 @@
 
 #include "../spectrum_distribution.hpp"
 
-namespace pbpt::radiometry::constant {
+namespace pbpt::radiometry{
+    
+template<typename ResponseSpectrumType>
+class ResponseSpectrum;
+
+namespace constant {
 
 using XYZRange         = TabularSpectrumRange<360, 830>;
 
@@ -230,5 +235,19 @@ inline static TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMax
 
 template <typename T>
 using XYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue>;
+
+template <typename T>
+using XYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue>;
+
+template<typename T>
+inline radiometry::ResponseSpectrum<constant::XYZSpectrumType<T>> get_xyz_spectrum() {
+    return radiometry::ResponseSpectrum<constant::XYZSpectrumType<T>>(
+        constant::CIE_X<T>,
+        constant::CIE_Y<T>,
+        constant::CIE_Z<T>
+    );
+}
+
+};
 
 };  // namespace pbpt::radiometry

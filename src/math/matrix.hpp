@@ -1079,9 +1079,18 @@ public:
         int r = 0;
         int swaps = 0;
         T total_scale_inv = T(1);
+        
+        // Compute adaptive pivot threshold based on matrix magnitude
+        T max_abs = T(0);
+        for (int i = 0; i < R * C; i++) {
+            T abs_val = pbpt::math::abs(m_data[i]);
+            if (abs_val > max_abs) max_abs = abs_val;
+        }
+        T pivot_threshold = max_abs * T(1e-10);
+        
         for (int c = 0; c < C && r < R; c ++) {
             auto [pr, pv] = argmax_abs_in_col(c, r);
-            if (is_zero(pv)) { continue; }
+            if (pbpt::math::abs(pv) < pivot_threshold) { continue; }
             if (pr != r) swap_rows(r, pr), swaps ++; 
             scale_row(r, T(1) / pv), total_scale_inv *= pv;
             for (int rr = r + 1; rr < R; rr ++) {
@@ -1090,7 +1099,6 @@ public:
             }
             r ++;
         }
-        visit([&](T& x, int, int){ if (is_zero(x)) x = T(0); });
         return {(*this), r, swaps, total_scale_inv};
     } 
 
@@ -1107,9 +1115,18 @@ public:
         int r = 0;
         int swaps = 0;
         T total_scale_inv = T(1);
+        
+        // Compute adaptive pivot threshold based on matrix magnitude
+        T max_abs = T(0);
+        for (int i = 0; i < R * C; i++) {
+            T abs_val = pbpt::math::abs(m_data[i]);
+            if (abs_val > max_abs) max_abs = abs_val;
+        }
+        T pivot_threshold = max_abs * T(1e-10);
+        
         for (int c = 0; c < C && r < R; c ++) {
             auto [pr, pv] = argmax_abs_in_col(c, r);
-            if (is_zero(pv)) {continue; }
+            if (pbpt::math::abs(pv) < pivot_threshold) {continue; }
             if (pr != r) swap_rows(r, pr), swaps ++;
             scale_row(r, T(1) / pv), total_scale_inv *= pv;
             for (int rr = 0; rr < R; rr ++) {
@@ -1119,7 +1136,6 @@ public:
             }
             r ++;
         }
-        visit([&](T& x, int, int){ if (is_zero(x)) x = T(0); });
         return {(*this), r, swaps, total_scale_inv};
     }
 

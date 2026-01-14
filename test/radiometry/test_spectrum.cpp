@@ -1002,4 +1002,173 @@ TEST_F(SpectrumTest, MultipliedSpectrumOwnsTemporaryConstantTimesD65) {
     EXPECT_NEAR(product.at(560.0f), 2.0f * d65.at(560.0f), 1e-5f);
 }
 
+// =============================================================================
+// PiecewiseLinearSpectrumDistribution from_string Tests
+// =============================================================================
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringBasic) {
+    // Test basic parsing with multiple points
+    std::string input = "400:0.5, 500:1.0, 600:0.8, 700:0.3";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    // Test exact knot points
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 1.0f);
+    EXPECT_FLOAT_EQ(spectrum.at(600.0f), 0.8f);
+    EXPECT_FLOAT_EQ(spectrum.at(700.0f), 0.3f);
+    
+    // Test interpolation
+    EXPECT_FLOAT_EQ(spectrum.at(450.0f), 0.75f);  // midpoint between 400:0.5 and 500:1.0
+    EXPECT_FLOAT_EQ(spectrum.at(550.0f), 0.9f);   // midpoint between 500:1.0 and 600:0.8
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringSinglePoint) {
+    // Test with a single point
+    std::string input = "550:1.5";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_FLOAT_EQ(spectrum.at(550.0f), 1.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 1.5f);  // Below range, should clamp
+    EXPECT_FLOAT_EQ(spectrum.at(700.0f), 1.5f);  // Above range, should clamp
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringWithSpaces) {
+    // Test parsing with various whitespace
+    std::string input = "  400:0.5  ,  500:1.0  , 600:0.8   ";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 1.0f);
+    EXPECT_FLOAT_EQ(spectrum.at(600.0f), 0.8f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringNoComma) {
+    // Test with single point without comma
+    std::string input = "500:1.0";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 1.0f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringUnsortedInput) {
+    // Test with unsorted wavelengths (should be sorted automatically)
+    std::string input = "600:0.8, 400:0.5, 700:0.3, 500:1.0";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 1.0f);
+    EXPECT_FLOAT_EQ(spectrum.at(600.0f), 0.8f);
+    EXPECT_FLOAT_EQ(spectrum.at(700.0f), 0.3f);
+    
+    // Test interpolation works correctly after sorting
+    EXPECT_FLOAT_EQ(spectrum.at(450.0f), 0.75f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringExtrapolation) {
+    // Test extrapolation behavior (should clamp to boundary values)
+    std::string input = "500:1.0, 600:0.5";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    // Below range
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 1.0f);
+    EXPECT_FLOAT_EQ(spectrum.at(499.0f), 1.0f);
+    
+    // Above range
+    EXPECT_FLOAT_EQ(spectrum.at(601.0f), 0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(700.0f), 0.5f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringNegativeValues) {
+    // Test with negative values
+    std::string input = "400:-0.5, 500:0.0, 600:1.5";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), -0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 0.0f);
+    EXPECT_FLOAT_EQ(spectrum.at(600.0f), 1.5f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringDecimalWavelengths) {
+    // Test with decimal wavelengths
+    std::string input = "450.5:0.5, 550.5:1.0";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_FLOAT_EQ(spectrum.at(450.5f), 0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(550.5f), 1.0f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.5f), 0.75f);  // midpoint
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringInvalidFormat) {
+    // Test with invalid format (missing colon)
+    std::string input = "400-0.5, 500:1.0";
+    EXPECT_THROW({
+        auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    }, std::invalid_argument);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringEmptyString) {
+    // Test with empty string
+    std::string input = "";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    // Should return 0 for any wavelength (empty spectrum)
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 0.0f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringScientificNotation) {
+    // Test with scientific notation
+    std::string input = "400:1.5e-3, 500:2.5e-3, 600:3.5e-3";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_NEAR(spectrum.at(400.0f), 1.5e-3f, 1e-6f);
+    EXPECT_NEAR(spectrum.at(500.0f), 2.5e-3f, 1e-6f);
+    EXPECT_NEAR(spectrum.at(600.0f), 3.5e-3f, 1e-6f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringDoubleType) {
+    // Test with double precision
+    std::string input = "400:0.123456789, 500:0.987654321";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<double>::from_string(input);
+    
+    EXPECT_DOUBLE_EQ(spectrum.at(400.0), 0.123456789);
+    EXPECT_DOUBLE_EQ(spectrum.at(500.0), 0.987654321);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringTrailingComma) {
+    // Test with trailing comma - function handles it gracefully by skipping empty point
+    std::string input = "400:0.5, 500:1.0,";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    // Should only parse the two valid points
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 1.0f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringMultipleColons) {
+    // Test with multiple colons in point
+    std::string input = "400:0.5:extra, 500:1.0";
+    // atof will stop at first non-numeric character, so "0.5:extra" -> 0.5
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 0.5f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 1.0f);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringOnlySpaces) {
+    // Test with only spaces - leads to empty point_str which has no colon
+    std::string input = "   ";
+    EXPECT_THROW({
+        auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    }, std::invalid_argument);
+}
+
+TEST_F(SpectrumTest, PiecewiseLinearFromStringLargeValues) {
+    // Test with very large values
+    std::string input = "400:1e10, 500:2e10, 600:3e10";
+    auto spectrum = PiecewiseLinearSpectrumDistribution<float>::from_string(input);
+    
+    EXPECT_FLOAT_EQ(spectrum.at(400.0f), 1e10f);
+    EXPECT_FLOAT_EQ(spectrum.at(500.0f), 2e10f);
+    EXPECT_FLOAT_EQ(spectrum.at(600.0f), 3e10f);
+    EXPECT_FLOAT_EQ(spectrum.at(450.0f), 1.5e10f);  // Interpolation
+}
+
 }

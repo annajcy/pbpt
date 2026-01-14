@@ -46,6 +46,8 @@ private:
     RenderSpace m_render_space{RenderSpace::CameraWorld};
 
 public:
+    RenderTransform() = default;
+    
     /// Create from a camera-to-world transform.
     static RenderTransform<T> from_camera_to_world(
         const geometry::Transform<T>& camera_to_world, 
@@ -60,6 +62,23 @@ public:
         RenderSpace space = RenderSpace::CameraWorld
     ) {
         return RenderTransform<T>(world_to_camera.inversed(), space);
+    }
+
+    /**
+     * @brief Build a render transform from a look-at specification.
+     *
+     * The resulting transform uses the provided eye/target/up to create
+     * a world-to-camera matrix and then derives the render-space
+     * transforms from it.
+     */
+    static RenderTransform<T> look_at(
+        const math::Point<T, 3>& eye,
+        const math::Point<T, 3>& target,
+        const math::Vector<T, 3>& up,
+        RenderSpace space = RenderSpace::CameraWorld
+    ) {
+        auto world_to_camera = geometry::Transform<T>::look_at(eye, target, up);
+        return from_world_to_camera(world_to_camera, space);
     }
 
 public:

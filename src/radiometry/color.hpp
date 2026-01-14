@@ -34,14 +34,15 @@ private:
     std::array<ResponseSpectrumType, 3> m_spectrum;
 
 public:
+    /// Default constructor - initializes all response channels with default-constructed spectra.
+    ResponseSpectrum() = default;
+    
     /**
      * @brief Constructs a response spectrum from three channel spectra.
      *
      * The channels are typically ordered as R, G, B or X, Y, Z.
      */
-    ResponseSpectrum(
-        const std::array<ResponseSpectrumType, 3>& spectrum
-    ) : m_spectrum{spectrum} {}
+    ResponseSpectrum(const std::array<ResponseSpectrumType, 3>& spectrum) : m_spectrum{spectrum} {}
 
     /**
      * @brief Constructs a response spectrum from individual channels.

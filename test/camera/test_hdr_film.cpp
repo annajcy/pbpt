@@ -25,7 +25,13 @@ using FilmType = HDRFilm<T, PixelSensorType>;
 PixelSensorType make_pixel_sensor(T ratio = T(1)) {
     return PixelSensorType(
         radiometry::constant::CIE_D65_ilum<T>,
+        radiometry::constant::CIE_D65_ilum<T>,
         radiometry::constant::sRGB<T>,
+        radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
+            radiometry::constant::CIE_X<T>,
+            radiometry::constant::CIE_Y<T>,
+            radiometry::constant::CIE_Z<T>
+        ),
         ratio
     );
 }
