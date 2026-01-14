@@ -1825,6 +1825,162 @@ TEST_F(MatrixRowOperationsTest, RankRectangular) {
     EXPECT_LE(rank, 2);
 }
 
+TEST_F(MatrixRowOperationsTest, RankIdentityMatrix) {
+    Matrix<double, 4, 4> m = Matrix<double, 4, 4>::identity();
+    EXPECT_EQ(m.rank(), 4);
+}
+
+TEST_F(MatrixRowOperationsTest, RankDiagonalMatrix) {
+    // Diagonal matrix with all non-zero diagonal elements
+    Matrix<double, 3, 3> m(
+        5, 0, 0,
+        0, 3, 0,
+        0, 0, 7
+    );
+    EXPECT_EQ(m.rank(), 3);
+}
+
+TEST_F(MatrixRowOperationsTest, RankDiagonalMatrixWithZeros) {
+    // Diagonal matrix with some zero diagonal elements
+    Matrix<double, 4, 4> m(
+        2, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 5, 0,
+        0, 0, 0, 3
+    );
+    EXPECT_EQ(m.rank(), 3);
+}
+
+TEST_F(MatrixRowOperationsTest, RankOneMatrix) {
+    // All rows are multiples of the first row
+    Matrix<double, 3, 3> m(
+        1, 2, 3,
+        2, 4, 6,
+        3, 6, 9
+    );
+    EXPECT_EQ(m.rank(), 1);
+}
+
+TEST_F(MatrixRowOperationsTest, RankMatrixWithZeroRow) {
+    Matrix<double, 3, 3> m(
+        1, 2, 3,
+        0, 0, 0,
+        4, 5, 6
+    );
+    EXPECT_EQ(m.rank(), 2);
+}
+
+TEST_F(MatrixRowOperationsTest, RankMatrixWithZeroColumn) {
+    Matrix<double, 3, 3> m(
+        1, 0, 2,
+        3, 0, 4,
+        5, 0, 6
+    );
+    EXPECT_EQ(m.rank(), 2);
+}
+
+TEST_F(MatrixRowOperationsTest, RankTallMatrix) {
+    // More rows than columns
+    Matrix<double, 4, 2> m(
+        1, 2,
+        3, 4,
+        5, 6,
+        7, 8
+    );
+    EXPECT_EQ(m.rank(), 2);
+}
+
+TEST_F(MatrixRowOperationsTest, RankWideMatrix) {
+    // More columns than rows
+    Matrix<double, 2, 4> m(
+        1, 0, 2, 0,
+        0, 1, 0, 3
+    );
+    EXPECT_EQ(m.rank(), 2);
+}
+
+TEST_F(MatrixRowOperationsTest, RankUpperTriangular) {
+    Matrix<double, 3, 3> m(
+        2, 3, 4,
+        0, 5, 6,
+        0, 0, 7
+    );
+    EXPECT_EQ(m.rank(), 3);
+}
+
+TEST_F(MatrixRowOperationsTest, RankLowerTriangular) {
+    Matrix<double, 3, 3> m(
+        2, 0, 0,
+        3, 5, 0,
+        4, 6, 7
+    );
+    EXPECT_EQ(m.rank(), 3);
+}
+
+TEST_F(MatrixRowOperationsTest, RankNearSingularMatrix) {
+    // Matrix that is nearly singular but not quite
+    Matrix<double, 3, 3> m(
+        1.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1e-8
+    );
+    // Should still be rank 3 because 1e-8 > 1e-10 threshold
+    EXPECT_EQ(m.rank(), 3);
+}
+
+TEST_F(MatrixRowOperationsTest, RankVerySmallElements) {
+    // Matrix with very small but non-zero elements
+    Matrix<double, 2, 2> m(
+        1e-11, 0.0,
+        0.0, 1e-11
+    );
+    // Elements are smaller than 1e-10 threshold, should be treated as zero
+    EXPECT_EQ(m.rank(), 0);
+}
+
+TEST_F(MatrixRowOperationsTest, RankLinearlyDependentRows) {
+    // Third row = first row + second row
+    Matrix<double, 3, 3> m(
+        1, 2, 3,
+        4, 5, 6,
+        5, 7, 9
+    );
+    EXPECT_EQ(m.rank(), 2);
+}
+
+TEST_F(MatrixRowOperationsTest, RankLinearlyDependentColumns) {
+    // Third column = first column + second column
+    Matrix<double, 3, 3> m(
+        1, 2, 3,
+        4, 5, 9,
+        7, 8, 15
+    );
+    EXPECT_EQ(m.rank(), 2);
+}
+
+TEST_F(MatrixRowOperationsTest, RankSingleElement) {
+    Matrix<double, 1, 1> m(5.0);
+    EXPECT_EQ(m.rank(), 1);
+    
+    Matrix<double, 1, 1> zero(0.0);
+    EXPECT_EQ(zero.rank(), 0);
+}
+
+TEST_F(MatrixRowOperationsTest, RankLargeMatrix) {
+    // 5x5 matrix with rank 3
+    Matrix<double, 5, 5> m(
+        1, 2, 3, 4, 5,
+        2, 4, 6, 8, 10,
+        0, 1, 2, 3, 4,
+        3, 5, 7, 9, 11,
+        0, 0, 1, 2, 3
+    );
+    // Rows 2 and 4 are linear combinations of other rows
+    int rank = m.rank();
+    EXPECT_GE(rank, 2);
+    EXPECT_LE(rank, 4);
+}
+
 // ===== Inverse via RREF Tests =====
 
 TEST_F(MatrixRowOperationsTest, InverseRREF_2x2) {

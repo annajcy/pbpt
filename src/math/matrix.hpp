@@ -1086,7 +1086,8 @@ public:
             T abs_val = pbpt::math::abs(m_data[i]);
             if (abs_val > max_abs) max_abs = abs_val;
         }
-        T pivot_threshold = max_abs * T(1e-10);
+        // Use minimum threshold of 1e-10 to handle zero/near-zero matrices
+        T pivot_threshold = (max_abs * T(1e-10) > T(1e-10)) ? max_abs * T(1e-10) : T(1e-10);
         
         for (int c = 0; c < C && r < R; c ++) {
             auto [pr, pv] = argmax_abs_in_col(c, r);
@@ -1122,7 +1123,8 @@ public:
             T abs_val = pbpt::math::abs(m_data[i]);
             if (abs_val > max_abs) max_abs = abs_val;
         }
-        T pivot_threshold = max_abs * T(1e-10);
+        // Use minimum threshold of 1e-10 to handle zero/near-zero matrices
+        T pivot_threshold = (max_abs * T(1e-10) > T(1e-10)) ? max_abs * T(1e-10) : T(1e-10);
         
         for (int c = 0; c < C && r < R; c ++) {
             auto [pr, pv] = argmax_abs_in_col(c, r);
