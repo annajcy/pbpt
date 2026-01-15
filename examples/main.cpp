@@ -18,7 +18,6 @@
 #include "pbpt.h"
 #include "shape/sphere.hpp"
 #include "shape/triangle.hpp"
-#include "scene/cornel_box_scene.hpp"
 
 using namespace pbpt;
 
