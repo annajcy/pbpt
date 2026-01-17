@@ -42,10 +42,10 @@ public:
 
         if (!rec) return std::nullopt;
 
-        PrimitiveIntersectionRecord<T> wrapped;
-        wrapped.intersection = *rec;
-        wrapped.material_id = m_material_id;
-        return wrapped;
+        PrimitiveIntersectionRecord<T> record;
+        record.intersection = *rec;
+        record.material_id = m_material_id;
+        return record;
     }
 
     std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {

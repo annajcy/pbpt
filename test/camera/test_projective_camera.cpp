@@ -354,7 +354,7 @@ TEST(ThinLensOrthographicCameraTest, Construction) {
     float lens_radius = 0.1f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, focal_distance);
     
     EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<float>());
 }
@@ -365,12 +365,12 @@ TEST(ThinLensOrthographicCameraTest, GenerateRayFromLensCenter) {
     float lens_radius = 0.1f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, focal_distance);
     
-    // Sample with lens center (0.5, 0.5)
+    // Sample with lens center
     CameraSample<float> sample;
     sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
-    sample.p_lens = math::Point<float, 2>(0.5f, 0.5f);
+    sample.p_lens = math::Point<float, 2>(0.0f, 0.0f);
     
     auto ray = camera.generate_ray(sample);
     
@@ -394,15 +394,15 @@ TEST(ThinLensOrthographicCameraTest, RaysConvergeAtFocalPlane) {
     float lens_radius = 0.2f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, focal_distance);
     
     // Generate rays from same film point but different lens positions
     CameraSample<float> sample1, sample2;
     sample1.p_film = math::Point<float, 2>(400.0f, 300.0f);
     sample2.p_film = math::Point<float, 2>(400.0f, 300.0f);
     
-    sample1.p_lens = math::Point<float, 2>(0.3f, 0.5f);
-    sample2.p_lens = math::Point<float, 2>(0.7f, 0.5f);
+    sample1.p_lens = math::Point<float, 2>(-0.1f, 0.0f);
+    sample2.p_lens = math::Point<float, 2>(0.1f, 0.0f);
     
     auto ray1 = camera.generate_ray(sample1);
     auto ray2 = camera.generate_ray(sample2);
@@ -424,11 +424,11 @@ TEST(ThinLensOrthographicCameraTest, GenerateDifferentialRay) {
     float lens_radius = 0.1f;
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, focal_distance);
     
     CameraSample<float> sample;
     sample.p_film = math::Point<float, 2>(400.0f, 300.0f);
-    sample.p_lens = math::Point<float, 2>(0.5f, 0.5f);
+    sample.p_lens = math::Point<float, 2>(0.0f, 0.0f);
     
     auto ray_diff = camera.generate_differential_ray(sample);
     
@@ -455,15 +455,15 @@ TEST(ThinLensOrthographicCameraTest, DepthOfFieldEffect) {
     float lens_radius = 0.5f; // Large aperture for visible DOF
     float focal_distance = 10.0f;
     
-    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, lens_radius, focal_distance);
+    ThinLensOrthographicCamera<float> camera(resolution, physical_size, -0.1f, -100.0f, focal_distance);
     
     // Sample rays from different lens positions
     CameraSample<float> sample1, sample2;
     sample1.p_film = math::Point<float, 2>(400.0f, 300.0f);
     sample2.p_film = math::Point<float, 2>(400.0f, 300.0f);
     
-    sample1.p_lens = math::Point<float, 2>(0.2f, 0.5f);
-    sample2.p_lens = math::Point<float, 2>(0.8f, 0.5f);
+    sample1.p_lens = math::Point<float, 2>(-0.2f, 0.0f);
+    sample2.p_lens = math::Point<float, 2>(0.2f, 0.0f);
     
     auto ray1 = camera.generate_ray(sample1);
     auto ray2 = camera.generate_ray(sample2);
@@ -494,7 +494,7 @@ TEST(ThinLensPerspectiveCameraTest, Construction) {
     double lens_radius = 0.1;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, focal_distance);
     
     EXPECT_NE(camera.projection().camera_to_clip(), geometry::Transform<double>());
 }
@@ -505,12 +505,12 @@ TEST(ThinLensPerspectiveCameraTest, GenerateRayFromLensCenter) {
     double lens_radius = 0.1;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, focal_distance);
     
     // Sample with lens center
     CameraSample<double> sample;
     sample.p_film = math::Point<double, 2>(400.0, 300.0);
-    sample.p_lens = math::Point<double, 2>(0.5, 0.5);
+    sample.p_lens = math::Point<double, 2>(0.0, 0.0);
     
     auto ray = camera.generate_ray(sample);
     
@@ -534,12 +534,12 @@ TEST(ThinLensPerspectiveCameraTest, RaysOriginateFromLens) {
     double lens_radius = 0.3;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, focal_distance);
     
     // Sample from edge of lens
     CameraSample<double> sample;
     sample.p_film = math::Point<double, 2>(400.0, 300.0);
-    sample.p_lens = math::Point<double, 2>(1.0, 0.5); // Right edge
+    sample.p_lens = math::Point<double, 2>(0.3, 0.0); // Right edge
     
     auto ray = camera.generate_ray(sample);
     
@@ -558,15 +558,15 @@ TEST(ThinLensPerspectiveCameraTest, FocalPlaneConvergence) {
     double lens_radius = 0.2;
     double focal_distance = 15.0;
     
-    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, focal_distance);
     
     // Generate rays from same film point but different lens positions
     CameraSample<double> sample1, sample2;
     sample1.p_film = math::Point<double, 2>(400.0, 300.0);
     sample2.p_film = math::Point<double, 2>(400.0, 300.0);
     
-    sample1.p_lens = math::Point<double, 2>(0.2, 0.5);
-    sample2.p_lens = math::Point<double, 2>(0.8, 0.5);
+    sample1.p_lens = math::Point<double, 2>(-0.1, 0.0);
+    sample2.p_lens = math::Point<double, 2>(0.1, 0.0);
     
     auto ray1 = camera.generate_ray(sample1);
     auto ray2 = camera.generate_ray(sample2);
@@ -588,11 +588,11 @@ TEST(ThinLensPerspectiveCameraTest, GenerateDifferentialRay) {
     double lens_radius = 0.1;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, focal_distance);
     
     CameraSample<double> sample;
     sample.p_film = math::Point<double, 2>(400.0, 300.0);
-    sample.p_lens = math::Point<double, 2>(0.5, 0.5);
+    sample.p_lens = math::Point<double, 2>(0.0, 0.0);
     
     auto ray_diff = camera.generate_differential_ray(sample);
     
@@ -617,15 +617,15 @@ TEST(ThinLensPerspectiveCameraTest, DepthOfFieldEffect) {
     double lens_radius = 0.4; // Large aperture
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, focal_distance);
     
     // Sample rays from opposite lens edges
     CameraSample<double> sample1, sample2;
     sample1.p_film = math::Point<double, 2>(400.0, 300.0);
     sample2.p_film = math::Point<double, 2>(400.0, 300.0);
     
-    sample1.p_lens = math::Point<double, 2>(0.1, 0.5);
-    sample2.p_lens = math::Point<double, 2>(0.9, 0.5);
+    sample1.p_lens = math::Point<double, 2>(-0.3, 0.0);
+    sample2.p_lens = math::Point<double, 2>(0.3, 0.0);
     
     auto ray1 = camera.generate_ray(sample1);
     auto ray2 = camera.generate_ray(sample2);
@@ -658,17 +658,17 @@ TEST(ThinLensPerspectiveCameraTest, BokehShapeTest) {
     double lens_radius = 0.3;
     double focal_distance = 10.0;
     
-    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, lens_radius, focal_distance);
+    ThinLensPerspectiveCamera<double> camera(resolution, physical_size, -0.1, -100.0, focal_distance);
     
     // Sample multiple points on lens
     std::vector<math::Point<double, 2>> lens_samples;
-    lens_samples.push_back(math::Point<double, 2>(0.5, 0.5)); // Center
-    lens_samples.push_back(math::Point<double, 2>(0.0, 0.5)); // Left
-    lens_samples.push_back(math::Point<double, 2>(1.0, 0.5)); // Right
-    lens_samples.push_back(math::Point<double, 2>(0.5, 0.0)); // Top
-    lens_samples.push_back(math::Point<double, 2>(0.5, 1.0)); // Bottom
-    lens_samples.push_back(math::Point<double, 2>(0.0, 0.0)); // Top-left
-    lens_samples.push_back(math::Point<double, 2>(1.0, 1.0)); // Bottom-right
+    lens_samples.push_back(math::Point<double, 2>(0.0, 0.0)); // Center
+    lens_samples.push_back(math::Point<double, 2>(-0.3, 0.0)); // Left
+    lens_samples.push_back(math::Point<double, 2>(0.3, 0.0)); // Right
+    lens_samples.push_back(math::Point<double, 2>(0.0, 0.3)); // Top
+    lens_samples.push_back(math::Point<double, 2>(0.0, -0.3)); // Bottom
+    lens_samples.push_back(math::Point<double, 2>(-0.2, 0.2)); // Top-left
+    lens_samples.push_back(math::Point<double, 2>(0.2, -0.2)); // Bottom-right
     
     CameraSample<double> sample;
     sample.p_film = math::Point<double, 2>(400.0, 300.0);
@@ -720,13 +720,13 @@ TEST(CameraComparisonTest, ThinLensVsPinhole) {
     // Very small aperture should approximate pinhole
     double tiny_aperture = 1e-6;
     ThinLensPerspectiveCamera<double> thin_lens_cam(
-        resolution, physical_size, -0.1, -100.0, tiny_aperture, focal_distance
+        resolution, physical_size, -0.1, -100.0, focal_distance
     );
     PerspectiveCamera<double> pinhole_cam(resolution, physical_size, -0.1, -100.0);
     
     CameraSample<double> thin_lens_sample;
     thin_lens_sample.p_film = math::Point<double, 2>(400.0, 300.0);
-    thin_lens_sample.p_lens = math::Point<double, 2>(0.5, 0.5);
+    thin_lens_sample.p_lens = math::Point<double, 2>(0.0, 0.0);
     
     CameraSample<double> pinhole_sample;
     pinhole_sample.p_film = math::Point<double, 2>(400.0, 300.0);

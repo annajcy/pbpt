@@ -3,9 +3,9 @@
 #include "integrator/integrator.hpp"
 namespace pbpt::integrator {
 
-template<typename T, typename SceneType>
-class PathIntegrator : public Integrator<PathIntegrator<T, SceneType>, T, SceneType> {
-    friend class Integrator<PathIntegrator<T, SceneType>, T, SceneType>;
+template<typename T, int N, typename SceneType>
+class PathIntegrator : public Integrator<PathIntegrator<T, N, SceneType>, T, N, SceneType> {
+    friend class Integrator<PathIntegrator<T, N, SceneType>, T, N, SceneType>;
 private:
     int m_ssp = 4;
     int m_max_depth = -1;

@@ -31,9 +31,6 @@ struct CameraSample{
     /// Film sample position in raster or viewport space.
     math::Point<T, 2> p_film{};
     /// Lens sample position for thin-lens cameras (ignored for pinhole).
-    ///
-    /// Typically this is a point in a 2D unit disk (later scaled by the
-    /// lens radius) used to simulate finite aperture and depth of field.
     math::Point<T, 2> p_lens{};
 
     /**
@@ -658,16 +655,13 @@ class ThinLensOrthographicCamera : public ProjectiveCamera<ThinLensOrthographicC
     friend class ProjectiveCamera<ThinLensOrthographicCamera<T>, T>;
 
 private:
-    /// Lens radius controlling aperture size (larger radius -> shallower depth of field).
-    T m_lens_radius{0};
     /// Distance from the lens to the focal plane along +z.
     T m_focal_distance{1};
 
 public:
     ThinLensOrthographicCamera() = default;
     ThinLensOrthographicCamera(const CameraProjection<T>& projection, T lens_radius, T focal_distance)
-        : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(projection),
-          m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
+        : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(projection), m_focal_distance(focal_distance) {}
 
     /**
      * @brief Construct a thin-lens orthographic camera from explicit bounds.
@@ -685,12 +679,12 @@ public:
      */
     ThinLensOrthographicCamera(
         T left, T right, T bottom, T top, T near, T far, 
-        T resolution_x, T resolution_y,
-        T lens_radius, T focal_distance
+        T resolution_x, T resolution_y, 
+        T focal_distance
     ) : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(CameraProjection<T>::orthographic(
         left, right, bottom, top, near, far, 
         resolution_x, resolution_y)
-    ), m_lens_radius(lens_radius), m_focal_distance(focal_distance) { }
+    ), m_focal_distance(focal_distance) { }
 
     /**
      * @brief Construct a thin-lens orthographic camera from film parameters.
@@ -705,15 +699,14 @@ public:
     ThinLensOrthographicCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
-        T near, T far, T lens_radius, T focal_distance
+        T near, T far, T focal_distance
     ) : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
             CameraProjection<T>::create_orthographic_projection(
                 film_resolution, 
                 film_physical_size, 
                 near, far
             )
-        ), m_lens_radius(lens_radius), 
-            m_focal_distance(focal_distance) {}
+        ), m_focal_distance(focal_distance) {}
     
 private:
     /**
@@ -730,19 +723,14 @@ private:
         // 1. 获取视口映射点 (位于近平面，但这不重要，我们只需要它的 x 和 y)
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
 
-        if (m_lens_radius <= T(0)) {
-            // Degenerates to a pinhole orthographic camera.
-            return geometry::Ray<T, 3>(p_camera, math::Vector<T, 3>(0, 0, -1));
-        }
-
         // 2. [优化] 直接构造焦点
         // 正交投影特性：焦点产生的 X,Y 与胶片点一致。
         // 焦平面深度：严格位于 Z = -m_focal_distance
         auto p_focus = math::Point<T, 3>(p_camera.x(), p_camera.y(), -m_focal_distance);
 
-        // 3. 采样透镜 (Lens)
-        auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
-        auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
+        // // 3. 采样透镜 (Lens)
+        // auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
+        auto origin = math::Point<T, 3>(sample.p_lens.x(), sample.p_lens.y(), 0);
 
         // 4. 生成射线
         auto direction = (p_focus - origin).normalized();
@@ -783,17 +771,14 @@ class ThinLensPerspectiveCamera : public ProjectiveCamera<ThinLensPerspectiveCam
     friend class ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>;
 
 private:
-    /// Lens radius controlling aperture size (larger radius -> shallower depth of field).
-    T m_lens_radius{0};
     /// Distance from the lens to the focal plane along +z.
     T m_focal_distance{1};
     
 public:
     ThinLensPerspectiveCamera() = default;
     
-    ThinLensPerspectiveCamera(const CameraProjection<T>& projection, T lens_radius, T focal_distance)
-        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(projection),
-          m_lens_radius(lens_radius), m_focal_distance(focal_distance) {}
+    ThinLensPerspectiveCamera(const CameraProjection<T>& projection, T focal_distance)
+        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(projection), m_focal_distance(focal_distance) {}
 
     /**
      * @brief Construct a thin-lens perspective camera from explicit frustum.
@@ -811,14 +796,13 @@ public:
         const T fov_y_rad,
         const T aspect_xy,
         const T near, const T far,
-        const T resolution_x, const T resolution_y,
-        T lens_radius, T focal_distance
+        const T resolution_x, const T resolution_y, T focal_distance
     ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(CameraProjection<T>::perspective(
         fov_y_rad, 
         aspect_xy, 
         near, far, 
         resolution_x, resolution_y)
-    ), m_lens_radius(lens_radius), m_focal_distance(focal_distance) { }
+    ), m_focal_distance(focal_distance) { }
 
 
     /**
@@ -837,12 +821,10 @@ public:
     ThinLensPerspectiveCamera(
         const math::Vector<int, 2>& film_resolution, 
         const math::Vector<T, 2>& film_physical_size,
-        T near, T far, T lens_radius, T focal_distance
+        T near, T far, T focal_distance
     ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
             CameraProjection<T>::create_perspective_projection(film_resolution, film_physical_size, near, far)
-        ), 
-        m_lens_radius(lens_radius), 
-        m_focal_distance(focal_distance) {}
+        ), m_focal_distance(focal_distance) {}
 
 private:
     /**
@@ -858,13 +840,8 @@ private:
      */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
-        if (m_lens_radius <= T(0)) {
-            // Pinhole fallback when the aperture is closed.
-            return geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), p_camera);
-        }
-
-        auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
-        auto origin = math::Point<T, 3>(p_lens.x(), p_lens.y(), 0);
+        //auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
+        auto origin = math::Point<T, 3>(sample.p_lens.x(), sample.p_lens.y(), 0);
         auto pinhole_ray = geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), p_camera);
         T t = -m_focal_distance / pinhole_ray.direction().z();
         auto p_focus = pinhole_ray.at(t);
@@ -874,7 +851,6 @@ private:
 
     /// Generate ray differentials by perturbing the film sample position.
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
-  
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
         T eps = static_cast<T>(1e-3);

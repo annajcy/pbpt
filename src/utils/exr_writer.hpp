@@ -29,8 +29,8 @@ namespace pbpt::utils {
  */
 template<typename FilmType>
 void write_exr(
-    const FilmType& film,
     const std::filesystem::path& output_path,
+    const FilmType& film,
     int width,
     int height
 ) {
@@ -46,7 +46,7 @@ void write_exr(
         for (int x = 0; x < width; ++x) {
             auto rgb = film.get_pixel_rgb(math::Point<int, 2>(x, y));
             std::size_t idx = (
-                static_cast<std::size_t>(height - 1 - y) * static_cast<std::size_t>(width) +
+                static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
                 static_cast<std::size_t>(x)
             ) * 3;
             buffer[idx + 0] = static_cast<float>(rgb.r());

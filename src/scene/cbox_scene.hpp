@@ -10,16 +10,26 @@
 #include "camera/pixel_filter.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "camera/render_transform.hpp"
+#include "geometry/ray.hpp"
 #include "light/area_light.hpp"
+#include "math/point.hpp"
+#include "math/random_generator.hpp"
 #include "math/vector.hpp"
+#include "radiometry/color.hpp"
+#include "radiometry/color_spectrum_lut.hpp"
+#include "radiometry/color_spectrum_optimizer.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 #include "radiometry/spectrum_distribution.hpp"
+#include "sampler/2d.hpp"
 #include "shape/primitive.hpp"
+#include "shape/shape.hpp"
 #include "shape/triangle.hpp"
 #include "material/material.hpp"
+#include "utils/exr_writer.hpp"
+#include "utils/progress_bar.hpp"
 
 namespace pbpt::scene {
 
@@ -28,6 +38,8 @@ class CornellBoxScene {
     static constexpr int SpectrumSampleCount = 4;
 
 private:
+    int m_ssp = 4;
+    int m_max_depth = -1;
     camera::CameraSystem<T, 
         camera::ThinLensPerspectiveCamera<T>, 
         camera::HDRFilm<T, 
@@ -163,8 +175,7 @@ private:
             camera::CameraProjection<T>::create_perspective_projection_by_fov(
                 math::Vector<int, 2>(512, 512), 
                 39.307, "smaller", 
-                10, 2800),
-            T(1.0), // lens radius
+                -10, -2800),
             T(1000.0)
         );
 
@@ -175,7 +186,7 @@ private:
             camera::RenderSpace::World
         );
 
-        auto pixel_filter = camera::GaussianFilter<T>(T(0.5), T(0.5));
+        auto pixel_filter = camera::GaussianFilter<T>(T(1.5), T(0.5));
 
         auto pixel_sensor = camera::PixelSensor<T, 
             radiometry::constant::CIED65SpectrumType<T>, 
@@ -309,6 +320,11 @@ public:
         m_aggregate = make_aggregate(m_mesh_map, m_material_map);
     }
 
+    math::RandomGenerator<T, 2> m_film_rng;
+    math::RandomGenerator<T, 2> m_lens_rng;
+    math::RandomGenerator<T, 1> m_spectrum_rng;
+    math::RandomGenerator<T, 2> m_bsdf_rng;
+
     // Accessors
     auto& camera_system() { return m_camera_system; }
     const auto& camera_system() const { return m_camera_system; }
@@ -321,6 +337,83 @@ public:
     
     auto& material_library() { return m_material_library; }
     const auto& material_library() const { return m_material_library; }
+
+    int ssp() const { return m_ssp; }
+    int max_depth() const { return m_max_depth; }
+
+    void render(const std::string& output_path = "output/cbox.exr") {
+        auto resolution = m_camera_system.film().resolution();
+        std::cout << "Starting triangle scene render: " << resolution.x() << "x" << resolution.y() << " pixels." << std::endl;
+        const std::size_t total_pixels = static_cast<std::size_t>(resolution.x()) * static_cast<std::size_t>(resolution.y());
+        utils::ProgressBar progress_bar(total_pixels, 40, "Rendering");
+        progress_bar.start(std::cout);
+        
+        for (int y = 0; y < resolution.y(); ++y) {
+            for (int x = 0; x < resolution.x(); ++x) {
+                for (int s = 0; s < m_ssp; ++s) {
+                    // Generate camera sample
+                    const math::Point<int, 2> pixel(x, y);
+                    const auto film_uv = math::Point<T, 2>::from_array(m_film_rng.generate_uniform());
+                    const auto filtered_sample = m_camera_system.pixel_filter().sample_film_position(pixel, film_uv);
+                    const math::Point<T, 2> lens_uv = math::Point<T, 2>::from_array(m_lens_rng.generate_uniform());
+                    const auto lens_position = sampler::sample_uniform_disk_concentric(lens_uv, 10.0);
+                    auto sample = camera::CameraSample<T>::create_thinlens_sample(
+                        filtered_sample.film_position,
+                        lens_position
+                    );
+
+                    // Generate ray and transform to render space
+                    auto ray = m_camera_system.camera().generate_ray(sample);
+                    ray = camera_system().render_transform().camera_to_render().transform_ray(ray);
+
+                    auto wavelength_sample = radiometry::sample_visible_wavelengths_stratified<T, SpectrumSampleCount>(m_spectrum_rng.generate_uniform());
+                    auto wavelength_pdf = radiometry::sample_visible_wavelengths_pdf(wavelength_sample);
+
+                    // Trace ray
+                    auto Li = this->Li(ray, wavelength_sample);
+
+                    // Accumulate to film
+                    m_camera_system.film().add_sample<SpectrumSampleCount>(pixel, Li, wavelength_sample, wavelength_pdf, filtered_sample.weight);
+                }
+            }
+            progress_bar.update(std::cout, resolution.x());
+        }
+        progress_bar.finish(std::cout);
+        pbpt::utils::write_exr(output_path, m_camera_system.film(), resolution.x(), resolution.y());
+    }
+
+    radiometry::SampledSpectrum<T, SpectrumSampleCount> Li(
+        const geometry::Ray<T, 3>& ray, 
+        const radiometry::SampledWavelength<T, SpectrumSampleCount>& wavelength_sample
+    ) const {
+        if (auto hit_opt = m_aggregate.intersect(ray)) {
+            auto hit = hit_opt.value();
+            return this->hit_shader(hit, wavelength_sample);
+        } else {
+            return this->miss_shader(wavelength_sample);
+        }
+    }
+    
+    radiometry::SampledSpectrum<T, SpectrumSampleCount> hit_shader(
+        const shape::PrimitiveIntersectionRecord<T>& prim_intersection_rec,
+        const radiometry::SampledWavelength<T, SpectrumSampleCount>& wavelength_sample
+    ) const {
+        auto rgb = prim_intersection_rec.intersection.interaction.n();
+        rgb.x() = rgb.x() * 0.5 + 0.5;
+        rgb.y() = rgb.y() * 0.5 + 0.5;
+        rgb.z() = rgb.z() * 0.5 + 0.5;
+        auto rsp = radiometry::lookup_srgb_to_rsp(
+            radiometry::RGB<T>(rgb.x(), rgb.y(), rgb.z())
+        );
+        auto spectrum = radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(rsp) * radiometry::constant::CIE_D65_ilum<T>;
+        return spectrum.sample(wavelength_sample);
+    }
+
+    radiometry::SampledSpectrum<T, SpectrumSampleCount> miss_shader(
+        const radiometry::SampledWavelength<T, SpectrumSampleCount>& wavelength_sample
+    ) const {
+        return radiometry::SampledSpectrum<T, SpectrumSampleCount>::filled(0.0);
+    }
 };
 
 };

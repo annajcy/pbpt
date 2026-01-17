@@ -118,6 +118,62 @@ public:
 };
 
 /**
+* @brief Per-pixel accumulation buffer.
+*
+* Stores a running sum of RGB values (in double precision for better
+* numerical stability) and the total weight of samples contributing
+* to this pixel.
+*/
+template<typename T>
+struct Pixel {
+    /// Accumulated weighted RGB sum.
+    std::array<T, 3> rgb_sum{0.0, 0.0, 0.0};
+    /// Sum of sample weights.
+    double weight_sum{0.0};
+
+    /**
+        * @brief Accumulate a single RGB sample into this pixel.
+        *
+        * @param rgb    Sampled RGB value.
+        * @param weight Monte Carlo weight associated with the sample.
+        */
+    void add_sample(const radiometry::RGB<T>& rgb, T weight) {
+        double w = static_cast<double>(weight);
+        rgb_sum[0] += w * static_cast<double>(rgb[0]);
+        rgb_sum[1] += w * static_cast<double>(rgb[1]);
+        rgb_sum[2] += w * static_cast<double>(rgb[2]);
+        weight_sum += w;
+    }
+
+    /**
+        * @brief Resolve the final pixel color.
+        *
+        * Returns the average RGB value by dividing the accumulated sum
+        * by the total weight. If no samples have contributed, returns
+        * black (0, 0, 0).
+        *
+        * @return Final RGB value for this pixel.
+        */
+    radiometry::RGB<T> resolve() const {
+        if (math::is_zero(weight_sum)) {
+            return radiometry::RGB<T>(T(0), T(0), T(0));
+        }
+        double inv_weight = 1.0 / weight_sum;
+        return radiometry::RGB<T>(
+            static_cast<T>(rgb_sum[0] * inv_weight),
+            static_cast<T>(rgb_sum[1] * inv_weight),
+            static_cast<T>(rgb_sum[2] * inv_weight)
+        );
+    }
+
+    /// Reset accumulation to zero.
+    void clear() {
+        rgb_sum = {0.0, 0.0, 0.0};
+        weight_sum = 0.0;
+    }   
+};
+
+/**
  * @brief Film that accumulates RGB values produced by a pixel sensor.
  *
  * This film stores for each pixel a running weighted sum of RGB values
@@ -129,68 +185,13 @@ public:
  */
 template<typename T, typename PixelSensorType>
 class HDRFilm : public Film<HDRFilm<T, PixelSensorType>, T> {
-public:
-
-    /**
-     * @brief Per-pixel accumulation buffer.
-     *
-     * Stores a running sum of RGB values (in double precision for better
-     * numerical stability) and the total weight of samples contributing
-     * to this pixel.
-     */
-    struct Pixel {
-        /// Accumulated weighted RGB sum.
-        std::array<T, 3> rgb_sum{0.0, 0.0, 0.0};
-        /// Sum of sample weights.
-        double weight_sum{0.0};
-
-        /**
-         * @brief Accumulate a single RGB sample into this pixel.
-         *
-         * @param rgb    Sampled RGB value.
-         * @param weight Monte Carlo weight associated with the sample.
-         */
-        void add_sample(const radiometry::RGB<T>& rgb, T weight) {
-            double w = static_cast<double>(weight);
-            rgb_sum[0] += w * static_cast<double>(rgb[0]);
-            rgb_sum[1] += w * static_cast<double>(rgb[1]);
-            rgb_sum[2] += w * static_cast<double>(rgb[2]);
-            weight_sum += w;
-        }
-
-        /**
-         * @brief Resolve the final pixel color.
-         *
-         * Returns the average RGB value by dividing the accumulated sum
-         * by the total weight. If no samples have contributed, returns
-         * black (0, 0, 0).
-         *
-         * @return Final RGB value for this pixel.
-         */
-        radiometry::RGB<T> resolve() const {
-            if (math::is_zero(weight_sum)) {
-                return radiometry::RGB<T>(T(0), T(0), T(0));
-            }
-            double inv_weight = 1.0 / weight_sum;
-            return radiometry::RGB<T>(
-                static_cast<T>(rgb_sum[0] * inv_weight),
-                static_cast<T>(rgb_sum[1] * inv_weight),
-                static_cast<T>(rgb_sum[2] * inv_weight)
-            );
-        }
-
-        /// Reset accumulation to zero.
-        void clear() {
-            rgb_sum = {0.0, 0.0, 0.0};
-            weight_sum = 0.0;
-        }   
-    };
+    friend class Film<HDRFilm<T, PixelSensorType>, T>;
 
 private:
     /// Pixel sensor used to convert spectral radiance to RGB.
     PixelSensorType m_pixel_sensor;
     /// Linear buffer of per-pixel accumulators.
-    std::vector<Pixel> m_pixels;
+    std::vector<Pixel<T>> m_pixels;
 
 public:
     HDRFilm() = default;
@@ -213,7 +214,8 @@ public:
         math::assert_if(width <= 0 || height <= 0, "RGBFilm requires a positive resolution");
         m_pixels.resize(static_cast<std::size_t>(width) * static_cast<std::size_t>(height));
     }
-
+    
+private:
     /**
      * @brief Implementation of spectral sample accumulation for sampled spectra.
      *
@@ -229,7 +231,7 @@ public:
         const radiometry::SampledPdf<T, N>& pdf,
         T weight
     ) {
-        Pixel& pixel = pixel_at(p_film);
+        Pixel<T>& pixel = pixel_at(p_film);
         auto sensor_rgb = m_pixel_sensor.template radiance_to_sensor_rgb<N>(radiance, wavelengths, pdf);
         auto display_rgb = m_pixel_sensor.sensor_rgb_to_color_space_rgb(sensor_rgb);
         pixel.add_sample(display_rgb, weight);
@@ -247,12 +249,13 @@ public:
         const SpectrumType& radiance,
         T weight
     ) {
-        Pixel& pixel = pixel_at(p_film);
+        Pixel<T>& pixel = pixel_at(p_film);
         auto sensor_rgb = m_pixel_sensor.radiance_to_sensor_rgb(radiance);
         auto display_rgb = m_pixel_sensor.sensor_rgb_to_color_space_rgb(sensor_rgb);
         pixel.add_sample(display_rgb, weight);
     }
 
+public:
     /**
      * @brief Directly accumulate an RGB sample into the film.
      *
@@ -264,7 +267,7 @@ public:
         const radiometry::RGB<T>& rgb,
         T weight
     ) {
-        Pixel& pixel = pixel_at(p_film);
+        Pixel<T>& pixel = pixel_at(p_film);
         pixel.add_sample(rgb, weight);
     }
 
@@ -296,24 +299,24 @@ public:
     }
 
     /// Get a const reference to the internal pixel buffer.
-    const std::vector<Pixel>& pixels() const {
+    const std::vector<Pixel<T>>& pixels() const {
         return m_pixels;
     }
 
     /// Get a mutable reference to the internal pixel buffer.
-    std::vector<Pixel>& pixels() {
+    std::vector<Pixel<T>>& pixels() {
         return m_pixels;
     }
 
 private:
     /// Access a pixel by integer coordinate (with bounds checks).
-    Pixel& pixel_at(const math::Point<int, 2>& p_film) {
+    Pixel<T>& pixel_at(const math::Point<int, 2>& p_film) {
         math::assert_if(!is_pixel_in_bounds(p_film), "Film sample coordinate out of range");
         return m_pixels[pixel_index(p_film)];
     }
 
     /// Access a pixel by integer coordinate (const, with bounds checks).
-    const Pixel& pixel_at(const math::Point<int, 2>& p_film) const {
+    const Pixel<T>& pixel_at(const math::Point<int, 2>& p_film) const {
         math::assert_if(!is_pixel_in_bounds(p_film), "Film sample coordinate out of range");
         return m_pixels[pixel_index(p_film)];
     }
