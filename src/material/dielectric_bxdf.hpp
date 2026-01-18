@@ -48,7 +48,7 @@ private:
         const math::Point<T, 2>& u_sample
     ) const {
         BxDFSampleRecord<T, N> record;
-        record.valid = false;
+        record.is_valid = false;
 
         // 计算菲涅尔反射比 F
         // wo.z() 在局部空间即 cos_theta_i
@@ -79,7 +79,7 @@ private:
             // 在路径追踪中，我们通常直接返回 throughput weight，但为了符合 f 的定义：
             record.f = m_tint_refl * F / std::abs(record.wi.z());
             
-            record.valid = true;
+            record.is_valid = true;
         } else {
             // === 走折射分支 (Refraction) ===
             
@@ -132,7 +132,7 @@ private:
             // Energy = ft * Tint * eta_factor
             record.f = m_tint_trans * ft * eta_factor / std::abs(record.wi.z());
             
-            record.valid = true;
+            record.is_valid = true;
         }
         
         return record;

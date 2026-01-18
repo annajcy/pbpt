@@ -308,6 +308,11 @@ public:
             ns = (b0 * m_mesh.normals()[idx[0]] + 
                   b1 * m_mesh.normals()[idx[1]] + 
                   b2 * m_mesh.normals()[idx[2]]).normalized();
+            
+            if (m_mesh.should_flip_normal()) {
+                ns = -ns;
+            }
+
             // Force geometric normal to match shading normal hemisphere
             if (ng.dot(ns.to_vector()) < 0) ng = -ng;
         } else {

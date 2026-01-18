@@ -55,7 +55,7 @@ private:
         record.wi = wi;
         record.pdf = sampler::sample_cosine_weighted_hemisphere_pdf(wi_p); // cos(theta)/pi
         record.f = this->f_impl(swl, wo, wi); // 使用 impl 避免虚函数开销
-        record.valid = true;
+        record.is_valid = true;
         record.sampled_type = type_impl();
         return record;
     }

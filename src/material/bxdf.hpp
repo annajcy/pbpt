@@ -53,7 +53,7 @@ struct BxDFSampleRecord {
     radiometry::SampledSpectrum<T, N> f;
     math::Vector<T, 3> wi;
     T pdf = 0;
-    bool valid = false; // 必须添加 valid 标志
+    bool is_valid = false; // 必须添加 valid 标志
     BxDFTypeFlags sampled_type = BxDFTypeFlags::Unset; // 记录采样到的具体类型
 };
 

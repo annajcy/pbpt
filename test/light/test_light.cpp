@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "geometry/interaction.hpp"
-#include "light/area_light.hpp"
+#include "light/light.hpp"
 #include "math/function.hpp"
 #include "aggregate/aggregate.hpp"
 #include "geometry/transform.hpp"
@@ -122,6 +122,7 @@ TEST(AreaLightTest, SampleLightAndPdfMatchExpectedForNorthPoleSample) {
     auto emission = light.emission_spectrum<N>(
         wavelengths,
         sample.visibility_tester.dst_point(),
+        math::Vector<T, 3>(0, 0, 1),
         -sample.wi
     );
     expect_constant_spectrum(emission, T(5));

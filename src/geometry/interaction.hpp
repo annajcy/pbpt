@@ -62,6 +62,11 @@ inline math::Point<T, 3> offset_ray_origin(
             std::abs(p_mid.z() * std::abs(n.z()))
         );
 
+    // Minimal offset to handle cases where calculation yields zero (e.g. at origin)
+    if (d < math::epsilon_v<T> * static_cast<T>(1024)) {
+        d = math::epsilon_v<T> * static_cast<T>(1024);
+    }
+
     auto nv = n.to_vector();
     math::Vector<T, 3> offset = d * nv;
 

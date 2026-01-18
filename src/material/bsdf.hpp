@@ -19,6 +19,7 @@ private:
     std::vector<AnyBxDF<T, N>> m_bxdfs;
 
 public:
+    BSDF() = default;
     BSDF(
         const geometry::Frame<T>& shading_frame,
         const geometry::Frame<T>& geometric_frame,
@@ -136,7 +137,7 @@ public:
     BxDFSampleRecord<T, N> sample_f(
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo,
-        const math::Point<T, 2>& u_sample,
+        const math::Point<T, 2>& uv_sample,
         const BxDFTypeFlags flags = BxDFTypeFlags::ANY,
         const std::vector<T>& custom_weights = {}
     ) const {
@@ -149,7 +150,7 @@ public:
         compute_effective_weights(flags, custom_weights, weights);
 
         std::vector<T> cdf_buffer;
-        auto selection = sampler::sample_discrete(weights, cdf_buffer, u_sample.x());
+        auto selection = sampler::sample_discrete(weights, cdf_buffer, uv_sample.x());
         if (selection.index == -1) return result; // 采样失败（可能 flags 过滤后为空）
 
         // 2. 采样选中的 BxDF
@@ -157,25 +158,26 @@ public:
             auto wo_local = m_shading_frame.to_local(wo);
             
             // 使用重映射后的 u
-            math::Point<T, 2> remapped_sample(selection.u_remapped, u_sample.y());
+            math::Point<T, 2> remapped_sample(selection.u_remapped, uv_sample.y());
             
             // 调用 BxDF 的 sample_f
             auto bxdf_sample = concrete_bxdf.sample_f(swl, wo_local, remapped_sample);
             
-            if (!bxdf_sample.valid) return; // 子采样失败
+            if (!bxdf_sample.is_valid) return; // 子采样失败
 
-            auto wi_world = m_shading_frame.to_render(bxdf_sample.wi);
-            bool is_geo_same = this->is_same_hemisphere(wo, wi_world);
+            auto wi_render = m_shading_frame.to_render(bxdf_sample.wi);
+            bool is_geo_same = this->is_same_hemisphere(wo, wi_render);
 
             bool type_reflect = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Reflection);
             bool type_transmit = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Transmission);
 
             // 几何一致性检查
             if (!((is_geo_same && type_reflect) || (!is_geo_same && type_transmit))) {
+                std::cerr << "Warning: BxDF sample direction inconsistent with geometric configuration." << std::endl;
                 return;
             }
 
-            result.wi = wi_world;
+            result.wi = wi_render;
             result.sampled_type = bxdf_sample.sampled_type; // 从子采样获取具体类型
 
             // 3. Specular 处理 (重要修复)
@@ -183,20 +185,20 @@ public:
                 // 如果是镜面反射，不进行 MIS 混合
                 result.f = bxdf_sample.f;
                 result.pdf = selection.pdf * bxdf_sample.pdf;
-                result.valid = true;
+                result.is_valid = true;
                 return;
             }
 
             // 4. Non-Specular 处理 (MIS 混合)
             // 重新计算混合 PDF (必须传入 custom_weights 以保持一致性)
-            result.pdf = this->pdf(wo, wi_world, flags, custom_weights);
+            result.pdf = this->pdf(wo, wi_render, flags, custom_weights);
 
             if (result.pdf > 0) {
                 // 重新计算混合 f (累加所有 component 的贡献)
-                result.f = this->f(swl, wo, wi_world, flags);
-                result.valid = true;
+                result.f = this->f(swl, wo, wi_render, flags);
+                result.is_valid = true;
             } else {
-                result.valid = false;
+                result.is_valid = false;
             }
 
         }, m_bxdfs[selection.index]); // 使用索引访问原始 m_bxdfs

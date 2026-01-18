@@ -13,6 +13,7 @@ template<typename T>
 struct PrimitiveIntersectionRecord {
     IntersectionRecord<T> intersection;
     int material_id{-1};
+    int light_id{-1};   
 };
 
 /**
@@ -27,12 +28,13 @@ private:
     // 鉴于你的风格，这里推荐持有 Variant
     AnyShape<T> m_shape; 
     int m_material_id{-1};
+    int m_light_id{-1};
 
 public:
     // 构造函数：移动 shape 进来
     template <typename ConcreteShape>
-    Primitive(ConcreteShape&& shape, int material_id)
-        : m_shape(std::forward<ConcreteShape>(shape)), m_material_id(material_id) {}
+    Primitive(ConcreteShape&& shape, int material_id, int light_id = -1)
+        : m_shape(std::forward<ConcreteShape>(shape)), m_material_id(material_id), m_light_id(light_id) {}
 
     std::optional<PrimitiveIntersectionRecord<T>> intersect(const geometry::Ray<T, 3>& ray) const {
         // 使用 std::visit 分发给具体的 Shape
@@ -45,6 +47,7 @@ public:
         PrimitiveIntersectionRecord<T> record;
         record.intersection = *rec;
         record.material_id = m_material_id;
+        record.light_id = m_light_id;
         return record;
     }
 
@@ -60,6 +63,7 @@ public:
     }
 
     int material_id() const { return m_material_id; }
+    int light_id() const { return m_light_id; }
 };
 
 }  // namespace pbpt::shape

@@ -81,7 +81,7 @@ public:
         const geometry::SurfaceInteraction<T>& si,
         const radiometry::SampledWavelength<T, N>& wavelengths
     ) const {
-        auto albedo = m_albedo_dist.sample<N>(wavelengths);
+        auto albedo = m_albedo_dist.template sample<N>(wavelengths);
         std::vector<AnyBxDF<T, N>> lobes;
         lobes.emplace_back(LambertianBxDF<T, N>(albedo));
         return make_bsdf(si, std::move(lobes));
@@ -118,8 +118,8 @@ public:
         const geometry::SurfaceInteraction<T>& si,
         const radiometry::SampledWavelength<T, N>& wavelengths
     ) const {
-        auto tint_refl = m_tint_refl_dist.sample<N>(wavelengths);
-        auto tint_trans = m_tint_trans_dist.sample<N>(wavelengths);
+        auto tint_refl = m_tint_refl_dist.template sample<N>(wavelengths);
+        auto tint_trans = m_tint_trans_dist.template sample<N>(wavelengths);
         std::vector<AnyBxDF<T, N>> lobes;
         lobes.emplace_back(DielectricBxDF<T, N>(m_eta, tint_refl, tint_trans));
         return make_bsdf(si, std::move(lobes));
