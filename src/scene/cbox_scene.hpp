@@ -161,8 +161,6 @@ private:
             camera::RenderSpace::World
         );
 
-        std::cout << render_transform.camera_to_world().matrix() * render_transform.world_to_camera().matrix() << std::endl;
-        
         auto pixel_filter = camera::GaussianFilter<T>(T(1.5), T(0.5));
 
         auto pixel_sensor = camera::PixelSensor<T, 
@@ -362,8 +360,11 @@ public:
     auto& material_library() { return m_material_library; }
     const auto& material_library() const { return m_material_library; }
 
-    int ssp() const { return m_ssp; }
-    int max_depth() const { return m_max_depth; }
+    const int& ssp() const { return m_ssp; }
+    int& ssp() { return m_ssp; }
+
+    const int max_depth() const { return m_max_depth; }
+    int& max_depth() { return m_max_depth; }
 
     void render(const std::string& output_path = "output/cbox.exr") {
         auto resolution = m_camera_system.film().resolution();
