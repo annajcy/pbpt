@@ -13,6 +13,9 @@ find_package(assimp         CONFIG REQUIRED)
 find_package(stb            CONFIG REQUIRED)
 find_package(slang          CONFIG REQUIRED)
 find_package(OpenEXR       CONFIG REQUIRED)
+find_package(pugixml        CONFIG REQUIRED)
+find_package(embree         CONFIG REQUIRED)
+
 
 # build imgui with Vulkan and GLFW backends
 add_library(imgui_vk STATIC)

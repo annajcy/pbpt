@@ -33,4 +33,6 @@ target_link_libraries(pbpt INTERFACE
     assimp::assimp 
     slang::slang
     OpenEXR::OpenEXR
+    pugixml::pugixml
+    embree::embree
 )

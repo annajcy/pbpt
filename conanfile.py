@@ -27,7 +27,8 @@ class PbptDeps(ConanFile):
         "build_docs": False,
         "float_64bit": False,
         "int_64bit": False,
-        "slang_version": "2025.10.4"
+        "slang_version": "2025.10.4",
+        "embree/*:shared": True
     }
 
     # 生成 CMake 所需文件 & 虚拟环境（给 cmake/ninja/运行时 PATH）
@@ -45,6 +46,8 @@ class PbptDeps(ConanFile):
         self.requires("stb/cci.20230920")
         self.requires("vulkan-loader/[>=1.3]")
         self.requires("openexr/3.2.4")
+        self.requires("pugixml/1.14")
+        self.requires("embree/4.4.0")
 
         # 本地 recipe：conan create . --name=slang --version=<ver>
         ver = str(self.options.slang_version)

@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "geometry/frame.hpp"
-#include "bxdf_type.hpp"
 #include "sampler/discrete.hpp"
+#include "bxdf_type.hpp"
 
 namespace pbpt::material {
 

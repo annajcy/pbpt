@@ -17,12 +17,11 @@
 #include "geometry/ray.hpp"
 #include "light/light.hpp"
 #include "material/bsdf.hpp"
-#include "material/bxdf.hpp"
+#include "material/material_type.hpp"
 #include "math/point.hpp"
 #include "math/random_generator.hpp"
 #include "math/vector.hpp"
 #include "radiometry/color.hpp"
-#include "radiometry/color_spectrum_lut.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
@@ -61,7 +60,7 @@ private:
     std::unordered_map<std::string, radiometry::PiecewiseLinearSpectrumDistribution<T>> m_spectrum_map;
     
     std::unordered_map<std::string, int> m_material_id_map;
-    material::MaterialLibrary<T> m_material_library;
+    material::AnyMaterialLibrary<T> m_material_library;
     
     std::unordered_map<std::string, int> m_light_id_map;
     std::vector<light::AreaLight<T, 
@@ -115,10 +114,10 @@ private:
     static auto make_materials(
         std::unordered_map<std::string, radiometry::PiecewiseLinearSpectrumDistribution<T>>& spectrum_map
     ) {
-        material::MaterialLibrary<T> material_library;
+        material::AnyMaterialLibrary<T> material_library;
         std::unordered_map<std::string, int> material_map;
         // White/Box material (floor, ceiling, back wall, boxes)
-        int white_id = material_library.add_material(
+        int white_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("white"))
         );
         material_map["cbox_floor"] = white_id;
@@ -128,19 +127,19 @@ private:
         material_map["cbox_largebox"] = white_id;
         
         // Red material (right wall)
-        int red_id = material_library.add_material(
+        int red_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("red"))
         );
         material_map["cbox_redwall"] = red_id;
         
         // Green material (left wall) 
-        int green_id = material_library.add_material(
+        int green_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("green"))
         );
         material_map["cbox_greenwall"] = green_id;
 
         // light source material
-        int light_id = material_library.add_material(
+        int light_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("light"))
         );
         material_map["cbox_luminaire"] = light_id;
@@ -164,6 +163,7 @@ private:
         );
 
         auto pixel_filter = camera::GaussianFilter<T>(T(1.5), T(0.5));
+
         auto pixel_sensor = camera::PixelSensor<T, 
             radiometry::constant::CIED65SpectrumType<T>, 
             radiometry::constant::CIED65SpectrumType<T>, 
@@ -361,8 +361,11 @@ public:
     auto& material_library() { return m_material_library; }
     const auto& material_library() const { return m_material_library; }
 
-    int ssp() const { return m_ssp; }
-    int max_depth() const { return m_max_depth; }
+    const int& ssp() const { return m_ssp; }
+    int& ssp() { return m_ssp; }
+
+    const int max_depth() const { return m_max_depth; }
+    int& max_depth() { return m_max_depth; }
 
     void render(const std::string& output_path = "output/cbox.exr") {
         auto resolution = m_camera_system.film().resolution();
@@ -417,63 +420,92 @@ public:
     ) {
         if (auto hit_opt = m_aggregate.intersect(ray)) {
             auto hit = hit_opt.value();
-            auto material = m_material_library.get(hit.material_id);
-            material::BSDF<T, SpectrumSampleCount> bsdf;
-            std::visit([&](const auto& mat) {
-                bsdf = mat.template compute_bsdf<SpectrumSampleCount>(
-                    hit.intersection.interaction,
-                    wavelength_sample
-                );
-            }, material);
-
-            radiometry::SampledSpectrum<T, SpectrumSampleCount> result = radiometry::SampledSpectrum<T, SpectrumSampleCount>::filled(0);
-
-            // hit light source
-            if (hit.light_id != -1) {
-                const auto& area_light = m_area_lights[hit.light_id];
-                result += area_light.emission_spectrum(
-                    wavelength_sample, 
-                    hit.intersection.interaction.point(),
-                    hit.intersection.interaction.n(),
-                    hit.intersection.interaction.wo()
-                );
-                return result;
-            } else {
-                // trace direct illumination
-                auto sample = bsdf.sample_f(wavelength_sample, hit.intersection.interaction.wo(), math::Point<double, 2>::from_array(rng2d.generate_uniform()));
-                
-                if (sample.is_valid && hit.material_id == m_material_id_map.at("cbox_greenwall")) {
-                    // auto wi_color = sample.wi;
-                    // wi_color.x() = wi_color.x() * 0.5 + 0.5;
-                    // wi_color.y() = wi_color.y() * 0.5 + 0.5;
-                    // wi_color.z() = wi_color.z() * 0.5 + 0.5;
-                    // result += radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(radiometry::lookup_srgb_to_rsp(radiometry::RGB<T>(wi_color.x(), wi_color.y(), wi_color.z()))).sample(wavelength_sample) * radiometry::constant::CIE_D65_ilum<T>.sample(wavelength_sample);
-                    auto new_ray = hit.intersection.interaction.spawn_ray(sample.wi);
-                    if (auto hit_opt_ = m_aggregate.intersect(new_ray)) {
-                        auto hit_ = hit_opt_.value();
-                        std::cout << "Hit something from green wall!: material_id" << hit_.material_id << std::endl;
-                        std::cout << " ray origin" << new_ray.origin() << std::endl;
-                        std::cout << " ray direction" << new_ray.direction() << std::endl;
-                        std::cout << "  Intersection point: " << hit_.intersection.interaction.point() << std::endl;
-                        std::cout << "  Normal: " << hit_.intersection.interaction.n() << std::endl;
-                        std::cout << " t: " << hit_.intersection.t << std::endl;
-                        if (hit_.light_id != -1) {
-                            std::cout << "Hit light!" << std::endl;
-                            // const auto& area_light = m_area_lights[light_hit.light_id];
-                            // // result += sample.f * area_light.emission_spectrum(
-                            // //     wavelength_sample, 
-                            // //     light_hit.intersection.interaction.point(),
-                            // //     light_hit.intersection.interaction.n(),
-                            // //     light_hit.intersection.interaction.wo()
-                            // // ) / sample.pdf;
-                            // result += sample.f * radiometry::SampledSpectrum<T, SpectrumSampleCount>::filled(1.0) / sample.pdf;
-                        }
-                    }
-                }
-                return result;
-            }
+            return this->hit_shader(
+                hit, 
+                wavelength_sample, 
+                depth,
+                rng2d, rng1d);
         } else {
             return this->miss_shader(wavelength_sample);
+        }
+    }
+    
+    radiometry::SampledSpectrum<T, SpectrumSampleCount> hit_shader(
+        const shape::PrimitiveIntersectionRecord<T>& prim_intersection_rec,
+        const radiometry::SampledWavelength<T, SpectrumSampleCount>& wavelength_sample,
+        int depth,
+        math::RandomGenerator<T, 2>& rng2d,
+        math::RandomGenerator<T, 1>& rng1d
+    ) {
+        auto material = m_material_library.get(prim_intersection_rec.material_id);
+        material::BSDF<T, SpectrumSampleCount> bsdf;
+        std::visit([&](const auto& mat) {
+            bsdf = mat.template compute_bsdf<SpectrumSampleCount>(
+                prim_intersection_rec.intersection.interaction,
+                wavelength_sample
+            );
+        }, material);
+
+        radiometry::SampledSpectrum<T, SpectrumSampleCount> result = radiometry::SampledSpectrum<T, SpectrumSampleCount>::filled(0);
+
+        // hit light source
+        if (prim_intersection_rec.light_id != -1) {
+            const auto& area_light = m_area_lights[prim_intersection_rec.light_id];
+            result += area_light.emission_spectrum(
+                wavelength_sample, 
+                prim_intersection_rec.intersection.interaction.point(),
+                prim_intersection_rec.intersection.interaction.n(),
+                prim_intersection_rec.intersection.interaction.wo()
+            );
+            return result;
+        }
+
+        // not hit light source
+        auto bsdf_sample_record = bsdf.sample_f(
+            wavelength_sample, 
+            prim_intersection_rec.intersection.interaction.wo(),
+            math::Point<T, 2>::from_array(rng2d.generate_uniform())
+        );
+
+        if (!bsdf_sample_record.is_valid || bsdf_sample_record.pdf <= 0) {
+            // 注意：这里不需要报错，因为在路径追踪中偶尔采样失败（如被吸收）是正常的物理现象
+            // 只有当 pdf 异常（NaN/Inf）时才值得打印警告
+            if (std::isnan(bsdf_sample_record.pdf) || std::isinf(bsdf_sample_record.pdf)) {
+                std::cerr << "Warning: BSDF sampling returned invalid pdf value." << std::endl;
+            }   
+            return result; // 直接返回累积的自发光项（如果有），停止递归
+        }
+
+        if (depth == m_max_depth) {
+            return result;
+        }
+
+        if (depth > 3) {
+            // Russian roulette
+            if (rng1d.generate_uniform() > p_rr) {
+                return result;
+            }
+
+             result += bsdf_sample_record.f * std::abs(bsdf_sample_record.wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) 
+            / bsdf_sample_record.pdf / p_rr * this->Li(
+                prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record.wi),
+                wavelength_sample,
+                depth + 1,
+                rng2d,
+                rng1d
+            );
+
+            return result;
+        } else {
+            result += bsdf_sample_record.f * std::abs(bsdf_sample_record.wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) 
+            / bsdf_sample_record.pdf * this->Li(
+                prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record.wi),
+                wavelength_sample,
+                depth + 1,
+                rng2d,
+                rng1d
+            );
+            return result;
         }
     }
 

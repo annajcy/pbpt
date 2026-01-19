@@ -8,6 +8,7 @@
 #include <variant>
 #include <vector>
 #include "aggregate/aggregate.hpp"
+#include "aggregate/embree_aggregate.hpp"
 #include "camera/camera.hpp"
 #include "camera/camera_system.hpp"
 #include "camera/film.hpp"
@@ -17,6 +18,7 @@
 #include "geometry/ray.hpp"
 #include "light/light.hpp"
 #include "material/bsdf.hpp"
+#include "material/material_type.hpp"
 #include "math/point.hpp"
 #include "math/random_generator.hpp"
 #include "math/vector.hpp"
@@ -59,7 +61,7 @@ private:
     std::unordered_map<std::string, radiometry::PiecewiseLinearSpectrumDistribution<T>> m_spectrum_map;
     
     std::unordered_map<std::string, int> m_material_id_map;
-    material::MaterialLibrary<T> m_material_library;
+    material::AnyMaterialLibrary<T> m_material_library;
     
     std::unordered_map<std::string, int> m_light_id_map;
     std::vector<light::AreaLight<T, 
@@ -69,7 +71,7 @@ private:
             radiometry::constant::CIED65SpectrumType<T>>>
     > m_area_lights;
 
-    aggregate::LinearAggregate<T> m_aggregate;
+    aggregate::EmbreeAggregate<T> m_aggregate;
 
     T p_rr = 0.9;
     std::string m_scene_path = "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox";
@@ -113,10 +115,10 @@ private:
     static auto make_materials(
         std::unordered_map<std::string, radiometry::PiecewiseLinearSpectrumDistribution<T>>& spectrum_map
     ) {
-        material::MaterialLibrary<T> material_library;
+        material::AnyMaterialLibrary<T> material_library;
         std::unordered_map<std::string, int> material_map;
         // White/Box material (floor, ceiling, back wall, boxes)
-        int white_id = material_library.add_material(
+        int white_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("white"))
         );
         material_map["cbox_floor"] = white_id;
@@ -126,19 +128,19 @@ private:
         material_map["cbox_largebox"] = white_id;
         
         // Red material (right wall)
-        int red_id = material_library.add_material(
+        int red_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("red"))
         );
         material_map["cbox_redwall"] = red_id;
         
         // Green material (left wall) 
-        int green_id = material_library.add_material(
+        int green_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("green"))
         );
         material_map["cbox_greenwall"] = green_id;
 
         // light source material
-        int light_id = material_library.add_material(
+        int light_id = material_library.add_item(
             material::LambertianMaterial<T>(spectrum_map.at("light"))
         );
         material_map["cbox_luminaire"] = light_id;
@@ -294,7 +296,7 @@ private:
     }
 
     
-    aggregate::LinearAggregate<T> make_aggregate(
+    aggregate::EmbreeAggregate<T> make_aggregate(
         const std::unordered_map<std::string, shape::TriangleMesh<T>>& mesh_map,
         const std::unordered_map<std::string, int>& material_map,
         const std::unordered_map<std::string, int>& light_id_map
@@ -317,7 +319,7 @@ private:
             }
         }
 
-        return aggregate::LinearAggregate<T>(primitives);
+        return aggregate::EmbreeAggregate<T>(std::move(primitives));
     }
     
 public:

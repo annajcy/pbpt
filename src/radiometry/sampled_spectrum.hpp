@@ -16,6 +16,11 @@
 namespace pbpt::radiometry {
 
 /**
+ * @brief Number of spectral samples used in sampled spectra.
+ */
+constexpr int SpectrumSampleCount = 4;
+
+/**
  * @brief Discrete spectrum represented by N samples.
  *
  * Typically stores radiance, reflectance or illuminant values evaluated

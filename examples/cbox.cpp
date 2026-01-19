@@ -1,9 +1,10 @@
 #include <format>
 #include "scene/cbox_scene.hpp"
 #include "scene/cbox_scene_test.hpp"
+#include "scene/scene.hpp"
 
 int main() {
-    int spp = 128;
+    int spp = 4;
     auto scene = pbpt::scene::CornellBoxScene();
     scene.ssp() = spp;
     std::cout << "Cornell Box Scene created successfully." << std::endl;

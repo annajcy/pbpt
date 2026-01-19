@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -87,81 +88,4 @@ public:
         return make_bsdf(si, std::move(lobes));
     }
 };
-
-/**
- * @brief Specular dielectric material (glass-like).
- */
-template<typename T>
-class DielectricMaterial : public Material<DielectricMaterial<T>, T> {
-private:
-    T m_eta;
-    radiometry::PiecewiseLinearSpectrumDistribution<T> m_tint_refl_dist;
-    radiometry::PiecewiseLinearSpectrumDistribution<T> m_tint_trans_dist;
-
-public:
-    // Constructor with IOR only (white tints)
-    explicit DielectricMaterial(T eta)
-        : m_eta(eta), 
-          m_tint_refl_dist(radiometry::ConstantSpectrumDistribution<T>(T(1))),
-          m_tint_trans_dist(radiometry::ConstantSpectrumDistribution<T>(T(1))) {}
-
-    // Constructor with IOR and spectrum distributions
-    template<typename SpectrumDistributionTypeR, typename SpectrumDistributionTypeT>
-    DielectricMaterial(
-        T eta,
-        const SpectrumDistributionTypeR& tint_r,
-        const SpectrumDistributionTypeT& tint_t)
-        : m_eta(eta), m_tint_refl_dist(tint_r), m_tint_trans_dist(tint_t) {}
-
-    template<int N>
-    BSDF<T, N> compute_bsdf_impl(
-        const geometry::SurfaceInteraction<T>& si,
-        const radiometry::SampledWavelength<T, N>& wavelengths
-    ) const {
-        auto tint_refl = m_tint_refl_dist.template sample<N>(wavelengths);
-        auto tint_trans = m_tint_trans_dist.template sample<N>(wavelengths);
-        std::vector<AnyBxDF<T, N>> lobes;
-        lobes.emplace_back(DielectricBxDF<T, N>(m_eta, tint_refl, tint_trans));
-        return make_bsdf(si, std::move(lobes));
-    }
-};
-
-template<typename T>
-using AnyMaterial = std::variant<
-    LambertianMaterial<T>,
-    DielectricMaterial<T>
->;
-
-/**
- * @brief Simple material registry keyed by integer IDs.
- *
- * Stores concrete material variants and provides lookup helpers.
- */
-template<typename T>
-class MaterialLibrary {
-private:
-    std::vector<AnyMaterial<T>> m_materials;
-public:
-
-    template<typename Mat>
-    int add_material(Mat material) {
-        m_materials.emplace_back(std::move(material));
-        return static_cast<int>(m_materials.size()) - 1;
-    }
-
-    const AnyMaterial<T>& get(int id) const {
-        if (id < 0 || id >= static_cast<int>(m_materials.size())) 
-            throw std::out_of_range("MaterialLibrary: Invalid material ID");
-        return m_materials[static_cast<std::size_t>(id)];
-    }
-
-    AnyMaterial<T>& get(int id) {
-        if (id < 0 || id >= static_cast<int>(m_materials.size())) 
-            throw std::out_of_range("MaterialLibrary: Invalid material ID");
-        return m_materials[static_cast<std::size_t>(id)];
-    }
-
-    std::size_t size() const { return m_materials.size(); }
-};
-
 }  // namespace pbpt::material
