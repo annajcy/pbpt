@@ -1,6 +1,7 @@
 #pragma once
 
 #include "radiometry/sampled_spectrum.hpp"
+
 namespace pbpt::integrator {
 
 template<typename Derived, typename T, int N, typename SceneType>
@@ -12,6 +13,10 @@ public:
 
     const Derived& as_derived() const {
         return static_cast<const Derived&>(*this);
+    }
+
+    void render(const SceneType& scene) {
+        return as_derived().render_impl(scene);
     }
     
 };

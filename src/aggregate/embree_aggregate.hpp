@@ -4,6 +4,7 @@
 #include <optional>
 #include <limits>
 #include <embree4/rtcore.h>
+#include <embree4/rtcore_common.h>
 
 #include "aggregate/aggregate.hpp"
 #include "shape/primitive.hpp"
@@ -13,6 +14,11 @@ namespace pbpt::aggregate {
 template<typename T>
 class EmbreeAggregate : public Aggregate<EmbreeAggregate<T>, T> {
     friend class Aggregate<EmbreeAggregate<T>, T>;
+
+    // Thread-local pointer to the current high-precision ray being traced.
+    // This allows the callbacks to access the original double-precision origin/direction/t_min
+    // to avoid self-intersection artifacts caused by float quantization of the Embree ray.
+    static inline thread_local const geometry::Ray<T, 3>* m_current_ray = nullptr;
 
 private:
     std::vector<shape::Primitive<T>> m_primitives;
@@ -33,12 +39,14 @@ private:
         if (!set) return;
         
         RTCBounds* bounds_o = args->bounds_o;
-        bounds_o->lower_x = static_cast<float>(bbox.min().x());
-        bounds_o->lower_y = static_cast<float>(bbox.min().y());
-        bounds_o->lower_z = static_cast<float>(bbox.min().z());
-        bounds_o->upper_x = static_cast<float>(bbox.max().x());
-        bounds_o->upper_y = static_cast<float>(bbox.max().y());
-        bounds_o->upper_z = static_cast<float>(bbox.max().z());
+        // Widen bounds slightly to account for float conversion precision loss
+        constexpr float eps = 1e-5f;
+        bounds_o->lower_x = static_cast<float>(bbox.min().x()) - eps;
+        bounds_o->lower_y = static_cast<float>(bbox.min().y()) - eps;
+        bounds_o->lower_z = static_cast<float>(bbox.min().z()) - eps;
+        bounds_o->upper_x = static_cast<float>(bbox.max().x()) + eps;
+        bounds_o->upper_y = static_cast<float>(bbox.max().y()) + eps;
+        bounds_o->upper_z = static_cast<float>(bbox.max().z()) + eps;
     }
 
     static void intersectFunc(const RTCIntersectFunctionNArguments* args) {
@@ -53,15 +61,23 @@ private:
         RTCRay& ray = rayhit->ray;
         RTCHit& hit = rayhit->hit;
 
-        math::Point<T, 3> o(ray.org_x, ray.org_y, ray.org_z);
-        math::Vector<T, 3> d(ray.dir_x, ray.dir_y, ray.dir_z);
-        geometry::Ray<T, 3> geo_ray(o, d, ray.tfar, ray.tnear);
+        // Use high-precision origin, direction and t_min from the original ray
+        // combined with the current t_max (tfar) from Embree's traversal state.
+        const auto* original_ray = m_current_ray;
+        geometry::Ray<T, 3> geo_ray(
+            original_ray->origin(), 
+            original_ray->direction(), 
+            static_cast<T>(ray.tfar), 
+            original_ray->t_min()
+        );
 
         auto hit_record = primitive.intersect(geo_ray);
 
         if (hit_record) {
             // Update ray.tfar
             T t = hit_record->intersection.t;
+            // Robustly update ray.tfar; ensure we don't accidentally exclude this hit in future checks
+            // if we were to interact with mixed precision again.
             ray.tfar = static_cast<float>(t);
 
             // Update hit
@@ -89,9 +105,13 @@ private:
         
         RTCRay* ray = (RTCRay*)args->ray;
 
-        math::Point<T, 3> o(ray->org_x, ray->org_y, ray->org_z);
-        math::Vector<T, 3> d(ray->dir_x, ray->dir_y, ray->dir_z);
-        geometry::Ray<T, 3> geo_ray(o, d, ray->tfar, ray->tnear);
+        const auto* original_ray = m_current_ray;
+        geometry::Ray<T, 3> geo_ray(
+            original_ray->origin(), 
+            original_ray->direction(), 
+            static_cast<T>(ray->tfar), 
+            original_ray->t_min()
+        );
 
         if (primitive.is_intersected(geo_ray)) {
             ray->tfar = -std::numeric_limits<float>::infinity(); 
@@ -158,6 +178,8 @@ private:
     std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
         if (!m_scene) return std::nullopt;
 
+        m_current_ray = &ray;
+
         RTCRayHit rayhit;
         rayhit.ray.org_x = static_cast<float>(ray.origin().x());
         rayhit.ray.org_y = static_cast<float>(ray.origin().y());
@@ -176,6 +198,8 @@ private:
         rtcInitIntersectArguments(&args);
         
         rtcIntersect1(m_scene, &rayhit, &args);
+
+        m_current_ray = nullptr;
         
         if (rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
             // Need to retrieve full interaction details.
@@ -203,9 +227,11 @@ private:
         
         return std::nullopt;
     }
-    
+        
     std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
         if (!m_scene) return std::nullopt;
+
+        m_current_ray = &ray;
 
         RTCRay ray_e;
         ray_e.org_x = static_cast<float>(ray.origin().x());
@@ -223,6 +249,8 @@ private:
         rtcInitOccludedArguments(&args);
         
         rtcOccluded1(m_scene, &ray_e, &args);
+
+        m_current_ray = nullptr;
         
         if (ray_e.tfar < 0.0f) { 
              return 0.0; 

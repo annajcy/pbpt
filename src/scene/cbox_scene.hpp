@@ -38,6 +38,7 @@
 
 namespace pbpt::scene {
 
+template<template<typename> class AggregateType>
 class CornellBoxScene {
     using T = double;
     static constexpr int SpectrumSampleCount = 4;
@@ -71,7 +72,7 @@ private:
             radiometry::constant::CIED65SpectrumType<T>>>
     > m_area_lights;
 
-    aggregate::EmbreeAggregate<T> m_aggregate;
+    AggregateType<T> m_aggregate;
 
     T p_rr = 0.9;
     std::string m_scene_path = "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox";
@@ -296,7 +297,7 @@ private:
     }
 
     
-    aggregate::EmbreeAggregate<T> make_aggregate(
+    AggregateType<T> make_aggregate(
         const std::unordered_map<std::string, shape::TriangleMesh<T>>& mesh_map,
         const std::unordered_map<std::string, int>& material_map,
         const std::unordered_map<std::string, int>& light_id_map
@@ -319,7 +320,7 @@ private:
             }
         }
 
-        return aggregate::EmbreeAggregate<T>(std::move(primitives));
+        return AggregateType<T>(std::move(primitives));
     }
     
 public:
@@ -403,7 +404,7 @@ public:
                     auto Li = this->Li(ray, wavelength_sample, 0, rng2d, rng1d);
 
                     // Accumulate to film
-                    m_camera_system.film().add_sample<SpectrumSampleCount>(pixel, Li, wavelength_sample, wavelength_pdf, filtered_sample.weight);
+                    m_camera_system.film().template add_sample<SpectrumSampleCount>(pixel, Li, wavelength_sample, wavelength_pdf, filtered_sample.weight);
                 }
             }
             progress_bar.update(std::cout, resolution.x());

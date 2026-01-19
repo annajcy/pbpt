@@ -1,6 +1,5 @@
 #pragma once
 
-#include <variant>
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/spectrum_distribution.hpp"
 #include "utils/library.hpp"

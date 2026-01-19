@@ -8,6 +8,7 @@
 #include <variant>
 #include <vector>
 #include "aggregate/aggregate.hpp"
+#include "aggregate/embree_aggregate.hpp"
 #include "camera/camera.hpp"
 #include "camera/camera_system.hpp"
 #include "camera/film.hpp"
@@ -70,7 +71,7 @@ private:
             radiometry::constant::CIED65SpectrumType<T>>>
     > m_area_lights;
 
-    aggregate::LinearAggregate<T> m_aggregate;
+    aggregate::EmbreeAggregate<T> m_aggregate;
 
     T p_rr = 0.9;
     std::string m_scene_path = "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox";
@@ -295,7 +296,7 @@ private:
     }
 
     
-    aggregate::LinearAggregate<T> make_aggregate(
+    aggregate::EmbreeAggregate<T> make_aggregate(
         const std::unordered_map<std::string, shape::TriangleMesh<T>>& mesh_map,
         const std::unordered_map<std::string, int>& material_map,
         const std::unordered_map<std::string, int>& light_id_map
@@ -318,7 +319,7 @@ private:
             }
         }
 
-        return aggregate::LinearAggregate<T>(primitives);
+        return aggregate::EmbreeAggregate<T>(std::move(primitives));
     }
     
 public:

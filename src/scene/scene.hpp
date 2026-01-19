@@ -39,15 +39,17 @@ public:
     aggregate::AnyAggregate<T> aggregate;
 
     // 资源库
+    // light material
     light::NamedAnyLightLibrary<T> light_library;
     material::NamedAnyMaterialLibrary<T> material_library;
 
+    // mesh and spectrum
     shape::NamedMeshLibrary<T> mesh_library;
     radiometry::NamedReflectanceSpectrumLibrary<T> reflectance_spectrum_library;
     
 public:
     Scene() = default;
-    
+
 };
 
 }
