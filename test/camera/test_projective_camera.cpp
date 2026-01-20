@@ -791,4 +791,5 @@ TEST(CameraTemplateTest, CRTPBehavior) {
     EXPECT_NEAR(ray_persp.origin().z(), 0.0f, 1e-5f);
 }
 
+// ============================================================================
 }  // namespace pbpt::camera::testing

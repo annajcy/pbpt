@@ -38,14 +38,33 @@ PixelSensorType make_pixel_sensor(T ratio = T(1)) {
 
 FilmType make_film(T ratio = T(1)) {
     math::Vector<int, 2> resolution(2, 2);
-    math::Vector<T, 2> physical_size(1.0f, 1.0f);
-    return FilmType(resolution, physical_size, make_pixel_sensor(ratio));
+    // physical_size removed
+    return FilmType(resolution, make_pixel_sensor(ratio));
 }
 
 FilmType make_film(int width, int height, T ratio = T(1)) {
     math::Vector<int, 2> resolution(width, height);
-    math::Vector<T, 2> physical_size(1.0f, 1.0f);
-    return FilmType(resolution, physical_size, make_pixel_sensor(ratio));
+    // physical_size removed
+    return FilmType(resolution, make_pixel_sensor(ratio));
+}
+
+struct MockCamera {
+    math::Vector<int, 2> m_res;
+    
+    MockCamera(math::Vector<int, 2> r) : m_res(r) {}
+    
+    const math::Vector<int, 2>& film_resolution() const { return m_res; }
+};
+
+TEST(HDRFilmTest, ConstructFromCamera) {
+    math::Vector<int, 2> resolution(800, 600);
+    MockCamera camera(resolution);
+    auto sensor = make_pixel_sensor();
+    
+    FilmType film(camera, sensor);
+    
+    EXPECT_EQ(film.resolution().x(), 800);
+    EXPECT_EQ(film.resolution().y(), 600);
 }
 
 }  // namespace
@@ -70,8 +89,7 @@ TEST(RGBFilmTest, AddColorSampleWeightedAverage) {
 
 TEST(RGBFilmTest, AddSampleUsesPixelSensorConversion) {
     math::Vector<int, 2> resolution(1, 1);
-    math::Vector<T, 2> physical_size(1.0f, 1.0f);
-    FilmType film(resolution, physical_size, make_pixel_sensor(T(1.5f)));
+    FilmType film(resolution, make_pixel_sensor(T(1.5f)));
 
     math::Point<int, 2> p(0, 0);
     math::Vector<T, 3> radiance_vec(0.8f, 0.4f, 0.2f);
@@ -209,8 +227,7 @@ TEST(RGBFilmTest, OutOfBoundsAccessThrows) {
 
 TEST(RGBFilmTest, HalfBlackHalfWhiteRadianceProducesMidGray) {
     math::Vector<int, 2> resolution(1, 1);
-    math::Vector<T, 2> physical_size(1.0f, 1.0f);
-    FilmType film(resolution, physical_size, make_pixel_sensor());
+    FilmType film(resolution, make_pixel_sensor());
 
     auto white_radiance = radiometry::constant::CIE_D65_ilum<T>;
     radiometry::ConstantSpectrumDistribution<T> black_radiance(T(0));
@@ -238,8 +255,7 @@ TEST(RGBFilmTest, HalfBlackHalfWhiteRadianceProducesMidGray) {
 
 TEST(RGBFilmTest, PrimaryReflectanceSamplesAverageToDarkGray) {
     math::Vector<int, 2> resolution(1, 1);
-    math::Vector<T, 2> physical_size(1.0f, 1.0f);
-    FilmType film(resolution, physical_size, make_pixel_sensor());
+    FilmType film(resolution, make_pixel_sensor());
     auto illuminant = radiometry::constant::CIE_D65_ilum<T>;
     constexpr int max_attempts = 30;
     constexpr double lr = 1.0;
@@ -347,3 +363,8 @@ TEST(RGBFilmTest, PrimaryReflectanceSamplesAverageToDarkGray) {
 }
 
 }  // namespace pbpt::camera::testing
+
+// ============================================================================
+// Coupled Construction Tests
+// ============================================================================
+// Defined inline in helper section above to use existing helpers

@@ -902,15 +902,15 @@ private:
 
 public:
     /**
-     * @brief Construct a spherical camera.
-     *
-     * @param film_resolution Film resolution (width, height).
-     * @param mapping         Mapping from image plane to sphere.
+     * @brief Construct a spherical camera from explicit resolution.
+     * 
+     * @param film_resolution The resolution of the film/sensor in pixels.
+     * @param mapping         How to map film coordinates to the sphere (default: Equirectangular).
      */
     SphericalCamera(
-        const math::Vector<T, 2>& film_resolution,
-        SphericalCameraMapping mapping = SphericalCameraMapping::EqualRectangular)
-        : m_mapping(mapping), m_film_resolution(film_resolution) {}
+        const math::Vector<int, 2>& film_resolution,
+        SphericalCameraMapping mapping = SphericalCameraMapping::EqualRectangular
+    ) : m_mapping(mapping), m_film_resolution(film_resolution) {}
 
     /// Get the current spherical mapping mode.
     SphericalCameraMapping mapping() const {

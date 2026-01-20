@@ -33,25 +33,29 @@ class Film {
 private:
     /// Pixel resolution (width, height).
     math::Vector<int, 2> m_resolution{};
-    /// Physical size of the film (e.g. in millimeters) in x and y.
-    math::Vector<T, 2> m_physical_size{};
 
 public:
     Film() = default;
     
     /**
-     * @brief Construct a film with given resolution and physical size.
+     * @brief Construct a film with given resolution.
      *
-     * @param resolution    Pixel resolution (width, height).
-     * @param physical_size Physical size of the film in x and y.
+     * @param resolution Pixel resolution (width, height).
      */
-    Film(const math::Vector<int, 2>& resolution, const math::Vector<T, 2>& physical_size)
-        : m_resolution(resolution), m_physical_size(physical_size) {}
+    explicit Film(const math::Vector<int, 2>& resolution)
+        : m_resolution(resolution) {}
+
+    /**
+     * @brief Construct a film from a camera.
+     * 
+     * Infers film resolution from the camera.
+     */
+    template <typename CameraType>
+    explicit Film(const CameraType& camera) 
+        : m_resolution(camera.film_resolution()) {}
 
     /// Get the film resolution in pixels.
     const math::Vector<int, 2>& resolution() const { return m_resolution; }
-    /// Get the physical size of the film.
-    const math::Vector<T, 2>& physical_size() const { return m_physical_size; }
 
     /**
      * @brief Add a spectral sample using Monte Carlo sampled wavelengths.
@@ -211,14 +215,30 @@ public:
      * @brief Construct an RGB film with a given resolution and sensor.
      *
      * @param resolution    Pixel resolution (width, height).
-     * @param physical_size Physical size of the film.
      * @param pixel_sensor  Pixel sensor used for spectral to RGB conversion.
      */
     HDRFilm(
         const math::Vector<int, 2>& resolution,
-        const math::Vector<T, 2>& physical_size,
         const PixelSensorType& pixel_sensor
-    ) : Film<HDRFilm<T, PixelSensorType>, T>(resolution, physical_size),
+    ) : Film<HDRFilm<T, PixelSensorType>, T>(resolution),
+        m_pixel_sensor(pixel_sensor) {
+        int width = this->resolution().x();
+        int height = this->resolution().y();
+        math::assert_if(width <= 0 || height <= 0, "RGBFilm requires a positive resolution");
+        m_pixels.resize(static_cast<std::size_t>(width) * static_cast<std::size_t>(height));
+    }
+
+    /**
+     * @brief Construct an RGB film from a camera and sensor.
+     * 
+     * @param camera        Camera object to derive resolution from.
+     * @param pixel_sensor  Pixel sensor used for spectral to RGB conversion.
+     */
+    template <typename CameraType>
+    HDRFilm(
+        const CameraType& camera,
+        const PixelSensorType& pixel_sensor
+    ) : Film<HDRFilm<T, PixelSensorType>, T>(camera),
         m_pixel_sensor(pixel_sensor) {
         int width = this->resolution().x();
         int height = this->resolution().y();

@@ -183,11 +183,7 @@ private:
         );
 
         auto film = camera::HDRFilm<T, decltype(pixel_sensor)>(
-            camera.film_resolution(),
-            math::Vector<T, 2>(
-                static_cast<T>(camera.film_resolution().x()),
-                static_cast<T>(camera.film_resolution().y())
-            ),
+            camera,
             pixel_sensor
         );
 
