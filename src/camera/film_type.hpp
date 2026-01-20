@@ -5,6 +5,7 @@
 #include "camera/film.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
+#include "radiometry/constant/standard_color_spaces.hpp"
 
 namespace pbpt::camera {
 
@@ -17,6 +18,21 @@ using StandardPixelSensor = camera::PixelSensor<T,
     radiometry::constant::CIED65SpectrumType<T>,
     radiometry::constant::XYZSpectrumType<T>
 >;
+
+template<typename T>
+inline auto make_standard_pixel_sensor(T ratio = T(1)) {
+    return StandardPixelSensor<T>(
+        radiometry::constant::CIE_D65_ilum<T>,
+        radiometry::constant::CIE_D65_ilum<T>,
+        radiometry::constant::sRGB<T>,
+        radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
+            radiometry::constant::CIE_X<T>,
+            radiometry::constant::CIE_Y<T>,
+            radiometry::constant::CIE_Z<T>
+        ),
+        ratio
+    );
+}
 
 // 具体 Film 类型定义
 template<typename T>

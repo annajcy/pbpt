@@ -1,24 +1,50 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include <unordered_map>
-#include <iostream>
 
 #include "aggregate/aggregate_type.hpp"
 #include "camera/film_type.hpp"
 #include "camera/pixel_filter_type.hpp"
 #include "material/material_type.hpp"
 #include "camera/render_transform.hpp"
-#include "material/material.hpp"
 #include "radiometry/spectrum_distribution_type.hpp"
-#include "shape/primitive.hpp"
+
 
 #include "light/light_type.hpp" 
 #include "camera/camera_type.hpp"
 #include "shape/shape_type.hpp"
 
 namespace pbpt::scene {
+
+template<typename T>
+struct RenderResources {
+    // 资源库
+    // light material
+    light::NamedAnyLightLibrary<T> any_light_library;
+    material::NamedAnyMaterialLibrary<T> any_material_library;
+
+    // mesh and spectrum
+    shape::NamedMeshLibrary<T> mesh_library;
+    radiometry::NamedReflectanceSpectrumLibrary<T> reflectance_spectrum_library;
+
+    // mesh name to material id map
+    std::unordered_map<std::string, int> mesh_material_map;
+    // mesh name to light id map, per triangle
+    // format: "mesh_name_triangleIndex" -> lightID
+    std::unordered_map<std::string, int> mesh_light_map;
+};
+
+template<typename T, typename CameraT, typename FilmT, typename PixelFilterT, typename AggregateT>
+struct SceneContext {
+    const CameraT& camera;
+    FilmT& film;
+    const PixelFilterT& pixel_filter;
+    const AggregateT& aggregate;
+    const camera::RenderTransform<T>& render_transform;
+    const RenderResources<T>& resources;
+};
+
 /**
  * @brief 数据驱动的 Scene 类
  * 
@@ -29,27 +55,19 @@ namespace pbpt::scene {
 template<typename T>
 class Scene {
 public:
+    // 渲染变换
+    camera::RenderTransform<T> render_transform;
+
     // 场景组件
     camera::AnyCamera<T> camera;
     camera::AnyFilm<T> film;
     camera::AnyPixelFilter<T> pixel_filter;
-    camera::RenderTransform<T> render_transform;
-
-    // 场景几何与材质
-    aggregate::AnyAggregate<T> aggregate;
-
-    // 资源库
-    // light material
-    light::NamedAnyLightLibrary<T> light_library;
-    material::NamedAnyMaterialLibrary<T> material_library;
-
-    // mesh and spectrum
-    shape::NamedMeshLibrary<T> mesh_library;
-    radiometry::NamedReflectanceSpectrumLibrary<T> reflectance_spectrum_library;
     
-public:
-    Scene() = default;
-
+    // 几何加速结构
+    aggregate::AnyAggregate<T> aggregate;
+    
+    // 场景几何与材质
+    RenderResources<T> resources;
 };
 
 }

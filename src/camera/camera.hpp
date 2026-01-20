@@ -10,10 +10,8 @@
 #include "geometry/transform.hpp"
 #include "geometry/spherical.hpp"
 
-#include "sampler/2d.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
-#include <type_traits>
 
 namespace pbpt::camera {
 
@@ -397,11 +395,11 @@ public:
     */
     static CameraProjection<T> create_perspective_projection_by_fov(
         const math::Vector<int, 2>& film_resolution,
-        T fov, const std::string& fov_axis,
+        T fov_degrees, const std::string& fov_axis,
         T near, T far
     ) {
         auto film_size = calculate_physical_film_size(
-            fov, fov_axis, near, 
+            fov_degrees, fov_axis, near, 
             film_resolution.x(), film_resolution.y()
         );
         return create_perspective_projection(
@@ -566,9 +564,6 @@ class PerspectiveCamera : public ProjectiveCamera<PerspectiveCamera<T>, T> {
 
 public:
     PerspectiveCamera() = default;
-    PerspectiveCamera(const CameraProjection<T>& projection)
-        : ProjectiveCamera<PerspectiveCamera<T>, T>(projection) {}
-
     /**
      * @brief Construct a perspective camera from explicit frustum and resolution.
      *
@@ -660,8 +655,6 @@ private:
 
 public:
     ThinLensOrthographicCamera() = default;
-    ThinLensOrthographicCamera(const CameraProjection<T>& projection, T lens_radius, T focal_distance)
-        : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(projection), m_focal_distance(focal_distance) {}
 
     /**
      * @brief Construct a thin-lens orthographic camera from explicit bounds.
@@ -707,7 +700,7 @@ public:
                 near, far
             )
         ), m_focal_distance(focal_distance) {}
-    
+
 private:
     /**
      * @brief Generate a ray using a thin-lens orthographic model.
@@ -776,9 +769,32 @@ private:
     
 public:
     ThinLensPerspectiveCamera() = default;
-    
-    ThinLensPerspectiveCamera(const CameraProjection<T>& projection, T focal_distance)
-        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(projection), m_focal_distance(focal_distance) {}
+
+    /***
+     * @brief Construct a thin-lens perspective camera from film parameters.
+     *
+     * The perspective projection is derived from the film size and near
+     * plane; depth of field is controlled by lens_radius and focal_distance.
+     *
+     * @param film_resolution    Film resolution (width, height) in pixels.
+     * @param fov_degrees        Field of view in degrees.
+     * @param fov_axis           Axis to which FOV applies: "x", "y", "smaller", "larger".
+     * @param near               Near plane in camera z.
+     * @param far                Far plane in camera z.
+     * @param lens_radius        Radius of the circular lens aperture.
+     * @param focal_distance     Distance from lens to focal plane along +z.
+    ***/
+    ThinLensPerspectiveCamera(
+        const math::Vector<T, 2>& film_resolution, 
+        T fov_degrees, const std::string& fov_axis,
+        T near, T far, T focal_distance
+    ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
+        CameraProjection<T>::create_perspective_projection_by_fov(
+            film_resolution,
+            fov_degrees, fov_axis,
+            near, far
+        )
+    ), m_focal_distance(focal_distance) {}
 
     /**
      * @brief Construct a thin-lens perspective camera from explicit frustum.

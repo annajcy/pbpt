@@ -69,7 +69,7 @@ TEST(HDRFilmTest, ConstructFromCamera) {
 
 }  // namespace
 
-TEST(RGBFilmTest, AddColorSampleWeightedAverage) {
+TEST(HDRFilmTest, AddColorSampleWeightedAverage) {
     auto film = make_film();
 
     math::Point<int, 2> p(0, 0);
@@ -87,7 +87,7 @@ TEST(RGBFilmTest, AddColorSampleWeightedAverage) {
     EXPECT_NEAR(other.b(), 0.0f, 1e-6f);
 }
 
-TEST(RGBFilmTest, AddSampleUsesPixelSensorConversion) {
+TEST(HDRFilmTest, AddSampleUsesPixelSensorConversion) {
     math::Vector<int, 2> resolution(1, 1);
     FilmType film(resolution, make_pixel_sensor(T(1.5f)));
 
@@ -111,7 +111,7 @@ TEST(RGBFilmTest, AddSampleUsesPixelSensorConversion) {
     EXPECT_NEAR(pixel_rgb.b(), expected_display_rgb.b(), 1e-4f);
 }
 
-TEST(RGBFilmTest, AddSampleAccumulatesWithWeights) {
+TEST(HDRFilmTest, AddSampleAccumulatesWithWeights) {
     auto film = make_film();
     math::Point<int, 2> p(1, 1);
     const auto& sensor = film.pixel_sensor();
@@ -152,7 +152,7 @@ TEST(RGBFilmTest, AddSampleAccumulatesWithWeights) {
     EXPECT_NEAR(pixel_rgb.b(), expected_b, 1e-4f);
 }
 
-TEST(RGBFilmTest, ClearResetsPixelAccumulation) {
+TEST(HDRFilmTest, ClearResetsPixelAccumulation) {
     auto film = make_film();
     math::Point<int, 2> p(0, 0);
 
@@ -165,7 +165,7 @@ TEST(RGBFilmTest, ClearResetsPixelAccumulation) {
     EXPECT_NEAR(rgb.b(), 0.0f, 1e-6f);
 }
 
-TEST(RGBFilmTest, DevelopGeneratesCorrectImage) {
+TEST(HDRFilmTest, DevelopGeneratesCorrectImage) {
     auto film = make_film(10, 5);
     int width = film.resolution().x();
     int height = film.resolution().y();
@@ -200,7 +200,7 @@ TEST(RGBFilmTest, DevelopGeneratesCorrectImage) {
     }
 }
 
-TEST(RGBFilmTest, ZeroWeightSampleDoesNotAffectPixel) {
+TEST(HDRFilmTest, ZeroWeightSampleDoesNotAffectPixel) {
     auto film = make_film();
     math::Point<int, 2> p(0, 0);
 
@@ -212,7 +212,7 @@ TEST(RGBFilmTest, ZeroWeightSampleDoesNotAffectPixel) {
     EXPECT_NEAR(rgb.b(), 0.0f, 1e-6f);
 }
 
-TEST(RGBFilmTest, OutOfBoundsAccessThrows) {
+TEST(HDRFilmTest, OutOfBoundsAccessThrows) {
     auto film = make_film();
 
     EXPECT_THROW(
@@ -225,7 +225,7 @@ TEST(RGBFilmTest, OutOfBoundsAccessThrows) {
     );
 }
 
-TEST(RGBFilmTest, HalfBlackHalfWhiteRadianceProducesMidGray) {
+TEST(HDRFilmTest, HalfBlackHalfWhiteRadianceProducesMidGray) {
     math::Vector<int, 2> resolution(1, 1);
     FilmType film(resolution, make_pixel_sensor());
 
@@ -253,7 +253,7 @@ TEST(RGBFilmTest, HalfBlackHalfWhiteRadianceProducesMidGray) {
     EXPECT_NEAR(rgb.b(), expected.b(), 5e-3f);
 }
 
-TEST(RGBFilmTest, PrimaryReflectanceSamplesAverageToDarkGray) {
+TEST(HDRFilmTest, PrimaryReflectanceSamplesAverageToDarkGray) {
     math::Vector<int, 2> resolution(1, 1);
     FilmType film(resolution, make_pixel_sensor());
     auto illuminant = radiometry::constant::CIE_D65_ilum<T>;

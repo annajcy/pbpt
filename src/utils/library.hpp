@@ -100,6 +100,14 @@ public:
         m_library.remove(id);
     }
 
+    const std::unordered_map<std::string, int>& name_to_id() const {
+        return m_name_to_id;
+    }
+
+    const std::unordered_map<int, std::string>& id_to_name() const {
+        return m_id_to_name;
+    }
+
     void clear() {
         m_name_to_id.clear();
         m_id_to_name.clear();
