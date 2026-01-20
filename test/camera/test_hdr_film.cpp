@@ -42,6 +42,12 @@ FilmType make_film(T ratio = T(1)) {
     return FilmType(resolution, physical_size, make_pixel_sensor(ratio));
 }
 
+FilmType make_film(int width, int height, T ratio = T(1)) {
+    math::Vector<int, 2> resolution(width, height);
+    math::Vector<T, 2> physical_size(1.0f, 1.0f);
+    return FilmType(resolution, physical_size, make_pixel_sensor(ratio));
+}
+
 }  // namespace
 
 TEST(RGBFilmTest, AddColorSampleWeightedAverage) {
@@ -139,6 +145,41 @@ TEST(RGBFilmTest, ClearResetsPixelAccumulation) {
     EXPECT_NEAR(rgb.r(), 0.0f, 1e-6f);
     EXPECT_NEAR(rgb.g(), 0.0f, 1e-6f);
     EXPECT_NEAR(rgb.b(), 0.0f, 1e-6f);
+}
+
+TEST(RGBFilmTest, DevelopGeneratesCorrectImage) {
+    auto film = make_film(10, 5);
+    int width = film.resolution().x();
+    int height = film.resolution().y();
+
+    // Fill film with some predictable data
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            float r = static_cast<float>(x) / width;
+            float g = static_cast<float>(y) / height;
+            float b = 0.5f;
+            film.add_color_sample(math::Point<int, 2>(x, y), radiometry::RGB<T>(r, g, b), 1.0f);
+        }
+    }
+
+    // Develop to Image
+    auto image = film.develop();
+
+    // Check dimensions
+    ASSERT_EQ(image.width(), width);
+    ASSERT_EQ(image.height(), height);
+
+    // Check content
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            auto rgb = film.get_pixel_rgb(math::Point<int, 2>(x, y));
+            auto pixel = image.get_pixel(x, y);
+
+            EXPECT_NEAR(pixel.x(), rgb.r(), 1e-4f);
+            EXPECT_NEAR(pixel.y(), rgb.g(), 1e-4f);
+            EXPECT_NEAR(pixel.z(), rgb.b(), 1e-4f);
+        }
+    }
 }
 
 TEST(RGBFilmTest, ZeroWeightSampleDoesNotAffectPixel) {

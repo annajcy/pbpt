@@ -5,6 +5,8 @@
 #include <OpenEXR/ImfHeader.h>
 #include <OpenEXR/ImfOutputFile.h>
 #include <OpenEXR/ImfInputFile.h>
+#include <stb_image.h>
+#include <stb_image_write.h>
 #include <filesystem>
 #include <stdexcept>
 #include <vector>
@@ -154,6 +156,126 @@ texture::Image<math::Vector<T, 3>> read_hdr_image(const std::filesystem::path& i
 
     } catch (const std::exception& e) {
         throw std::runtime_error("Failed to read EXR file " + input_path.string() + ": " + e.what());
+    }
+}
+
+/**
+ * @brief Write an 8-bit RGB PNG image.
+ *
+ * @tparam T          Scalar type of the image (double or float).
+ * @param output_path Target file path for the PNG image.
+ * @param image       Source image to write.
+ */
+template<typename T>
+void write_ldr_image(
+    const std::filesystem::path& output_path,
+    const texture::Image<math::Vector<T, 3>>& image
+) {
+    int width = image.width();
+    int height = image.height();
+    
+    if (!output_path.parent_path().empty()) {
+        std::filesystem::create_directories(output_path.parent_path());
+    }
+
+    std::vector<unsigned char> data(
+        static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 3
+    );
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            auto pixel = image.get_pixel(x, y);
+            // Simple linear quantization to 8-bit. 
+            // Users should gamma-correct before calling if needed.
+            auto clamp = [](T val) {
+                return std::max(T(0), std::min(T(1), val));
+            };
+            
+            data[(y * width + x) * 3 + 0] = static_cast<unsigned char>(clamp(pixel.x()) * 255.0 + 0.5);
+            data[(y * width + x) * 3 + 1] = static_cast<unsigned char>(clamp(pixel.y()) * 255.0 + 0.5);
+            data[(y * width + x) * 3 + 2] = static_cast<unsigned char>(clamp(pixel.z()) * 255.0 + 0.5);
+        }
+    }
+
+    if (stbi_write_png(output_path.string().c_str(), width, height, 3, data.data(), width * 3) == 0) {
+        throw std::runtime_error("Failed to write PNG to " + output_path.string());
+    }
+}
+
+/**
+ * @brief Read an LDR image (PNG, JPG, BMP, TGA) using stb_image.
+ *
+ * @tparam T          Scalar type of the output image (converts 8-bit to [0,1] float/double).
+ * @param input_path  Source file path.
+ * @return            Image read from file.
+ */
+template<typename T>
+texture::Image<math::Vector<T, 3>> read_ldr_image(const std::filesystem::path& input_path) {
+    if (!std::filesystem::exists(input_path)) {
+        throw std::runtime_error("File not found: " + input_path.string());
+    }
+
+    int width, height, channels;
+    // Force 3 channels (RGB)
+    unsigned char* data = stbi_load(input_path.string().c_str(), &width, &height, &channels, 3);
+    
+    if (!data) {
+        throw std::runtime_error("Failed to load image " + input_path.string() + ": " + stbi_failure_reason());
+    }
+
+    texture::Image<math::Vector<T, 3>> image(width, height);
+    T scale = T(1) / T(255);
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            std::size_t idx = (static_cast<std::size_t>(y) * width + x) * 3;
+            image.get_pixel(x, y) = math::Vector<T, 3>(
+                static_cast<T>(data[idx + 0]) * scale,
+                static_cast<T>(data[idx + 1]) * scale,
+                static_cast<T>(data[idx + 2]) * scale
+            );
+        }
+    }
+
+    stbi_image_free(data);
+    return image;
+}
+
+/**
+ * @brief Generic image write function that dispatches based on file extension.
+ * Supports .exr via OpenEXR and .png via stb_image_write.
+ * 
+ * @tparam T          Scalar type of the image.
+ * @param output_path Target file path (extension determines format).
+ * @param image       Source image to write.
+ */
+template<typename T>
+void write_image(const std::filesystem::path& output_path, const texture::Image<math::Vector<T, 3>>& image) {
+    std::string ext = output_path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c){ return std::tolower(c); });
+
+    if (ext == ".exr") {
+        write_hdr_image(output_path, image);
+    } else if (ext == ".png") {
+        write_ldr_image(output_path, image);
+    } else {
+        throw std::runtime_error("Unsupported image format for writing: " + ext);
+    }
+}
+
+/**
+ * @brief Generic image read function that dispatches based on file extension.
+ * Supports .exr via OpenEXR and .png/.jpg/.bmp/.tga via stb_image.
+ */
+template<typename T>
+texture::Image<math::Vector<T, 3>> read_image(const std::filesystem::path& input_path) {
+    std::string ext = input_path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c){ return std::tolower(c); });
+
+    if (ext == ".exr") {
+        return read_hdr_image<T>(input_path);
+    } else {
+        return read_ldr_image<T>(input_path);
     }
 }
 

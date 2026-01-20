@@ -14,6 +14,7 @@
 
 #include "radiometry/color.hpp"
 #include "radiometry/sampled_spectrum.hpp"
+#include "texture/image.hpp"
 
 namespace pbpt::camera {
 
@@ -104,6 +105,16 @@ public:
             radiance, 
             weight
         );
+    }
+
+    /**
+     * @brief Develop the film into an image-like object.
+     * 
+     * The return type depends on the specific Film implementation
+     * (e.g. ImageN<T, 3> for HDRFilm).
+     */
+    auto develop() const {
+        return as_derived().develop_impl();
     }
 
     /// Access the derived implementation (non-const).
@@ -253,6 +264,24 @@ private:
         auto sensor_rgb = m_pixel_sensor.radiance_to_sensor_rgb(radiance);
         auto display_rgb = m_pixel_sensor.sensor_rgb_to_color_space_rgb(sensor_rgb);
         pixel.add_sample(display_rgb, weight);
+    }
+
+     /**
+     * @brief Develop the film into an Image.
+     */
+    texture::ImageN<T, 3> develop_impl() const {
+        int width = this->resolution().x();
+        int height = this->resolution().y();
+        texture::ImageN<T, 3> image(width, height);
+
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                math::Point<int, 2> p(x, y);
+                auto rgb = get_pixel_rgb(p);
+                image.get_pixel(x, y) = math::Vector<T, 3>(rgb.r(), rgb.g(), rgb.b());
+            }
+        }
+        return image;
     }
 
 public:

@@ -33,7 +33,7 @@
 #include "shape/shape.hpp"
 #include "shape/triangle.hpp"
 #include "material/material.hpp"
-#include "utils/exr_writer.hpp"
+#include "utils/image_io.hpp"
 #include "utils/progress_bar.hpp"
 
 namespace pbpt::scene {
@@ -410,7 +410,8 @@ public:
             progress_bar.update(std::cout, resolution.x());
         }
         progress_bar.finish(std::cout);
-        pbpt::utils::write_exr(output_path, m_camera_system.film(), resolution.x(), resolution.y());
+        auto image = m_camera_system.film().develop();
+        pbpt::utils::write_hdr_image(output_path, image);
     }
 
     radiometry::SampledSpectrum<T, SpectrumSampleCount> Li(
