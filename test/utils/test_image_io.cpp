@@ -193,3 +193,64 @@ TEST_F(ImageIOTest, DispatchWriteRead) {
 TEST_F(ImageIOTest, ReadNonExistentFile) {
     EXPECT_THROW(utils::read_hdr_image<double>("non_existent_file.exr"), std::runtime_error);
 }
+
+TEST_F(ImageIOTest, ConvertImage) {
+    int width = 16;
+    int height = 16;
+    texture::Image<math::Vector<float, 3>> original_img(width, height);
+    
+    // Fill with pattern
+    math::Vector<float, 3> color(0.8f, 0.4f, 0.2f);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            original_img.get_pixel(x, y) = color;
+        }
+    }
+
+    // Source and dest paths
+    std::filesystem::path src_exr = std::filesystem::temp_directory_path() / "convert_src.exr";
+    std::filesystem::path dst_png = std::filesystem::temp_directory_path() / "convert_dst.png";
+    std::filesystem::path dst_exr = std::filesystem::temp_directory_path() / "convert_dst.exr";
+
+    // Cleanup before test (in case of previous failure)
+    if (std::filesystem::exists(src_exr)) std::filesystem::remove(src_exr);
+    if (std::filesystem::exists(dst_png)) std::filesystem::remove(dst_png);
+    if (std::filesystem::exists(dst_exr)) std::filesystem::remove(dst_exr);
+
+    // 1. Create source EXR
+    utils::write_image(src_exr, original_img);
+    ASSERT_TRUE(std::filesystem::exists(src_exr));
+
+    // 2. Convert EXR -> PNG
+    // Note: convert_image reads the file, so we must specify the type T to use for reading/writing in memory
+    utils::convert_image<float>(src_exr, dst_png);
+    ASSERT_TRUE(std::filesystem::exists(dst_png));
+
+    // Verify PNG content
+    auto loaded_png = utils::read_image<float>(dst_png);
+    EXPECT_EQ(loaded_png.width(), width);
+    EXPECT_EQ(loaded_png.height(), height);
+    // PNG is 8-bit, so we expect some quantization error (approx 1/255 ~= 0.004)
+    EXPECT_NEAR(loaded_png.get_pixel(0,0).x(), color.x(), 0.01f);
+    EXPECT_NEAR(loaded_png.get_pixel(0,0).y(), color.y(), 0.01f);
+    EXPECT_NEAR(loaded_png.get_pixel(0,0).z(), color.z(), 0.01f);
+
+    // 3. Convert PNG -> EXR
+    utils::convert_image<float>(dst_png, dst_exr);
+    ASSERT_TRUE(std::filesystem::exists(dst_exr));
+
+    // Verify EXR content
+    auto loaded_exr = utils::read_image<float>(dst_exr);
+    EXPECT_EQ(loaded_exr.width(), width);
+    EXPECT_EQ(loaded_exr.height(), height);
+    // The source was the PNG, so it already had quantization error. 
+    // Converting back to EXR preserves that value (floating point), but doesn't recover original precision.
+    EXPECT_NEAR(loaded_exr.get_pixel(0,0).x(), color.x(), 0.01f);
+    EXPECT_NEAR(loaded_exr.get_pixel(0,0).y(), color.y(), 0.01f);
+    EXPECT_NEAR(loaded_exr.get_pixel(0,0).z(), color.z(), 0.01f);
+
+    // Cleanup
+    std::filesystem::remove(src_exr);
+    std::filesystem::remove(dst_png);
+    std::filesystem::remove(dst_exr);
+}

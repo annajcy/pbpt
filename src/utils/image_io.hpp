@@ -279,4 +279,13 @@ texture::Image<math::Vector<T, 3>> read_image(const std::filesystem::path& input
     }
 }
 
+template<typename T>
+void convert_image(
+    const std::filesystem::path& input_path,
+    const std::filesystem::path& output_path
+) {
+    auto hdr_image = read_image<T>(input_path);
+    write_image<T>(output_path, hdr_image);
+}
+
 }

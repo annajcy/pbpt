@@ -29,26 +29,18 @@ public:
     }
 
     void render(pbpt::scene::Scene<T>& scene, int ssp = 4, std::string output_path = "output.exr") {
-        std::visit([&](const auto& camera) {
-            std::visit([&](auto& film) { 
-                std::visit([&](const auto& pixel_filter) {
-                    std::visit([&](const auto& aggregate) {
+        std::visit([&](const auto& camera, auto& film, const auto& pixel_filter, const auto& aggregate) {
+            scene::SceneContext context{
+                camera, film, pixel_filter, aggregate, 
+                scene.render_transform, scene.resources
+            };
 
-                        scene::SceneContext context{
-                            camera, film, pixel_filter, aggregate, 
-                            scene.render_transform, scene.resources
-                        };
-
-                        this->render_loop(
-                            context,
-                            ssp,
-                            output_path
-                        );
-
-                    }, scene.aggregate);
-                }, scene.pixel_filter);
-            }, scene.film);
-        }, scene.camera);
+            this->render_loop(
+                context,
+                ssp,
+                output_path
+            );
+        }, scene.camera, scene.film, scene.pixel_filter, scene.aggregate);
     }
 
 protected:
