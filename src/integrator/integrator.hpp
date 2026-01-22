@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <iostream>
 #include <string>
 #include <variant>
@@ -28,7 +29,7 @@ public:
         return static_cast<const Derived&>(*this);
     }
 
-    void render(pbpt::scene::Scene<T>& scene, int spp = 4, std::string output_path = "output.exr") {
+    void render(pbpt::scene::Scene<T>& scene, int spp = 4, std::string output_path = "output.exr", bool is_trace_ray_differential = false) {
         std::visit([&](const auto& camera, auto& film, const auto& pixel_filter, const auto& aggregate) {
             scene::SceneContext context{
                 camera, film, pixel_filter, aggregate, 
@@ -38,16 +39,29 @@ public:
             this->render_loop(
                 context,
                 spp,
-                output_path
+                output_path,
+                is_trace_ray_differential
             );
         }, scene.camera, scene.film, scene.pixel_filter, scene.aggregate);
     }
 
 protected:
     template<typename SceneContextT>
+    static constexpr bool supports_ray_differential = requires(
+        Derived& derived,
+        const SceneContextT& context,
+        const geometry::RayDifferential<T, 3>& ray,
+        const radiometry::SampledWavelength<T, N>& wavelength_sample,
+        Sampler& sampler
+    ) {
+        derived.Li_impl(context, ray, wavelength_sample, sampler);
+    };
+
+    template<typename SceneContextT>
     void render_loop(
         const SceneContextT& context,
-        int spp, const std::string& output_path
+        int spp, const std::string& output_path,
+        bool is_trace_ray_differential
     ) {
         auto resolution = context.film.resolution();
         std::cout << "Starting render: " << resolution.x() << "x" << resolution.y() << " pixels, SPP=" << spp << std::endl;
@@ -78,8 +92,19 @@ protected:
                     auto wavelength_sample = radiometry::sample_visible_wavelengths_stratified<T, N>(sampler.next_1d());
                     auto wavelength_pdf = radiometry::sample_visible_wavelengths_pdf(wavelength_sample);
 
-                    // Evaluate radiance along the ray
-                    auto Li = this->Li(context, ray, wavelength_sample, sampler);
+                    // Evaluate radiance along the ray (ray differentials if enabled + supported)
+                    radiometry::SampledSpectrum<T, N> Li;
+                    if constexpr (supports_ray_differential<SceneContextT>) {
+                        if (is_trace_ray_differential) {
+                        auto ray_diff = context.camera.generate_differential_ray(sample);
+                        ray_diff = context.render_transform.camera_to_render().transform_ray(ray_diff);
+                        Li = this->Li(context, ray_diff, wavelength_sample, sampler);
+                        } else {
+                            Li = this->Li(context, ray, wavelength_sample, sampler);
+                        }
+                    } else {
+                        Li = this->Li(context, ray, wavelength_sample, sampler);
+                    }
 
                     // Accumulate the result to film
                     context.film.template add_sample<N>(pixel, Li, wavelength_sample, wavelength_pdf, filtered_sample.weight);
@@ -98,6 +123,21 @@ private:
     radiometry::SampledSpectrum<T, N> Li(
         const SceneContextT& context,
         const geometry::Ray<T, 3>& ray, 
+        const radiometry::SampledWavelength<T, N>& wavelength_sample,
+        Sampler& sampler
+    ) {
+        return as_derived().Li_impl(
+            context, 
+            ray, 
+            wavelength_sample, 
+            sampler
+        );
+    }
+
+    template<typename SceneContextT>
+    radiometry::SampledSpectrum<T, N> Li(
+        const SceneContextT& context,
+        const geometry::RayDifferential<T, 3>& ray, 
         const radiometry::SampledWavelength<T, N>& wavelength_sample,
         Sampler& sampler
     ) {

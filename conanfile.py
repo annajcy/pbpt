@@ -48,6 +48,7 @@ class PbptDeps(ConanFile):
         self.requires("openexr/3.2.4")
         self.requires("pugixml/1.14")
         self.requires("embree/4.4.0")
+        self.requires("onetbb/2021.12.0")
 
         # 本地 recipe：conan create . --name=slang --version=<ver>
         ver = str(self.options.slang_version)

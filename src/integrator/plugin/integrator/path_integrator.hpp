@@ -44,11 +44,49 @@ private:
         );
     }
 
+    template<typename SceneContextT>
+    radiometry::SampledSpectrum<T, N> Li_impl(
+        const SceneContextT& context,
+        const geometry::RayDifferential<T, 3>& ray, 
+        const radiometry::SampledWavelength<T, N>& wavelength_sample,
+        Sampler& sampler
+    ) {
+        return this->Li_dfs(
+            context,
+            ray,
+            wavelength_sample,
+            0,
+            sampler
+        );
+    }
+
 private:
     template<typename SceneContextT>
     radiometry::SampledSpectrum<T, N> Li_dfs(
         const SceneContextT& context,
         const geometry::Ray<T, 3>& ray, 
+        const radiometry::SampledWavelength<T, N>& wavelength_sample,
+        int depth,
+        Sampler& sampler
+    ) {
+        auto hit_opt = context.aggregate.intersect(ray);
+
+        if (hit_opt) {
+            return this->hit_shader(
+                context,
+                hit_opt.value(), 
+                wavelength_sample, 
+                depth,
+                sampler);
+        } else {
+            return this->miss_shader(wavelength_sample);
+        }
+    }
+
+    template<typename SceneContextT>
+    radiometry::SampledSpectrum<T, N> Li_dfs(
+        const SceneContextT& context,
+        const geometry::RayDifferential<T, 3>& ray, 
         const radiometry::SampledWavelength<T, N>& wavelength_sample,
         int depth,
         Sampler& sampler

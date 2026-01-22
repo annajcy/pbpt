@@ -35,4 +35,5 @@ target_link_libraries(pbpt INTERFACE
     OpenEXR::OpenEXR
     pugixml::pugixml
     embree::embree
+    TBB::tbb
 )
