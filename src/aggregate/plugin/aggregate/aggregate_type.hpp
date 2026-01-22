@@ -1,7 +1,6 @@
 #pragma once
 
 #include <variant>
-#include "aggregate/aggregate.hpp"
 #include "embree_aggregate.hpp"
 #include "linear_aggregate.hpp"
 
