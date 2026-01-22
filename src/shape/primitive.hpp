@@ -51,6 +51,20 @@ public:
         return record;
     }
 
+    std::optional<PrimitiveIntersectionRecord<T>> intersect(const geometry::RayDifferential<T, 3>& ray) const {
+        auto rec = std::visit([&](const auto& s) -> std::optional<IntersectionRecord<T>> {
+            return s.intersect(ray);
+        }, m_shape);
+
+        if (!rec) return std::nullopt;
+
+        PrimitiveIntersectionRecord<T> record;
+        record.intersection = *rec;
+        record.material_id = m_material_id;
+        record.light_id = m_light_id;
+        return record;
+    }
+
     std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {
         return std::visit([&](const auto& s) -> std::optional<T> { 
             return s.is_intersected(ray); 

@@ -15,6 +15,10 @@ public:
         return as_derived().intersect_impl(ray);
     }
 
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect(const geometry::RayDifferential<T, 3>& ray) const {
+        return as_derived().intersect_impl(ray);
+    }
+
     std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {
         return as_derived().is_intersected_impl(ray);
     }
@@ -40,6 +44,21 @@ public:
 
 private:
     std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
+        std::optional<shape::PrimitiveIntersectionRecord<T>> closest_hit;
+        T closest_t = std::numeric_limits<T>::infinity();
+
+        for (const auto& primitive : m_primitives) {
+            auto hit = primitive.intersect(ray);
+            if (hit && hit->intersection.t < closest_t) {
+                closest_t = hit->intersection.t;
+                closest_hit = hit;
+            }
+        }
+
+        return closest_hit;
+    }
+
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
         std::optional<shape::PrimitiveIntersectionRecord<T>> closest_hit;
         T closest_t = std::numeric_limits<T>::infinity();
 

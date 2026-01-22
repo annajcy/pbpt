@@ -360,7 +360,14 @@ public:
         );
 
         geometry::ShadingInfo<T> shading{ns};
-        return IntersectionRecord<T>{interaction, shading, t_hit};
+        return IntersectionRecord<T>{interaction, shading, std::nullopt, t_hit};
+    }
+
+    std::optional<IntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
+        auto hit = intersect_impl(ray.main_ray());
+        if (!hit) return std::nullopt;
+        hit->differentials = geometry::compute_surface_differentials(hit->interaction, ray);
+        return hit;
     }
 
     std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {

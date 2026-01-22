@@ -23,6 +23,7 @@ template<typename T>
 struct IntersectionRecord {
     geometry::SurfaceInteraction<T> interaction;
     geometry::ShadingInfo<T> shading;
+    std::optional<geometry::SurfaceDifferentials<T>> differentials;
     T t{};
 };
 
@@ -111,6 +112,12 @@ public:
      */
     std::optional<IntersectionRecord<T>> intersect(
         const geometry::Ray<T, 3>& ray
+    ) const {
+        return as_derived().intersect_impl(ray);
+    }
+
+    std::optional<IntersectionRecord<T>> intersect(
+        const geometry::RayDifferential<T, 3>& ray
     ) const {
         return as_derived().intersect_impl(ray);
     }

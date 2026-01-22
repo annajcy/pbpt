@@ -1,3 +1,4 @@
+#include <array>
 #include <cmath>
 #include <vector>
 #include <gtest/gtest.h>
@@ -230,6 +231,56 @@ TEST_F(InteractionTest, SpawnRayToDistantPoint) {
     Vector<Float, 3> actual_dir = ray.direction();
     Float dot_product = actual_dir.dot(expected_dir);
     EXPECT_GT(dot_product, Float(0.5));
+}
+
+TEST_F(InteractionTest, ComputeDifferentialsFromRayDifferential) {
+    SurfaceInteraction<Float> si(
+        Pt3(Float(0), Float(0), Float(0)),
+        Vec3(0, 0, 1),
+        Normal3(0, 0, 1),
+        Pt2(Float(0), Float(0)),
+        Vec3(1, 0, 0),
+        Vec3(0, 1, 0),
+        Vec3(0, 0, 0)
+    );
+
+    Ray<Float, 3> main_ray(Pt3(0, 0, 1), Vec3(0, 0, -1));
+    std::array<Ray<Float, 3>, 2> diff_rays{
+        Ray<Float, 3>(Pt3(1, 0, 1), Vec3(0, 0, -1)),
+        Ray<Float, 3>(Pt3(0, 1, 1), Vec3(0, 0, -1))
+    };
+
+    RayDifferential<Float, 3> ray_diff(main_ray, diff_rays);
+    auto diffs = compute_surface_differentials(si, ray_diff);
+
+    ASSERT_TRUE(diffs.has_value());
+    EXPECT_NEAR(diffs->dpdx.x(), Float(1), Float(1e-6));
+    EXPECT_NEAR(diffs->dpdx.y(), Float(0), Float(1e-6));
+    EXPECT_NEAR(diffs->dpdy.x(), Float(0), Float(1e-6));
+    EXPECT_NEAR(diffs->dpdy.y(), Float(1), Float(1e-6));
+    EXPECT_NEAR(diffs->dudx, Float(1), Float(1e-6));
+    EXPECT_NEAR(diffs->dvdx, Float(0), Float(1e-6));
+    EXPECT_NEAR(diffs->dudy, Float(0), Float(1e-6));
+    EXPECT_NEAR(diffs->dvdy, Float(1), Float(1e-6));
+}
+
+TEST_F(InteractionTest, ComputeDifferentialsDegenerateParallelRay) {
+    SurfaceInteraction<Float> si(
+        Pt3(Float(0), Float(0), Float(0)),
+        Vec3(0, 0, 1),
+        Normal3(0, 0, 1),
+        Pt2(Float(0), Float(0)),
+        Vec3(1, 0, 0),
+        Vec3(0, 1, 0),
+        Vec3(0, 0, 0)
+    );
+
+    Ray<Float, 3> main_ray(Pt3(0, 0, 1), Vec3(1, 0, 0));
+    std::array<Ray<Float, 3>, 2> diff_rays{main_ray, main_ray};
+    RayDifferential<Float, 3> ray_diff(main_ray, diff_rays);
+
+    auto diffs = compute_surface_differentials(si, ray_diff);
+    EXPECT_FALSE(diffs.has_value());
 }
 
 }  // namespace pbpt::geometry::testing

@@ -1,3 +1,4 @@
+#include <array>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -11,6 +12,7 @@ namespace pbpt::shape::testing {
 
 using T = double;
 using pbpt::geometry::Ray;
+using pbpt::geometry::RayDifferential;
 using pbpt::geometry::Transform;
 using pbpt::math::Point;
 using pbpt::math::Vector;
@@ -78,6 +80,64 @@ TEST(TriangleTest, RayMissOutsideTriangle) {
     auto hit = tri.intersect(ray);
 
     EXPECT_FALSE(hit.has_value());
+}
+
+TEST(TriangleTest, RayDifferentialComputesSurfaceDifferentials) {
+    TriangleMeshD mesh = make_unit_mesh();
+    TriangleD tri(mesh, 0);
+
+    Ray<T, 3> main_ray(Point<T, 3>(0.25, 0.25, 1.0), Vector<T, 3>(0, 0, -1));
+    std::array<Ray<T, 3>, 2> diff_rays{
+        Ray<T, 3>(Point<T, 3>(0.26, 0.25, 1.0), Vector<T, 3>(0, 0, -1)),
+        Ray<T, 3>(Point<T, 3>(0.25, 0.26, 1.0), Vector<T, 3>(0, 0, -1))
+    };
+    RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
+
+    auto hit = tri.intersect(ray_diff);
+    ASSERT_TRUE(hit.has_value());
+    ASSERT_TRUE(hit->differentials.has_value());
+    const auto& surface_diffs = hit->differentials.value();
+
+    const T offset = T(0.01);
+    EXPECT_NEAR(surface_diffs.dpdx.x(), offset, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdx.y(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdx.z(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdy.x(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdy.y(), offset, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdy.z(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dudx, offset, 1e-9);
+    EXPECT_NEAR(surface_diffs.dvdx, 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dudy, 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dvdy, offset, 1e-9);
+}
+
+TEST(TriangleTest, RayDifferentialDegenerateWhenDiffEqualsMain) {
+    TriangleMeshD mesh = make_unit_mesh();
+    TriangleD tri(mesh, 0);
+
+    Ray<T, 3> main_ray(Point<T, 3>(0.25, 0.25, 1.0), Vector<T, 3>(0, 0, -1));
+    std::array<Ray<T, 3>, 2> diff_rays{main_ray, main_ray};
+    RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
+
+    auto hit = tri.intersect(ray_diff);
+    ASSERT_TRUE(hit.has_value());
+    EXPECT_FALSE(hit->differentials.has_value());
+}
+
+TEST(TriangleTest, RayDifferentialWithoutDifferentialsLeavesOptionalEmpty) {
+    TriangleMeshD mesh = make_unit_mesh();
+    TriangleD tri(mesh, 0);
+
+    Ray<T, 3> main_ray(Point<T, 3>(0.25, 0.25, 1.0), Vector<T, 3>(0, 0, -1));
+    std::array<Ray<T, 3>, 2> diff_rays{
+        Ray<T, 3>(main_ray.origin(), Vector<T, 3>(1.0, 0.0, 0.0)),
+        Ray<T, 3>(main_ray.origin(), Vector<T, 3>(0.0, 1.0, 0.0))
+    };
+    RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
+    auto hit = tri.intersect(ray_diff);
+
+    ASSERT_TRUE(hit.has_value());
+    EXPECT_FALSE(hit->differentials.has_value());
 }
 
 TEST(TriangleTest, SampleOnShapeUniformPdfAndNormal) {

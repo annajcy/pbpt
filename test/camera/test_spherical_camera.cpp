@@ -339,9 +339,9 @@ TEST(SphericalCameraTest, DifferentialRayEqualRectangular) {
     
     // Main ray should be normalized
     float length = std::sqrt(
-        ray_diff.direction().x() * ray_diff.direction().x() +
-        ray_diff.direction().y() * ray_diff.direction().y() +
-        ray_diff.direction().z() * ray_diff.direction().z()
+        ray_diff.main_ray().direction().x() * ray_diff.main_ray().direction().x() +
+        ray_diff.main_ray().direction().y() * ray_diff.main_ray().direction().y() +
+        ray_diff.main_ray().direction().z() * ray_diff.main_ray().direction().z()
     );
     EXPECT_NEAR(length, 1.0f, 1e-5f);
     
@@ -361,7 +361,7 @@ TEST(SphericalCameraTest, DifferentialRayEqualRectangular) {
     EXPECT_NEAR(length_y, 1.0f, 1e-5f);
     
     // All origins should be (0, 0, 0)
-    EXPECT_NEAR(ray_diff.origin().x(), 0.0f, 1e-5f);
+    EXPECT_NEAR(ray_diff.main_ray().origin().x(), 0.0f, 1e-5f);
     EXPECT_NEAR(ray_diff.x().origin().x(), 0.0f, 1e-5f);
     EXPECT_NEAR(ray_diff.y().origin().x(), 0.0f, 1e-5f);
 }
@@ -377,9 +377,9 @@ TEST(SphericalCameraTest, DifferentialRayEqualArea) {
     
     // Main ray should be normalized
     double length = std::sqrt(
-        ray_diff.direction().x() * ray_diff.direction().x() +
-        ray_diff.direction().y() * ray_diff.direction().y() +
-        ray_diff.direction().z() * ray_diff.direction().z()
+        ray_diff.main_ray().direction().x() * ray_diff.main_ray().direction().x() +
+        ray_diff.main_ray().direction().y() * ray_diff.main_ray().direction().y() +
+        ray_diff.main_ray().direction().z() * ray_diff.main_ray().direction().z()
     );
     EXPECT_NEAR(length, 1.0, 1e-5);
     
@@ -410,16 +410,16 @@ TEST(SphericalCameraTest, DifferentialRayDirectionDifference) {
     
     // X-differential ray should have different direction
     bool x_different = 
-        std::abs(ray_diff.direction().x() - ray_diff.x().direction().x()) > 1e-6f ||
-        std::abs(ray_diff.direction().y() - ray_diff.x().direction().y()) > 1e-6f ||
-        std::abs(ray_diff.direction().z() - ray_diff.x().direction().z()) > 1e-6f;
+        std::abs(ray_diff.main_ray().direction().x() - ray_diff.x().direction().x()) > 1e-6f ||
+        std::abs(ray_diff.main_ray().direction().y() - ray_diff.x().direction().y()) > 1e-6f ||
+        std::abs(ray_diff.main_ray().direction().z() - ray_diff.x().direction().z()) > 1e-6f;
     EXPECT_TRUE(x_different) << "X-differential ray should have different direction";
     
     // Y-differential ray should have different direction
     bool y_different = 
-        std::abs(ray_diff.direction().x() - ray_diff.y().direction().x()) > 1e-6f ||
-        std::abs(ray_diff.direction().y() - ray_diff.y().direction().y()) > 1e-6f ||
-        std::abs(ray_diff.direction().z() - ray_diff.y().direction().z()) > 1e-6f;
+        std::abs(ray_diff.main_ray().direction().x() - ray_diff.y().direction().x()) > 1e-6f ||
+        std::abs(ray_diff.main_ray().direction().y() - ray_diff.y().direction().y()) > 1e-6f ||
+        std::abs(ray_diff.main_ray().direction().z() - ray_diff.y().direction().z()) > 1e-6f;
     EXPECT_TRUE(y_different) << "Y-differential ray should have different direction";
 }
 
@@ -445,9 +445,9 @@ TEST(SphericalCameraTest, DifferentialRayConsistency) {
     auto ray_y = camera.generate_ray(sample_y);
     
     // Differential ray should match manual calculation
-    EXPECT_NEAR(ray_diff.direction().x(), main_ray.direction().x(), 1e-5f);
-    EXPECT_NEAR(ray_diff.direction().y(), main_ray.direction().y(), 1e-5f);
-    EXPECT_NEAR(ray_diff.direction().z(), main_ray.direction().z(), 1e-5f);
+    EXPECT_NEAR(ray_diff.main_ray().direction().x(), main_ray.direction().x(), 1e-5f);
+    EXPECT_NEAR(ray_diff.main_ray().direction().y(), main_ray.direction().y(), 1e-5f);
+    EXPECT_NEAR(ray_diff.main_ray().direction().z(), main_ray.direction().z(), 1e-5f);
 }
 
 // ============================================================================

@@ -370,6 +370,15 @@ public:
         );
     }
 
+    /// Transform a 3D ray differential (main ray and differential rays).
+    constexpr RayDifferential<T, 3> transform_ray(const RayDifferential<T, 3>& ray) const {
+        std::array<Ray<T, 3>, 2> diff_rays = {
+            transform_ray(ray.x()),
+            transform_ray(ray.y())
+        };
+        return RayDifferential<T, 3>(transform_ray(ray.main_ray()), diff_rays);
+    }
+
     /// Transform an axis-aligned 3D bounding box by transforming all corners.
     constexpr Bounds<T, 3> transform_bounds(const Bounds<T, 3>& b) const {
         Bounds<T, 3> result;
@@ -393,7 +402,7 @@ public:
             n = -n;
         }
 
-        return SurfaceInteraction<T>(
+        auto result = SurfaceInteraction<T>(
             this->transform_point(si.p_lower()),
             this->transform_point(si.p_upper()),
             this->transform_vector(si.wo()),
@@ -402,6 +411,7 @@ public:
             this->transform_vector(si.dpdu()),
             this->transform_vector(si.dpdv())
         );
+        return result;
     }
 
     constexpr auto transform_volume(const T area) const {

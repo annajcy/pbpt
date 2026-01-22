@@ -535,7 +535,7 @@ private:
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
-        T eps = static_cast<T>(1e-3);
+        T eps = static_cast<T>(1);
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0); 
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
@@ -619,7 +619,7 @@ private:
         
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
-        T eps = static_cast<T>(1e-3);
+        T eps = static_cast<T>(1);
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0); 
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
@@ -735,7 +735,7 @@ private:
        
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
-        T eps = static_cast<T>(1e-3);
+        T eps = static_cast<T>(1);
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0); 
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
@@ -869,7 +869,7 @@ private:
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
-        T eps = static_cast<T>(1e-3);
+        T eps = static_cast<T>(1);
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0); 
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
@@ -969,7 +969,7 @@ private:
     geometry::RayDifferential<T, 3> generate_differential_ray_impl(const CameraSample<T>& sample) const {
         geometry::Ray<T, 3> main_ray = this->generate_ray_impl(sample);
 
-        T eps = static_cast<T>(1e-3);
+        T eps = static_cast<T>(1);
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0); 
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 

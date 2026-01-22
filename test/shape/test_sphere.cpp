@@ -1,6 +1,8 @@
+#include <array>
 #include <gtest/gtest.h>
 
 #include "geometry/interaction.hpp"
+#include "geometry/ray.hpp"
 #include "math/point.hpp"
 #include "shape/shape.hpp"
 #include "shape/sphere.hpp"
@@ -9,6 +11,7 @@ using namespace pbpt::math;
 namespace pbpt::shape::testing {
 
 using pbpt::geometry::Ray;
+using pbpt::geometry::RayDifferential;
 using pbpt::geometry::Transform;
 using pbpt::geometry::offset_ray_origin;
 using pbpt::math::Point;
@@ -219,6 +222,65 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
     EXPECT_NEAR(interaction.p_upper().y(), p.y(), 1e-12);
     EXPECT_NEAR(interaction.p_lower().z(), p.z(), 1e-12);
     EXPECT_NEAR(interaction.p_upper().z(), p.z(), 1e-12);
+}
+
+TEST_F(SphereTest, RayDifferentialComputesSurfaceDifferentials) {
+    auto sphere = make_sphere(1.0);
+    Ray<double, 3> main_ray(Point<double, 3>(2.0, 0.0, 0.0), Vector<double, 3>(-1.0, 0.0, 0.0));
+    std::array<Ray<double, 3>, 2> diff_rays{
+        Ray<double, 3>(Point<double, 3>(2.0, 1.0, 0.0), Vector<double, 3>(-1.0, 0.0, 0.0)),
+        Ray<double, 3>(Point<double, 3>(2.0, 0.0, 1.0), Vector<double, 3>(-1.0, 0.0, 0.0))
+    };
+    RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
+
+    const SphereShapeInterface& shape_iface = sphere;
+    auto hit = shape_iface.intersect(ray_diff);
+
+    ASSERT_TRUE(hit.has_value());
+    ASSERT_TRUE(hit->differentials.has_value());
+    const auto& surface_diffs = hit->differentials.value();
+
+    EXPECT_NEAR(surface_diffs.dpdx.x(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdx.y(), 1.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdx.z(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdy.x(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdy.y(), 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dpdy.z(), 1.0, 1e-9);
+
+    double two_pi = 2.0 * pi_v<double>;
+    EXPECT_NEAR(surface_diffs.dudx, 1.0 / two_pi, 1e-9);
+    EXPECT_NEAR(surface_diffs.dvdx, 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dudy, 0.0, 1e-9);
+    EXPECT_NEAR(surface_diffs.dvdy, 1.0 / pi_v<double>, 1e-9);
+}
+
+TEST_F(SphereTest, RayDifferentialDegenerateWhenDiffEqualsMain) {
+    auto sphere = make_sphere(1.0);
+    Ray<double, 3> main_ray(Point<double, 3>(1.0, 0.0, -3.0), Vector<double, 3>(0.0, 0.0, 1.0));
+    std::array<Ray<double, 3>, 2> diff_rays{main_ray, main_ray};
+    RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
+
+    const SphereShapeInterface& shape_iface = sphere;
+    auto hit = shape_iface.intersect(ray_diff);
+
+    ASSERT_TRUE(hit.has_value());
+    EXPECT_FALSE(hit->differentials.has_value());
+}
+
+TEST_F(SphereTest, RayDifferentialWithoutDifferentialsLeavesOptionalEmpty) {
+    auto sphere = make_sphere(1.0);
+    Ray<double, 3> main_ray(Point<double, 3>(2.0, 0.0, 0.0), Vector<double, 3>(-1.0, 0.0, 0.0));
+    std::array<Ray<double, 3>, 2> diff_rays{
+        Ray<double, 3>(main_ray.origin(), Vector<double, 3>(0.0, 1.0, 0.0)),
+        Ray<double, 3>(main_ray.origin(), Vector<double, 3>(0.0, 0.0, 1.0))
+    };
+    RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
+
+    const SphereShapeInterface& shape_iface = sphere;
+    auto hit = shape_iface.intersect(ray_diff);
+
+    ASSERT_TRUE(hit.has_value());
+    EXPECT_FALSE(hit->differentials.has_value());
 }
 
 TEST_F(SphereTest, SampleOnShapeProducesConsistentValues) {

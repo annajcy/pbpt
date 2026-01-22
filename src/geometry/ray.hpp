@@ -153,15 +153,12 @@ using Ray2 = Ray<double, 2>;
  * @tparam N Dimension of the embedding space.
  */
 template <typename T, int N>
-class RayDifferential : public Ray<T, N> {
+class RayDifferential {
 private:
+    Ray<T, N> m_main_ray;
     std::array<Ray<T, N>, N - 1> m_differential_rays{};
 
 public:
-    using Ray<T, N>::Ray;
-    using Ray<T, N>::origin;
-    using Ray<T, N>::direction;
-
     /**
      * @brief Construct from a main ray and its differential rays.
      *
@@ -171,7 +168,7 @@ public:
     constexpr RayDifferential<T, N>(
         const Ray<T, N>& ray,
         const std::array<Ray<T, N>, N - 1>& differential_rays
-    ) : Ray<T, N>(ray), m_differential_rays(differential_rays) {}
+    ) : m_main_ray(ray), m_differential_rays(differential_rays) {}
 
     /// Access the x-directional differential ray (const).
     constexpr const Ray<T, N>& x() const requires (N > 0) { return m_differential_rays[0]; }
@@ -201,9 +198,9 @@ public:
     constexpr const std::array<Ray<T, N>, N - 1>& differential_rays() const { return m_differential_rays; }
 
     /// Access the main ray (const).
-    constexpr const Ray<T, N>& main_ray() const { return *this; }
+    constexpr const Ray<T, N>& main_ray() const { return m_main_ray; }
     /// Access the main ray (mutable).
-    constexpr Ray<T, N>& main_ray() { return *this; }
+    constexpr Ray<T, N>& main_ray() { return m_main_ray; }
 
     /**
      * @brief Uniformly scale the distance between main and differential rays.
@@ -219,8 +216,8 @@ public:
     template<typename U>
     requires std::is_arithmetic_v<U>
     auto& scale(U scale) {
-        auto& main_o = origin();
-        auto& main_d = direction();
+        auto& main_o = m_main_ray.origin();
+        auto& main_d = m_main_ray.direction();
 
         for (size_t i = 0; i < m_differential_rays.size(); ++i) {
             auto& o = m_differential_rays[i].origin();
@@ -243,8 +240,8 @@ public:
      */
     template<typename U>
     auto& scale(const std::array<U, N - 1>& scale) {
-        auto& main_o = origin();
-        auto& main_d = direction();
+        auto& main_o = m_main_ray.origin();
+        auto& main_d = m_main_ray.direction();
 
         for (size_t i = 0; i < m_differential_rays.size(); ++i) {
             auto& o = m_differential_rays[i].origin();

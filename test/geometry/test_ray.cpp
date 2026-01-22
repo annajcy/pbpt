@@ -9,6 +9,25 @@ using namespace pbpt::math;
 
 namespace pbpt::geometry::testing {
 
+namespace {
+RayDiff3 make_default_ray_diff3() {
+    Ray3 main_ray;
+    std::array<Ray3, 2> diff_rays = {
+        Ray3(Point<double, 3>(1e-3, 0.0, 0.0), Vector<double, 3>(1.0, 0.1, 0.0)),
+        Ray3(Point<double, 3>(0.0, 1e-3, 0.0), Vector<double, 3>(1.0, 0.0, 0.1))
+    };
+    return RayDiff3(main_ray, diff_rays);
+}
+
+RayDiff2 make_default_ray_diff2() {
+    Ray2 main_ray;
+    std::array<Ray2, 1> diff_rays = {
+        Ray2(Point<double, 2>(0.0, 1e-3), Vector<double, 2>(1.0, 0.1))
+    };
+    return RayDiff2(main_ray, diff_rays);
+}
+}  // namespace
+
 // 测试 Ray 类的基础功能
 class RayTest : public ::testing::Test {
 protected:
@@ -212,9 +231,9 @@ protected:
     void TearDown() override {}
 };
 
-// 测试 RayDifferential 的默认构造
+// 测试 RayDifferential 的基础构造
 TEST_F(RayDifferentialTest, DefaultConstruction) {
-    RayDiff3 rd;
+    auto rd = make_default_ray_diff3();
     
     // 检查主光线的默认值
     EXPECT_DOUBLE_EQ(rd.main_ray().origin().x(), 0.0);
@@ -224,6 +243,11 @@ TEST_F(RayDifferentialTest, DefaultConstruction) {
     EXPECT_DOUBLE_EQ(rd.main_ray().direction().x(), 1.0);
     EXPECT_DOUBLE_EQ(rd.main_ray().direction().y(), 0.0);
     EXPECT_DOUBLE_EQ(rd.main_ray().direction().z(), 0.0);
+
+    EXPECT_NE(rd.x().origin(), rd.main_ray().origin());
+    EXPECT_NE(rd.x().direction(), rd.main_ray().direction());
+    EXPECT_NE(rd.y().origin(), rd.main_ray().origin());
+    EXPECT_NE(rd.y().direction(), rd.main_ray().direction());
 }
 
 // 测试带参数的 RayDifferential 构造
@@ -245,11 +269,13 @@ TEST_F(RayDifferentialTest, ParameterizedConstruction) {
     // 检查微分光线访问 (使用近似比较避免浮点精度问题)
     EXPECT_NEAR(rd.x().origin().x(), 1.1, 1e-6);
     EXPECT_NEAR(rd.y().origin().y(), 2.1, 1e-6);
+    EXPECT_NE(rd.x().origin(), rd.main_ray().origin());
+    EXPECT_NE(rd.y().origin(), rd.main_ray().origin());
 }
 
 // 测试微分光线的访问方法
 TEST_F(RayDifferentialTest, DifferentialRayAccess) {
-    RayDiff3 rd;
+    auto rd = make_default_ray_diff3();
     
     // 测试 x() 方法（第一个微分光线）
     rd.x() = Ray3(Pt3(1.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0));
@@ -271,7 +297,7 @@ TEST_F(RayDifferentialTest, DifferentialRayAccess) {
 
 // 测试 RayDifferential 的边界检查
 TEST_F(RayDifferentialTest, BoundaryChecks) {
-    RayDiff3 rd;
+    auto rd = make_default_ray_diff3();
     
     // 测试越界访问
     EXPECT_THROW(rd.differential_ray(-1), std::runtime_error);
@@ -280,7 +306,7 @@ TEST_F(RayDifferentialTest, BoundaryChecks) {
 
 // 测试 2D RayDifferential
 TEST_F(RayDifferentialTest, RayDiff2D) {
-    RayDiff2 rd2;
+    auto rd2 = make_default_ray_diff2();
     
     // 2D 只有一个微分光线 (N-1 = 1)
     rd2.x() = Ray2(Point<double, 2>(1.0, 0.0), Vector<double, 2>(0.0, 1.0));
@@ -326,7 +352,7 @@ TEST_F(RayDifferentialTest, ComprehensiveTest) {
 
 // 测试 differential_rays() 方法
 TEST_F(RayDifferentialTest, DifferentialRaysAccess) {
-    RayDiff3 rd;
+    auto rd = make_default_ray_diff3();
     
     // 获取 differential_rays 数组引用并修改
     auto& diff_rays = rd.differential_rays();
@@ -346,7 +372,7 @@ TEST_F(RayDifferentialTest, DifferentialRaysAccess) {
 
 // 测试主光线访问
 TEST_F(RayDifferentialTest, MainRayAccess) {
-    RayDiff3 rd;
+    auto rd = make_default_ray_diff3();
     
     // 修改主光线
     rd.main_ray() = Ray3(Pt3(5.0, 6.0, 7.0), Vec3(1.0, 1.0, 1.0));

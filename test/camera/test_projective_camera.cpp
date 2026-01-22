@@ -95,19 +95,19 @@ TEST(OrthographicCameraTest, GenerateDifferentialRay) {
     auto ray_diff = camera.generate_differential_ray(sample);
     
     // Main ray should be valid
-    EXPECT_NEAR(ray_diff.direction().z(), -1.0f, 1e-5f);
+    EXPECT_NEAR(ray_diff.main_ray().direction().z(), -1.0f, 1e-5f);
     
     // Differential rays should also have direction (0, 0, -1)
     EXPECT_NEAR(ray_diff.x().direction().z(), -1.0f, 1e-5f);
     EXPECT_NEAR(ray_diff.y().direction().z(), -1.0f, 1e-5f);
     
     // X-differential ray origin should be offset in x direction
-    EXPECT_GT(ray_diff.x().origin().x(), ray_diff.origin().x());
-    EXPECT_NEAR(ray_diff.x().origin().y(), ray_diff.origin().y(), 1e-3f);
+    EXPECT_GT(ray_diff.x().origin().x(), ray_diff.main_ray().origin().x());
+    EXPECT_NEAR(ray_diff.x().origin().y(), ray_diff.main_ray().origin().y(), 1e-3f);
     
     // Y-differential ray origin should be offset in y direction
-    EXPECT_NEAR(ray_diff.y().origin().x(), ray_diff.origin().x(), 1e-3f);
-    EXPECT_GT(ray_diff.y().origin().y(), ray_diff.origin().y());
+    EXPECT_NEAR(ray_diff.y().origin().x(), ray_diff.main_ray().origin().x(), 1e-3f);
+    EXPECT_GT(ray_diff.y().origin().y(), ray_diff.main_ray().origin().y());
 }
 
 TEST(OrthographicCameraTest, ParallelRays) {
@@ -238,13 +238,13 @@ TEST(PerspectiveCameraTest, GenerateDifferentialRay) {
     auto ray_diff = camera.generate_differential_ray(sample);
     
     // All rays should originate from camera origin
-    EXPECT_NEAR(ray_diff.origin().x(), 0.0, 1e-10);
+    EXPECT_NEAR(ray_diff.main_ray().origin().x(), 0.0, 1e-10);
     EXPECT_NEAR(ray_diff.x().origin().x(), 0.0, 1e-10);
     EXPECT_NEAR(ray_diff.y().origin().x(), 0.0, 1e-10);
     
     // Differential rays should have slightly different directions
-    EXPECT_NE(ray_diff.direction().x(), ray_diff.x().direction().x());
-    EXPECT_NE(ray_diff.direction().y(), ray_diff.y().direction().y());
+    EXPECT_NE(ray_diff.main_ray().direction().x(), ray_diff.x().direction().x());
+    EXPECT_NE(ray_diff.main_ray().direction().y(), ray_diff.y().direction().y());
 }
 
 TEST(PerspectiveCameraTest, FieldOfView) {
@@ -434,9 +434,9 @@ TEST(ThinLensOrthographicCameraTest, GenerateDifferentialRay) {
     
     // Main ray should be valid
     float length = std::sqrt(
-        ray_diff.direction().x() * ray_diff.direction().x() +
-        ray_diff.direction().y() * ray_diff.direction().y() +
-        ray_diff.direction().z() * ray_diff.direction().z()
+        ray_diff.main_ray().direction().x() * ray_diff.main_ray().direction().x() +
+        ray_diff.main_ray().direction().y() * ray_diff.main_ray().direction().y() +
+        ray_diff.main_ray().direction().z() * ray_diff.main_ray().direction().z()
     );
     EXPECT_NEAR(length, 1.0f, 1e-5f);
     
@@ -606,7 +606,7 @@ TEST(ThinLensPerspectiveCameraTest, GenerateDifferentialRay) {
         return std::abs(length - 1.0) < 1e-5;
     };
     
-    EXPECT_TRUE(check_normalized(ray_diff));
+    EXPECT_TRUE(check_normalized(ray_diff.main_ray()));
     EXPECT_TRUE(check_normalized(ray_diff.x()));
     EXPECT_TRUE(check_normalized(ray_diff.y()));
 }

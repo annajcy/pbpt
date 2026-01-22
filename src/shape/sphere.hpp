@@ -217,7 +217,14 @@ private:
         }
 
         geometry::ShadingInfo<T> shading{si_render.n()};
-        return std::make_optional(IntersectionRecord<T>{si_render, shading, result.t_hit});
+        return std::make_optional(IntersectionRecord<T>{si_render, shading, std::nullopt, result.t_hit});
+    }
+
+    std::optional<IntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
+        auto hit = intersect_impl(ray.main_ray());
+        if (!hit) return std::nullopt;
+        hit->differentials = geometry::compute_surface_differentials(hit->interaction, ray);
+        return hit;
     }
 
     T area_impl() const {

@@ -227,6 +227,17 @@ private:
         
         return std::nullopt;
     }
+
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
+        auto hit = intersect_impl(ray.main_ray());
+        if (hit) {
+            hit->intersection.differentials = geometry::compute_surface_differentials(
+                hit->intersection.interaction,
+                ray
+            );
+        }
+        return hit;
+    }
         
     std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
         if (!m_scene) return std::nullopt;

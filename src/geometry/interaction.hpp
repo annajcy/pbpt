@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cmath>
+#include <optional>
 
 #include "math/point.hpp"
 #include "math/vector.hpp"
@@ -162,5 +163,86 @@ public:
         m_n = -m_n;
     }
 };
+
+// -----------------------------------------------------------------------------
+// Surface Differentials
+// -----------------------------------------------------------------------------
+
+template<typename T>
+struct SurfaceDifferentials {
+    math::Vector<T, 3> dpdx{};
+    math::Vector<T, 3> dpdy{};
+    T dudx{0};
+    T dvdx{0};
+    T dudy{0};
+    T dvdy{0};
+};
+
+template<typename T>
+inline std::optional<SurfaceDifferentials<T>> compute_surface_differentials(
+    const SurfaceInteraction<T>& si,
+    const geometry::RayDifferential<T, 3>& ray
+) {
+    auto n_vec = si.n().to_vector();
+    auto p = si.point();
+
+    T tx_denom = n_vec.dot(ray.x().direction());
+    T ty_denom = n_vec.dot(ray.y().direction());
+    if (std::abs(tx_denom) < math::epsilon_v<T> || std::abs(ty_denom) < math::epsilon_v<T>) {
+        return std::nullopt;
+    }
+
+    T tx = n_vec.dot(p - ray.x().origin()) / tx_denom;
+    T ty = n_vec.dot(p - ray.y().origin()) / ty_denom;
+    if (!std::isfinite(tx) || !std::isfinite(ty)) {
+        return std::nullopt;
+    }
+
+    auto px = ray.x().origin() + ray.x().direction() * tx;
+    auto py = ray.y().origin() + ray.y().direction() * ty;
+
+    SurfaceDifferentials<T> diffs;
+    diffs.dpdx = px - p;
+    diffs.dpdy = py - p;
+    T eps_sq = math::epsilon_v<T> * math::epsilon_v<T>;
+    if (diffs.dpdx.length_squared() <= eps_sq && diffs.dpdy.length_squared() <= eps_sq) {
+        return std::nullopt;
+    }
+
+    int dim0 = 0;
+    int dim1 = 1;
+    T abs_nx = std::abs(n_vec.x());
+    T abs_ny = std::abs(n_vec.y());
+    T abs_nz = std::abs(n_vec.z());
+    if (abs_nx > abs_ny && abs_nx > abs_nz) {
+        dim0 = 1;
+        dim1 = 2;
+    } else if (abs_ny > abs_nz) {
+        dim0 = 0;
+        dim1 = 2;
+    }
+
+    const auto& dpdu = si.dpdu();
+    const auto& dpdv = si.dpdv();
+    T a00 = dpdu[dim0];
+    T a01 = dpdv[dim0];
+    T a10 = dpdu[dim1];
+    T a11 = dpdv[dim1];
+    T det = a00 * a11 - a01 * a10;
+    if (std::abs(det) > math::epsilon_v<T>) {
+        T inv_det = T(1) / det;
+        T bx0 = diffs.dpdx[dim0];
+        T bx1 = diffs.dpdx[dim1];
+        T by0 = diffs.dpdy[dim0];
+        T by1 = diffs.dpdy[dim1];
+
+        diffs.dudx = (bx0 * a11 - bx1 * a01) * inv_det;
+        diffs.dvdx = (-bx0 * a10 + bx1 * a00) * inv_det;
+        diffs.dudy = (by0 * a11 - by1 * a01) * inv_det;
+        diffs.dvdy = (-by0 * a10 + by1 * a00) * inv_det;
+    }
+
+    return diffs;
+}
 
 } // namespace pbpt::geometry
