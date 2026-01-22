@@ -1,6 +1,8 @@
 include(CTest)
 include(GoogleTest)
 
+set(CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)
+
 add_subdirectory(radiometry)
 add_subdirectory(math)
 add_subdirectory(geometry)

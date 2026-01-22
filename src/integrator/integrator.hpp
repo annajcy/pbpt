@@ -85,9 +85,7 @@ protected:
                         lens_position
                     );
 
-                    auto ray = context.camera.generate_ray(sample);
-                    ray = context.render_transform.camera_to_render().transform_ray(ray);
-
+                    
                     // Sample wavelengths
                     auto wavelength_sample = radiometry::sample_visible_wavelengths_stratified<T, N>(sampler.next_1d());
                     auto wavelength_pdf = radiometry::sample_visible_wavelengths_pdf(wavelength_sample);
@@ -96,13 +94,17 @@ protected:
                     radiometry::SampledSpectrum<T, N> Li;
                     if constexpr (supports_ray_differential<SceneContextT>) {
                         if (is_trace_ray_differential) {
-                        auto ray_diff = context.camera.generate_differential_ray(sample);
-                        ray_diff = context.render_transform.camera_to_render().transform_ray(ray_diff);
-                        Li = this->Li(context, ray_diff, wavelength_sample, sampler);
+                            auto ray_diff = context.camera.generate_differential_ray(sample);
+                            ray_diff = context.render_transform.camera_to_render().transform_ray(ray_diff);
+                            Li = this->Li(context, ray_diff, wavelength_sample, sampler);
                         } else {
+                            auto ray = context.camera.generate_ray(sample);
+                            ray = context.render_transform.camera_to_render().transform_ray(ray);
                             Li = this->Li(context, ray, wavelength_sample, sampler);
                         }
                     } else {
+                        auto ray = context.camera.generate_ray(sample);
+                        ray = context.render_transform.camera_to_render().transform_ray(ray);
                         Li = this->Li(context, ray, wavelength_sample, sampler);
                     }
 
