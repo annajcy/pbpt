@@ -14,11 +14,14 @@ namespace pbpt::light::testing {
 namespace {
 
 template <typename T>
-geometry::NormalInteraction<T> make_ref_interaction(const math::Point<T, 3>& p) {
-    return geometry::NormalInteraction<T>(
+geometry::SurfaceInteraction<T> make_ref_interaction(const math::Point<T, 3>& p) {
+    return geometry::SurfaceInteraction<T>(
         p,
         math::Vector<T, 3>(0, 0, 1),
         math::Normal<T, 3>(0, 0, 1),
+        math::Point<T, 2>(0, 0),
+        math::Vector<T, 3>(0, 0, 0),
+        math::Vector<T, 3>(0, 0, 0),
         math::Vector<T, 3>(0, 0, 0)
     );
 }
@@ -42,7 +45,7 @@ TEST(VisibilityTesterTest, UnoccludedDependsOnAggregateHit) {
     shape::Primitive<T> blocking_prim(std::move(blocking_sphere), 0);
     aggregate::LinearAggregate<T> agg({blocking_prim});
 
-    VisibilityTester<T, geometry::NormalInteraction<T>> tester(ref, dst);
+    VisibilityTester<T, geometry::SurfaceInteraction<T>> tester(ref, dst);
     EXPECT_FALSE(tester.is_unoccluded(agg));  // blocked
 
     shape::Sphere<T> away_sphere(geometry::Transform<T>::translate(math::Vector<T, 3>(5, 0, 0)), false, T(1));

@@ -301,34 +301,28 @@ public:
         auto dp02 = p0 - p2;
         auto dp12 = p1 - p2;
         auto ng = math::cross(dp02, dp12).normalized();
-        
+        if (m_mesh.should_flip_normal()) {
+            ng = -ng;
+        }
+
         // 7. Compute Shading Normal & FaceForward
         math::Normal<T, 3> ns;
         if (m_mesh.has_normals()) {
-            ns = (b0 * m_mesh.normals()[idx[0]] + 
-                  b1 * m_mesh.normals()[idx[1]] + 
+            ns = (b0 * m_mesh.normals()[idx[0]] +
+                  b1 * m_mesh.normals()[idx[1]] +
                   b2 * m_mesh.normals()[idx[2]]).normalized();
-            
             if (m_mesh.should_flip_normal()) {
                 ns = -ns;
             }
-
-            // Force geometric normal to match shading normal hemisphere
-            if (ng.dot(ns.to_vector()) < 0) ng = -ng;
+            if (ng.dot(ns.to_vector()) < 0) {
+                ns = -ns;
+            }
         } else {
             ns = ng;
-            // Apply mesh flip logic if no explicit normals exist
-            if (m_mesh.should_flip_normal()) {
-                ng = -ng;
-                ns = -ns;
-            }
         }
 
         // 8. Compute Partial Derivatives (dpdu, dpdv)
         math::Vector<T, 3> dpdu, dpdv;
-        math::Normal<T, 3> dndu{0,0,0}, dndv{0,0,0}; // Always 0 for flat triangle geometry
-        math::Normal<T, 3> shading_dndu{0,0,0}, shading_dndv{0,0,0};
-
         if (m_mesh.has_uvs()) {
             const auto& uvs = m_mesh.uvs();
             auto duv1 = uvs[idx[1]] - uvs[idx[0]];
@@ -341,50 +335,32 @@ public:
                 T inv_det = T(1) / det;
                 dpdu = (duv2.y() * dp1 - duv1.y() * dp2) * inv_det;
                 dpdv = (-duv2.x() * dp1 + duv1.x() * dp2) * inv_det;
-                
-                // Compute Shading Normal Derivatives (Weingarten equations)
-                if (m_mesh.has_normals()) {
-                    const auto& normals = m_mesh.normals();
-                    auto dn1 = normals[idx[1]] - normals[idx[0]];
-                    auto dn2 = normals[idx[2]] - normals[idx[0]];
-                    shading_dndu = (duv2.y() * dn1 - duv1.y() * dn2) * inv_det;
-                    shading_dndv = (-duv2.x() * dn1 + duv1.x() * dn2) * inv_det;
-                }
             } else {
-                 // Degenerate UVs, create arbitrary coordinate system
-                 auto frame = math::coordinate_system(ng);
-                 dpdu = frame.first; dpdv = frame.second;
+                // Degenerate UVs, create arbitrary coordinate system
+                auto frame = math::coordinate_system(ng);
+                dpdu = frame.first;
+                dpdv = frame.second;
             }
         } else {
-             // No UVs, create arbitrary coordinate system
-             auto frame = math::coordinate_system(ng);
-             dpdu = frame.first; dpdv = frame.second;
+            // No UVs, create arbitrary coordinate system
+            auto frame = math::coordinate_system(ng);
+            dpdu = frame.first;
+            dpdv = frame.second;
         }
 
-        // 9. Orthogonalize Shading Tangents
-        math::Vector<T, 3> shading_dpdu = dpdu;
-        math::Vector<T, 3> shading_dpdv = dpdv;
-        
-        // Gram-Schmidt
-        shading_dpdu = shading_dpdu - ns.to_vector() * shading_dpdu.dot(ns.to_vector());
-        if (shading_dpdu.length_squared() > 0) shading_dpdu = shading_dpdu.normalized();
-        
-        // Ensure orthogonality for shading bitangent
-        shading_dpdv = shading_dpdv - ns.to_vector() * shading_dpdv.dot(ns.to_vector());
-        shading_dpdv = shading_dpdv - shading_dpdu * shading_dpdv.dot(shading_dpdu); // double orthogonalization
-        if (shading_dpdv.length_squared() > 0) shading_dpdv = shading_dpdv.normalized();
-
-        // 10. Construct Interaction
+        // 9. Construct Interaction
         geometry::SurfaceInteraction<T> interaction(
-            p_hit - p_error, 
+            p_hit - p_error,
             p_hit + p_error,
             -ray.direction().normalized(),
-            ng, ns, uv_hit,
-            dpdu, dpdv, dndu, dndv,
-            shading_dpdu, shading_dpdv, shading_dndu, shading_dndv
+            ng,
+            uv_hit,
+            dpdu,
+            dpdv
         );
 
-        return IntersectionRecord<T>{interaction, t_hit};
+        geometry::ShadingInfo<T> shading{ns};
+        return IntersectionRecord<T>{interaction, shading, t_hit};
     }
 
     std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {

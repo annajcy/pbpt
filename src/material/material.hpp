@@ -22,9 +22,10 @@ public:
     template<int N>
     BSDF<T, N> compute_bsdf(
         const geometry::SurfaceInteraction<T>& si,
+        const geometry::ShadingInfo<T>& shading,
         const radiometry::SampledWavelength<T, N>& wavelengths
     ) const {
-        return as_derived().template compute_bsdf_impl<N>(si, wavelengths);
+        return as_derived().template compute_bsdf_impl<N>(si, shading, wavelengths);
     }
 
     Derived& as_derived() {
@@ -40,15 +41,23 @@ public:
  * @brief Convenience helpers for building BSDF frames and libraries of materials.
  */
 namespace detail {
+
 template<typename T>
-inline geometry::Frame<T> build_shading_frame(const geometry::SurfaceInteraction<T>& si) {
-    const auto shading_n = si.shading_n().to_vector().normalized();
-    const auto dpdu = si.shading_dpdu();
-    if (dpdu.length_squared() > 0) {
-        return geometry::Frame<T>(dpdu, shading_n);
+inline geometry::Frame<T> build_shading_frame(
+    const geometry::SurfaceInteraction<T>& si,
+    const geometry::ShadingInfo<T>& shading
+) {
+    auto shading_n = shading.n;
+    if (shading_n.to_vector().dot(si.n().to_vector()) < 0) {
+        shading_n = -shading_n;
     }
-    return geometry::Frame<T>(shading_n);
+    const auto dpdu = si.dpdu();
+    if (dpdu.length_squared() > 0) {
+        return geometry::Frame<T>(dpdu, shading_n.to_vector());
+    }
+    return geometry::Frame<T>(shading_n.to_vector());
 }
+
 }  // namespace detail
 
 /**
@@ -57,9 +66,10 @@ inline geometry::Frame<T> build_shading_frame(const geometry::SurfaceInteraction
 template<typename T, int N>
 inline BSDF<T, N> make_bsdf(
     const geometry::SurfaceInteraction<T>& si,
+    const geometry::ShadingInfo<T>& shading,
     std::vector<AnyBxDF<T, N>> bxdfs
 ) {
-    geometry::Frame<T> shading_frame = detail::build_shading_frame(si);
+    geometry::Frame<T> shading_frame = detail::build_shading_frame(si, shading);
     geometry::Frame<T> geometric_frame(si.n().to_vector());
     return BSDF<T, N>(shading_frame, geometric_frame, std::move(bxdfs));
 }
@@ -80,12 +90,13 @@ public:
     template<int N>
     BSDF<T, N> compute_bsdf_impl(
         const geometry::SurfaceInteraction<T>& si,
+        const geometry::ShadingInfo<T>& shading,
         const radiometry::SampledWavelength<T, N>& wavelengths
     ) const {
         auto albedo = m_albedo_dist.template sample<N>(wavelengths);
         std::vector<AnyBxDF<T, N>> lobes;
         lobes.emplace_back(LambertianBxDF<T, N>(albedo));
-        return make_bsdf(si, std::move(lobes));
+        return make_bsdf(si, shading, std::move(lobes));
     }
 };
 }  // namespace pbpt::material

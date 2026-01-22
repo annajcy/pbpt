@@ -22,6 +22,7 @@ namespace pbpt::shape {
 template<typename T>
 struct IntersectionRecord {
     geometry::SurfaceInteraction<T> interaction;
+    geometry::ShadingInfo<T> shading;
     T t{};
 };
 

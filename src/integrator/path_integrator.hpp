@@ -80,6 +80,7 @@ private:
         std::visit([&](const auto& mat) {
             bsdf = mat.template compute_bsdf<N>(
                 prim_intersection_rec.intersection.interaction,
+                prim_intersection_rec.intersection.shading,
                 wavelength_sample
             );
         }, material);

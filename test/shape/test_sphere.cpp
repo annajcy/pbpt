@@ -177,7 +177,9 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
     auto result = shape_iface.intersect(ray);
 
     ASSERT_TRUE(result.has_value());
-    const auto& [interaction, t_hit] = result.value();
+    const auto& record = result.value();
+    const auto& interaction = record.interaction;
+    auto t_hit = record.t;
 
     EXPECT_NEAR(t_hit, 1.0, 1e-12);
 
@@ -209,16 +211,6 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
     EXPECT_NEAR(dpdv.x(), 0.0, 1e-12);
     EXPECT_NEAR(dpdv.y(), 0.0, 1e-12);
     EXPECT_NEAR(dpdv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
-
-    auto dndu = interaction.dndu().to_vector();
-    EXPECT_NEAR(dndu.x(), 0.0, 1e-12);
-    EXPECT_NEAR(dndu.y(), sphere.phi_max(), 1e-12);
-    EXPECT_NEAR(dndu.z(), 0.0, 1e-12);
-
-    auto dndv = interaction.dndv().to_vector();
-    EXPECT_NEAR(dndv.x(), 0.0, 1e-12);
-    EXPECT_NEAR(dndv.y(), 0.0, 1e-12);
-    EXPECT_NEAR(dndv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
 
     auto expected_error = pbpt::math::gamma<double>(5) * 1.0;
     EXPECT_NEAR(interaction.p_lower().x(), p.x() - expected_error, 1e-12);
@@ -329,7 +321,9 @@ TEST_F(SphereTransformTest, IntersectProducesRenderSpaceSurfaceInteraction) {
     auto result = shape_iface.intersect(ray);
 
     ASSERT_TRUE(result.has_value());
-    const auto& [interaction, t_hit] = result.value();
+    const auto& record = result.value();
+    const auto& interaction = record.interaction;
+    auto t_hit = record.t;
 
     EXPECT_NEAR(t_hit, 1.0, 1e-12);
 
@@ -358,16 +352,6 @@ TEST_F(SphereTransformTest, IntersectProducesRenderSpaceSurfaceInteraction) {
     EXPECT_NEAR(dpdv.y(), 0.0, 1e-12);
     EXPECT_NEAR(dpdv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
 
-    auto dndu = interaction.dndu().to_vector();
-    EXPECT_NEAR(dndu.x(), 0.0, 1e-12);
-    EXPECT_NEAR(dndu.y(), sphere.phi_max(), 1e-12);
-    EXPECT_NEAR(dndu.z(), 0.0, 1e-12);
-
-    auto dndv = interaction.dndv().to_vector();
-    EXPECT_NEAR(dndv.x(), 0.0, 1e-12);
-    EXPECT_NEAR(dndv.y(), 0.0, 1e-12);
-    EXPECT_NEAR(dndv.z(), -(sphere.z_max_theta() - sphere.z_min_theta()), 1e-12);
-
     auto expected_error = pbpt::math::gamma<double>(5) * 1.0;
     EXPECT_NEAR(interaction.p_lower().x(), p.x() - expected_error, 1e-12);
     EXPECT_NEAR(interaction.p_upper().x(), p.x() + expected_error, 1e-12);
@@ -395,7 +379,9 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
     Ray<double, 3> ray_a(Point<double, 3>(1.0, 2.0, 0.0), Vector<double, 3>(0.0, 0.0, 1.0));
     auto hit_a = transformed.intersect(ray_a);
     ASSERT_TRUE(hit_a.has_value());
-    const auto& [intr_a, t_a] = hit_a.value();
+    const auto& record_a = hit_a.value();
+    const auto& intr_a = record_a.interaction;
+    auto t_a = record_a.t;
     EXPECT_NEAR(t_a, 2.0, 1e-12);
     auto p_a = intr_a.point();
     EXPECT_NEAR(p_a.x(), 1.0, 1e-12);
@@ -410,7 +396,9 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
     auto transformed_b = make_sphere_with_transform(translate_b, 1.0);
     auto hit_b = transformed_b.intersect(ray_a);
     ASSERT_TRUE(hit_b.has_value());
-    const auto& [intr_b, t_b] = hit_b.value();
+    const auto& record_b = hit_b.value();
+    const auto& intr_b = record_b.interaction;
+    auto t_b = record_b.t;
     EXPECT_NEAR(t_b, 2.040834, 1e-6);
     auto p_b = intr_b.point();
     EXPECT_NEAR(p_b.x(), 1.0, 1e-6);

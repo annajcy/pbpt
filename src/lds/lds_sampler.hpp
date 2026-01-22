@@ -1,6 +1,5 @@
 #pragma once
 
-#include "math/random_generator.hpp"
 #include "math/point.hpp"
 
 namespace pbpt::lds {

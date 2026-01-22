@@ -1,8 +1,6 @@
 #include <format>
 #include <iostream>
 #include <vector>
-#include "aggregate/aggregate.hpp"
-#include "aggregate/embree_aggregate.hpp"
 #include "loader/scene_loader.hpp"
 #include "scene/cbox_scene.hpp"
 #include "scene/scene.hpp"

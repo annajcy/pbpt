@@ -28,7 +28,7 @@ public:
         return static_cast<const Derived&>(*this);
     }
 
-    void render(pbpt::scene::Scene<T>& scene, int ssp = 4, std::string output_path = "output.exr") {
+    void render(pbpt::scene::Scene<T>& scene, int spp = 4, std::string output_path = "output.exr") {
         std::visit([&](const auto& camera, auto& film, const auto& pixel_filter, const auto& aggregate) {
             scene::SceneContext context{
                 camera, film, pixel_filter, aggregate, 
@@ -37,7 +37,7 @@ public:
 
             this->render_loop(
                 context,
-                ssp,
+                spp,
                 output_path
             );
         }, scene.camera, scene.film, scene.pixel_filter, scene.aggregate);
@@ -47,10 +47,10 @@ protected:
     template<typename SceneContextT>
     void render_loop(
         const SceneContextT& context,
-        int ssp, const std::string& output_path
+        int spp, const std::string& output_path
     ) {
         auto resolution = context.film.resolution();
-        std::cout << "Starting render: " << resolution.x() << "x" << resolution.y() << " pixels, SSP=" << ssp << std::endl;
+        std::cout << "Starting render: " << resolution.x() << "x" << resolution.y() << " pixels, SPP=" << spp << std::endl;
         const std::size_t total_pixels = static_cast<std::size_t>(resolution.x()) * static_cast<std::size_t>(resolution.y());
         utils::ProgressBar progress_bar(total_pixels, 40, "Rendering");
         progress_bar.start(std::cout);
@@ -58,7 +58,7 @@ protected:
         for (int y = 0; y < resolution.y(); ++y) {
             for (int x = 0; x < resolution.x(); ++x) {
                 Sampler sampler; 
-                for (int s = 0; s < ssp; ++s) {
+                for (int s = 0; s < spp; ++s) {
                     // Generate camera ray
                     const math::Point<int, 2> pixel(x, y);
                     const auto film_uv = sampler.next_2d();

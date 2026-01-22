@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <concepts>
 #include <cstdlib>
 
 #include "math/function.hpp"

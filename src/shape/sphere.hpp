@@ -213,10 +213,11 @@ private:
         // Note: Matrix handedness swap is already handled inside transform_surface_interaction.
         // We only apply the extra flip if user explicitly requested ReverseOrientation.
         if (m_flip_normals) {
-            si_render.filp_normals();
+            si_render.flip_normal();
         }
 
-        return std::make_optional(IntersectionRecord<T>{si_render, result.t_hit});
+        geometry::ShadingInfo<T> shading{si_render.n()};
+        return std::make_optional(IntersectionRecord<T>{si_render, shading, result.t_hit});
     }
 
     T area_impl() const {
@@ -515,33 +516,12 @@ private:
         );
         dpdv = dpdv * theta_range;
 
-        // 3. Compute Normal Derivatives (dndu, dndv)
-        // For sphere: dn = dp / radius
-        // (Weingarten equations simplify significantly for spheres)
-        math::Vector<T, 3> dndu = dpdu * (T(1) / m_radius);
-        math::Vector<T, 3> dndv = dpdv * (T(1) / m_radius);
-
-        // 4. Compute Normal
+        // 3. Compute Normal
         math::Normal<T, 3> N = math::Normal<T, 3>::from_vector(
             (intersection.p_obj - math::Point<T, 3>(0,0,0)).normalized()
         );
-        
-        // Handle User Flip inside Object Space (if needed, though usually handled in Render Space)
-        if (m_flip_normals) {
-             N = -N;
-             dndu = -dndu;
-             dndv = -dndv;
-        }
 
-        // 5. Initialize Shading Geometry (Identical to Geometric for Sphere)
-        // PBRT Standard: Shading Normal starts same as Geometric Normal
-        math::Normal<T, 3> shading_n = N;
-        math::Vector<T, 3> shading_dpdu = dpdu;
-        math::Vector<T, 3> shading_dpdv = dpdv;
-        math::Normal<T, 3> shading_dndu = math::Normal<T, 3>(dndu);
-        math::Normal<T, 3> shading_dndv = math::Normal<T, 3>(dndv);
-
-        // 6. Compute Error Bounds (for robust intersection)
+        // 4. Compute Error Bounds (for robust intersection)
         math::Vector<T, 3> p_error = math::gamma<T>(5) * math::Vector<T, 3>(
             std::abs(intersection.p_obj.x()),
             std::abs(intersection.p_obj.y()),
@@ -553,12 +533,9 @@ private:
             intersection.p_obj + p_error,
             -ray_obj.direction().normalized(),
             N,
-            shading_n,
             math::Point<T, 2>(u, v),
-            dpdu, dpdv,
-            math::Normal<T, 3>(dndu), math::Normal<T, 3>(dndv),
-            shading_dpdu, shading_dpdv,
-            shading_dndu, shading_dndv
+            dpdu,
+            dpdv
         );
     }
 };
