@@ -6,7 +6,7 @@
 #include "geometry/transform.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
-#include "shape/triangle.hpp"
+#include "shape/plugin/shape/triangle.hpp"
 
 namespace pbpt::shape::testing {
 

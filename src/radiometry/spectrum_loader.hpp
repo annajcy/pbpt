@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "spectrum_distribution.hpp"
+#include "radiometry/plugin/spectrum_distribution/tabular.hpp"
 
 namespace pbpt::radiometry {
 

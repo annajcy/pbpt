@@ -1,9 +1,9 @@
 #pragma once
 
 #include <variant>
-#include "light/light.hpp"
-#include "radiometry/spectrum_distribution_type.hpp"
-#include "shape/triangle.hpp"
+#include "area_light.hpp"
+#include "radiometry/plugin/spectrum_distribution/spectrum_distribution_type.hpp"
+#include "shape/plugin/shape/triangle.hpp"
 #include "utils/library.hpp"
 
 namespace pbpt::light {

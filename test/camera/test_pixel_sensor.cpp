@@ -7,7 +7,8 @@
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
-#include "radiometry/spectrum_distribution.hpp"
+#include "radiometry/plugin/spectrum_distribution/functional.hpp"
+
 
 namespace pbpt::camera::testing {
 

@@ -15,7 +15,6 @@
 #include "geometry/transform.hpp"
 #include "math/normal.hpp"
 #include "math/point.hpp"
-#include "camera/render_transform.hpp"
 
 namespace pbpt::shape {
 

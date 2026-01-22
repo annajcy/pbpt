@@ -1,14 +1,13 @@
 #include <gtest/gtest.h>
 
 #include "geometry/interaction.hpp"
-#include "light/light.hpp"
+#include "light/plugin/light/area_light.hpp"
 #include "math/function.hpp"
-#include "aggregate/aggregate.hpp"
+#include "aggregate/plugin/aggregate/linear_aggregate.hpp"
 #include "geometry/transform.hpp"
+#include "radiometry/plugin/spectrum_distribution/constant.hpp"
 #include "radiometry/sampled_spectrum.hpp"
-#include "radiometry/spectrum_distribution.hpp"
-#include "shape/sphere.hpp"
-
+#include "shape/plugin/shape/sphere.hpp"
 namespace pbpt::light::testing {
 
 namespace {

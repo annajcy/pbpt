@@ -270,4 +270,4 @@ private:
     }
 };
 
-}
+} // namespace pbpt::aggregate

@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 
-#include "../spectrum_distribution.hpp"
+#include "../plugin/spectrum_distribution/piecewise_linear.hpp"
 
 namespace pbpt::radiometry::constant {
 

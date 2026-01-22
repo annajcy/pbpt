@@ -5,7 +5,7 @@
 #include "geometry/ray.hpp"
 #include "math/point.hpp"
 #include "shape/shape.hpp"
-#include "shape/sphere.hpp"
+#include "shape/plugin/shape/sphere.hpp"
 using namespace pbpt::math;
 
 namespace pbpt::shape::testing {

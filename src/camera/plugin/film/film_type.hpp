@@ -2,7 +2,7 @@
 
 #include <variant>
 
-#include "camera/film.hpp"
+#include "camera/plugin/film/hdr_film.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"

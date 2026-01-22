@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "camera/film.hpp"
+#include "camera/plugin/film/hdr_film.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "gtest/gtest.h"
 #include "math/point.hpp"
@@ -10,7 +10,8 @@
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/standard_color_spaces.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
-#include "radiometry/spectrum_distribution.hpp"
+#include "radiometry/plugin/spectrum_distribution/constant.hpp"
+#include "radiometry/plugin/spectrum_distribution/multiplied.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::camera::testing {

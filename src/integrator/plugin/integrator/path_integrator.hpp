@@ -1,7 +1,7 @@
 #pragma once
 
 #include "integrator/integrator.hpp"
-#include "lds/independent.hpp"
+#include "lds/plugin/lds/independent.hpp"
 
 #include <cstddef>
 #include <variant>

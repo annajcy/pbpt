@@ -12,12 +12,11 @@
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/swatch_reflectances_spectrum.hpp"
 #include "integrator/domain.hpp"
-#include "radiometry/spectrum_distribution.hpp"
-#include "shape/shape.hpp"
 
 #include "pbpt.h"
-#include "shape/sphere.hpp"
-#include "shape/triangle.hpp"
+#include "radiometry/plugin/spectrum_distribution/black_body.hpp"
+#include "shape/plugin/shape/sphere.hpp"
+#include "shape/plugin/shape/triangle.hpp"
 
 using namespace pbpt;
 

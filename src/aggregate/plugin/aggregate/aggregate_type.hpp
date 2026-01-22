@@ -2,7 +2,8 @@
 
 #include <variant>
 #include "aggregate/aggregate.hpp"
-#include "aggregate/embree_aggregate.hpp"
+#include "embree_aggregate.hpp"
+#include "linear_aggregate.hpp"
 
 namespace pbpt::aggregate {
 
@@ -12,4 +13,5 @@ using AnyAggregate = std::variant<
     aggregate::LinearAggregate<T>,
     aggregate::EmbreeAggregate<T>
 >;
+
 };

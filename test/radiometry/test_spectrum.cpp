@@ -7,7 +7,9 @@
 #include "math/type_alias.hpp"
 #include "pbpt.h"
 #include "math/random_generator.hpp"
-#include "radiometry/spectrum_distribution.hpp"
+#include "radiometry/plugin/spectrum_distribution/black_body.hpp"
+#include "radiometry/plugin/spectrum_distribution/constant.hpp"
+#include "radiometry/plugin/spectrum_distribution/multiplied.hpp"
 
 using namespace pbpt::math;
 using namespace pbpt::radiometry::constant;

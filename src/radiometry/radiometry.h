@@ -16,7 +16,6 @@
 #include "color_spectrum_optimizer.hpp"
 #include "color_spectrum_lut.hpp"
 #include "sampled_spectrum.hpp"
-#include "spectrum_distribution.hpp"
 #include "spectrum_loader.hpp"
 
 #include "constant/swatch_reflectances_spectrum.hpp"

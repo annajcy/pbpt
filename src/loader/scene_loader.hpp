@@ -12,16 +12,17 @@
 #include "loader/loader_context.hpp"
 
 // Component headers
-#include "camera/camera.hpp"
-#include "camera/film.hpp"
-#include "camera/pixel_filter.hpp"
+#include "camera/plugin/camera/projective_cameras.hpp"
+#include "camera/plugin/film/hdr_film.hpp"
+#include "camera/plugin/pixel_filter/gaussian_filter.hpp"
 #include "camera/pixel_sensor.hpp"
-#include "material/material.hpp"
-#include "shape/triangle.hpp" // Contains Triangle and TriangleMesh
-#include "light/light.hpp"
-#include "aggregate/embree_aggregate.hpp"
+#include "material/plugin/material/lambertian_material.hpp"
+#include "shape/plugin/shape/triangle.hpp" // Contains Triangle and TriangleMesh
+#include "light/plugin/light/area_light.hpp"
+#include "aggregate/plugin/aggregate/embree_aggregate.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
+#include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 
 namespace pbpt::loader {
 

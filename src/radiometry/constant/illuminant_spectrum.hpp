@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../spectrum_distribution.hpp"
+#include "../plugin/spectrum_distribution/tabular.hpp"
 
 namespace pbpt::radiometry::constant {
 

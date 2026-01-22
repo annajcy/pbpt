@@ -1,7 +1,7 @@
 #pragma once
 
 #include <variant>
-#include "material.hpp"
+#include "material/plugin/material/lambertian_material.hpp"
 #include "utils/library.hpp"
 
 namespace pbpt::material {

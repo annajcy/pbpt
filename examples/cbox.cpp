@@ -4,7 +4,7 @@
 #include "loader/scene_loader.hpp"
 #include "scene/cbox_scene.hpp"
 #include "scene/scene.hpp"
-#include "integrator/path_integrator.hpp"
+#include "integrator/plugin/integrator/path_integrator.hpp"
 
 int main() {
     // Debug: compare both scenes - load scene2 FIRST to avoid static id issue

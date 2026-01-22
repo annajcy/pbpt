@@ -1,7 +1,8 @@
 #pragma once
 
 #include "radiometry/constant/illuminant_spectrum.hpp"
-#include "radiometry/spectrum_distribution.hpp"
+#include "radiometry/plugin/spectrum_distribution/multiplied.hpp"
+#include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 #include "utils/library.hpp"
 
 namespace pbpt::radiometry {

@@ -8,8 +8,14 @@
  */
 #pragma once
 
-#include "camera.hpp"
-#include "film.hpp"
-#include "pixel_sensor.hpp"
-#include "render_transform.hpp"
-#include "pixel_filter.hpp"
+#include "camera/camera.hpp"
+#include "camera/plugin/camera/projective_cameras.hpp"
+#include "camera/plugin/camera/spherical_camera.hpp"
+#include "camera/film.hpp"
+#include "camera/plugin/film/hdr_film.hpp"
+#include "camera/pixel_sensor.hpp"
+#include "camera/render_transform.hpp"
+#include "camera/pixel_filter.hpp"
+#include "camera/plugin/pixel_filter/box_filter.hpp"
+#include "camera/plugin/pixel_filter/gaussian_filter.hpp"
+#include "camera/plugin/pixel_filter/tent_filter.hpp"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lds_sampler.hpp"
+#include "lds/lds_sampler.hpp"
 #include "math/random_generator.hpp"
 #include "math/point.hpp"
 

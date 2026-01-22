@@ -7,7 +7,7 @@
 
 #include "geometry/frame.hpp"
 #include "sampler/discrete.hpp"
-#include "bxdf_type.hpp"
+#include "material/plugin/bxdf/bxdf_type.hpp"
 
 namespace pbpt::material {
 

@@ -5,7 +5,7 @@
 #include <variant>
 #include "geometry/ray.hpp"
 #include "shape.hpp" 
-#include "shape_type.hpp"
+#include "shape/plugin/shape/shape_type.hpp"
 
 namespace pbpt::shape {
 

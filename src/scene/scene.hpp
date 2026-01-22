@@ -3,17 +3,16 @@
 #include <string>
 #include <unordered_map>
 
-#include "aggregate/aggregate_type.hpp"
-#include "camera/film_type.hpp"
-#include "camera/pixel_filter_type.hpp"
-#include "material/material_type.hpp"
+#include "aggregate/plugin/aggregate/aggregate_type.hpp"
+#include "camera/plugin/film/film_type.hpp"
+#include "camera/plugin/pixel_filter/pixel_filter_type.hpp"
+#include "material/plugin/material/material_type.hpp"
 #include "camera/render_transform.hpp"
-#include "radiometry/spectrum_distribution_type.hpp"
+#include "radiometry/plugin/spectrum_distribution/spectrum_distribution_type.hpp"
 
-
-#include "light/light_type.hpp" 
-#include "camera/camera_type.hpp"
-#include "shape/shape_type.hpp"
+#include "light/plugin/light/light_type.hpp" 
+#include "camera/plugin/camera/camera_type.hpp"
+#include "shape/plugin/shape/shape_type.hpp"
 
 namespace pbpt::scene {
 

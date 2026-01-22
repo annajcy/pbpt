@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "aggregate/aggregate.hpp"
+#include "aggregate/plugin/aggregate/linear_aggregate.hpp"
 #include "geometry/ray.hpp"
 #include "geometry/transform.hpp"
 #include "shape/primitive.hpp"
-#include "shape/sphere.hpp"
-
+#include "shape/plugin/shape/sphere.hpp"
 namespace pbpt::aggregate::testing {
 
 using pbpt::geometry::Ray;

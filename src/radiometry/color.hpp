@@ -12,7 +12,7 @@
 #include "math/utils.hpp"
 #include "math/vector.hpp"
 
-#include "radiometry/spectrum_distribution.hpp"
+#include "radiometry/plugin/spectrum_distribution/tabular.hpp"
 #include "sampled_spectrum.hpp"
 #include "constant/xyz_spectrum.hpp"
 #include "constant/lambda.hpp"

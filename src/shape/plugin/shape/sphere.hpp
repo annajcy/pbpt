@@ -18,7 +18,7 @@
 #include "math/normal.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
-#include "shape.hpp"
+#include "shape/shape.hpp"
 
 namespace pbpt::shape {
 

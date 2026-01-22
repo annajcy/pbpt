@@ -6,14 +6,8 @@
 
 #include <array>
 #include <cmath>
-#include <functional>
-#include <fstream>
-#include <memory>
 #include <optional>
-#include <sstream>
-#include <stdexcept>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "geometry/bounds.hpp"
@@ -25,7 +19,7 @@
 #include "math/point.hpp"
 #include "math/vector.hpp"
 #include "sampler/3d.hpp"
-#include "shape.hpp"
+#include "shape/shape.hpp"
 
 #include "utils/obj_loader.hpp"
 

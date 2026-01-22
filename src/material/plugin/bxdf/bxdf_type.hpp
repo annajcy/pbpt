@@ -1,7 +1,7 @@
 #pragma once
 
 #include <variant>
-#include "bxdf.hpp"
+#include "material/plugin/bxdf/lambertian_bxdf.hpp"
 
 namespace pbpt::material {
 
