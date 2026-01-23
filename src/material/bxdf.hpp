@@ -7,7 +7,12 @@
 
 namespace pbpt::material {
 
-enum class BxDFTypeFlags : int {
+enum class TransportMode : int {
+    Radiance,
+    Importance
+};
+
+enum class BxDFFlags : int {
     Unset = 0,
     // Directional types
     Reflection = 1 << 0,
@@ -28,10 +33,29 @@ enum class BxDFTypeFlags : int {
     ANY = ALL + 1  // sentinel meaning "no filtering"
 };
 
-enum class TransportMode : int {
-    Radiance,
-    Importance
-};
+// 重载位运算符
+inline BxDFFlags operator|(BxDFFlags a, BxDFFlags b) {
+    return static_cast<BxDFFlags>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+inline BxDFFlags operator&(BxDFFlags a, BxDFFlags b) {
+    return static_cast<BxDFFlags>(static_cast<int>(a) & static_cast<int>(b));
+}
+
+inline BxDFFlags& operator|=(BxDFFlags& a, BxDFFlags b) {
+    a = a | b;
+    return a;
+}
+
+// is type the subset of filters? 
+inline bool is_match_flags(BxDFFlags type, BxDFFlags filters) {
+    return filters == BxDFFlags::ANY || (type & filters) == type;
+}
+
+// does type has the flag? even if only one flag bit exists in flag, return true
+inline bool has_flag(BxDFFlags type, BxDFFlags flag) {
+    return (type & flag) != BxDFFlags::Unset;
+}
 
 enum class BxDFReflTransFlags : int {
     Unset = 0,
@@ -39,20 +63,6 @@ enum class BxDFReflTransFlags : int {
     Transmission = 1 << 1,
     All = Reflection | Transmission
 };
-
-// 重载位运算符
-inline BxDFTypeFlags operator|(BxDFTypeFlags a, BxDFTypeFlags b) {
-    return static_cast<BxDFTypeFlags>(static_cast<int>(a) | static_cast<int>(b));
-}
-
-inline BxDFTypeFlags operator&(BxDFTypeFlags a, BxDFTypeFlags b) {
-    return static_cast<BxDFTypeFlags>(static_cast<int>(a) & static_cast<int>(b));
-}
-
-inline BxDFTypeFlags& operator|=(BxDFTypeFlags& a, BxDFTypeFlags b) {
-    a = a | b;
-    return a;
-}
 
 inline BxDFReflTransFlags operator|(BxDFReflTransFlags a, BxDFReflTransFlags b) {
     return static_cast<BxDFReflTransFlags>(static_cast<int>(a) | static_cast<int>(b));
@@ -67,28 +77,18 @@ inline BxDFReflTransFlags& operator|=(BxDFReflTransFlags& a, BxDFReflTransFlags 
     return a;
 }
 
-// is type the subset of filters?
-inline bool is_match_flags(BxDFTypeFlags type, BxDFTypeFlags filters) {
-    return filters == BxDFTypeFlags::ANY || (type & filters) == type;
-}
-
-// does type has the flag?
-inline bool has_flag(BxDFTypeFlags type, BxDFTypeFlags flag) {
-    return (type & flag) != BxDFTypeFlags::Unset;
-}
-
 inline bool has_flag(BxDFReflTransFlags type, BxDFReflTransFlags flag) {
     return (type & flag) != BxDFReflTransFlags::Unset;
 }
 
-inline bool is_match_refl_trans(BxDFTypeFlags type, BxDFReflTransFlags flags) {
+inline bool is_match_refl_trans(BxDFFlags type, BxDFReflTransFlags flags) {
     if (flags == BxDFReflTransFlags::All) return true;
     if (flags == BxDFReflTransFlags::Unset) return false;
 
     bool matches_reflection = has_flag(flags, BxDFReflTransFlags::Reflection) &&
-                              has_flag(type, BxDFTypeFlags::Reflection);
+                              has_flag(type, BxDFFlags::Reflection);
     bool matches_transmission = has_flag(flags, BxDFReflTransFlags::Transmission) &&
-                                has_flag(type, BxDFTypeFlags::Transmission);
+                                has_flag(type, BxDFFlags::Transmission);
     return matches_reflection || matches_transmission;
 }
 
@@ -98,7 +98,7 @@ struct BxDFSampleRecord {
     math::Vector<T, 3> wi; // 入射方向
     T pdf = 0; // 采样概率密度
     T eta = 1; // 折射率比值
-    BxDFTypeFlags sampled_flags = BxDFTypeFlags::Unset; // 记录采样到的具体类型
+    BxDFFlags sampled_flags = BxDFFlags::Unset; // 记录采样到的具体类型
 };
 
 template<typename Derived, typename T, int N>
@@ -106,16 +106,15 @@ class BxDF {
 public:
     Derived& as_derived() { return static_cast<Derived&>(*this); }
     const Derived& as_derived() const { return static_cast<const Derived&>(*this); }
-    BxDFTypeFlags type() const { return as_derived().type_impl(); }
-    
+    BxDFFlags type() const { return as_derived().type_impl(); }
+
     radiometry::SampledSpectrum<T, N> f(
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo, 
         const math::Vector<T, 3>& wi,
-        TransportMode mode,
-        const BxDFTypeFlags flags = BxDFTypeFlags::ALL
+        TransportMode mode
     ) const {
-        return as_derived().f_impl(swl, wo, wi, mode, flags);
+        return as_derived().f_impl(swl, wo, wi, mode);
     }
 
     std::optional<BxDFSampleRecord<T, N>> sample_f(

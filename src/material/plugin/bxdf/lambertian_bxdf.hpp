@@ -25,20 +25,16 @@ public:
     LambertianBxDF(const radiometry::SampledSpectrum<T, N>& albedo) : m_albedo(albedo) {}
 
 private:
-    BxDFTypeFlags type_impl() const {
-        return BxDFTypeFlags::DiffuseReflection;
+    BxDFFlags type_impl() const {
+        return BxDFFlags::DiffuseReflection;
     }
 
     radiometry::SampledSpectrum<T, N> f_impl(
         const radiometry::SampledWavelength<T, N>&,
         const math::Vector<T, 3>& wo,
         const math::Vector<T, 3>& wi,
-        TransportMode,
-        const BxDFTypeFlags flags = BxDFTypeFlags::ALL
+        TransportMode mode
     ) const {
-        if (!is_match_flags(type_impl(), flags)) {
-            return radiometry::SampledSpectrum<T, N>::filled(0);
-        }
         if (!is_same_hemisphere(wo, wi)) return radiometry::SampledSpectrum<T, N>::filled(0);
         return m_albedo * (1.0 / math::pi_v<T>);
     };
@@ -51,7 +47,7 @@ private:
         TransportMode mode,
         const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
     ) const {
-        if (!is_match_refl_trans(this->type(), sample_flags)) {
+        if (!is_match_refl_trans(type_impl(), sample_flags)) {
             return std::nullopt;
         }
         // 余弦采样得到的是局部坐标
@@ -64,7 +60,7 @@ private:
         BxDFSampleRecord<T, N> record;
         record.wi = wi;
         record.pdf = sampler::sample_cosine_weighted_hemisphere_pdf(wi_p); // cos(theta)/pi
-        record.f = this->f_impl(swl, wo, wi, mode); 
+        record.f = f_impl(swl, wo, wi, mode); 
         record.sampled_flags = type_impl();
         return record;
     }

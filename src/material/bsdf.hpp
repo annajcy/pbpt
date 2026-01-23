@@ -58,7 +58,7 @@ public:
         const math::Vector<T, 3>& wo, 
         const math::Vector<T, 3>& wi,
         TransportMode mode,
-        const BxDFTypeFlags flags = BxDFTypeFlags::ALL
+        const BxDFFlags flags = BxDFFlags::ALL
     ) const {
         auto wo_local = m_frame.to_local(wo);
         auto wi_local = m_frame.to_local(wi);
