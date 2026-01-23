@@ -1,5 +1,6 @@
 #pragma once
 
+#include "material/bsdf.hpp"
 #include "material/material.hpp"
 #include "material/plugin/bxdf/lambertian_bxdf.hpp"
 #include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
@@ -26,9 +27,7 @@ public:
         const radiometry::SampledWavelength<T, N>& wavelengths
     ) const {
         auto albedo = m_albedo_dist.template sample<N>(wavelengths);
-        std::vector<AnyBxDF<T, N>> lobes;
-        lobes.emplace_back(LambertianBxDF<T, N>(albedo));
-        return make_bsdf(si, shading, std::move(lobes));
+        return BSDF<T, N>(si, shading, LambertianBxDF<T, N>(albedo));
     }
 };
 

@@ -1,71 +1,55 @@
 #pragma once
 
-#include <algorithm>
-#include <numeric>
+#include <optional>
 #include <utility>
-#include <vector>
 
 #include "geometry/frame.hpp"
-#include "sampler/discrete.hpp"
 #include "material/plugin/bxdf/bxdf_type.hpp"
 
 namespace pbpt::material {
 
+
+template<typename T>
+inline geometry::Frame<T> build_shading_frame(
+    const geometry::SurfaceInteraction<T>& si,
+    const geometry::ShadingInfo<T>& shading
+) {
+    auto shading_n = shading.n;
+    if (shading_n.to_vector().dot(si.n().to_vector()) < 0) {
+        shading_n = -shading_n;
+    }
+    const auto dpdu = si.dpdu();
+    if (dpdu.length_squared() > 0) {
+        return geometry::Frame<T>(dpdu, shading_n.to_vector());
+    }
+    return geometry::Frame<T>(shading_n.to_vector());
+}
+
 template<typename T, int N>
 class BSDF {
 private: 
-    geometry::Frame<T> m_shading_frame;
-    geometry::Frame<T> m_geometric_frame;
-    std::vector<AnyBxDF<T, N>> m_bxdfs;
+    geometry::Frame<T> m_frame;
+    AnyBxDF<T, N> m_bxdf;
 
 public:
-    BSDF() = default;
-    BSDF(
-        const geometry::Frame<T>& shading_frame,
-        const geometry::Frame<T>& geometric_frame,
-        const std::vector<AnyBxDF<T, N>>& bxdfs
-    ) : m_shading_frame(shading_frame), 
-        m_geometric_frame(geometric_frame),
-        m_bxdfs(bxdfs) {}
+    template<typename BxDFType>
+    BSDF(const geometry::SurfaceInteraction<T>& si,
+        const geometry::ShadingInfo<T>& shading,
+        BxDFType&& bxdf
+    ) : m_frame(build_shading_frame(si, shading)),
+        m_bxdf(AnyBxDF<T, N>(std::move(bxdf))) {}
 
-    // 几何检查：是否在物理几何的同一侧
-    bool is_same_hemisphere(
-        const math::Vector<T, 3>& wo,
-        const math::Vector<T, 3>& wi
-    ) const {
-        T cos_theta_o = m_geometric_frame.n().dot(wo);
-        T cos_theta_i = m_geometric_frame.n().dot(wi);
-        return (cos_theta_o * cos_theta_i) > T(0);
+    BSDF(const geometry::Frame<T>& shading_frame,
+        AnyBxDF<T, N> bxdf
+    ) : m_frame(shading_frame),
+        m_bxdf(std::move(bxdf)) {}
+
+    math::Vector<T, 3> render_to_local(const math::Vector<T, 3>& w) const {
+        return m_frame.to_local(w);
     }
 
-    // 计算权重的辅助函数 (统一逻辑)
-    // 返回 total_weight
-    T compute_effective_weights(
-        const BxDFTypeFlags flags,
-        const std::vector<T>& custom_weights,
-        std::vector<T>& effective_weights_out
-    ) const {
-        const bool has_custom = !custom_weights.empty() && custom_weights.size() == m_bxdfs.size();
-        effective_weights_out.assign(m_bxdfs.size(), T(0));
-        T total_weight = 0;
-
-        for (size_t i = 0; i < m_bxdfs.size(); ++i) {
-            bool flag_match = false;
-            std::visit([&](const auto& bxdf) {
-                if (bxdf.is_flags_matched(flags)) flag_match = true;
-            }, m_bxdfs[i]);
-
-            if (!flag_match) {
-                effective_weights_out[i] = T(0);
-                continue;
-            }
-
-            const T w = has_custom ? custom_weights[i] : T(1);
-            
-            effective_weights_out[i] = w;
-            total_weight += w;
-        }
-        return total_weight;
+    math::Vector<T, 3> local_to_render(const math::Vector<T, 3>& w) const {
+        return m_frame.to_render(w);
     }
 
     // Evaluate f()
@@ -73,137 +57,47 @@ public:
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo, 
         const math::Vector<T, 3>& wi,
-        const BxDFTypeFlags flags
+        TransportMode mode,
+        const BxDFTypeFlags flags = BxDFTypeFlags::ALL
     ) const {
-        radiometry::SampledSpectrum<T, N> result = radiometry::SampledSpectrum<T, N>::filled(0);
-        auto wo_local = m_shading_frame.to_local(wo);
-        auto wi_local = m_shading_frame.to_local(wi);
-        bool is_geo_same = this->is_same_hemisphere(wo, wi);
-
-        for (const auto& bxdf : m_bxdfs) {
-            std::visit([&](const auto& concrete_bxdf) {
-                if (!concrete_bxdf.is_flags_matched(flags)) return;
-
-                bool type_reflect = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Reflection);
-                bool type_transmit = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Transmission);
-                
-                // 防漏光检查
-                if ((is_geo_same && type_reflect) || (!is_geo_same && type_transmit)) {
-                    result += concrete_bxdf.f(swl, wo_local, wi_local);
-                }
-            }, bxdf);
-        }
-        return result;
+        auto wo_local = m_frame.to_local(wo);
+        auto wi_local = m_frame.to_local(wi);
+        return std::visit([&](const auto& bxdf) {
+            return bxdf.f(swl, wo_local, wi_local, mode, flags);
+        }, m_bxdf);
     }
 
     // Evaluate PDF()
     T pdf(
         const math::Vector<T, 3>& wo,
         const math::Vector<T, 3>& wi,
-        const BxDFTypeFlags flags,
-        const std::vector<T>& custom_weights = {}
+        TransportMode mode,
+        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
     ) const {
-        if (m_bxdfs.empty()) return 0;
-
-        auto wo_local = m_shading_frame.to_local(wo);
-        auto wi_local = m_shading_frame.to_local(wi);
-        bool is_geo_same = this->is_same_hemisphere(wo, wi);
-
-        std::vector<T> weights;
-        T total_weight = compute_effective_weights(flags, custom_weights, weights);
-        
-        if (total_weight == 0) return 0;
-        T inv_total_weight = T(1) / total_weight;
-
-        T final_pdf = 0;
-
-        for (size_t i = 0; i < m_bxdfs.size(); ++i) {
-            if (weights[i] == 0) continue;
-
-            std::visit([&](const auto& concrete_bxdf) {
-                bool type_reflect = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Reflection);
-                bool type_transmit = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Transmission);
-                
-                if ((is_geo_same && type_reflect) || (!is_geo_same && type_transmit)) {
-                    T prob = weights[i] * inv_total_weight;
-                    final_pdf += prob * concrete_bxdf.pdf(wo_local, wi_local);
-                }
-            }, m_bxdfs[i]);
-        }
-        return final_pdf;
+        auto wo_local = m_frame.to_local(wo);
+        auto wi_local = m_frame.to_local(wi);
+        return std::visit([&](const auto& bxdf) {
+            return bxdf.pdf(wo_local, wi_local, mode, sample_flags);
+        }, m_bxdf);
     }
 
     // Sample BSDF
-    BxDFSampleRecord<T, N> sample_f(
+    std::optional<BxDFSampleRecord<T, N>> sample_f(
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo,
-        const math::Point<T, 2>& uv_sample,
-        const BxDFTypeFlags flags = BxDFTypeFlags::ANY,
-        const std::vector<T>& custom_weights = {}
+        const T uc,
+        const math::Point<T, 2>& u2,
+        TransportMode mode,
+        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
     ) const {
-        BxDFSampleRecord<T, N> result; // valid=false initially
-        if (m_bxdfs.empty()) return result;
+        auto wo_local = m_frame.to_local(wo);
+        auto bxdf_sample = std::visit([&](const auto& bxdf) {
+            return bxdf.sample_f(swl, wo_local, uc, u2, mode, sample_flags);
+        }, m_bxdf);
+        if (!bxdf_sample) return std::nullopt;
 
-        // 1. 计算权重
-        std::vector<T> weights;
-        // 注意：这里不需要 filtered_bxdfs，我们直接用 weights 的索引访问 m_bxdfs
-        compute_effective_weights(flags, custom_weights, weights);
-
-        std::vector<T> cdf_buffer;
-        auto selection = sampler::sample_discrete(weights, cdf_buffer, uv_sample.x());
-        if (selection.index == -1) return result; // 采样失败（可能 flags 过滤后为空）
-
-        // 2. 采样选中的 BxDF
-        std::visit([&](const auto& concrete_bxdf) {
-            auto wo_local = m_shading_frame.to_local(wo);
-            
-            // 使用重映射后的 u
-            math::Point<T, 2> remapped_sample(selection.u_remapped, uv_sample.y());
-            
-            // 调用 BxDF 的 sample_f
-            auto bxdf_sample = concrete_bxdf.sample_f(swl, wo_local, remapped_sample);
-            
-            if (!bxdf_sample.is_valid) return; // 子采样失败
-
-            auto wi_render = m_shading_frame.to_render(bxdf_sample.wi);
-            bool is_geo_same = this->is_same_hemisphere(wo, wi_render);
-
-            bool type_reflect = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Reflection);
-            bool type_transmit = concrete_bxdf.is_flags_matched(BxDFTypeFlags::Transmission);
-
-            // 几何一致性检查
-            if (!((is_geo_same && type_reflect) || (!is_geo_same && type_transmit))) {
-                std::cerr << "Warning: BxDF sample direction inconsistent with geometric configuration." << std::endl;
-                return;
-            }
-
-            result.wi = wi_render;
-            result.sampled_type = bxdf_sample.sampled_type; // 从子采样获取具体类型
-
-            // 3. Specular 处理 (重要修复)
-            if (has_flag(result.sampled_type, BxDFTypeFlags::Specular)) {
-                // 如果是镜面反射，不进行 MIS 混合
-                result.f = bxdf_sample.f;
-                result.pdf = selection.pdf * bxdf_sample.pdf;
-                result.is_valid = true;
-                return;
-            }
-
-            // 4. Non-Specular 处理 (MIS 混合)
-            // 重新计算混合 PDF (必须传入 custom_weights 以保持一致性)
-            result.pdf = this->pdf(wo, wi_render, flags, custom_weights);
-
-            if (result.pdf > 0) {
-                // 重新计算混合 f (累加所有 component 的贡献)
-                result.f = this->f(swl, wo, wi_render, flags);
-                result.is_valid = true;
-            } else {
-                result.is_valid = false;
-            }
-
-        }, m_bxdfs[selection.index]); // 使用索引访问原始 m_bxdfs
-
-        return result;
+        bxdf_sample->wi = m_frame.to_render(bxdf_sample->wi);
+        return bxdf_sample;
     }
 };
 

@@ -21,7 +21,7 @@ private:
     T m_rr_threshold = T(0.9);
 
 public:
-    PathIntegrator(unsigned max_depth, T rr_threshold) 
+    PathIntegrator(unsigned max_depth = -1, T rr_threshold = T(0.9)) 
     : m_max_depth(max_depth), m_rr_threshold(rr_threshold) {}
     
     unsigned max_depth() const { return m_max_depth; }
@@ -114,9 +114,8 @@ private:
         Sampler& sampler
     ) {
         auto material = context.resources.any_material_library.get(prim_intersection_rec.material_id);
-        material::BSDF<T, N> bsdf;
-        std::visit([&](const auto& mat) {
-            bsdf = mat.template compute_bsdf<N>(
+        material::BSDF<T, N> bsdf = std::visit([&](const auto& mat) {
+            return mat.template compute_bsdf<N>(
                 prim_intersection_rec.intersection.interaction,
                 prim_intersection_rec.intersection.shading,
                 wavelength_sample
@@ -144,10 +143,12 @@ private:
         auto bsdf_sample_record = bsdf.sample_f(
             wavelength_sample, 
             prim_intersection_rec.intersection.interaction.wo(),
-            sampler.next_2d()
+            sampler.next_1d(),
+            sampler.next_2d(),
+            material::TransportMode::Radiance
         );
 
-        if (!bsdf_sample_record.is_valid || bsdf_sample_record.pdf <= 0) {
+        if (!bsdf_sample_record || bsdf_sample_record->pdf <= 0) {
             return result; 
         }
 
@@ -161,10 +162,10 @@ private:
                return result;
             }
             // re-scaling: / p_rr
-            result += bsdf_sample_record.f * std::abs(bsdf_sample_record.wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) 
-            / bsdf_sample_record.pdf / m_rr_threshold * this->Li_dfs(
+            result += bsdf_sample_record->f * std::abs(bsdf_sample_record->wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) 
+            / bsdf_sample_record->pdf / m_rr_threshold * this->Li_dfs(
                 context,
-                prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record.wi),
+                prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record->wi),
                 wavelength_sample,
                 depth + 1,
                 sampler
@@ -172,10 +173,10 @@ private:
 
             return result;
         } else {
-            result += bsdf_sample_record.f * std::abs(bsdf_sample_record.wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) 
-            / bsdf_sample_record.pdf * this->Li_dfs(
+            result += bsdf_sample_record->f * std::abs(bsdf_sample_record->wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) 
+            / bsdf_sample_record->pdf * this->Li_dfs(
                 context,
-                prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record.wi),
+                prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record->wi),
                 wavelength_sample,
                 depth + 1,
                 sampler
