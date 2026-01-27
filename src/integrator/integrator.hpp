@@ -46,17 +46,6 @@ public:
 
 protected:
     template<typename SceneContextT>
-    static constexpr bool supports_ray_differential = requires(
-        Derived& derived,
-        const SceneContextT& context,
-        const geometry::RayDifferential<T, 3>& ray,
-        const radiometry::SampledWavelength<T, N>& wavelength_sample,
-        Sampler& sampler
-    ) {
-        derived.Li_impl(context, ray, wavelength_sample, sampler);
-    };
-
-    template<typename SceneContextT>
     void render_loop(
         const SceneContextT& context,
         int spp, const std::string& output_path,
@@ -83,7 +72,6 @@ protected:
                         filtered_sample.film_position,
                         lens_position
                     );
-
                     
                     // Sample wavelengths
                     auto wavelength_sample = radiometry::sample_visible_wavelengths_stratified<T, N>(sampler.next_1d());
@@ -91,16 +79,10 @@ protected:
 
                     // Evaluate radiance along the ray (ray differentials if enabled + supported)
                     radiometry::SampledSpectrum<T, N> Li;
-                    if constexpr (supports_ray_differential<SceneContextT>) {
-                        if (is_trace_ray_differential) {
-                            auto ray_diff = context.camera.generate_differential_ray(sample);
-                            ray_diff = context.render_transform.camera_to_render().transform_ray(ray_diff);
-                            Li = this->Li(context, ray_diff, wavelength_sample, sampler);
-                        } else {
-                            auto ray = context.camera.generate_ray(sample);
-                            ray = context.render_transform.camera_to_render().transform_ray(ray);
-                            Li = this->Li(context, ray, wavelength_sample, sampler);
-                        }
+                    if (is_trace_ray_differential) {
+                        auto ray_diff = context.camera.generate_differential_ray(sample);
+                        ray_diff = context.render_transform.camera_to_render().transform_ray(ray_diff);
+                        Li = this->Li(context, ray_diff, wavelength_sample, sampler);
                     } else {
                         auto ray = context.camera.generate_ray(sample);
                         ray = context.render_transform.camera_to_render().transform_ray(ray);

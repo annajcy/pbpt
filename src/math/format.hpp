@@ -13,6 +13,7 @@
 #include "math/normal.hpp"
 #include "math/octahedral.hpp"
 #include "math/tuple.hpp"
+#include "math/complex.hpp"
 
 namespace pbpt::math {
 
@@ -97,6 +98,22 @@ std::string to_string(const OctahedralVector<T>& oct) {
     Vector<T, 3> decoded = oct.decode();
     oss << "x=" << decoded[0] << ", y=" << decoded[1] << ", z=" << decoded[2];
     oss << ")";
+    return oss.str();
+}
+
+// =============================================================================
+// Complex type
+// =============================================================================
+
+/**
+ * @brief Format a complex number.
+ */
+template <typename T>
+std::string to_string(const Complex<T>& c) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << std::format("Complex<{}>(", typeid(T).name());
+    oss << c.real() << ", " << c.imag() << ")";
     return oss.str();
 }
 
@@ -202,6 +219,14 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& m) {
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const OctahedralVector<T>& oct) {
     return os << to_string(oct);
+}
+
+/**
+ * @brief Stream insertion for complex numbers.
+ */
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Complex<T>& c) {
+    return os << to_string(c);
 }
 
 }  // namespace pbpt::math

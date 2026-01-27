@@ -108,6 +108,14 @@ public:
     const Derived& as_derived() const { return static_cast<const Derived&>(*this); }
     BxDFFlags type() const { return as_derived().type_impl(); }
 
+    T rou_hh() {
+        return T(0);
+    }
+
+    T rou_hd() {
+        return T(0);
+    }
+
     radiometry::SampledSpectrum<T, N> f(
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo, 
@@ -121,11 +129,11 @@ public:
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo,
         const T uc,
-        const math::Point<T, 2>& u_sample,
+        const math::Point<T, 2>& u2d,
         TransportMode mode,
         const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
     ) const {
-        return as_derived().sample_f_impl(swl, wo, uc, u_sample, mode, sample_flags);
+        return as_derived().sample_f_impl(swl, wo, uc, u2d, mode, sample_flags);
     }
 
     T pdf(

@@ -26,3 +26,7 @@ gtest_discover_tests(test_homo)
 add_executable(test_octahedral test_octahedral.cpp)
 target_link_libraries(test_octahedral PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_octahedral)
+
+add_executable(test_complex test_complex.cpp)
+target_link_libraries(test_complex PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_complex)

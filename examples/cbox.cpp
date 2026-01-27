@@ -55,7 +55,7 @@ int main() {
     pbpt::scene::Scene<double> scene = pbpt::loader::load_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox.xml");
     //pbpt::scene::Scene<double> scene = pbpt::scene::create_cbox_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox");
         
-    std::vector<int> spps = {4, 16};
+    std::vector<int> spps = {16};
     for (int spp : spps) {
         
         pbpt::integrator::PathIntegrator<double, 4> integrator(

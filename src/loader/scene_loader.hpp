@@ -1,9 +1,14 @@
 #pragma once
 
-#include <iostream>
+#include <algorithm>
 #include <filesystem>
 #include <format>
+#include <fstream>
+#include <iostream>
+#include <optional>
+#include <sstream>
 #include <stdexcept>
+#include <vector>
 #include <pugixml.hpp>
 
 #include "scene/scene.hpp"
@@ -17,14 +22,102 @@
 #include "camera/plugin/pixel_filter/gaussian_filter.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "material/plugin/material/lambertian_material.hpp"
+#include "material/plugin/material/dielectric_specular_material.hpp"
+#include "material/plugin/material/conductor_specular_material.hpp"
 #include "shape/plugin/shape/triangle.hpp" // Contains Triangle and TriangleMesh
 #include "light/plugin/light/area_light.hpp"
 #include "aggregate/plugin/aggregate/embree_aggregate.hpp"
 #include "radiometry/constant/illuminant_spectrum.hpp"
+#include "radiometry/constant/lambda.hpp"
 #include "radiometry/constant/xyz_spectrum.hpp"
 #include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 
 namespace pbpt::loader {
+
+inline bool ends_with(const std::string& str, const std::string& suffix) {
+    if (str.size() < suffix.size()) return false;
+    return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
+}
+
+inline bool starts_with(const std::string& str, const std::string& prefix) {
+    if (str.size() < prefix.size()) return false;
+    return std::equal(prefix.begin(), prefix.end(), str.begin());
+}
+
+inline std::optional<std::string> find_child_value(
+    const pugi::xml_node& node,
+    const std::string& tag,
+    const std::string& name
+) {
+    for (auto child : node.children(tag.c_str())) {
+        if (std::string(child.attribute("name").value()) == name) {
+            const char* value = child.attribute("value").value();
+            if (value && value[0] != '\0') {
+                return std::string(value);
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+template <typename T>
+inline std::optional<T> find_float_property(const pugi::xml_node& node, const std::string& name) {
+    for (auto child : node.children("float")) {
+        if (std::string(child.attribute("name").value()) == name) {
+            return parse_value<T>(child.attribute("value").value());
+        }
+    }
+    return std::nullopt;
+}
+
+template <typename T>
+inline radiometry::PiecewiseLinearSpectrumDistribution<T> constant_spectrum(T value) {
+    return radiometry::PiecewiseLinearSpectrumDistribution<T>({
+        {radiometry::constant::lambda_min<T>, value},
+        {radiometry::constant::lambda_max<T>, value}
+    });
+}
+
+template <typename T>
+inline radiometry::PiecewiseLinearSpectrumDistribution<T> load_piecewise_spectrum_from_csv(
+    const std::string& abs_path
+) {
+    std::ifstream fin(abs_path);
+    if (!fin) {
+        throw std::runtime_error("Cannot open spectrum CSV: " + abs_path);
+    }
+
+    std::vector<std::pair<T, T>> points;
+    std::string line;
+    while (std::getline(fin, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        std::replace(line.begin(), line.end(), ',', ' ');
+        std::istringstream iss(line);
+        T lambda = T(0);
+        T value = T(0);
+        if (!(iss >> lambda >> value)) continue;
+        points.emplace_back(lambda, value);
+    }
+    if (points.empty()) {
+        throw std::runtime_error("Spectrum CSV contains no data: " + abs_path);
+    }
+    return radiometry::PiecewiseLinearSpectrumDistribution<T>(points);
+}
+
+template <typename T>
+inline radiometry::PiecewiseLinearSpectrumDistribution<T> parse_piecewise_spectrum_value(
+    const std::string& value,
+    const LoaderContext<T>& ctx
+) {
+    if (starts_with(value, "file:")) {
+        auto rel_path = value.substr(5);
+        return load_piecewise_spectrum_from_csv<T>(ctx.resolve_path(rel_path));
+    }
+    if (ends_with(value, ".csv")) {
+        return load_piecewise_spectrum_from_csv<T>(ctx.resolve_path(value));
+    }
+    return radiometry::PiecewiseLinearSpectrumDistribution<T>::from_string(value);
+}
 
 template <typename T>
 void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
@@ -32,18 +125,51 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
     std::string id = node.attribute("id").value();
 
     if (type == "diffuse") {
-        std::string spectrum_str;
-        for (auto child : node.children("spectrum")) {
-            if (std::string(child.attribute("name").value()) == "reflectance") {
-                spectrum_str = child.attribute("value").value();
-            }
+        auto spectrum_value = find_child_value(node, "spectrum", "reflectance");
+        if (!spectrum_value) {
+            throw std::runtime_error("Diffuse BSDF missing reflectance spectrum: " + id);
         }
         
         std::string spec_name = id + "_reflectance";
-        auto spectrum = radiometry::PiecewiseLinearSpectrumDistribution<T>::from_string(spectrum_str);
+        auto spectrum = parse_piecewise_spectrum_value<T>(*spectrum_value, ctx);
         ctx.resources.reflectance_spectrum_library.add_item(spec_name, std::move(spectrum));
         
         auto mat = material::LambertianMaterial<T>(ctx.resources.reflectance_spectrum_library.get(spec_name));
+        ctx.resources.any_material_library.add_item(id, std::move(mat));
+    } else if (type == "dielectric_specular") {
+        auto eta_opt = find_float_property<T>(node, "eta");
+        if (!eta_opt) {
+            eta_opt = find_float_property<T>(node, "intIOR");
+        }
+        T eta = eta_opt.value_or(T(1.5));
+        auto mat = material::DielectricSpecularMaterial<T>(eta);
+        ctx.resources.any_material_library.add_item(id, std::move(mat));
+    } else if (type == "conductor_specular") {
+        auto eta_value = find_child_value(node, "spectrum", "eta");
+        if (!eta_value) {
+            eta_value = find_child_value(node, "string", "eta");
+        }
+        auto k_value = find_child_value(node, "spectrum", "k");
+        if (!k_value) {
+            k_value = find_child_value(node, "string", "k");
+        }
+
+        radiometry::PiecewiseLinearSpectrumDistribution<T> eta_dist = constant_spectrum<T>(T(1));
+        radiometry::PiecewiseLinearSpectrumDistribution<T> k_dist = constant_spectrum<T>(T(0));
+
+        if (eta_value) {
+            eta_dist = parse_piecewise_spectrum_value<T>(*eta_value, ctx);
+        } else if (auto eta_scalar = find_float_property<T>(node, "eta")) {
+            eta_dist = constant_spectrum<T>(*eta_scalar);
+        }
+
+        if (k_value) {
+            k_dist = parse_piecewise_spectrum_value<T>(*k_value, ctx);
+        } else if (auto k_scalar = find_float_property<T>(node, "k")) {
+            k_dist = constant_spectrum<T>(*k_scalar);
+        }
+
+        auto mat = material::ConductorSpecularMaterial<T>(std::move(eta_dist), std::move(k_dist));
         ctx.resources.any_material_library.add_item(id, std::move(mat));
     }
 }

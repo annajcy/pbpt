@@ -7,12 +7,9 @@
 #include "math/function.hpp"
 #include "sampler/3d.hpp"
 
-namespace pbpt::material {
+#include "material/optics.hpp"
 
-template<typename T>
-bool is_same_hemisphere(const math::Vector<T, 3>& w, const math::Vector<T, 3>& wp) {
-    return w.z() * wp.z() > 0;
-}
+namespace pbpt::material {
 
 // --- Lambertian 实现 ---
 template<typename T, int N>
@@ -35,7 +32,7 @@ private:
         const math::Vector<T, 3>& wi,
         TransportMode mode
     ) const {
-        if (!is_same_hemisphere(wo, wi)) return radiometry::SampledSpectrum<T, N>::filled(0);
+        if (!material::is_same_hemisphere(wo, wi)) return radiometry::SampledSpectrum<T, N>::filled(0);
         return m_albedo * (1.0 / math::pi_v<T>);
     };
 
@@ -43,7 +40,7 @@ private:
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo,
         const T,
-        const math::Point<T, 2>& u_sample,
+        const math::Point<T, 2>& u2d,
         TransportMode mode,
         const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
     ) const {
@@ -51,7 +48,7 @@ private:
             return std::nullopt;
         }
         // 余弦采样得到的是局部坐标
-        auto wi_p = sampler::sample_cosine_weighted_hemisphere(u_sample);
+        auto wi_p = sampler::sample_cosine_weighted_hemisphere(u2d);
         auto wi = wi_p.to_vector();
 
         // 如果 wo 在下半球，我们需要翻转 wi 到下半球
