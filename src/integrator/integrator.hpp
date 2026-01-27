@@ -77,7 +77,6 @@ protected:
                     auto wavelength_sample = radiometry::sample_visible_wavelengths_stratified<T, N>(sampler.next_1d());
                     auto wavelength_pdf = radiometry::sample_visible_wavelengths_pdf(wavelength_sample);
 
-                    // Evaluate radiance along the ray (ray differentials if enabled + supported)
                     radiometry::SampledSpectrum<T, N> Li;
                     if (is_trace_ray_differential) {
                         auto ray_diff = context.camera.generate_differential_ray(sample);

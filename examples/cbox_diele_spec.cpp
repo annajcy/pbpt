@@ -13,7 +13,7 @@ int main() {
 
     std::vector<int> spps = {256};
     for (int spp : spps) {
-        pbpt::integrator::PathIntegrator<double, 4> integrator(5, 0.9);
+        pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
         integrator.render(scene, spp, std::format("output/cbox_diele_spec_{}.exr", spp));
     }
     return 0;
