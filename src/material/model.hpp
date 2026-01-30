@@ -66,7 +66,7 @@ public:
     }
 
     T D_visible(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wm) const {
-        return D(wm) * G1(wo) * std::abs(wo.dot(wm)) / (geometry::cos_theta(wo));
+        return D(wm) * G1(wo) * std::abs(wo.dot(wm)) / std::abs(geometry::cos_theta(wo));
     }
 
     T pdf_wm(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wm) const {
