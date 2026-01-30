@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cmath>
 #include <optional>
 #include <variant>
 
@@ -9,10 +8,8 @@
 #include "material/plugin/bxdf/dielectric_rough_bxdf.hpp"
 #include "material/plugin/bxdf/dielectric_specular_bxdf.hpp"
 #include "material/plugin/bxdf/null_bxdf.hpp"
-#include "math/normal.hpp"
 #include "math/vector.hpp"
 #include "radiometry/sampled_spectrum.hpp"
-#include "material/optics.hpp"
 
 namespace pbpt::material {
 

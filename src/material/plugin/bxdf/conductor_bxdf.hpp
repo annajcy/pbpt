@@ -1,21 +1,15 @@
 #pragma once
 
-#include <cmath>
 #include <cstdlib>
 #include <optional>
 #include <variant>
 
-#include "geometry/spherical.hpp"
 #include "material/bxdf.hpp"
 #include "material/model.hpp"
 #include "material/plugin/bxdf/conductor_rough_bxdf.hpp"
 #include "material/plugin/bxdf/conductor_specular_bxdf.hpp"
-#include "math/function.hpp"
-#include "math/normal.hpp"
 #include "math/vector.hpp"
 #include "radiometry/sampled_spectrum.hpp"
-
-#include "material/optics.hpp"
 
 namespace pbpt::material {
 
