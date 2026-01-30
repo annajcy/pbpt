@@ -23,8 +23,10 @@
 #include "camera/plugin/pixel_filter/gaussian_filter.hpp"
 #include "camera/pixel_sensor.hpp"
 #include "material/plugin/material/lambertian_material.hpp"
+#include "material/plugin/material/dielectric_material.hpp"
 #include "material/plugin/material/dielectric_specular_material.hpp"
 #include "material/plugin/material/dielectric_rough_material.hpp"
+#include "material/plugin/material/conductor_material.hpp"
 #include "material/plugin/material/conductor_specular_material.hpp"
 #include "material/plugin/material/conductor_rough_material.hpp"
 #include "shape/plugin/shape/triangle.hpp" // Contains Triangle and TriangleMesh
@@ -200,6 +202,15 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         
         auto mat = material::LambertianMaterial<T>(ctx.resources.reflectance_spectrum_library.get(spec_name));
         ctx.resources.any_material_library.add_item(id, std::move(mat));
+    } else if (type == "dielectric") {
+        auto eta_opt = find_float_property<T>(node, "eta");
+        if (!eta_opt) {
+            eta_opt = find_float_property<T>(node, "intIOR");
+        }
+        T eta = eta_opt.value_or(T(1.5));
+        auto microfacet_model = parse_microfacet_model<T>(node);
+        auto mat = material::DielectricMaterial<T>(eta, microfacet_model);
+        ctx.resources.any_material_library.add_item(id, std::move(mat));
     } else if (type == "dielectric_specular") {
         auto eta_opt = find_float_property<T>(node, "eta");
         if (!eta_opt) {
@@ -216,6 +227,38 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         T eta = eta_opt.value_or(T(1.5));
         auto microfacet_model = parse_microfacet_model<T>(node);
         auto mat = material::DielectricRoughMaterial<T>(eta, microfacet_model);
+        ctx.resources.any_material_library.add_item(id, std::move(mat));
+    } else if (type == "conductor") {
+        auto eta_value = find_child_value(node, "spectrum", "eta");
+        if (!eta_value) {
+            eta_value = find_child_value(node, "string", "eta");
+        }
+        auto k_value = find_child_value(node, "spectrum", "k");
+        if (!k_value) {
+            k_value = find_child_value(node, "string", "k");
+        }
+
+        radiometry::PiecewiseLinearSpectrumDistribution<T> eta_dist = constant_spectrum<T>(T(1));
+        radiometry::PiecewiseLinearSpectrumDistribution<T> k_dist = constant_spectrum<T>(T(0));
+
+        if (eta_value) {
+            eta_dist = parse_piecewise_spectrum_value<T>(*eta_value, ctx);
+        } else if (auto eta_scalar = find_float_property<T>(node, "eta")) {
+            eta_dist = constant_spectrum<T>(*eta_scalar);
+        }
+
+        if (k_value) {
+            k_dist = parse_piecewise_spectrum_value<T>(*k_value, ctx);
+        } else if (auto k_scalar = find_float_property<T>(node, "k")) {
+            k_dist = constant_spectrum<T>(*k_scalar);
+        }
+
+        auto microfacet_model = parse_microfacet_model<T>(node);
+        auto mat = material::ConductorMaterial<T>(
+            std::move(eta_dist),
+            std::move(k_dist),
+            microfacet_model
+        );
         ctx.resources.any_material_library.add_item(id, std::move(mat));
     } else if (type == "conductor_specular") {
         auto eta_value = find_child_value(node, "spectrum", "eta");

@@ -10,7 +10,6 @@
 
 namespace pbpt::material {
 
-// --- Lambertian 实现 ---
 template<typename T, int N>
 class DielectricSpecularBxDF : public BxDF<DielectricSpecularBxDF<T, N>, T, N> {
     friend class BxDF<DielectricSpecularBxDF<T, N>, T, N>;

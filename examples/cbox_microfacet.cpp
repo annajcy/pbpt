@@ -8,13 +8,13 @@
 int main() {
     pbpt::scene::Scene<double> scene =
         pbpt::loader::load_scene<double>(
-            "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox_rough.xml"
+            "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox_microfacet.xml"
         );
 
     std::vector<int> spps = {256};
     for (int spp : spps) {
         pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
-        integrator.render(scene, spp, std::format("output/cbox_rough_{}.exr", spp));
+        integrator.render(scene, spp, std::format("output/cbox_microfacet_{}.exr", spp));
     }
     return 0;
 }

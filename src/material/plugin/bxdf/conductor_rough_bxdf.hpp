@@ -16,7 +16,6 @@
 
 namespace pbpt::material {
 
-// --- Lambertian 实现 ---
 template<typename T, int N>
 class ConductorRoughBxDF : public BxDF<ConductorRoughBxDF<T, N>, T, N> {
     friend class BxDF<ConductorRoughBxDF<T, N>, T, N>;

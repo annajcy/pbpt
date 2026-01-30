@@ -2,8 +2,10 @@
 
 #include <variant>
 #include "material/plugin/material/lambertian_material.hpp"
+#include "material/plugin/material/dielectric_material.hpp"
 #include "material/plugin/material/dielectric_specular_material.hpp"
 #include "material/plugin/material/dielectric_rough_material.hpp"
+#include "material/plugin/material/conductor_material.hpp"
 #include "material/plugin/material/conductor_specular_material.hpp"
 #include "material/plugin/material/conductor_rough_material.hpp"
 #include "utils/library.hpp"
@@ -13,8 +15,10 @@ namespace pbpt::material {
 template<typename T>
 using AnyMaterial = std::variant<
     LambertianMaterial<T>,
+    DielectricMaterial<T>,
     DielectricSpecularMaterial<T>,
     DielectricRoughMaterial<T>,
+    ConductorMaterial<T>,
     ConductorSpecularMaterial<T>,
     ConductorRoughMaterial<T>
 >;
