@@ -4,11 +4,10 @@
 #include <cstdlib>
 #include <optional>
 
+#include "geometry/spherical.hpp"
 #include "material/bxdf.hpp"
-#include "math/function.hpp"
 #include "math/vector.hpp"
 #include "radiometry/sampled_spectrum.hpp"
-#include "sampler/3d.hpp"
 
 #include "material/optics.hpp"
 
@@ -56,7 +55,7 @@ private:
         }
 
         math::Vector<T, 3> wi = math::Vector<T, 3>(-wo.x(), -wo.y(), wo.z());
-        auto abs_cos_theta = std::abs(wi.z());
+        auto abs_cos_theta = std::abs(geometry::cos_theta(wi));
 
         BxDFSampleRecord<T, N> record;
         record.wi = wi;

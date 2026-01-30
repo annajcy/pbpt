@@ -39,7 +39,7 @@ private:
     std::optional<BxDFSampleRecord<T, N>> sample_f_impl(
         const radiometry::SampledWavelength<T, N>& swl,
         const math::Vector<T, 3>& wo,
-        const T,
+        const T uc,
         const math::Point<T, 2>& u2d,
         TransportMode mode,
         const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All

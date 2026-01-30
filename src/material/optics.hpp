@@ -3,21 +3,19 @@
 #include <algorithm>
 #include <optional>
 #include "math/complex.hpp"
-#include "math/normal.hpp"
 #include "math/vector.hpp"
 #include "radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::material {
 
 template<typename T>
-inline bool is_same_hemisphere(const math::Vector<T, 3>& w, const math::Vector<T, 3>& wp) {
-    return w.z() * wp.z() > 0;
+inline bool is_same_hemisphere(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi) {
+    return wo.z() * wi.z() > 0;
 }
 
 template<typename T>
-inline math::Vector<T, 3> reflect(const math::Vector<T, 3>& wo, const math::Normal<T, 3>& n) {
-    auto n_ = n.to_vector();
-    return -wo + 2 * n_ * n_.dot(wo);
+inline math::Vector<T, 3> reflect(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& n) {
+    return -wo + 2 * n * n.dot(wo);
 }
 
 template<typename T>
@@ -27,15 +25,14 @@ struct RefractResult {
 };
 
 template<typename T>
-inline std::optional<RefractResult<T>> refract(const math::Vector<T, 3>& wi, const math::Normal<T, 3>& n, T eta) {
-    auto n_ = n.to_vector();
-    T cos_theta_i = n_.dot(wi);
+inline std::optional<RefractResult<T>> refract(const math::Vector<T, 3>& wo, math::Vector<T, 3> n, T eta) {
+    T cos_theta_i = n.dot(wo);
 
     // flip normal if the incident direction is below the surface
     if (cos_theta_i < 0) {
         eta = 1 / eta;
         cos_theta_i = -cos_theta_i;
-        n_ = -n_;
+        n = -n;
     }
 
     // compute cosine of transmitted angle using Snell's law
@@ -49,7 +46,7 @@ inline std::optional<RefractResult<T>> refract(const math::Vector<T, 3>& wi, con
 
     // compute transmitted direction
     T cos_theta_t = std::sqrt(1 - sin2_theta_t);
-    math::Vector<T, 3> wt = -wi / eta + n_ * (cos_theta_i / eta - cos_theta_t);
+    math::Vector<T, 3> wt = -wo / eta + n * (cos_theta_i / eta - cos_theta_t);
     return RefractResult<T>{wt, eta};
 }
 
@@ -79,7 +76,7 @@ inline T fresnel_dielectric(T cos_theta_i, T eta) {
 }
 
 template <typename T>
-inline T fresnel_conductor(T cos_theta_i, const math::Complex<T>& eta) {
+inline T fresnel_conductor_per_wavelength(T cos_theta_i, const math::Complex<T>& eta) {
     cos_theta_i = std::clamp(cos_theta_i, T(0), T(1));
     // Compute complex cosine of transmitted angle using Snell's law
     T sin2_theta_i = std::max(T(0), T(1) - cos_theta_i * cos_theta_i);
@@ -102,7 +99,7 @@ radiometry::SampledSpectrum<T, N> fresnel_conductor(
     radiometry::SampledSpectrum<T, N> R;
     for (int i = 0; i < N; ++i) {
         math::Complex<T> eta_c(eta[i], k[i]);
-        R[i] = fresnel_conductor(cos_theta_i, eta_c);
+        R[i] = fresnel_conductor_per_wavelength(cos_theta_i, eta_c);
     }
     return R;
 }
@@ -132,4 +129,4 @@ radiometry::SampledSpectrum<T, N> fresnel_conductor_schlick(
     return R;
 }
 
-}  // namespace pbpt::geometry
+}  // namespace pbpt::material

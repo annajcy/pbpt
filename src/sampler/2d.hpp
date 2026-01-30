@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include <array>
 #include "math/function.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
@@ -23,12 +22,12 @@ namespace pbpt::sampler {
  */
 template <typename T>  
 inline math::Point<T, 2> sample_uniform_2d(
-    const math::Point<T, 2>& uv, 
+    const math::Point<T, 2>& u2d, 
     const math::Vector<T, 2>& x_range = math::Vector<T, 2>(T(0), T(1)), 
     const math::Vector<T, 2>& y_range = math::Vector<T, 2>(T(0), T(1))
 ) {
-    T x = sample_uniform(uv.x(), x_range.x(), x_range.y());
-    T y = sample_uniform(uv.y(), y_range.x(), y_range.y());
+    T x = sample_uniform(u2d.x(), x_range.x(), x_range.y());
+    T y = sample_uniform(u2d.y(), y_range.x(), y_range.y());
     return math::Point<T, 2>(x, y);
 }
 
@@ -59,9 +58,9 @@ inline T sample_uniform_2d_pdf(
  * @return math::Point<T, 2> Sampled point from the 2D tent distribution.
  */
 template<typename T>
-inline math::Point<T, 2> sample_tent_2d(const math::Point<T, 2>& uv, T rx = 1.0, T ry = 1.0) {
-    T x = sample_tent(uv.x(), rx);
-    T y = sample_tent(uv.y(), ry);
+inline math::Point<T, 2> sample_tent_2d(const math::Point<T, 2>& u2d, T rx = 1.0, T ry = 1.0) {
+    T x = sample_tent(u2d.x(), rx);
+    T y = sample_tent(u2d.y(), ry);
     return math::Point<T, 2>(x, y);
 }
 
@@ -95,9 +94,9 @@ inline T sample_tent_2d_pdf(const math::Point<T, 2>& p, T rx = 1.0, T ry = 1.0) 
  * @return math::Point<T, 2> Sampled point on the disk.
  */
 template<typename T>
-inline math::Point<T, 2> sample_uniform_disk(const math::Point<T, 2>& uv, T radius = 1.0) {
-    T r = std::sqrt(uv.x()) * radius;
-    T theta = 2.0 * math::pi_v<T> * uv.y();
+inline math::Point<T, 2> sample_uniform_disk(const math::Point<T, 2>& u2d, T radius = 1.0) {
+    T r = std::sqrt(u2d.x()) * radius;
+    T theta = 2.0 * math::pi_v<T> * u2d.y();
     return math::Point<T, 2>(r * std::cos(theta), r * std::sin(theta));
 }
 
@@ -130,8 +129,8 @@ inline math::Point<T, 2> sample_uniform_disk(const math::Point<T, 2>& uv, T radi
  * @return math::Point<T, 2> Sampled point on the disk.
  */
 template<typename T>
-inline math::Point<T, 2> sample_uniform_disk_concentric(const math::Point<T, 2>& uv, T radius = 1.0) {
-    math::Point<T, 2> p_offset = 2.0 * uv.to_vector() - math::Vector<T, 2>(1, 1);
+inline math::Point<T, 2> sample_uniform_disk_concentric(const math::Point<T, 2>& u2d, T radius = 1.0) {
+    math::Point<T, 2> p_offset = 2.0 * u2d.to_vector() - math::Vector<T, 2>(1, 1);
 
     if (p_offset.x() == 0 && p_offset.y() == 0) {
         return math::Point<T, 2>(0, 0);
@@ -172,13 +171,13 @@ inline T sample_uniform_disk_pdf(T radius = 1.0) {
  */
 template <typename T>
 inline math::Point<T, 2> sample_gaussian_2d(
-    const math::Point<T, 2>& uv,
+    const math::Point<T, 2>& u2d,
     const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
     const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
 ) {
     // Treat X and Y independently
-    T x = sample_gaussian(uv.x(), mean.x(), stddev.x());
-    T y = sample_gaussian(uv.y(), mean.y(), stddev.y());
+    T x = sample_gaussian(u2d.x(), mean.x(), stddev.x());
+    T y = sample_gaussian(u2d.y(), mean.y(), stddev.y());
     return math::Point<T, 2>(x, y);
 }
 
@@ -194,10 +193,12 @@ inline math::Point<T, 2> sample_gaussian_2d(
  */
 template <typename T>
 inline math::Point<T, 2> sample_gaussian_2d_box_muller(
-    T u1, T u2,
+    const math::Point<T, 2>& u2d,
     const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
     const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
 ) {
+    T u1 = u2d.x();
+    T u2 = u2d.y();
     // 1. 防止 log(0)
     if (u1 < 1e-6) u1 = 1e-6;
 

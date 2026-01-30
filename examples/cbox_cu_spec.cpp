@@ -11,9 +11,9 @@ int main() {
             "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox_cu_spec.xml"
         );
 
-    std::vector<int> spps = {256};
+    std::vector<int> spps = {128};
     for (int spp : spps) {
-        pbpt::integrator::PathIntegrator<double, 4> integrator(5, 0.9);
+        pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
         integrator.render(scene, spp, std::format("output/cbox_cu_spec_{}.exr", spp));
     }
     return 0;

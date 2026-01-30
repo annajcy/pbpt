@@ -64,6 +64,14 @@ enum class BxDFReflTransFlags : int {
     All = Reflection | Transmission
 };
 
+inline bool operator==(BxDFReflTransFlags a, int b) {
+    return static_cast<int>(a) == b;
+}
+
+inline bool operator!(BxDFReflTransFlags a) {
+    return a == BxDFReflTransFlags::Unset;
+}
+
 inline BxDFReflTransFlags operator|(BxDFReflTransFlags a, BxDFReflTransFlags b) {
     return static_cast<BxDFReflTransFlags>(static_cast<int>(a) | static_cast<int>(b));
 }

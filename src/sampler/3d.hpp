@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include <array>
 #include "math/function.hpp"
 #include "math/point.hpp"
 #include "math/vector.hpp"
@@ -24,10 +23,10 @@ namespace pbpt::sampler {
  * @return math::Point<T, 3> Sampled point on the hemisphere.
  */
 template<typename T>
-inline math::Point<T, 3> sample_uniform_hemisphere(const math::Point<T, 2>& uv, T radius = 1.0) {
-    T z = uv.x();
+inline math::Point<T, 3> sample_uniform_hemisphere(const math::Point<T, 2>& u2d, T radius = 1.0) {
+    T z = u2d.x();
     T r = std::sqrt(std::max(T(0), T(1) - z * z));
-    T phi = 2.0 * math::pi_v<T> * uv.y();
+    T phi = 2.0 * math::pi_v<T> * u2d.y();
     return math::Point<T, 3>(radius * r * std::cos(phi), radius * r * std::sin(phi), radius * z);
 }
 
@@ -62,8 +61,8 @@ inline T sample_uniform_hemisphere_pdf(T radius = 1.0) {
  * @return math::Point<T, 3> Sampled point on the hemisphere.
  */
 template<typename T>
-math::Point<T, 3> sample_cosine_weighted_hemisphere(const math::Point<T, 2>& uv, T radius = 1.0) {
-    auto d = sample_uniform_disk_concentric(uv);
+math::Point<T, 3> sample_cosine_weighted_hemisphere(const math::Point<T, 2>& u2d, T radius = 1.0) {
+    auto d = sample_uniform_disk_concentric(u2d);
     auto r2 = d.x() * d.x() + d.y() * d.y();
     auto z = std::sqrt(std::max(T(0), T(1) - r2));
     return math::Point<T, 3>{radius * d.x(), radius * d.y(), radius * z};
@@ -81,10 +80,10 @@ math::Point<T, 3> sample_cosine_weighted_hemisphere(const math::Point<T, 2>& uv,
  * @return T Probability density function value (w.r.t solid angle).
  */
 template<typename T>
-inline T sample_cosine_weighted_hemisphere_pdf(const math::Point<T, 3>& p, T radius = 1.0) {
+inline T sample_cosine_weighted_hemisphere_pdf(const math::Point<T, 3>& u2d, T radius = 1.0) {
     // Calculate cos(theta). For a point on a sphere, z = r * cos(theta).
     // Therefore, cos(theta) = z / r.
-    T cos_theta = p.z() / radius;
+    T cos_theta = u2d.z() / radius;
 
     // The distribution is only defined for the upper hemisphere (z >= 0).
     if (cos_theta < 0) {
@@ -106,10 +105,10 @@ inline T sample_cosine_weighted_hemisphere_pdf(const math::Point<T, 3>& p, T rad
  * @return math::Point<T, 3> Sampled point on the sphere.
  */
 template<typename T>
-inline math::Point<T, 3> sample_uniform_sphere(const math::Point<T, 2>& uv, T radius = 1.0) {
-    T z = 1.0 - 2.0 * uv.x();
+inline math::Point<T, 3> sample_uniform_sphere(const math::Point<T, 2>& u2d, T radius = 1.0) {
+    T z = 1.0 - 2.0 * u2d.x();
     T r = std::sqrt(std::max(T(0), T(1) - z * z));
-    T phi = 2.0 * math::pi_v<T> * uv.y();
+    T phi = 2.0 * math::pi_v<T> * u2d.y();
     return math::Point<T, 3>(radius * r * std::cos(phi), radius * r * std::sin(phi), radius * z);
 }
 
@@ -168,18 +167,18 @@ inline T sample_uniform_sphere_pdf(T radius = 1.0) {
  */
 template<typename T>
 inline math::Point<T, 3> sample_uniform_triangle(
-    const math::Point<T, 2>& uv,
+    const math::Point<T, 2>& u2d,
     const math::Point<T, 3>& v0,
     const math::Point<T, 3>& v1,
     const math::Point<T, 3>& v2
 ) {
     // 1. Sample the first barycentric coordinate b1 (associated with v1).
     // The sqrt pushes samples towards smaller values where the triangle is wider.
-    T b1 = 1.0 - std::sqrt(uv.x());
+    T b1 = 1.0 - std::sqrt(u2d.x());
 
     // 2. Sample the second barycentric coordinate b2 (associated with v2).
     // Sample uniformly within the remaining vertical height.
-    T b2 = uv.y() * (1.0 - b1);
+    T b2 = u2d.y() * (1.0 - b1);
 
     // 3. Compute the remaining barycentric coordinate b0 (associated with v0).
     T b0 = 1.0 - b1 - b2;
@@ -233,15 +232,15 @@ inline T sample_uniform_triangle_pdf(
 
 template<typename T>
 inline math::Point<T, 3> sample_uniform_triangle_barycentric(
-    const math::Point<T, 2>& uv
+    const math::Point<T, 2>& u2d
 ) {
     // 1. Sample the first barycentric coordinate b1 (associated with v1).
     // The sqrt pushes samples towards smaller values where the triangle is wider.
-    T b1 = 1.0 - std::sqrt(uv.x());
+    T b1 = 1.0 - std::sqrt(u2d.x());
 
     // 2. Sample the second barycentric coordinate b2 (associated with v2).
     // Sample uniformly within the remaining vertical height.
-    T b2 = uv.y() * (1.0 - b1);
+    T b2 = u2d.y() * (1.0 - b1);
 
     // 3. Compute the remaining barycentric coordinate b0 (associated with v0).
     T b0 = 1.0 - b1 - b2;

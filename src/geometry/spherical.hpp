@@ -187,20 +187,20 @@ inline constexpr auto cos_theta(const Vector<T, 3>& v) {
 
 /// Cosine squared of the polar angle.
 template <typename T>
-inline constexpr auto cos_theta_sq(const Vector<T, 3>& v) {
+inline constexpr auto cos2_theta(const Vector<T, 3>& v) {
     return v.z() * v.z();
 }
 
 /// Sine squared of the polar angle.
 template<typename T>
-inline constexpr auto sin_theta_sq(const Vector<T, 3>& v) {
-    return std::max(T(0), T(1) - cos_theta_sq(v));
+inline constexpr auto sin2_theta(const Vector<T, 3>& v) {
+    return std::max(T(0), T(1) - cos2_theta(v));
 }
 
 /// Sine of the polar angle.
 template<typename T>
 inline constexpr auto sin_theta(const Vector<T, 3>& v) {
-    return std::sqrt(sin_theta_sq(v));
+    return std::sqrt(sin2_theta(v));
 }
 
 /// Tangent of the polar angle.
@@ -211,8 +211,8 @@ inline constexpr auto tan_theta(const Vector<T, 3>& v) {
 
 /// Tangent squared of the polar angle.
 template <typename T>
-inline constexpr auto tan_theta_sq(const Vector<T, 3>& v) {
-    return sin_theta_sq(v) / cos_theta_sq(v);
+inline constexpr auto tan2_theta(const Vector<T, 3>& v) {
+    return sin2_theta(v) / cos2_theta(v);
 }
 
 /// Azimuth angle of a 3D direction in [0, 2*pi).

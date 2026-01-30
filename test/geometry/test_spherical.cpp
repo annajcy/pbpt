@@ -772,27 +772,27 @@ TEST(SphericalUtilityTest, CosThetaSqFunction) {
     // Test cos_theta_sq function
     Vector<Float, 3> v(1, 2, 3);  // z = 3
     Float expected = Float(9);  // z^2 = 9
-    EXPECT_FLOAT_EQ(cos_theta_sq<Float>(v), expected);
+    EXPECT_FLOAT_EQ(cos2_theta<Float>(v), expected);
     
     // Test with normalized vector
     Vector<Float, 3> normalized = v.normalized();
     Float cos_val = cos_theta<Float>(normalized);
-    EXPECT_TRUE(are_almost_equal(cos_theta_sq<Float>(normalized), cos_val * cos_val));
+    EXPECT_TRUE(are_almost_equal(cos2_theta<Float>(normalized), cos_val * cos_val));
 }
 
 TEST(SphericalUtilityTest, SinThetaSqFunction) {
     // Test sin_theta_sq function
     Vector<Float, 3> north_pole(0, 0, 1);
-    EXPECT_TRUE(are_almost_equal(sin_theta_sq<Float>(north_pole), Float(0), Float(1e-10)));
+    EXPECT_TRUE(are_almost_equal(sin2_theta<Float>(north_pole), Float(0), Float(1e-10)));
     
     Vector<Float, 3> equator(1, 0, 0);
-    EXPECT_TRUE(are_almost_equal(sin_theta_sq<Float>(equator), Float(1), Float(1e-10)));
+    EXPECT_TRUE(are_almost_equal(sin2_theta<Float>(equator), Float(1), Float(1e-10)));
     
     // Test identity: sin²θ + cos²θ = 1
     Vector<Float, 3> arbitrary(2, 3, 4);
     arbitrary = arbitrary.normalized();
-    Float sin_sq = sin_theta_sq<Float>(arbitrary);
-    Float cos_sq = cos_theta_sq<Float>(arbitrary);
+    Float sin_sq = sin2_theta<Float>(arbitrary);
+    Float cos_sq = cos2_theta<Float>(arbitrary);
     EXPECT_TRUE(are_almost_equal(sin_sq + cos_sq, Float(1), Float(1e-6)));
 }
 
@@ -837,17 +837,17 @@ TEST(SphericalUtilityTest, TanThetaFunction) {
 TEST(SphericalUtilityTest, TanThetaSqFunction) {
     // Test tan_theta_sq function
     Vector<Float, 3> v_45deg = Vector<Float, 3>(1, 0, 1).normalized();
-    EXPECT_TRUE(are_almost_equal(tan_theta_sq<Float>(v_45deg), Float(1)));
+    EXPECT_TRUE(are_almost_equal(tan2_theta<Float>(v_45deg), Float(1)));
     
     Vector<Float, 3> north_pole(0, 0, 1);
-    EXPECT_TRUE(are_almost_equal(tan_theta_sq<Float>(north_pole), Float(0), Float(1e-10)));
+    EXPECT_TRUE(are_almost_equal(tan2_theta<Float>(north_pole), Float(0), Float(1e-10)));
     
     // Test relationship with sin and cos (avoid division by zero)
     Vector<Float, 3> arbitrary(1, 2, 3);
     arbitrary = arbitrary.normalized();
     if (std::abs(cos_theta<Float>(arbitrary)) > Float(1e-6)) {
-        Float tan_sq_direct = tan_theta_sq<Float>(arbitrary);
-        Float tan_from_sin_cos = sin_theta_sq<Float>(arbitrary) / cos_theta_sq<Float>(arbitrary);
+        Float tan_sq_direct = tan2_theta<Float>(arbitrary);
+        Float tan_from_sin_cos = sin2_theta<Float>(arbitrary) / cos2_theta<Float>(arbitrary);
         EXPECT_TRUE(are_almost_equal(tan_sq_direct, tan_from_sin_cos, Float(1e-6)));
     }
 }
@@ -998,8 +998,8 @@ TEST(SphericalUtilityTest, TrigonometricIdentities) {
     
     for (const auto& v : test_vectors) {
         // Test sin²θ + cos²θ = 1
-        Float sin_sq = sin_theta_sq(v);
-        Float cos_sq = cos_theta_sq(v);
+        Float sin_sq = sin2_theta(v);
+        Float cos_sq = cos2_theta(v);
         EXPECT_TRUE(are_almost_equal(sin_sq + cos_sq, Float(1), Float(1e-6)))
             << "sin²θ + cos²θ = 1 failed for vector (" << v.x() << ", " << v.y() << ", " << v.z() << ")";
         
@@ -1013,8 +1013,8 @@ TEST(SphericalUtilityTest, TrigonometricIdentities) {
         
         // Test tan²θ = sin²θ / cos²θ (except when cos_theta = 0)
         if (std::abs(cos_theta(v)) > Float(1e-6)) {
-            Float tan_sq_direct = tan_theta_sq(v);
-            Float tan_sq_from_trig = sin_theta_sq(v) / cos_theta_sq(v);
+            Float tan_sq_direct = tan2_theta(v);
+            Float tan_sq_from_trig = sin2_theta(v) / cos2_theta(v);
             EXPECT_TRUE(are_almost_equal(tan_sq_direct, tan_sq_from_trig, Float(1e-6)))
                 << "tan²θ identity failed for vector (" << v.x() << ", " << v.y() << ", " << v.z() << ")";
         }

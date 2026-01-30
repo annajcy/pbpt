@@ -59,7 +59,7 @@ int main() {
     for (int spp : spps) {
         
         pbpt::integrator::PathIntegrator<double, 4> integrator(
-            5, 0.9
+            -1, 0.9
         );
         integrator.render(scene, spp, std::format("output/cbox_loader_{}.exr", spp));
     }
