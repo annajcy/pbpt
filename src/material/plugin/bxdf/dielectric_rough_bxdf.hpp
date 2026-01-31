@@ -114,11 +114,11 @@ private:
                        (T(4) * std::abs(geometry::cos_theta(wo)) * std::abs(geometry::cos_theta(wi)));
 
             return BxDFSampleRecord<T, N>{
+                .f = radiometry::SampledSpectrum<T, N>::filled(fr),
                 .wi = wi,
                 .pdf = pdf,
-                .f = radiometry::SampledSpectrum<T, N>::filled(fr),
-                .sampled_flags = BxDFFlags::GlossyReflection,
-                .eta = T(1)
+                .eta = T(1),
+                .sampled_flags = BxDFFlags::GlossyReflection
             };
 
         } else {
@@ -150,11 +150,11 @@ private:
             }
 
             return BxDFSampleRecord<T, N>{
+                .f = radiometry::SampledSpectrum<T, N>::filled(ft),
                 .wi = wi,
                 .pdf = pdf,
-                .f = radiometry::SampledSpectrum<T, N>::filled(ft),
-                .sampled_flags = BxDFFlags::GlossyTransmission,
-                .eta = etap
+                .eta = etap,
+                .sampled_flags = BxDFFlags::GlossyTransmission
             };
         
         }

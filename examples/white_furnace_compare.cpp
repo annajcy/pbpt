@@ -3,7 +3,6 @@
 
 #include "integrator/plugin/integrator/path_integrator.hpp"
 #include "loader/scene_loader.hpp"
-#include "scene/scene.hpp"
 
 int main() {
     auto scene = pbpt::loader::load_scene<double>(

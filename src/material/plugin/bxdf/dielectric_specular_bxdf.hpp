@@ -64,11 +64,11 @@ private:
             auto cos_theta_i = geometry::cos_theta(wi);
             auto abs_cos_theta_i = std::abs(cos_theta_i);
             return BxDFSampleRecord<T, N>{
+                .f = radiometry::SampledSpectrum<T, N>::filled(Re / abs_cos_theta_i),
                 .wi = wi,
                 .pdf = pr,
-                .f = radiometry::SampledSpectrum<T, N>::filled(Re / abs_cos_theta_i),
-                .sampled_flags = BxDFFlags::SpecularReflection,
-                .eta = T(1)
+                .eta = T(1),
+                .sampled_flags = BxDFFlags::SpecularReflection
             };
         } else {
             // transmission
@@ -91,11 +91,11 @@ private:
             }
 
             return BxDFSampleRecord<T, N>{
+                .f = radiometry::SampledSpectrum<T, N>::filled(ft),
                 .wi = wi,
                 .pdf = pt,
-                .f = radiometry::SampledSpectrum<T, N>::filled(ft),
-                .sampled_flags = BxDFFlags::SpecularTransmission,
-                .eta = etap
+                .eta = etap,
+                .sampled_flags = BxDFFlags::SpecularTransmission
             };
         }       
     }
