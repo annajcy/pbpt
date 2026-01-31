@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<scene version="0.4.0">
+	<integrator type="path">
+		<integer name="maxDepth" value="-1"/>
+	</integrator>
+
+	<sensor type="perspective">
+		<string name="fovAxis" value="smaller"/>
+		<float name="nearClip" value="0.1"/>
+		<float name="farClip" value="50"/>
+		<transform name="toWorld">
+			<lookAt origin="0, 0, -8" target="0, 0, 0" up="0, 1, 0"/>
+		</transform>
+		<float name="fov" value="45"/>
+
+		<sampler type="ldsampler">
+			<integer name="sampleCount" value="128"/>
+		</sampler>
+
+		<film type="hdrfilm">
+			<integer name="width" value="512"/>
+			<integer name="height" value="512"/>
+			<rfilter type="gaussian"/>
+		</film>
+	</sensor>
+
+	<bsdf type="diffuse" id="black">
+		<spectrum name="reflectance" value="400:0, 700:0"/>
+	</bsdf>
+
+	<bsdf type="diffuse" id="diffuse_ref">
+		<spectrum name="reflectance" value="400:1, 700:1"/>
+	</bsdf>
+
+	<bsdf type="dielectric_rough" id="rough_01">
+		<float name="eta" value="1.5"/>
+		<float name="roughness" value="0.1"/>
+	</bsdf>
+
+	<bsdf type="dielectric_rough" id="rough_04">
+		<float name="eta" value="1.5"/>
+		<float name="roughness" value="0.4"/>
+	</bsdf>
+
+	<bsdf type="dielectric_rough" id="rough_08">
+		<float name="eta" value="1.5"/>
+		<float name="roughness" value="0.8"/>
+	</bsdf>
+
+	<shape type="obj">
+		<string name="filename" value="meshes/furnace_sphere.obj"/>
+		<transform name="toWorld">
+			<scale x="-10" y="-10" z="-10"/>
+		</transform>
+		<ref id="black"/>
+
+		<emitter type="area">
+			<spectrum name="radiance" value="400:0.1, 700:0.1"/>
+		</emitter>
+	</shape>
+
+	<shape type="obj">
+		<string name="filename" value="meshes/sphere_r01.obj"/>
+		<transform name="toWorld">
+			<translate x="-2.5" y="-1.5" z="0"/>
+		</transform>
+		<ref id="rough_01"/>
+	</shape>
+
+	<shape type="obj">
+		<string name="filename" value="meshes/sphere_r04.obj"/>
+		<transform name="toWorld">
+			<translate x="2.5" y="-1.5" z="0"/>
+		</transform>
+		<ref id="rough_04"/>
+	</shape>
+
+	<shape type="obj">
+		<string name="filename" value="meshes/sphere_r08.obj"/>
+		<transform name="toWorld">
+			<translate x="-2.5" y="1.5" z="0"/>
+		</transform>
+		<ref id="rough_08"/>
+	</shape>
+
+	<shape type="obj">
+		<string name="filename" value="meshes/sphere_diff.obj"/>
+		<transform name="toWorld">
+			<translate x="2.5" y="1.5" z="0"/>
+		</transform>
+		<ref id="diffuse_ref"/>
+	</shape>
+</scene>

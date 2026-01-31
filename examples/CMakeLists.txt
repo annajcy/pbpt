@@ -16,5 +16,14 @@ target_link_libraries(cbox_rough PRIVATE pbpt)
 add_executable(cbox_microfacet cbox_microfacet.cpp)
 target_link_libraries(cbox_microfacet PRIVATE pbpt)
 
+add_executable(cbox_microfacet_aniso cbox_microfacet_aniso.cpp)
+target_link_libraries(cbox_microfacet_aniso PRIVATE pbpt)
+
+add_executable(cbox_microfacet_compare cbox_microfacet_compare.cpp)
+target_link_libraries(cbox_microfacet_compare PRIVATE pbpt)
+
+add_executable(white_furnace_compare white_furnace_compare.cpp)
+target_link_libraries(white_furnace_compare PRIVATE pbpt)
+
 add_executable(image_io image_io.cpp)
 target_link_libraries(image_io PRIVATE pbpt)

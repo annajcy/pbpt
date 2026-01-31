@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<scene version="0.4.0">
+	<integrator type="path">
+		<integer name="maxDepth" value="-1"/>
+	</integrator>
+
+	<sensor type="perspective">
+		<string name="fovAxis" value="smaller"/>
+		<float name="nearClip" value="0.1"/>
+		<float name="farClip" value="50"/>
+		<transform name="toWorld">
+			<lookAt origin="0, 0, -4" target="0, 0, 0" up="0, 1, 0"/>
+		</transform>
+		<float name="fov" value="45"/>
+
+		<sampler type="ldsampler">
+			<integer name="sampleCount" value="64"/>
+		</sampler>
+
+		<film type="hdrfilm">
+			<integer name="width" value="512"/>
+			<integer name="height" value="512"/>
+			<rfilter type="gaussian"/>
+		</film>
+	</sensor>
+
+	<bsdf type="diffuse" id="black">
+		<spectrum name="reflectance" value="400:0, 700:0"/>
+	</bsdf>
+
+	<bsdf type="conductor" id="test_microfacet">
+		<string name="eta" value="file:../../spectrum/metal/Cu_eta_Johnson_1972.csv"/>
+		<string name="k" value="file:../../spectrum/metal/Cu_k_Johnson_1972.csv"/>
+		<float name="alpha" value="0.7"/>
+	</bsdf>
+
+	<shape type="obj">
+		<string name="filename" value="meshes/furnace_sphere.obj"/>
+		<transform name="toWorld">
+			<scale x="-10" y="-10" z="-10"/>
+		</transform>
+		<ref id="black"/>
+
+		<emitter type="area">
+			<spectrum name="radiance" value="400:1, 700:1"/>
+		</emitter>
+	</shape>
+
+	<shape type="obj">
+		<string name="filename" value="meshes/test_sphere.obj"/>
+		<transform name="toWorld">
+			<scale x="1" y="1" z="1"/>
+		</transform>
+		<ref id="test_microfacet"/>
+	</shape>
+</scene>
