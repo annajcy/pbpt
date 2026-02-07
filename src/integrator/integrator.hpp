@@ -80,12 +80,12 @@ protected:
                     radiometry::SampledSpectrum<T, N> Li;
                     if (is_trace_ray_differential) {
                         auto ray_diff = context.camera.generate_differential_ray(sample);
-                        ray_diff = context.render_transform.camera_to_render().transform_ray(ray_diff);
-                        Li = this->Li(context, ray_diff, wavelength_sample, sampler);
+                        ray_diff = context.render_transform.camera_to_render().transform_ray_differential(ray_diff);
+                        Li = this->Li_ray_differential(context, ray_diff, wavelength_sample, sampler);
                     } else {
                         auto ray = context.camera.generate_ray(sample);
-                        ray = context.render_transform.camera_to_render().transform_ray(ray);
-                        Li = this->Li(context, ray, wavelength_sample, sampler);
+                        ray = context.render_transform.camera_to_render().transform_ray_main(ray);
+                        Li = this->Li_ray(context, ray, wavelength_sample, sampler);
                     }
 
                     // Accumulate the result to film
@@ -102,13 +102,13 @@ protected:
 
 private:
     template<typename SceneContextT>
-    radiometry::SampledSpectrum<T, N> Li(
+    radiometry::SampledSpectrum<T, N> Li_ray(
         const SceneContextT& context,
         const geometry::Ray<T, 3>& ray, 
         const radiometry::SampledWavelength<T, N>& wavelength_sample,
         Sampler& sampler
     ) {
-        return as_derived().Li_impl(
+        return as_derived().Li_ray_impl(
             context, 
             ray, 
             wavelength_sample, 
@@ -117,15 +117,15 @@ private:
     }
 
     template<typename SceneContextT>
-    radiometry::SampledSpectrum<T, N> Li(
+    radiometry::SampledSpectrum<T, N> Li_ray_differential(
         const SceneContextT& context,
-        const geometry::RayDifferential<T, 3>& ray, 
+        const geometry::RayDifferential<T, 3>& ray_diff, 
         const radiometry::SampledWavelength<T, N>& wavelength_sample,
         Sampler& sampler
     ) {
-        return as_derived().Li_impl(
+        return as_derived().Li_ray_differential_impl(
             context, 
-            ray, 
+            ray_diff, 
             wavelength_sample, 
             sampler
         );

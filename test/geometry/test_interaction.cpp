@@ -251,7 +251,7 @@ TEST_F(InteractionTest, ComputeDifferentialsFromRayDifferential) {
     };
 
     RayDifferential<Float, 3> ray_diff(main_ray, diff_rays);
-    auto diffs = compute_surface_differentials(si, ray_diff);
+    auto diffs = si.compute_differentials(ray_diff);
 
     ASSERT_TRUE(diffs.has_value());
     EXPECT_NEAR(diffs->dpdx.x(), Float(1), Float(1e-6));
@@ -279,7 +279,7 @@ TEST_F(InteractionTest, ComputeDifferentialsDegenerateParallelRay) {
     std::array<Ray<Float, 3>, 2> diff_rays{main_ray, main_ray};
     RayDifferential<Float, 3> ray_diff(main_ray, diff_rays);
 
-    auto diffs = compute_surface_differentials(si, ray_diff);
+    auto diffs = si.compute_differentials(ray_diff);
     EXPECT_FALSE(diffs.has_value());
 }
 

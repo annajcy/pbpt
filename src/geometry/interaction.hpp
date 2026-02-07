@@ -7,10 +7,12 @@
 
 #include <cmath>
 #include <optional>
+#include <algorithm>
 
 #include "math/point.hpp"
 #include "math/vector.hpp"
 #include "math/normal.hpp"
+#include "math/matrix.hpp"
 #include "geometry/ray.hpp"
 
 namespace pbpt::geometry {
@@ -82,6 +84,22 @@ inline math::Point<T, 3> offset_ray_origin(
 template<typename T>
 struct ShadingInfo {
     math::Normal<T, 3> n{};
+    math::Normal<T, 3> dndu{};
+    math::Normal<T, 3> dndv{};
+};
+
+// -----------------------------------------------------------------------------
+// Surface Differentials
+// -----------------------------------------------------------------------------
+
+template<typename T>
+struct SurfaceDifferentials {
+    math::Vector<T, 3> dpdx{};
+    math::Vector<T, 3> dpdy{};
+    T dudx{0};
+    T dvdx{0};
+    T dudy{0};
+    T dvdy{0};
 };
 
 // -----------------------------------------------------------------------------
@@ -106,6 +124,8 @@ private:
     math::Point<T, 2> m_uv;
     math::Vector<T, 3> m_dpdu;
     math::Vector<T, 3> m_dpdv;
+    math::Normal<T, 3> m_dndu;
+    math::Normal<T, 3> m_dndv;
 
 public:
     SurfaceInteraction() = default;
@@ -117,8 +137,10 @@ public:
         const math::Normal<T, 3>& n,
         const math::Point<T, 2>& uv,
         const math::Vector<T, 3>& dpdu,
-        const math::Vector<T, 3>& dpdv
-    ) : m_p_lower(p_lower), m_p_upper(p_upper), m_wo(wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv) {}
+        const math::Vector<T, 3>& dpdv,
+        const math::Normal<T, 3>& dndu = math::Normal<T, 3>(0, 0, 0),
+        const math::Normal<T, 3>& dndv = math::Normal<T, 3>(0, 0, 0)
+    ) : m_p_lower(p_lower), m_p_upper(p_upper), m_wo(wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
 
     SurfaceInteraction(
         const math::Point<T, 3>& p,
@@ -127,8 +149,10 @@ public:
         const math::Point<T, 2>& uv,
         const math::Vector<T, 3>& dpdu,
         const math::Vector<T, 3>& dpdv,
-        const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0}
-    ) : m_p_lower(p - error_margin), m_p_upper(p + error_margin), m_wo(wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv) {}
+        const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0},
+        const math::Normal<T, 3>& dndu = math::Normal<T, 3>(0, 0, 0),
+        const math::Normal<T, 3>& dndv = math::Normal<T, 3>(0, 0, 0)
+    ) : m_p_lower(p - error_margin), m_p_upper(p + error_margin), m_wo(wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
 
     // --- Accessors ---
     const math::Vector<T, 3>& wo() const { return m_wo; }
@@ -140,11 +164,36 @@ public:
     const math::Point<T, 2>& uv() const { return m_uv; }
     const math::Vector<T, 3>& dpdu() const { return m_dpdu; }
     const math::Vector<T, 3>& dpdv() const { return m_dpdv; }
+    const math::Normal<T, 3>& dndu() const { return m_dndu; }
+    const math::Normal<T, 3>& dndv() const { return m_dndv; }
 
     // --- Ray Spawning ---
     Ray<T, 3> spawn_ray(const math::Vector<T, 3>& wi) const {
         auto o = offset_ray_origin(m_p_lower, m_p_upper, wi, m_n);
         return Ray<T, 3>(o, wi);
+    }
+
+    RayDifferential<T, 3> spawn_ray_differential(
+        const math::Vector<T, 3>& wi,
+        const RayDifferentialOffset<T>& diffs_offset
+    ) const {
+        // 1. Compute main ray origin with Shadow Acne avoidance
+        auto o = offset_ray_origin(m_p_lower, m_p_upper, wi, m_n);
+        Ray<T, 3> main_ray(o, wi);
+
+        // 2. Apply position deltas to the SAFE origin
+        // This ensures differential rays maintain a similar distance from the surface
+        auto ox = o + diffs_offset.dpdx;
+        auto oy = o + diffs_offset.dpdy;
+
+        // 3. Apply direction deltas to the main direction
+        auto dir_x = wi + diffs_offset.dwdx;
+        auto dir_y = wi + diffs_offset.dwdy;
+
+        Ray<T, 3> ray_x(ox, dir_x);
+        Ray<T, 3> ray_y(oy, dir_y);
+
+        return RayDifferential<T, 3>(main_ray, {ray_x, ray_y});
     }
 
     Ray<T, 3> spawn_ray_to(const math::Point<T, 3>& p_to) const {
@@ -161,88 +210,78 @@ public:
 
     void flip_normal() {
         m_n = -m_n;
+        m_dndu = -m_dndu;
+        m_dndv = -m_dndv;
+    }
+
+    std::optional<SurfaceDifferentials<T>> compute_differentials(
+        const geometry::RayDifferential<T, 3>& ray_diff
+    ) const {
+        // Treat "no perturbation" differential rays as invalid differentials.
+        const auto& main_ray = ray_diff.main_ray();
+        auto is_same_ray = [&](const geometry::Ray<T, 3>& ray) {
+            auto origin_delta = ray.origin() - main_ray.origin();
+            auto direction_delta = ray.direction() - main_ray.direction();
+            return origin_delta.length_squared() <= math::epsilon_v<T> &&
+                   direction_delta.length_squared() <= math::epsilon_v<T>;
+        };
+        if (is_same_ray(ray_diff.x()) && is_same_ray(ray_diff.y())) {
+            return std::nullopt;
+        }
+
+        auto n_vec = m_n.to_vector();
+        auto p = point();
+
+        T tx_denom = n_vec.dot(ray_diff.x().direction());
+        T ty_denom = n_vec.dot(ray_diff.y().direction());
+        if (std::abs(tx_denom) < math::epsilon_v<T> || std::abs(ty_denom) < math::epsilon_v<T>) {
+            return std::nullopt;
+        }
+
+        T x_d = -n_vec.dot(ray_diff.x().origin() - p);
+        T y_d = -n_vec.dot(ray_diff.y().origin() - p);
+        
+        T tx = x_d / tx_denom;
+        T ty = y_d / ty_denom;
+
+        if (!std::isfinite(tx) || !std::isfinite(ty)) {
+            return std::nullopt;
+        }
+
+        auto px = ray_diff.x().origin() + ray_diff.x().direction() * tx;
+        auto py = ray_diff.y().origin() + ray_diff.y().direction() * ty;
+
+        SurfaceDifferentials<T> diffs;
+        diffs.dpdx = px - p;
+        diffs.dpdy = py - p;
+
+        math::Matrix<T, 2, 3> A;
+        for (int i = 0; i < 3; ++i) {
+            A.at(0, i) = m_dpdu[i];
+            A.at(1, i) = m_dpdv[i];
+        }
+
+        math::Matrix<T, 2, 3> B;
+        for (int i = 0; i < 3; ++i) {
+            B.at(0, i) = diffs.dpdx[i];
+            B.at(1, i) = diffs.dpdy[i];
+        }
+
+        auto solution = math::solve_LMS(A, B);
+
+        T limit = static_cast<T>(1e8);
+        auto clamp_val = [&](T val) {
+            if (!std::isfinite(val)) return T(0);
+            return std::clamp(val, -limit, limit);
+        };
+
+        diffs.dudx = clamp_val(solution.at(0, 0));
+        diffs.dvdx = clamp_val(solution.at(0, 1));
+        diffs.dudy = clamp_val(solution.at(1, 0));
+        diffs.dvdy = clamp_val(solution.at(1, 1));
+
+        return diffs;
     }
 };
-
-// -----------------------------------------------------------------------------
-// Surface Differentials
-// -----------------------------------------------------------------------------
-
-template<typename T>
-struct SurfaceDifferentials {
-    math::Vector<T, 3> dpdx{};
-    math::Vector<T, 3> dpdy{};
-    T dudx{0};
-    T dvdx{0};
-    T dudy{0};
-    T dvdy{0};
-};
-
-template<typename T>
-inline std::optional<SurfaceDifferentials<T>> compute_surface_differentials(
-    const SurfaceInteraction<T>& si,
-    const geometry::RayDifferential<T, 3>& ray
-) {
-    auto n_vec = si.n().to_vector();
-    auto p = si.point();
-
-    T tx_denom = n_vec.dot(ray.x().direction());
-    T ty_denom = n_vec.dot(ray.y().direction());
-    if (std::abs(tx_denom) < math::epsilon_v<T> || std::abs(ty_denom) < math::epsilon_v<T>) {
-        return std::nullopt;
-    }
-
-    T tx = n_vec.dot(p - ray.x().origin()) / tx_denom;
-    T ty = n_vec.dot(p - ray.y().origin()) / ty_denom;
-    if (!std::isfinite(tx) || !std::isfinite(ty)) {
-        return std::nullopt;
-    }
-
-    auto px = ray.x().origin() + ray.x().direction() * tx;
-    auto py = ray.y().origin() + ray.y().direction() * ty;
-
-    SurfaceDifferentials<T> diffs;
-    diffs.dpdx = px - p;
-    diffs.dpdy = py - p;
-    T eps_sq = math::epsilon_v<T> * math::epsilon_v<T>;
-    if (diffs.dpdx.length_squared() <= eps_sq && diffs.dpdy.length_squared() <= eps_sq) {
-        return std::nullopt;
-    }
-
-    int dim0 = 0;
-    int dim1 = 1;
-    T abs_nx = std::abs(n_vec.x());
-    T abs_ny = std::abs(n_vec.y());
-    T abs_nz = std::abs(n_vec.z());
-    if (abs_nx > abs_ny && abs_nx > abs_nz) {
-        dim0 = 1;
-        dim1 = 2;
-    } else if (abs_ny > abs_nz) {
-        dim0 = 0;
-        dim1 = 2;
-    }
-
-    const auto& dpdu = si.dpdu();
-    const auto& dpdv = si.dpdv();
-    T a00 = dpdu[dim0];
-    T a01 = dpdv[dim0];
-    T a10 = dpdu[dim1];
-    T a11 = dpdv[dim1];
-    T det = a00 * a11 - a01 * a10;
-    if (std::abs(det) > math::epsilon_v<T>) {
-        T inv_det = T(1) / det;
-        T bx0 = diffs.dpdx[dim0];
-        T bx1 = diffs.dpdx[dim1];
-        T by0 = diffs.dpdy[dim0];
-        T by1 = diffs.dpdy[dim1];
-
-        diffs.dudx = (bx0 * a11 - bx1 * a01) * inv_det;
-        diffs.dvdx = (-bx0 * a10 + bx1 * a00) * inv_det;
-        diffs.dudy = (by0 * a11 - by1 * a01) * inv_det;
-        diffs.dvdy = (-by0 * a10 + by1 * a00) * inv_det;
-    }
-
-    return diffs;
-}
 
 } // namespace pbpt::geometry

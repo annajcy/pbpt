@@ -289,7 +289,7 @@ TEST_F(TransformTest, RayTransform) {
     Ray3 ray(Pt3(0, 0, 0), Vec3(1, 0, 0));
     
     // Transform the ray
-    Ray3 transformed_ray = T.transform_ray(ray);
+    Ray3 transformed_ray = T.transform_ray_main(ray);
     
     // Origin should be translated
     EXPECT_NEAR(transformed_ray.origin().x(), 1.0, kEpsilon);
@@ -303,7 +303,7 @@ TEST_F(TransformTest, RayTransform) {
     
     // Test with rotation
     Transform<double> R = Transform<double>::rotate_z(deg2rad(90.0));
-    Ray3 rotated_ray = R.transform_ray(ray);
+    Ray3 rotated_ray = R.transform_ray_main(ray);
     
     // Direction should be rotated from (1,0,0) to (0,1,0)
     EXPECT_NEAR(rotated_ray.direction().x(), 0.0, kEpsilon);

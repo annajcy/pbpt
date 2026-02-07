@@ -5,6 +5,7 @@
 #include "scene/cbox_scene.hpp"
 #include "scene/scene.hpp"
 #include "integrator/plugin/integrator/path_integrator.hpp"
+#include "texture/texture.hpp"
 
 int main() {
     // // Debug: compare both scenes - load scene2 FIRST to avoid static id issue
@@ -57,7 +58,6 @@ int main() {
         
     std::vector<int> spps = {16};
     for (int spp : spps) {
-        
         pbpt::integrator::PathIntegrator<double, 4> integrator(
             -1, 0.9
         );

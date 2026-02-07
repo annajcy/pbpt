@@ -177,9 +177,9 @@ private:
         );
     }
 
-    std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<T> is_intersected_ray_impl(const geometry::Ray<T, 3>& ray) const {
         // 1. Transform Ray to Object Space
-        auto ray_obj = m_render_to_object.transform_ray(ray);
+        auto ray_obj = m_render_to_object.transform_ray_main(ray);
 
         // 2. Solve intersection in Object Space
         auto result_opt = intersect_object_space(ray_obj);
@@ -190,9 +190,9 @@ private:
         return std::nullopt;
     }
 
-    std::optional<IntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<IntersectionRecord<T>> intersect_ray_impl(const geometry::Ray<T, 3>& ray) const {
         // 1. Transform Ray to Object Space
-        auto ray_obj = m_render_to_object.transform_ray(ray);
+        auto ray_obj = m_render_to_object.transform_ray_main(ray);
 
         // 2. Solve intersection in Object Space
         auto result_opt = intersect_object_space(ray_obj);
@@ -216,14 +216,14 @@ private:
             si_render.flip_normal();
         }
 
-        geometry::ShadingInfo<T> shading{si_render.n()};
+        geometry::ShadingInfo<T> shading{si_render.n(), si_render.dndu(), si_render.dndv()};
         return std::make_optional(IntersectionRecord<T>{si_render, shading, std::nullopt, result.t_hit});
     }
 
-    std::optional<IntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
-        auto hit = intersect_impl(ray.main_ray());
+    std::optional<IntersectionRecord<T>> intersect_ray_differential_impl(const geometry::RayDifferential<T, 3>& ray_diff) const {
+        auto hit = intersect_ray_impl(ray_diff.main_ray());
         if (!hit) return std::nullopt;
-        hit->differentials = geometry::compute_surface_differentials(hit->interaction, ray);
+        hit->differentials = hit->interaction.compute_differentials(ray_diff);
         return hit;
     }
 
@@ -523,6 +523,10 @@ private:
         );
         dpdv = dpdv * theta_range;
 
+        // For a sphere, n = p / r, so dn/du = dp/du / r and dn/dv = dp/dv / r.
+        math::Normal<T, 3> dndu = math::Normal<T, 3>::from_vector(dpdu / m_radius);
+        math::Normal<T, 3> dndv = math::Normal<T, 3>::from_vector(dpdv / m_radius);
+
         // 3. Compute Normal
         math::Normal<T, 3> N = math::Normal<T, 3>::from_vector(
             (intersection.p_obj - math::Point<T, 3>(0,0,0)).normalized()
@@ -542,7 +546,9 @@ private:
             N,
             math::Point<T, 2>(u, v),
             dpdu,
-            dpdv
+            dpdv,
+            dndu,
+            dndv
         );
     }
 };

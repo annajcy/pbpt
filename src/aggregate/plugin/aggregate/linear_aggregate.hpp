@@ -19,12 +19,12 @@ public:
     LinearAggregate(const std::vector<shape::Primitive<T>>& primitives): m_primitives(primitives) {}
 
 private:
-    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_ray_impl(const geometry::Ray<T, 3>& ray) const {
         std::optional<shape::PrimitiveIntersectionRecord<T>> closest_hit;
         T closest_t = std::numeric_limits<T>::infinity();
 
         for (const auto& primitive : m_primitives) {
-            auto hit = primitive.intersect(ray);
+            auto hit = primitive.intersect_ray(ray);
             if (hit && hit->intersection.t < closest_t) {
                 closest_t = hit->intersection.t;
                 closest_hit = hit;
@@ -34,12 +34,12 @@ private:
         return closest_hit;
     }
 
-    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_ray_differential_impl(const geometry::RayDifferential<T, 3>& ray_diff) const {
         std::optional<shape::PrimitiveIntersectionRecord<T>> closest_hit;
         T closest_t = std::numeric_limits<T>::infinity();
 
         for (const auto& primitive : m_primitives) {
-            auto hit = primitive.intersect(ray);
+            auto hit = primitive.intersect_ray_differential(ray_diff);
             if (hit && hit->intersection.t < closest_t) {
                 closest_t = hit->intersection.t;
                 closest_hit = hit;
@@ -49,12 +49,12 @@ private:
         return closest_hit;
     }
 
-    std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<T> is_intersected_ray_impl(const geometry::Ray<T, 3>& ray) const {
         T closest_t = std::numeric_limits<T>::infinity();
         bool hit_found = false;
 
         for (const auto& primitive : m_primitives) {
-            auto hit_t = primitive.is_intersected(ray);
+            auto hit_t = primitive.is_intersected_ray(ray);
             if (hit_t && *hit_t < closest_t) {
                 closest_t = *hit_t;
                 hit_found = true;

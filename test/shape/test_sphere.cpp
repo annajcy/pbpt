@@ -93,7 +93,7 @@ TEST_F(SphereTest, RayHitsSphereReturnsClosestIntersection) {
     Ray<double, 3> ray(origin, direction);
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto t_hit = shape_iface.is_intersected(ray);
+    auto t_hit = shape_iface.is_intersected_ray(ray);
 
     ASSERT_TRUE(t_hit.has_value());
     EXPECT_NEAR(t_hit.value(), 2.0, 1e-10);
@@ -106,7 +106,7 @@ TEST_F(SphereTest, RayUsesSecondRootWhenFirstBelowTMin) {
     Ray<double, 3> ray(origin, direction, 10.0, 2.5);  // Ignore the first root at t=2
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto t_hit = shape_iface.is_intersected(ray);
+    auto t_hit = shape_iface.is_intersected_ray(ray);
 
     ASSERT_TRUE(t_hit.has_value());
     EXPECT_NEAR(t_hit.value(), 4.0, 1e-10);
@@ -119,7 +119,7 @@ TEST_F(SphereTest, RayMissesClampedZRange) {
     Ray<double, 3> ray(origin, direction);
 
     const SphereShapeInterface& shape_iface = hemisphere;
-    auto t_hit = shape_iface.is_intersected(ray);
+    auto t_hit = shape_iface.is_intersected_ray(ray);
 
     EXPECT_FALSE(t_hit.has_value());
 }
@@ -165,7 +165,7 @@ TEST_F(SphereTest, RayMissesClampedPhiRange) {
     Ray<double, 3> ray(origin, direction);
 
     const SphereShapeInterface& shape_iface = partial;
-    auto t_hit = shape_iface.is_intersected(ray);
+    auto t_hit = shape_iface.is_intersected_ray(ray);
 
     EXPECT_FALSE(t_hit.has_value());
 }
@@ -177,7 +177,7 @@ TEST_F(SphereTest, IntersectReturnsSurfaceInteractionData) {
     Ray<double, 3> ray(origin, direction);
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto result = shape_iface.intersect(ray);
+    auto result = shape_iface.intersect_ray(ray);
 
     ASSERT_TRUE(result.has_value());
     const auto& record = result.value();
@@ -234,7 +234,7 @@ TEST_F(SphereTest, RayDifferentialComputesSurfaceDifferentials) {
     RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto hit = shape_iface.intersect(ray_diff);
+    auto hit = shape_iface.intersect_ray_differential(ray_diff);
 
     ASSERT_TRUE(hit.has_value());
     ASSERT_TRUE(hit->differentials.has_value());
@@ -261,7 +261,7 @@ TEST_F(SphereTest, RayDifferentialDegenerateWhenDiffEqualsMain) {
     RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto hit = shape_iface.intersect(ray_diff);
+    auto hit = shape_iface.intersect_ray_differential(ray_diff);
 
     ASSERT_TRUE(hit.has_value());
     EXPECT_FALSE(hit->differentials.has_value());
@@ -277,7 +277,7 @@ TEST_F(SphereTest, RayDifferentialWithoutDifferentialsLeavesOptionalEmpty) {
     RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto hit = shape_iface.intersect(ray_diff);
+    auto hit = shape_iface.intersect_ray_differential(ray_diff);
 
     ASSERT_TRUE(hit.has_value());
     EXPECT_FALSE(hit->differentials.has_value());
@@ -351,7 +351,7 @@ TEST_F(SphereTransformTest, RayIntersectionAccountsForRenderToObjectTransform) {
     Ray<double, 3> ray(origin, direction);
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto t_hit = shape_iface.is_intersected(ray);
+    auto t_hit = shape_iface.is_intersected_ray(ray);
 
     ASSERT_TRUE(t_hit.has_value());
     EXPECT_NEAR(t_hit.value(), 4.0, 1e-10);
@@ -380,7 +380,7 @@ TEST_F(SphereTransformTest, IntersectProducesRenderSpaceSurfaceInteraction) {
     Ray<double, 3> ray(origin, direction);
 
     const SphereShapeInterface& shape_iface = sphere;
-    auto result = shape_iface.intersect(ray);
+    auto result = shape_iface.intersect_ray(ray);
 
     ASSERT_TRUE(result.has_value());
     const auto& record = result.value();
@@ -439,7 +439,7 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
     EXPECT_NEAR(transformed.area(), 4.0 * pi_v<double> * unit_sphere.radius() * unit_sphere.radius(), 1e-12);
 
     Ray<double, 3> ray_a(Point<double, 3>(1.0, 2.0, 0.0), Vector<double, 3>(0.0, 0.0, 1.0));
-    auto hit_a = transformed.intersect(ray_a);
+    auto hit_a = transformed.intersect_ray(ray_a);
     ASSERT_TRUE(hit_a.has_value());
     const auto& record_a = hit_a.value();
     const auto& intr_a = record_a.interaction;
@@ -456,7 +456,7 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
 
     auto translate_b = Transform<double>::translate(Vector<double, 3>(1.2, 2.2, 3.0));
     auto transformed_b = make_sphere_with_transform(translate_b, 1.0);
-    auto hit_b = transformed_b.intersect(ray_a);
+    auto hit_b = transformed_b.intersect_ray(ray_a);
     ASSERT_TRUE(hit_b.has_value());
     const auto& record_b = hit_b.value();
     const auto& intr_b = record_b.interaction;
@@ -472,7 +472,7 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
     EXPECT_NEAR(n_b.z(), -0.959166, 1e-6);
 
     Ray<double, 3> ray_tangent(Point<double, 3>(1.0, 1.0, 2.0), Vector<double, 3>(0.0, 1.0, 0.0));
-    auto hit_tangent = transformed.intersect(ray_tangent);
+    auto hit_tangent = transformed.intersect_ray(ray_tangent);
     ASSERT_TRUE(hit_tangent.has_value());
     EXPECT_NEAR(hit_tangent->t, 1.0, 1e-12);
     auto n_tangent = hit_tangent->interaction.n().to_vector();
@@ -481,10 +481,10 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
     EXPECT_NEAR(n_tangent.z(), -1.0, 1e-12);
 
     Ray<double, 3> ray_miss(Point<double, 3>(1.0, 1.0, 2.0), Vector<double, 3>(1.0, 1.0, 0.0));
-    EXPECT_FALSE(transformed.intersect(ray_miss).has_value());
+    EXPECT_FALSE(transformed.intersect_ray(ray_miss).has_value());
 
     Ray<double, 3> ray_inside(Point<double, 3>(1.0, 2.0, 3.0), Vector<double, 3>(0.0, 1.0, 0.0));
-    auto hit_inside = transformed.intersect(ray_inside);
+    auto hit_inside = transformed.intersect_ray(ray_inside);
     ASSERT_TRUE(hit_inside.has_value());
     EXPECT_NEAR(hit_inside->t, 1.0, 1e-12);
     auto p_inside = hit_inside->interaction.point();
@@ -497,7 +497,7 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
     EXPECT_NEAR(n_inside.z(), 0.0, 1e-12);
 
     Ray<double, 3> ray_surface(Point<double, 3>(1.0, 1.0, 3.0), Vector<double, 3>(0.0, -1.0, 0.0));
-    auto hit_surface = transformed.intersect(ray_surface);
+    auto hit_surface = transformed.intersect_ray(ray_surface);
     ASSERT_TRUE(hit_surface.has_value());
     EXPECT_NEAR(hit_surface->t, 0.0, 1e-12);
 
@@ -510,7 +510,7 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
         Normal<double, 3>(0.0, -1.0, 0.0)
     );
     ray_surface.origin() = adjusted_origin;
-    EXPECT_FALSE(transformed.intersect(ray_surface).has_value());
+    EXPECT_FALSE(transformed.intersect_ray(ray_surface).has_value());
 }
 
 }  // namespace pbpt::shape::testing

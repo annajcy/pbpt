@@ -26,9 +26,9 @@ add_library(pbpt INTERFACE)
 target_include_directories(pbpt INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(pbpt INTERFACE 
     pbpt_rgb_spectrum_lut
-    imgui_vk 
+    #imgui_vk 
     stb_impl 
-    glfw 
+    #glfw 
     Vulkan::Loader 
     assimp::assimp 
     slang::slang

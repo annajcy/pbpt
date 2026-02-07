@@ -124,7 +124,7 @@ public:
         const math::Vector<T, 3>& wi
     ) const {
         auto ray = ref_point.spawn_ray(wi);
-        auto intersection_opt = m_shape.intersect(ray);
+        auto intersection_opt = m_shape.intersect_ray(ray);
         if (!intersection_opt.has_value()) {
             return T(0);
         }
@@ -145,7 +145,7 @@ public:
         const math::Vector<T, 3>& wi
     ) const {
         auto ray = ref_point.spawn_ray(wi);
-        auto intersection_opt = m_shape.intersect(ray);
+        auto intersection_opt = m_shape.intersect_ray(ray);
         if (!intersection_opt.has_value()) {
             return T(0);
         }

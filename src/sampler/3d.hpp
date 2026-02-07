@@ -38,7 +38,7 @@ inline math::Point<T, 3> sample_uniform_hemisphere(const math::Point<T, 2>& u2d,
  * @return T Probability density function value.
  */
 template<typename T>
-inline T sample_uniform_hemisphere_pdf(T radius = 1.0) {
+inline T sample_uniform_hemisphere_pdf(T radius = static_cast<T>(1.0)) {
     return 1.0 / (2.0 * math::pi_v<T> * radius * radius);
 }
 

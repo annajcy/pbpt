@@ -35,7 +35,7 @@ public:
     template<typename Aggregate>
     bool is_unoccluded(const Aggregate& aggregate) const {
         auto ray = m_src_i.spawn_ray_to(m_dst_p);
-        return !aggregate.is_intersected(ray);        
+        return !aggregate.is_intersected_ray(ray);        
     }
 
     const NormalInteractionType& src_interaction() const {

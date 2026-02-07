@@ -63,7 +63,7 @@ TEST(TriangleTest, RayHitReturnsIntersectionAndInterpolatedUV) {
     TriangleD tri(mesh, 0);
 
     Ray<T, 3> ray(Point<T, 3>(0.25, 0.25, 1.0), Vector<T, 3>(0, 0, -1));
-    auto hit = tri.intersect(ray);
+    auto hit = tri.intersect_ray(ray);
 
     ASSERT_TRUE(hit.has_value());
     EXPECT_NEAR(hit->t, 1.0, 1e-9);
@@ -77,7 +77,7 @@ TEST(TriangleTest, RayMissOutsideTriangle) {
     TriangleD tri(mesh, 0);
 
     Ray<T, 3> ray(Point<T, 3>(1.5, 1.5, 1.0), Vector<T, 3>(0, 0, -1));
-    auto hit = tri.intersect(ray);
+    auto hit = tri.intersect_ray(ray);
 
     EXPECT_FALSE(hit.has_value());
 }
@@ -93,7 +93,7 @@ TEST(TriangleTest, RayDifferentialComputesSurfaceDifferentials) {
     };
     RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
 
-    auto hit = tri.intersect(ray_diff);
+    auto hit = tri.intersect_ray_differential(ray_diff);
     ASSERT_TRUE(hit.has_value());
     ASSERT_TRUE(hit->differentials.has_value());
     const auto& surface_diffs = hit->differentials.value();
@@ -119,7 +119,7 @@ TEST(TriangleTest, RayDifferentialDegenerateWhenDiffEqualsMain) {
     std::array<Ray<T, 3>, 2> diff_rays{main_ray, main_ray};
     RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
 
-    auto hit = tri.intersect(ray_diff);
+    auto hit = tri.intersect_ray_differential(ray_diff);
     ASSERT_TRUE(hit.has_value());
     EXPECT_FALSE(hit->differentials.has_value());
 }
@@ -134,7 +134,7 @@ TEST(TriangleTest, RayDifferentialWithoutDifferentialsLeavesOptionalEmpty) {
         Ray<T, 3>(main_ray.origin(), Vector<T, 3>(0.0, 1.0, 0.0))
     };
     RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
-    auto hit = tri.intersect(ray_diff);
+    auto hit = tri.intersect_ray_differential(ray_diff);
 
     ASSERT_TRUE(hit.has_value());
     EXPECT_FALSE(hit->differentials.has_value());

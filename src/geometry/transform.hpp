@@ -361,7 +361,7 @@ public:
     }
 
     /// Transform a 3D ray (origin and direction, preserving t-range).
-    constexpr Ray<T, 3> transform_ray(const Ray<T, 3>& ray) const {
+    constexpr Ray<T, 3> transform_ray_main(const Ray<T, 3>& ray) const {
         return Ray<T, 3>(
             transform_point(ray.origin()), 
             transform_vector(ray.direction()),
@@ -371,12 +371,12 @@ public:
     }
 
     /// Transform a 3D ray differential (main ray and differential rays).
-    constexpr RayDifferential<T, 3> transform_ray(const RayDifferential<T, 3>& ray) const {
+    constexpr RayDifferential<T, 3> transform_ray_differential(const RayDifferential<T, 3>& ray_diff) const {
         std::array<Ray<T, 3>, 2> diff_rays = {
-            transform_ray(ray.x()),
-            transform_ray(ray.y())
+            transform_ray_main(ray_diff.x()),
+            transform_ray_main(ray_diff.y())
         };
-        return RayDifferential<T, 3>(transform_ray(ray.main_ray()), diff_rays);
+        return RayDifferential<T, 3>(transform_ray_main(ray_diff.main_ray()), diff_rays);
     }
 
     /// Transform an axis-aligned 3D bounding box by transforming all corners.
@@ -397,9 +397,13 @@ public:
      */
     constexpr auto transform_surface_interaction(const SurfaceInteraction<T>& si) const {
         auto n = this->transform_normal(si.n());
+        auto dndu = this->transform_normal(si.dndu());
+        auto dndv = this->transform_normal(si.dndv());
 
         if (this->is_swaps_handedness()) {
             n = -n;
+            dndu = -dndu;
+            dndv = -dndv;
         }
 
         auto result = SurfaceInteraction<T>(
@@ -409,7 +413,9 @@ public:
             n,
             si.uv(),
             this->transform_vector(si.dpdu()),
-            this->transform_vector(si.dpdv())
+            this->transform_vector(si.dpdv()),
+            dndu,
+            dndv
         );
         return result;
     }

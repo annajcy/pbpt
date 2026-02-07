@@ -99,8 +99,8 @@ public:
      * @return Optional parametric distance t in [t_min, t_max] if an
      *         intersection exists, or std::nullopt otherwise.
      */
-    std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {
-        return as_derived().is_intersected_impl(ray);
+    std::optional<T> is_intersected_ray(const geometry::Ray<T, 3>& ray) const {
+        return as_derived().is_intersected_ray_impl(ray);
     }
 
     /**
@@ -109,16 +109,16 @@ public:
      * When an intersection exists, returns the surface interaction
      * (position, normal, UV, etc.) together with the hit distance t.
      */
-    std::optional<IntersectionRecord<T>> intersect(
+    std::optional<IntersectionRecord<T>> intersect_ray(
         const geometry::Ray<T, 3>& ray
     ) const {
-        return as_derived().intersect_impl(ray);
+        return as_derived().intersect_ray_impl(ray);
     }
 
-    std::optional<IntersectionRecord<T>> intersect(
-        const geometry::RayDifferential<T, 3>& ray
+    std::optional<IntersectionRecord<T>> intersect_ray_differential(
+        const geometry::RayDifferential<T, 3>& ray_diff
     ) const {
-        return as_derived().intersect_impl(ray);
+        return as_derived().intersect_ray_differential_impl(ray_diff);
     }
 
     /**

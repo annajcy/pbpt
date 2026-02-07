@@ -249,7 +249,7 @@ public:
         return geometry::DirectionalCone<T>(n.to_vector(), math::deg2rad(180.0));
     }
 
-    std::optional<IntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<IntersectionRecord<T>> intersect_ray_impl(const geometry::Ray<T, 3>& ray) const {
         // 1. Get Vertices (Render Space)
         auto idx = get_indices();
         const auto& p0 = m_mesh.positions()[idx[0]];
@@ -299,17 +299,45 @@ public:
             ng = -ng;
         }
 
-        // 7. Compute Shading Normal & FaceForward
+        // 7. Compute Shading Normal & its UV derivatives
         math::Normal<T, 3> ns;
+        math::Normal<T, 3> dndu_shading(0, 0, 0);
+        math::Normal<T, 3> dndv_shading(0, 0, 0);
         if (m_mesh.has_normals()) {
-            ns = (b0 * m_mesh.normals()[idx[0]] +
-                  b1 * m_mesh.normals()[idx[1]] +
-                  b2 * m_mesh.normals()[idx[2]]).normalized();
+            auto n0 = m_mesh.normals()[idx[0]];
+            auto n1 = m_mesh.normals()[idx[1]];
+            auto n2 = m_mesh.normals()[idx[2]];
             if (m_mesh.should_flip_normal()) {
-                ns = -ns;
+                n0 = -n0;
+                n1 = -n1;
+                n2 = -n2;
             }
+
+            ns = (b0 * n0 + b1 * n1 + b2 * n2).normalized();
+            bool faceforward_flipped = false;
             if (ng.dot(ns.to_vector()) < 0) {
                 ns = -ns;
+                faceforward_flipped = true;
+            }
+
+            if (m_mesh.has_uvs()) {
+                const auto& uvs = m_mesh.uvs();
+                auto duv1 = uvs[idx[1]] - uvs[idx[0]];
+                auto duv2 = uvs[idx[2]] - uvs[idx[0]];
+                T det = duv1.x() * duv2.y() - duv1.y() * duv2.x();
+                if (std::abs(det) > 1e-8f) {
+                    T inv_det = T(1) / det;
+                    auto dn1 = n1.to_vector() - n0.to_vector();
+                    auto dn2 = n2.to_vector() - n0.to_vector();
+                    auto dndu_vec = (duv2.y() * dn1 - duv1.y() * dn2) * inv_det;
+                    auto dndv_vec = (-duv2.x() * dn1 + duv1.x() * dn2) * inv_det;
+                    if (faceforward_flipped) {
+                        dndu_vec = -dndu_vec;
+                        dndv_vec = -dndv_vec;
+                    }
+                    dndu_shading = math::Normal<T, 3>::from_vector(dndu_vec);
+                    dndv_shading = math::Normal<T, 3>::from_vector(dndv_vec);
+                }
             }
         } else {
             ns = ng;
@@ -353,18 +381,18 @@ public:
             dpdv
         );
 
-        geometry::ShadingInfo<T> shading{ns};
+        geometry::ShadingInfo<T> shading{ns, dndu_shading, dndv_shading};
         return IntersectionRecord<T>{interaction, shading, std::nullopt, t_hit};
     }
 
-    std::optional<IntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
-        auto hit = intersect_impl(ray.main_ray());
+    std::optional<IntersectionRecord<T>> intersect_ray_differential_impl(const geometry::RayDifferential<T, 3>& ray_diff) const {
+        auto hit = intersect_ray_impl(ray_diff.main_ray());
         if (!hit) return std::nullopt;
-        hit->differentials = geometry::compute_surface_differentials(hit->interaction, ray);
+        hit->differentials = hit->interaction.compute_differentials(ray_diff);
         return hit;
     }
 
-    std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<T> is_intersected_ray_impl(const geometry::Ray<T, 3>& ray) const {
         auto idx = get_indices();
         auto result = intersect_triangle_geometry(ray, 
             m_mesh.positions()[idx[0]], 

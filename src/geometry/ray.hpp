@@ -284,6 +284,18 @@ public:
     
 };
 
+/**
+ * @brief Offset information for generating new ray differentials.
+ * Used to decouple differential calculation (e.g. in BSDF) from ray spawning.
+ */
+template <typename T>
+struct RayDifferentialOffset {
+    math::Vector<T, 3> dpdx{};
+    math::Vector<T, 3> dpdy{};
+    math::Vector<T, 3> dwdx{};
+    math::Vector<T, 3> dwdy{};
+};
+
 /// Double-precision 2D ray differential.
 using RayDiff2 = RayDifferential<double, 2>;
 /// Double-precision 3D ray differential.

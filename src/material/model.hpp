@@ -18,12 +18,22 @@ private:
     T m_alpha_y;
 
 public:
-    T roughness_to_alpha(T roughness) {
+    static T roughness_to_alpha(T roughness) {
         return std::sqrt(roughness);
     }
 
-    T alpha_to_roughness(T alpha) {
+    static T alpha_to_roughness(T alpha) {
         return alpha * alpha;
+    }
+
+    static MicrofacetModel<T> from_roughness(T roughness_x, T roughness_y) {
+        T alpha_x = roughness_to_alpha(roughness_x);
+        T alpha_y = roughness_to_alpha(roughness_y);
+        return MicrofacetModel<T>(alpha_x, alpha_y);
+    }
+
+    static MicrofacetModel<T> from_alphas(T alpha_x, T alpha_y) {
+        return MicrofacetModel<T>(alpha_x, alpha_y);
     }
 
 public:

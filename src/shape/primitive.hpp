@@ -36,10 +36,10 @@ public:
     Primitive(ConcreteShape&& shape, int material_id, int light_id = -1)
         : m_shape(std::forward<ConcreteShape>(shape)), m_material_id(material_id), m_light_id(light_id) {}
 
-    std::optional<PrimitiveIntersectionRecord<T>> intersect(const geometry::Ray<T, 3>& ray) const {
+    std::optional<PrimitiveIntersectionRecord<T>> intersect_ray(const geometry::Ray<T, 3>& ray) const {
         // 使用 std::visit 分发给具体的 Shape
         auto rec = std::visit([&](const auto& s) -> std::optional<IntersectionRecord<T>> { 
-            return s.intersect(ray); 
+            return s.intersect_ray(ray); 
         }, m_shape);
 
         if (!rec) return std::nullopt;
@@ -51,9 +51,9 @@ public:
         return record;
     }
 
-    std::optional<PrimitiveIntersectionRecord<T>> intersect(const geometry::RayDifferential<T, 3>& ray) const {
+    std::optional<PrimitiveIntersectionRecord<T>> intersect_ray_differential(const geometry::RayDifferential<T, 3>& ray_diff) const {
         auto rec = std::visit([&](const auto& s) -> std::optional<IntersectionRecord<T>> {
-            return s.intersect(ray);
+            return s.intersect_ray_differential(ray_diff);
         }, m_shape);
 
         if (!rec) return std::nullopt;
@@ -65,9 +65,9 @@ public:
         return record;
     }
 
-    std::optional<T> is_intersected(const geometry::Ray<T, 3>& ray) const {
+    std::optional<T> is_intersected_ray(const geometry::Ray<T, 3>& ray) const {
         return std::visit([&](const auto& s) -> std::optional<T> { 
-            return s.is_intersected(ray); 
+            return s.is_intersected_ray(ray); 
         }, m_shape);
     }
 

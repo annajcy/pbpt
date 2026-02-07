@@ -71,7 +71,7 @@ private:
             original_ray->t_min()
         );
 
-        auto hit_record = primitive.intersect(geo_ray);
+        auto hit_record = primitive.intersect_ray(geo_ray);
 
         if (hit_record) {
             // Update ray.tfar
@@ -113,7 +113,7 @@ private:
             original_ray->t_min()
         );
 
-        if (primitive.is_intersected(geo_ray)) {
+        if (primitive.is_intersected_ray(geo_ray)) {
             ray->tfar = -std::numeric_limits<float>::infinity(); 
         }
     }
@@ -175,7 +175,7 @@ public:
     }
 
 private:
-    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_ray_impl(const geometry::Ray<T, 3>& ray) const {
         if (!m_scene) return std::nullopt;
 
         m_current_ray = &ray;
@@ -216,30 +216,27 @@ private:
             // Note: Do NOT use rayhit.ray.tfar (float) as the t_max for re-intersection.
             // Converting float tfar back to T (double) might result in a value slightly smaller 
             // than the actual intersection t due to precision loss, causing the check inside 
-            // primitive.intersect() to fail (t <= t_max). 
+            // primitive.intersect_ray() to fail (t <= t_max). 
             // Since Embree has identified this primitive as the winner, we can safely use the 
             // original ray's t_max (or essentially infinity/large enough) to recover the exact interaction.
             
             // Optimization: we could just call primitive.intersect again
             // Or we could try to cache the result? But re-intersect is robust.
-            return m_primitives[id].intersect(hit_ray);
+            return m_primitives[id].intersect_ray(hit_ray);
         }
         
         return std::nullopt;
     }
 
-    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_impl(const geometry::RayDifferential<T, 3>& ray) const {
-        auto hit = intersect_impl(ray.main_ray());
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_ray_differential_impl(const geometry::RayDifferential<T, 3>& ray_diff) const {
+        auto hit = intersect_ray_impl(ray_diff.main_ray());
         if (hit) {
-            hit->intersection.differentials = geometry::compute_surface_differentials(
-                hit->intersection.interaction,
-                ray
-            );
+            hit->intersection.differentials = hit->intersection.interaction.compute_differentials(ray_diff);
         }
         return hit;
     }
         
-    std::optional<T> is_intersected_impl(const geometry::Ray<T, 3>& ray) const {
+    std::optional<T> is_intersected_ray_impl(const geometry::Ray<T, 3>& ray) const {
         if (!m_scene) return std::nullopt;
 
         m_current_ray = &ray;

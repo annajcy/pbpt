@@ -32,7 +32,7 @@ TEST(PrimitiveTest, CarriesMaterialIdAndIntersection) {
     Primitive<T> prim(std::move(sphere), 42);
 
     Ray<T, 3> ray(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1));
-    auto hit = prim.intersect(ray);
+    auto hit = prim.intersect_ray(ray);
 
     ASSERT_TRUE(hit.has_value());
     EXPECT_EQ(hit->material_id, 42);
@@ -46,7 +46,7 @@ TEST(AggregateTest, ReturnsClosestHitWithMaterial) {
     LinearAggregate<T> agg({near_prim, far_prim});
     Ray<T, 3> ray(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1));
 
-    auto hit = agg.intersect(ray);
+    auto hit = agg.intersect_ray(ray);
     ASSERT_TRUE(hit.has_value());
     EXPECT_EQ(hit->material_id, 1);
     EXPECT_NEAR(hit->intersection.t, 2.0f, 1e-4f);
@@ -57,7 +57,7 @@ TEST(AggregateTest, IsIntersectedReportsNearestDistance) {
     LinearAggregate<T> agg({prim});
 
     Ray<T, 3> ray(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1));
-    auto t = agg.is_intersected(ray);
+    auto t = agg.is_intersected_ray(ray);
 
     ASSERT_TRUE(t.has_value());
     EXPECT_NEAR(t.value(), 4.0f, 1e-4f);
@@ -70,7 +70,7 @@ TEST(EmbreeAggregateTest, ReturnsClosestHitWithMaterial) {
     EmbreeAggregate<T> agg(std::vector<Primitive<T>>{near_prim, far_prim});
     Ray<T, 3> ray(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1));
 
-    auto hit = agg.intersect(ray);
+    auto hit = agg.intersect_ray(ray);
     ASSERT_TRUE(hit.has_value());
     EXPECT_EQ(hit->material_id, 11);
     EXPECT_NEAR(hit->intersection.t, 2.0f, 1e-4f);
@@ -81,7 +81,7 @@ TEST(EmbreeAggregateTest, ReturnsNulloptWhenNoHit) {
     EmbreeAggregate<T> agg(std::vector<Primitive<T>>{prim});
 
     Ray<T, 3> ray(Point<T, 3>(0, 3, -3), Vector<T, 3>(0, 0, 1));
-    auto hit = agg.intersect(ray);
+    auto hit = agg.intersect_ray(ray);
 
     EXPECT_FALSE(hit.has_value());
 }
@@ -91,12 +91,12 @@ TEST(EmbreeAggregateTest, RespectsTMinAndTMax) {
     EmbreeAggregate<T> agg(std::vector<Primitive<T>>{prim});
 
     Ray<T, 3> ray_skip_first(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1), 10.0f, 2.5f);
-    auto hit_skip = agg.intersect(ray_skip_first);
+    auto hit_skip = agg.intersect_ray(ray_skip_first);
     ASSERT_TRUE(hit_skip.has_value());
     EXPECT_NEAR(hit_skip->intersection.t, 4.0f, 1e-4f);
 
     Ray<T, 3> ray_clip(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1), 1.5f, 0.0f);
-    auto hit_clip = agg.intersect(ray_clip);
+    auto hit_clip = agg.intersect_ray(ray_clip);
     EXPECT_FALSE(hit_clip.has_value());
 }
 
@@ -105,7 +105,7 @@ TEST(EmbreeAggregateTest, IsIntersectedReportsOcclusion) {
     EmbreeAggregate<T> agg(std::vector<Primitive<T>>{prim});
 
     Ray<T, 3> ray(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1));
-    auto t = agg.is_intersected(ray);
+    auto t = agg.is_intersected_ray(ray);
 
     ASSERT_TRUE(t.has_value());
     EXPECT_NEAR(t.value(), 0.0f, 1e-6f);
@@ -122,7 +122,7 @@ TEST(EmbreeAggregateTest, RayDifferentialPopulatesSurfaceDifferentials) {
     };
     RayDifferential<T, 3> ray_diff(main_ray, differential_rays);
 
-    auto hit = agg.intersect(ray_diff);
+    auto hit = agg.intersect_ray_differential(ray_diff);
     ASSERT_TRUE(hit.has_value());
     ASSERT_TRUE(hit->intersection.differentials.has_value());
     EXPECT_GT(hit->intersection.differentials->dpdx.length(), 0.0f);
@@ -133,12 +133,12 @@ TEST(EmbreeAggregateTest, EmptyAggregateReturnsNullopt) {
     EmbreeAggregate<T> default_agg;
     Ray<T, 3> ray(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1));
 
-    EXPECT_FALSE(default_agg.intersect(ray).has_value());
-    EXPECT_FALSE(default_agg.is_intersected(ray).has_value());
+    EXPECT_FALSE(default_agg.intersect_ray(ray).has_value());
+    EXPECT_FALSE(default_agg.is_intersected_ray(ray).has_value());
 
     EmbreeAggregate<T> empty_agg(std::vector<Primitive<T>>{});
-    EXPECT_FALSE(empty_agg.intersect(ray).has_value());
-    EXPECT_FALSE(empty_agg.is_intersected(ray).has_value());
+    EXPECT_FALSE(empty_agg.intersect_ray(ray).has_value());
+    EXPECT_FALSE(empty_agg.is_intersected_ray(ray).has_value());
 }
 
 }  // namespace pbpt::aggregate::testing
