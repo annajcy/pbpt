@@ -42,7 +42,8 @@ void write_hdr_image(
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            auto rgb = image.get_pixel(x, y);
+            int flipped_y = height - 1 - y;  // Flip Y axis for EXR coordinate system
+            auto rgb = image.get_pixel(x, flipped_y);
             std::size_t idx = (
                 static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
                 static_cast<std::size_t>(x)
@@ -139,6 +140,7 @@ texture::Image<math::Vector<T, 3>> read_hdr_image(const std::filesystem::path& i
         // Convert float buffer to target Image<Vector<T, 3>>
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
+                int flipped_y = height - 1 - y;  // Flip Y axis for EXR coordinate system
                 std::size_t src_idx = (
                     static_cast<std::size_t>(y) * static_cast<std::size_t>(width) + 
                     static_cast<std::size_t>(x)
@@ -184,7 +186,8 @@ void write_ldr_image(
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            auto pixel = image.get_pixel(x, y);
+            int flipped_y = height - 1 - y;  // Flip Y axis for EXR coordinate system
+            auto pixel = image.get_pixel(x, flipped_y);
             // Simple linear quantization to 8-bit. 
             // Users should gamma-correct before calling if needed.
             auto clamp = [](T val) {
@@ -228,6 +231,7 @@ texture::Image<math::Vector<T, 3>> read_ldr_image(const std::filesystem::path& i
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
+            int flipped_y = height - 1 - y;  // Flip Y axis for EXR coordinate system
             std::size_t idx = (static_cast<std::size_t>(y) * width + x) * 3;
             image.get_pixel(x, y) = math::Vector<T, 3>(
                 static_cast<T>(data[idx + 0]) * scale,

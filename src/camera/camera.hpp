@@ -278,9 +278,13 @@ public:
     ) {
         T fov_rad = math::deg2rad(fov_degrees);
         T aspect = T(width) / T(height);
+        const T near_distance = std::abs(near_clip);
         
         // Calculate the physical size of the dimension to which FOV applies
-        T physical_size_for_fov = 2 * near_clip * std::tan(fov_rad / 2);
+        // near_clip may be negative in a right-handed -Z-forward camera setup.
+        // Film dimensions must stay positive; using signed near flips the film
+        // and mirrors the rendered image horizontally/vertically.
+        T physical_size_for_fov = 2 * near_distance * std::tan(fov_rad / 2);
         
         T physical_width, physical_height;
         

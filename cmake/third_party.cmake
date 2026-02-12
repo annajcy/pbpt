@@ -19,7 +19,7 @@ find_package(TBB            CONFIG REQUIRED)
 
 
 # build imgui with Vulkan and GLFW backends
-add_library(imgui_vk STATIC)
+add_library(pbpt_imgui_vk STATIC)
 set(_IMGUI_PKG_ROOT "")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND DEFINED imgui_PACKAGE_FOLDER_DEBUG)
   set(_IMGUI_PKG_ROOT "${imgui_PACKAGE_FOLDER_DEBUG}")
@@ -45,17 +45,17 @@ set(IMGUI_BACKENDS_DIR "${_IMGUI_PKG_ROOT}/res/bindings")
 message(STATUS "ImGui include dir  : ${IMGUI_INC_DIR}")
 message(STATUS "ImGui backends dir : ${IMGUI_BACKENDS_DIR}")
 
-target_sources(imgui_vk PRIVATE
+target_sources(pbpt_imgui_vk PRIVATE
   "${IMGUI_BACKENDS_DIR}/imgui_impl_glfw.cpp"
   "${IMGUI_BACKENDS_DIR}/imgui_impl_vulkan.cpp"
 )
 
-target_include_directories(imgui_vk PUBLIC
+target_include_directories(pbpt_imgui_vk PUBLIC
   "${IMGUI_INC_DIR}"
   "${IMGUI_BACKENDS_DIR}"
 )
 
-target_link_libraries(imgui_vk PUBLIC
+target_link_libraries(pbpt_imgui_vk PUBLIC
   imgui::imgui
   glfw
   Vulkan::Loader
@@ -81,5 +81,5 @@ set(STB_IMPLEMENTATION_CONTENT
 file(WRITE "${STB_IMPLEMENTATION_FILE}" "${STB_IMPLEMENTATION_CONTENT}")
 message(STATUS "STB implementation file generated at: ${STB_IMPLEMENTATION_FILE}")
 
-add_library(stb_impl STATIC "${STB_IMPLEMENTATION_FILE}")
-target_link_libraries(stb_impl PUBLIC stb::stb)
+add_library(pbpt_stb_impl STATIC "${STB_IMPLEMENTATION_FILE}")
+target_link_libraries(pbpt_stb_impl PUBLIC stb::stb)

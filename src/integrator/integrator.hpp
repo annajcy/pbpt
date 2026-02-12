@@ -1,7 +1,10 @@
 #pragma once
 
+#include <functional>
 #include <iostream>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <variant>
 
 #include "radiometry/sampled_spectrum.hpp"
@@ -14,6 +17,16 @@
 #include "scene/scene.hpp"
 
 namespace pbpt::integrator {
+
+struct RenderObserver {
+    std::function<void(float)> on_progress{};
+    std::function<bool()> is_cancel_requested{};
+};
+
+class RenderCanceled : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
 
 template<typename Derived, typename T, int N, typename Sampler>
 class Integrator {
@@ -28,7 +41,28 @@ public:
         return static_cast<const Derived&>(*this);
     }
 
-    void render(pbpt::scene::Scene<T>& scene, int spp = 4, std::string output_path = "output.exr", bool is_trace_ray_differential = false) {
+    void render(
+        pbpt::scene::Scene<T>& scene,
+        int spp = 4,
+        std::string output_path = "output.exr",
+        bool is_trace_ray_differential = false
+    ) {
+        render(
+            scene,
+            spp,
+            std::move(output_path),
+            is_trace_ray_differential,
+            RenderObserver{}
+        );
+    }
+
+    void render(
+        pbpt::scene::Scene<T>& scene,
+        int spp,
+        std::string output_path,
+        bool is_trace_ray_differential,
+        const RenderObserver& observer
+    ) {
         std::visit([&](const auto& camera, auto& film, const auto& pixel_filter, const auto& aggregate) {
             scene::SceneContext context{
                 camera, film, pixel_filter, aggregate, 
@@ -39,7 +73,8 @@ public:
                 context,
                 spp,
                 output_path,
-                is_trace_ray_differential
+                is_trace_ray_differential,
+                observer
             );
         }, scene.camera, scene.film, scene.pixel_filter, scene.aggregate);
     }
@@ -49,7 +84,8 @@ protected:
     void render_loop(
         const SceneContextT& context,
         int spp, const std::string& output_path,
-        bool is_trace_ray_differential
+        bool is_trace_ray_differential,
+        const RenderObserver& observer
     ) {
         auto resolution = context.film.resolution();
         std::cout << "Starting render: " << resolution.x() << "x" << resolution.y() << " pixels, SPP=" << spp << std::endl;
@@ -58,6 +94,10 @@ protected:
         progress_bar.start(std::cout);
         
         for (int y = 0; y < resolution.y(); ++y) {
+            if (observer.is_cancel_requested && observer.is_cancel_requested()) {
+                throw RenderCanceled("Render canceled by observer.");
+            }
+
             for (int x = 0; x < resolution.x(); ++x) {
                 Sampler sampler; 
                 for (int s = 0; s < spp; ++s) {
@@ -93,6 +133,9 @@ protected:
                 }
             }
             progress_bar.update(std::cout, resolution.x());
+            if (observer.on_progress) {
+                observer.on_progress(static_cast<float>(y + 1) / static_cast<float>(resolution.y()));
+            }
         }
         progress_bar.finish(std::cout);
         // Develop and save the final image
