@@ -1,0 +1,3 @@
+add_executable(test_scene_loader_matrix test_scene_loader_matrix.cpp)
+target_link_libraries(test_scene_loader_matrix PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_scene_loader_matrix)

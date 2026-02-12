@@ -1,77 +1,146 @@
 #pragma once
 
+#include <cmath>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 #include <pugixml.hpp>
-#include "loader/basic_parser.hpp"
+
 #include "camera/render_transform.hpp"
 #include "geometry/transform.hpp"
+#include "loader/basic_parser.hpp"
 
 namespace pbpt::loader {
+
+namespace detail {
+
+template <typename T>
+std::vector<T> parse_numeric_values(std::string text, const std::string& field_name) {
+    for (char& c : text) {
+        if (c == ',') {
+            c = ' ';
+        }
+    }
+
+    std::stringstream ss(text);
+    std::vector<T> values{};
+    T value = T(0);
+    while (ss >> value) {
+        if (!std::isfinite(static_cast<double>(value))) {
+            throw std::runtime_error(field_name + " contains non-finite values.");
+        }
+        values.emplace_back(value);
+    }
+
+    if (ss.fail() && !ss.eof()) {
+        throw std::runtime_error(field_name + " contains invalid numeric token.");
+    }
+
+    return values;
+}
+
+} // namespace detail
+
+template <typename T>
+math::Matrix<T, 4, 4> parse_matrix_4x4_value(const std::string& value_str) {
+    const auto values = detail::parse_numeric_values<T>(value_str, "matrix value");
+    if (values.size() != 16u) {
+        throw std::runtime_error("matrix value must contain exactly 16 numbers.");
+    }
+
+    math::Matrix<T, 4, 4> matrix{};
+    std::size_t idx = 0;
+    for (int row = 0; row < 4; ++row) {
+        for (int col = 0; col < 4; ++col) {
+            matrix.at(row, col) = values[idx++];
+        }
+    }
+    return matrix;
+}
 
 template <typename T>
 geometry::Transform<T> load_transform(const pugi::xml_node& node) {
     geometry::Transform<T> transform = geometry::Transform<T>::identity();
-    
-    // Iterate over children (translate, scale, rotate, lookAt, matrix)
-    // Order matters! Transformations are usually multiplied.
-    // In Mitsuba/PBRT, transforms are often applied in order.
-    
-    for (auto child : node.children()) {
-        std::string name = child.name();
+
+    for (const auto& child : node.children()) {
+        const std::string name = child.name();
         if (name == "lookAt") {
-            auto origin = parse_point<T, 3>(child.attribute("origin").value());
-            auto target = parse_point<T, 3>(child.attribute("target").value());
-            auto up = parse_vector<T, 3>(child.attribute("up").value());
-            // geometry::Transform doesn't have look_at, usually RenderTransform does or it's a utility.
-            // Let's check geometry/transform.hpp or assume we construct matrix.
-            // For now, let's look for a look_at helper or implement it.
-            // Wait, cbox_scene.hpp uses camera::RenderTransform::look_at.
-            // Here we are parsing generic transforms (e.g. for shapes). 
-            // Shape transforms are usually ObjectToWorld.
-            // Let's implement a simple lookAt manually if needed or find it.
-            // Actually, RenderTransform::look_at returns a RenderTransform (wrapper), 
-            // but here we might just want a geometry::Transform matrix.
-            // We can implement look_at logic or maybe geometry::Transform has it?
-            
-            // Assuming we implement a local helper or use what's available.
-            // I'll skip lookAt for generic transform for now unless I find it in geometry/transform.hpp
-            // But cbox.xml uses lookAt for sensor. 
-            // Sensor parsing might use RenderTransform directly.
-            // Shape parsing uses <transform><translate/></transform>.
+            const auto origin = parse_point<T, 3>(child.attribute("origin").value());
+            const auto target = parse_point<T, 3>(child.attribute("target").value());
+            const auto up = parse_vector<T, 3>(child.attribute("up").value());
+            transform = transform * geometry::Transform<T>::look_at(origin, target, up).inversed();
+        } else if (name == "matrix") {
+            const std::string value = child.attribute("value").value();
+            if (value.empty()) {
+                throw std::runtime_error("transform matrix is missing value attribute.");
+            }
+            transform = transform * geometry::Transform<T>(parse_matrix_4x4_value<T>(value));
         } else if (name == "translate") {
-            T x = child.attribute("x").as_float(0);
-            T y = child.attribute("y").as_float(0);
-            T z = child.attribute("z").as_float(0);
+            const T x = child.attribute("x").as_float(0);
+            const T y = child.attribute("y").as_float(0);
+            const T z = child.attribute("z").as_float(0);
             transform = transform * geometry::Transform<T>::translate(math::Vector<T, 3>(x, y, z));
         } else if (name == "scale") {
-            T x = child.attribute("x").as_float(1);
-            T y = child.attribute("y").as_float(1);
-            T z = child.attribute("z").as_float(1);
-             // Assuming scale takes a vector?
+            const T x = child.attribute("x").as_float(1);
+            const T y = child.attribute("y").as_float(1);
+            const T z = child.attribute("z").as_float(1);
             transform = transform * geometry::Transform<T>::scale(math::Vector<T, 3>(x, y, z));
-        } else if (name == "rotate") {
-             // ...
         }
     }
+
     return transform;
 }
 
-// Special parser for Camera RenderTransform which supports lookAt
+// Special parser for Camera RenderTransform which supports lookAt and matrix.
 template <typename T>
 camera::RenderTransform<T> load_render_transform(const pugi::xml_node& node) {
-    // Specifically for sensor toWorld
-    for (auto child : node.children()) {
-        std::string name = child.name();
+    bool has_look_at = false;
+    bool has_matrix = false;
+
+    camera::RenderTransform<T> look_at_transform{};
+    geometry::Transform<T> matrix_camera_to_world = geometry::Transform<T>::identity();
+
+    for (const auto& child : node.children()) {
+        const std::string name = child.name();
         if (name == "lookAt") {
-            auto origin = parse_point<T, 3>(child.attribute("origin").value());
-            auto target = parse_point<T, 3>(child.attribute("target").value());
-            auto up = parse_vector<T, 3>(child.attribute("up").value());
-            return camera::RenderTransform<T>::look_at(origin, target, up, camera::RenderSpace::World);
+            if (has_matrix) {
+                throw std::runtime_error("Sensor transform cannot contain both lookAt and matrix.");
+            }
+            const auto origin = parse_point<T, 3>(child.attribute("origin").value());
+            const auto target = parse_point<T, 3>(child.attribute("target").value());
+            const auto up = parse_vector<T, 3>(child.attribute("up").value());
+            look_at_transform =
+                camera::RenderTransform<T>::look_at(origin, target, up, camera::RenderSpace::World);
+            has_look_at = true;
+        } else if (name == "matrix") {
+            if (has_look_at) {
+                throw std::runtime_error("Sensor transform cannot contain both lookAt and matrix.");
+            }
+            const std::string value = child.attribute("value").value();
+            if (value.empty()) {
+                throw std::runtime_error("Sensor transform matrix is missing value attribute.");
+            }
+            matrix_camera_to_world = geometry::Transform<T>(parse_matrix_4x4_value<T>(value));
+            has_matrix = true;
         }
     }
-    // Fallback or identity
-    return camera::RenderTransform<T>::look_at(
-        math::Point<T, 3>(0,0,0), math::Point<T, 3>(0,0,1), math::Vector<T, 3>(0,1,0), camera::RenderSpace::World
+
+    if (has_look_at) {
+        return look_at_transform;
+    }
+    if (has_matrix) {
+        return camera::RenderTransform<T>::from_camera_to_world(
+            matrix_camera_to_world,
+            camera::RenderSpace::World
+        );
+    }
+
+    return camera::RenderTransform<T>::from_camera_to_world(
+        geometry::Transform<T>::identity(),
+        camera::RenderSpace::World
     );
 }
 
-}
+} // namespace pbpt::loader
