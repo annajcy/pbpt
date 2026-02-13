@@ -12,6 +12,9 @@ class PbptConan(ConanFile):
     package_type = "static-library"
 
     def set_version(self):
+        cli_version = getattr(self, "version", None)
+        if cli_version:
+            return
         self.version = os.getenv("PBPT_VERSION", "0.1.0-dev.local")
 
     settings = "os", "arch", "compiler", "build_type"
