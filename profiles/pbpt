@@ -1,0 +1,12 @@
+include(default)
+
+[settings]
+compiler.cppstd=23
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja
+tools.system.package_manager:mode=install
+tools.system.package_manager:sudo=True
+
+[buildenv]
+CMAKE_GENERATOR=Ninja

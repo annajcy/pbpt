@@ -10,36 +10,29 @@ Yet another pbrt, but with a focus on modern C++ and extensibility.
 
 ```bash
 conda install conda-forge::uv
-conda install conda-forge::conan
 ```
 ```bash
 uv sync 
 ```
 
-if using macos/linux
-```bash
-source .venv/bin/activate
-```
+`conan` is installed into the project virtual environment by `uv sync`.
 
-if using windows
-```powershell
-.venv\Scripts\activate
-```
+Use `uv run` to execute Python/Conan commands; no manual environment activation is needed.
 
 ### Conan Build
 
 ```bash
-conan profile detect --force
+uv run conan profile detect --force
 ```
 
 ```bash
 cd conan_recipe
-python build_conan_recipes.py -d . -v
+uv run python build_conan_recipes.py -d . -b Debug -v
 cd ..
 ```
 
 ```bash
-conan create . --name=pbpt --version=0.1.0-dev.<sha> -s build_type=Debug -s compiler.cppstd=23 -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --build=missing
+uv run conan create . --name=pbpt --version=0.1.0-dev.<sha> -pr:h=profiles/pbpt -pr:b=profiles/pbpt -s build_type=Debug --build=missing
 ```
 
 ### Downstream consumption
@@ -64,8 +57,8 @@ SHA=$(git rev-parse --short HEAD)
 PBPT_VER="0.1.0-dev.${SHA}"
 RTR_VER="0.1.0-dev.${SHA}"
 
-conan create external/pbpt --version ${PBPT_VER} -s build_type=Debug -s compiler.cppstd=23 --build=missing
-conan create . --name=rtr --version ${RTR_VER} -pr=profiles/rtr2 -s build_type=Debug -s compiler.cppstd=23 -o "&:pbpt_version=${PBPT_VER}" --build=missing
+uv run conan create external/pbpt --version ${PBPT_VER} -pr:h=external/pbpt/profiles/pbpt -pr:b=external/pbpt/profiles/pbpt -s build_type=Debug --build=missing
+uv run conan create . --name=rtr --version ${RTR_VER} -pr=profiles/rtr2 -s build_type=Debug -s compiler.cppstd=23 -o "&:pbpt_version=${PBPT_VER}" --build=missing
 ```
 
 If `rtr` resolves an older `pbpt` from cache (for example `pbpt/0.1.0`), dependency variants can conflict (such as `imgui` vs `imgui-docking`).

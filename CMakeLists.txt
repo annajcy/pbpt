@@ -34,7 +34,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 option(PBPT_BUILD_TESTS "Build the project's tests" ${PROJECT_IS_TOP_LEVEL})
 option(PBPT_BUILD_EXAMPLES "Build the project's examples" ${PROJECT_IS_TOP_LEVEL})
-option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" OFF)
+option(PBPT_BUILD_DOCUMENTATION "Build the Doxygen documentation" ${PROJECT_IS_TOP_LEVEL})
 option(PBPT_FLOAT_64BIT "Use double precision floating point" OFF)
 option(PBPT_INT_64BIT "Use 64-bit integer type" OFF)
 

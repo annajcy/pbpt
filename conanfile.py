@@ -2,6 +2,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import copy
+import os
 
 required_conan_version = ">=2.0"
 
@@ -10,6 +11,9 @@ class PbptConan(ConanFile):
     name = "pbpt"
     package_type = "static-library"
 
+    def set_version(self):
+        self.version = os.getenv("PBPT_VERSION", "0.1.0-dev.local")
+
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "with_tests": [True, False],
@@ -17,15 +21,13 @@ class PbptConan(ConanFile):
         "with_docs": [True, False],
         "float_64bit": [True, False],
         "int_64bit": [True, False],
-        "slang_version": ["ANY"],
     }
     default_options = {
-        "with_tests": False,
-        "with_examples": False,
-        "with_docs": False,
+        "with_tests": True,
+        "with_examples": True,
+        "with_docs": True,
         "float_64bit": False,
         "int_64bit": False,
-        "slang_version": "2025.10.4",
         "embree/*:shared": True,
     }
 
@@ -65,15 +67,13 @@ class PbptConan(ConanFile):
         )
 
     def requirements(self):
-        self.requires("assimp/5.4.3")
         self.requires("stb/cci.20230920")
-        self.requires("vulkan-loader/[>=1.3]")
+        self.requires("pugixml/1.14")
         self.requires(
             "openexr/3.2.4",
             transitive_headers=True,
             transitive_libs=True,
         )
-        self.requires("pugixml/1.14")
         self.requires(
             "embree/4.4.0",
             transitive_headers=True,
@@ -84,9 +84,6 @@ class PbptConan(ConanFile):
             transitive_headers=True,
             transitive_libs=True,
         )
-
-        ver = str(self.options.slang_version)
-        self.requires(f"slang/{ver}")
 
         if self.options.with_tests:
             self.requires("gtest/[>=1.14 <2]")
@@ -131,9 +128,6 @@ class PbptConan(ConanFile):
         core_component.requires = [
             "rgb_spectrum_lut",
             "stb_impl",
-            "vulkan-loader::vulkan-loader",
-            "assimp::assimp",
-            "slang::slang",
             "openexr::openexr",
             "pugixml::pugixml",
             "embree::embree",

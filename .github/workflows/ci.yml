@@ -86,37 +86,87 @@ jobs:
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          python -m pip install conan
           python -m pip install uv
           uv sync --python 3.11 --dev
 
-      - name: Conan Profile Detect
-        run: |
-          conan profile detect --force
-
-      - name: Conan Build Custom Recipes (${{ matrix.build_type }})
+      - name: Conan Setup (README) on Linux/macOS
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           set -euo pipefail
+          uv run conan profile detect --force
           if [[ -d "conan_recipe" ]]; then
             cd conan_recipe
-            for d in */ ; do
-              [[ -d "$d" ]] || continue
-              [[ -f "${d}/conanfile.py" ]] || continue
-              echo "::group::Conan create ${d} (${{ matrix.build_type }})"
-              conan create "${d}" -s build_type=${{ matrix.build_type }} --build=missing
-              echo "::endgroup::"
-            done
+            uv run python build_conan_recipes.py -d . -b ${{ matrix.build_type }} -v
+            cd ..
           else
             echo "No conan_recipe directory; skipping custom recipes."
           fi
+          uv run conan install . \
+            -pr:h=profiles/pbpt \
+            -pr:b=profiles/pbpt \
+            -s build_type=${{ matrix.build_type }} \
+            --build=missing
 
-      - name: Conan Build (${{ matrix.build_type }})
+      - name: Conan Setup (README) on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Set-ExecutionPolicy -Scope Process Bypass -Force
+          uv run conan profile detect --force
+          if (Test-Path "conan_recipe") {
+            Push-Location conan_recipe
+            uv run python build_conan_recipes.py -d . -b ${{ matrix.build_type }} -v
+            Pop-Location
+          } else {
+            Write-Host "No conan_recipe directory; skipping custom recipes."
+          }
+          uv run conan install . `
+            -pr:h=profiles/pbpt `
+            -pr:b=profiles/pbpt `
+            -s build_type=${{ matrix.build_type }} `
+            --build=missing
+
+      - name: Configure and Build (CMake Presets) on Linux/macOS
+        if: runner.os != 'Windows'
         shell: bash
         run: |
-          conan create . \
-            -s build_type=${{ matrix.build_type }} \
-            -s compiler.cppstd=23 \
-            -c tools.system.package_manager:mode=install \
-            -c tools.system.package_manager:sudo=True \
-            --build=missing
+          set -euo pipefail
+          build_type="${{ matrix.build_type }}"
+          preset="conan-$(echo "$build_type" | tr '[:upper:]' '[:lower:]')"
+          source "build/${build_type}/generators/conanbuild.sh"
+          set +u
+          source "build/${build_type}/generators/conanrun.sh"
+          set -u
+          cmake --list-presets
+          cmake --preset "$preset"
+          cmake --build --preset "$preset"
+
+      - name: Configure and Build (CMake Presets) on Windows
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          @echo on
+          set BUILD_TYPE=${{ matrix.build_type }}
+          if /I "%BUILD_TYPE%"=="Debug" (set PRESET=conan-debug) else (set PRESET=conan-release)
+          call "build\%BUILD_TYPE%\generators\conanbuild.bat"
+          call "build\%BUILD_TYPE%\generators\conanrun.bat"
+          cmake --list-presets
+          cmake --preset %PRESET%
+          cmake --build --preset %PRESET%
+
+      - name: Test (${{ matrix.build_type }}) on Linux/macOS
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -e
+          source build/${{ matrix.build_type }}/generators/conanrun.sh
+          ctest --test-dir build/${{ matrix.build_type }} -C ${{ matrix.build_type }} --output-on-failure
+
+      - name: Test (${{ matrix.build_type }}) on Windows
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          call "build\${{ matrix.build_type }}\generators\conanrun.bat"
+          ctest --test-dir "build\${{ matrix.build_type }}" --output-on-failure

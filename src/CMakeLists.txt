@@ -36,9 +36,6 @@ target_link_libraries(pbpt INTERFACE
     #pbpt_imgui_vk 
     pbpt_stb_impl 
     #glfw 
-    Vulkan::Loader 
-    assimp::assimp 
-    slang::slang
     OpenEXR::OpenEXR
     pugixml::pugixml
     embree::embree
