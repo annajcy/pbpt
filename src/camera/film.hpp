@@ -8,13 +8,13 @@
 #include <cstddef>
 #include <vector>
 
-#include "math/point.hpp"
-#include "math/utils.hpp"
-#include "math/vector.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/utils.hpp"
+#include "pbpt/math/vector.hpp"
 
-#include "radiometry/color.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "texture/image.hpp"
+#include "pbpt/radiometry/color.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/texture/image.hpp"
 
 namespace pbpt::camera {
 

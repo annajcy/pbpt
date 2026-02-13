@@ -5,18 +5,18 @@
 #include <algorithm>
 #include <cmath>
 
-#include "geometry/interaction.hpp"
-#include "geometry/ray.hpp"
-#include "math/normal.hpp"
-#include "math/vector.hpp"
-#include "radiometry/constant/illuminant_spectrum.hpp"
-#include "radiometry/constant/swatch_reflectances_spectrum.hpp"
-#include "integrator/domain.hpp"
+#include "pbpt/geometry/interaction.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
+#include "pbpt/radiometry/constant/swatch_reflectances_spectrum.hpp"
+#include "pbpt/integrator/domain.hpp"
 
-#include "pbpt.h"
-#include "radiometry/plugin/spectrum_distribution/black_body.hpp"
-#include "shape/plugin/shape/sphere.hpp"
-#include "shape/plugin/shape/triangle.hpp"
+#include "pbpt/pbpt.h"
+#include "pbpt/radiometry/plugin/spectrum_distribution/black_body.hpp"
+#include "pbpt/shape/plugin/shape/sphere.hpp"
+#include "pbpt/shape/plugin/shape/triangle.hpp"
 
 using namespace pbpt;
 

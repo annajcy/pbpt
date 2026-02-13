@@ -1,11 +1,11 @@
 #include <format>
 #include <iostream>
 #include <vector>
-#include "loader/scene_loader.hpp"
-#include "scene/cbox_scene.hpp"
-#include "scene/scene.hpp"
-#include "integrator/plugin/integrator/path_integrator.hpp"
-#include "texture/texture.hpp"
+#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/scene/cbox_scene.hpp"
+#include "pbpt/scene/scene.hpp"
+#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
+#include "pbpt/texture/texture.hpp"
 
 int main() {
     // // Debug: compare both scenes - load scene2 FIRST to avoid static id issue

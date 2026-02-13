@@ -3,12 +3,12 @@
 #include <cmath>
 #include <optional>
 
-#include "material/bxdf.hpp"
-#include "material/model.hpp"
-#include "math/normal.hpp"
-#include "math/vector.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "material/optics.hpp"
+#include "pbpt/material/bxdf.hpp"
+#include "pbpt/material/model.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/material/optics.hpp"
 
 namespace pbpt::material {
 

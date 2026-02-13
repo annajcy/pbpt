@@ -10,18 +10,18 @@
 #include <string>
 #include <vector>
 
-#include "geometry/bounds.hpp"
-#include "geometry/directional_cone.hpp"
-#include "geometry/ray.hpp"
-#include "geometry/transform.hpp"
-#include "math/function.hpp"
-#include "math/normal.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "sampler/3d.hpp"
-#include "shape/shape.hpp"
+#include "pbpt/geometry/bounds.hpp"
+#include "pbpt/geometry/directional_cone.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/geometry/transform.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/sampler/3d.hpp"
+#include "pbpt/shape/shape.hpp"
 
-#include "utils/obj_loader.hpp"
+#include "pbpt/utils/obj_loader.hpp"
 
 namespace pbpt::shape {
 

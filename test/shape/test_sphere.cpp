@@ -1,11 +1,11 @@
 #include <array>
 #include <gtest/gtest.h>
 
-#include "geometry/interaction.hpp"
-#include "geometry/ray.hpp"
-#include "math/point.hpp"
-#include "shape/shape.hpp"
-#include "shape/plugin/shape/sphere.hpp"
+#include "pbpt/geometry/interaction.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/shape/shape.hpp"
+#include "pbpt/shape/plugin/shape/sphere.hpp"
 using namespace pbpt::math;
 
 namespace pbpt::shape::testing {

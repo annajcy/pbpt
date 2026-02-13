@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "camera/camera.hpp"
+#include "pbpt/camera/camera.hpp"
 
 namespace pbpt::camera {
 

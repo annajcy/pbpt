@@ -6,17 +6,17 @@
 
 #include <array>
 
-#include "math/matrix.hpp"
-#include "math/operator.hpp"
-#include "math/vector.hpp"
-#include "math/format.hpp"
+#include "pbpt/math/matrix.hpp"
+#include "pbpt/math/operator.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/math/format.hpp"
 
 #include "color.hpp"
 #include "color_space.hpp"
 #include "constant/illuminant_spectrum.hpp"
 #include "constant/standard_color_spaces.hpp"
-#include "radiometry/plugin/spectrum_distribution/rgb_sigmoid.hpp"
-#include "radiometry/plugin/spectrum_distribution/rgb_spectra.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/rgb_sigmoid.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/rgb_spectra.hpp"
 
 namespace pbpt::radiometry {
 

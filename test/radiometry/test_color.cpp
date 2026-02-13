@@ -4,7 +4,7 @@
 #include <cmath>
 #include <memory>
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 using namespace pbpt::radiometry;
 using namespace pbpt::math;

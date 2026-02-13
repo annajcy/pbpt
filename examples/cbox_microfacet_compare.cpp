@@ -1,8 +1,8 @@
 #include <format>
 #include <vector>
 
-#include "integrator/plugin/integrator/path_integrator.hpp"
-#include "loader/scene_loader.hpp"
+#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
+#include "pbpt/loader/scene_loader.hpp"
 
 int main() {
     auto scene_aniso = pbpt::loader::load_scene<double>(

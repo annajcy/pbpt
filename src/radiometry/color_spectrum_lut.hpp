@@ -11,8 +11,8 @@
 #include <limits>
 
 #include "color.hpp"
-#include "radiometry/plugin/spectrum_distribution/rgb_sigmoid.hpp"
-#include "radiometry/plugin/spectrum_distribution/rgb_spectra.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/rgb_sigmoid.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/rgb_spectra.hpp"
 
 namespace pbpt::radiometry {
 

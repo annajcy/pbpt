@@ -9,11 +9,11 @@
 #include <iomanip>
 #include <format>
 
-#include "math/matrix.hpp"
-#include "math/normal.hpp"
-#include "math/octahedral.hpp"
-#include "math/tuple.hpp"
-#include "math/complex.hpp"
+#include "pbpt/math/matrix.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/octahedral.hpp"
+#include "pbpt/math/tuple.hpp"
+#include "pbpt/math/complex.hpp"
 
 namespace pbpt::math {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "camera/film.hpp"
+#include "pbpt/camera/film.hpp"
 
 namespace pbpt::camera {
 

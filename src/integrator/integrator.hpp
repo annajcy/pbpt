@@ -7,14 +7,14 @@
 #include <utility>
 #include <variant>
 
-#include "radiometry/sampled_spectrum.hpp"
-#include "camera/camera.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/camera/camera.hpp"
 
-#include "math/point.hpp"
-#include "sampler/2d.hpp" 
-#include "utils/image_io.hpp"
-#include "utils/progress_bar.hpp"
-#include "scene/scene.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/sampler/2d.hpp" 
+#include "pbpt/utils/image_io.hpp"
+#include "pbpt/utils/progress_bar.hpp"
+#include "pbpt/scene/scene.hpp"
 
 namespace pbpt::integrator {
 

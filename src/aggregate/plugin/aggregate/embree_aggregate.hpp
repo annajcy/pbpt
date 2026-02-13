@@ -6,8 +6,8 @@
 #include <embree4/rtcore.h>
 #include <embree4/rtcore_common.h>
 
-#include "aggregate/aggregate.hpp"
-#include "shape/primitive.hpp"
+#include "pbpt/aggregate/aggregate.hpp"
+#include "pbpt/shape/primitive.hpp"
 
 namespace pbpt::aggregate {
 

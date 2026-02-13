@@ -9,11 +9,11 @@
 #include <gtest/gtest.h>
 #include <cmath>
 
-#include "camera/plugin/camera/spherical_camera.hpp"
-#include "geometry/ray.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "math/format.hpp"
+#include "pbpt/camera/plugin/camera/spherical_camera.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/math/format.hpp"
 
 namespace pbpt::camera::testing {
 

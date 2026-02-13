@@ -8,13 +8,13 @@
 
 #include <optional>
 
-#include "geometry/bounds.hpp"
-#include "geometry/directional_cone.hpp"
-#include "geometry/interaction.hpp"
-#include "geometry/ray.hpp"
-#include "geometry/transform.hpp"
-#include "math/normal.hpp"
-#include "math/point.hpp"
+#include "pbpt/geometry/bounds.hpp"
+#include "pbpt/geometry/directional_cone.hpp"
+#include "pbpt/geometry/interaction.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/geometry/transform.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/point.hpp"
 
 namespace pbpt::shape {
 

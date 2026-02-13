@@ -2,14 +2,14 @@
 
 #include <variant>
 
-#include "material/plugin/bxdf/conductor_bxdf.hpp"
-#include "material/plugin/bxdf/conductor_rough_bxdf.hpp"
-#include "material/plugin/bxdf/conductor_specular_bxdf.hpp"
-#include "material/plugin/bxdf/dielectric_bxdf.hpp"
-#include "material/plugin/bxdf/dielectric_rough_bxdf.hpp"
-#include "material/plugin/bxdf/dielectric_specular_bxdf.hpp"
-#include "material/plugin/bxdf/lambertian_bxdf.hpp"
-#include "material/plugin/bxdf/null_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/conductor_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/conductor_rough_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/conductor_specular_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/dielectric_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/dielectric_rough_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/dielectric_specular_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/lambertian_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/null_bxdf.hpp"
 
 namespace pbpt::material {
 

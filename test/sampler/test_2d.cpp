@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 namespace pbpt::sampler::testing {
 

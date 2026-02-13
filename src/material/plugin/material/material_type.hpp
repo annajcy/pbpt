@@ -1,14 +1,14 @@
 #pragma once
 
 #include <variant>
-#include "material/plugin/material/lambertian_material.hpp"
-#include "material/plugin/material/dielectric_material.hpp"
-#include "material/plugin/material/dielectric_specular_material.hpp"
-#include "material/plugin/material/dielectric_rough_material.hpp"
-#include "material/plugin/material/conductor_material.hpp"
-#include "material/plugin/material/conductor_specular_material.hpp"
-#include "material/plugin/material/conductor_rough_material.hpp"
-#include "utils/library.hpp"
+#include "pbpt/material/plugin/material/lambertian_material.hpp"
+#include "pbpt/material/plugin/material/dielectric_material.hpp"
+#include "pbpt/material/plugin/material/dielectric_specular_material.hpp"
+#include "pbpt/material/plugin/material/dielectric_rough_material.hpp"
+#include "pbpt/material/plugin/material/conductor_material.hpp"
+#include "pbpt/material/plugin/material/conductor_specular_material.hpp"
+#include "pbpt/material/plugin/material/conductor_rough_material.hpp"
+#include "pbpt/utils/library.hpp"
 
 namespace pbpt::material {
 

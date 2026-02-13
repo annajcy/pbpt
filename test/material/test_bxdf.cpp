@@ -2,14 +2,14 @@
 #include <vector>
 #include <random>
 
-#include "material/plugin/bxdf/lambertian_bxdf.hpp"
-#include "material/plugin/bxdf/conductor_rough_bxdf.hpp"
-#include "material/plugin/bxdf/dielectric_rough_bxdf.hpp"
-#include "material/model.hpp"
-#include "material/optics.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "math/random_generator.hpp"
-#include "math/point.hpp"
+#include "pbpt/material/plugin/bxdf/lambertian_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/conductor_rough_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/dielectric_rough_bxdf.hpp"
+#include "pbpt/material/model.hpp"
+#include "pbpt/material/optics.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/math/random_generator.hpp"
+#include "pbpt/math/point.hpp"
 
 using namespace pbpt;
 using namespace pbpt::material;

@@ -1,18 +1,18 @@
 #include <gtest/gtest.h>
 
-#include "camera/plugin/film/hdr_film.hpp"
-#include "camera/pixel_sensor.hpp"
+#include "pbpt/camera/plugin/film/hdr_film.hpp"
+#include "pbpt/camera/pixel_sensor.hpp"
 #include "gtest/gtest.h"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "radiometry/color.hpp"
-#include "radiometry/color_spectrum_optimizer.hpp"
-#include "radiometry/constant/illuminant_spectrum.hpp"
-#include "radiometry/constant/standard_color_spaces.hpp"
-#include "radiometry/constant/xyz_spectrum.hpp"
-#include "radiometry/plugin/spectrum_distribution/constant.hpp"
-#include "radiometry/plugin/spectrum_distribution/multiplied.hpp"
-#include "radiometry/sampled_spectrum.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/color.hpp"
+#include "pbpt/radiometry/color_spectrum_optimizer.hpp"
+#include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
+#include "pbpt/radiometry/constant/standard_color_spaces.hpp"
+#include "pbpt/radiometry/constant/xyz_spectrum.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/constant.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/multiplied.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::camera::testing {
 namespace {

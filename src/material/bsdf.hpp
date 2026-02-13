@@ -3,8 +3,8 @@
 #include <optional>
 #include <utility>
 
-#include "geometry/frame.hpp"
-#include "material/plugin/bxdf/bxdf_type.hpp"
+#include "pbpt/geometry/frame.hpp"
+#include "pbpt/material/plugin/bxdf/bxdf_type.hpp"
 
 namespace pbpt::material {
 

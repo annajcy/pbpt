@@ -3,7 +3,7 @@
 #include <array>
 #include <cmath>
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 using namespace pbpt::math;
 

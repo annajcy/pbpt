@@ -4,14 +4,14 @@
 #include <cstdlib>
 #include <optional>
 #include <vector>
-#include "geometry/ray.hpp"
-#include "geometry/interaction.hpp"
-#include "geometry/spherical.hpp"
-#include "math/function.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "sampler/3d.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/geometry/interaction.hpp"
+#include "pbpt/geometry/spherical.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/sampler/3d.hpp"
 
 namespace pbpt::material {
 

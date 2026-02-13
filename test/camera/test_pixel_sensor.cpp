@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 #include <cmath>
 
-#include "camera/pixel_sensor.hpp"
-#include "math/vector.hpp"
-#include "radiometry/color.hpp"
-#include "radiometry/constant/illuminant_spectrum.hpp"
-#include "radiometry/constant/standard_color_spaces.hpp"
-#include "radiometry/constant/xyz_spectrum.hpp"
-#include "radiometry/plugin/spectrum_distribution/functional.hpp"
+#include "pbpt/camera/pixel_sensor.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/color.hpp"
+#include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
+#include "pbpt/radiometry/constant/standard_color_spaces.hpp"
+#include "pbpt/radiometry/constant/xyz_spectrum.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/functional.hpp"
 
 
 namespace pbpt::camera::testing {

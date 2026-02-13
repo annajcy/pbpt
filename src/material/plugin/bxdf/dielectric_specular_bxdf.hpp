@@ -3,10 +3,10 @@
 #include <cmath>
 #include <optional>
 
-#include "geometry/spherical.hpp"
-#include "material/bxdf.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "material/optics.hpp"
+#include "pbpt/geometry/spherical.hpp"
+#include "pbpt/material/bxdf.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/material/optics.hpp"
 
 namespace pbpt::material {
 

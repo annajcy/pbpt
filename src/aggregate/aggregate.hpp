@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "shape/primitive.hpp"
+#include "pbpt/shape/primitive.hpp"
 
 namespace pbpt::aggregate {
 

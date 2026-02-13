@@ -5,11 +5,11 @@
 #include <variant>
 #include <vector>
 
-#include "geometry/frame.hpp"
-#include "geometry/interaction.hpp"
-#include "material/bsdf.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "radiometry/spectrum_distribution.hpp"
+#include "pbpt/geometry/frame.hpp"
+#include "pbpt/geometry/interaction.hpp"
+#include "pbpt/material/bsdf.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/radiometry/spectrum_distribution.hpp"
 
 namespace pbpt::material {
 

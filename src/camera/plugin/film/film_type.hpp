@@ -2,10 +2,10 @@
 
 #include <variant>
 
-#include "camera/plugin/film/hdr_film.hpp"
-#include "camera/pixel_sensor.hpp"
-#include "radiometry/constant/illuminant_spectrum.hpp"
-#include "radiometry/constant/standard_color_spaces.hpp"
+#include "pbpt/camera/plugin/film/hdr_film.hpp"
+#include "pbpt/camera/pixel_sensor.hpp"
+#include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
+#include "pbpt/radiometry/constant/standard_color_spaces.hpp"
 
 namespace pbpt::camera {
 

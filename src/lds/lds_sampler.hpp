@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math/point.hpp"
+#include "pbpt/math/point.hpp"
 
 namespace pbpt::lds {
 

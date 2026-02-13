@@ -9,11 +9,11 @@
 #include <optional>
 #include <algorithm>
 
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "math/normal.hpp"
-#include "math/matrix.hpp"
-#include "geometry/ray.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/matrix.hpp"
+#include "pbpt/geometry/ray.hpp"
 
 namespace pbpt::geometry {
 

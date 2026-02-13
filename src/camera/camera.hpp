@@ -8,14 +8,14 @@
 #include <cmath>
 #include <string>
 
-#include "geometry/ray.hpp"
+#include "pbpt/geometry/ray.hpp"
 
-#include "geometry/ray.hpp"
-#include "geometry/transform.hpp"
-#include "geometry/spherical.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/geometry/transform.hpp"
+#include "pbpt/geometry/spherical.hpp"
 
-#include "math/point.hpp"
-#include "math/vector.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
 
 namespace pbpt::camera {
 

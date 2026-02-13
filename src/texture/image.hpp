@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <vector>
-#include "math/vector.hpp"
+#include "pbpt/math/vector.hpp"
 
 namespace pbpt::texture {
 

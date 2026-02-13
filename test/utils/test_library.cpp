@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <variant>
 #include <string>
-#include "utils/library.hpp"
+#include "pbpt/utils/library.hpp"
 
 using namespace pbpt::utils;
 

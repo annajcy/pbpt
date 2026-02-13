@@ -9,16 +9,16 @@
 #include <optional>
 #include <utility>
 
-#include "geometry/bounds.hpp"
-#include "geometry/directional_cone.hpp"
-#include "geometry/interaction.hpp"
-#include "geometry/ray.hpp"
-#include "geometry/transform.hpp"
-#include "math/function.hpp"
-#include "math/normal.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "shape/shape.hpp"
+#include "pbpt/geometry/bounds.hpp"
+#include "pbpt/geometry/directional_cone.hpp"
+#include "pbpt/geometry/interaction.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/geometry/transform.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/shape/shape.hpp"
 
 namespace pbpt::shape {
 

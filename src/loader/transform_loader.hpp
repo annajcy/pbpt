@@ -8,9 +8,9 @@
 
 #include <pugixml.hpp>
 
-#include "camera/render_transform.hpp"
-#include "geometry/transform.hpp"
-#include "loader/basic_parser.hpp"
+#include "pbpt/camera/render_transform.hpp"
+#include "pbpt/geometry/transform.hpp"
+#include "pbpt/loader/basic_parser.hpp"
 
 namespace pbpt::loader {
 

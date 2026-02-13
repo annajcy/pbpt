@@ -2,8 +2,8 @@
 
 #include <cmath>
 
-#include "light/light.hpp"
-#include "shape/shape.hpp"
+#include "pbpt/light/light.hpp"
+#include "pbpt/shape/shape.hpp"
 
 namespace pbpt::light {
 

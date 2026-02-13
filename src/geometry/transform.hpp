@@ -6,17 +6,17 @@
 
 #include <utility>
 
-#include "geometry/interaction.hpp"
-#include "math/homogeneous.hpp"
-#include "math/type_alias.hpp"
-#include "math/matrix.hpp"
-#include "math/normal.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
+#include "pbpt/geometry/interaction.hpp"
+#include "pbpt/math/homogeneous.hpp"
+#include "pbpt/math/type_alias.hpp"
+#include "pbpt/math/matrix.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
 
 #include "bounds.hpp"
 #include "ray.hpp"
-#include "math/format.hpp"
+#include "pbpt/math/format.hpp"
 #include <iostream>
 
 using namespace pbpt::math;

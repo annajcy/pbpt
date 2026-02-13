@@ -4,7 +4,7 @@
 #include <optional>
 #include <vector>
 
-#include "aggregate/aggregate.hpp"
+#include "pbpt/aggregate/aggregate.hpp"
 
 namespace pbpt::aggregate {
 

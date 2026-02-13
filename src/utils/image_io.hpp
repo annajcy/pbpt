@@ -10,8 +10,8 @@
 #include <filesystem>
 #include <stdexcept>
 #include <vector>
-#include "math/point.hpp"
-#include "texture/image.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/texture/image.hpp"
 
 namespace pbpt::utils {
 

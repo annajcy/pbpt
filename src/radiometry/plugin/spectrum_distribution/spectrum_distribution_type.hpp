@@ -1,9 +1,9 @@
 #pragma once
 
-#include "radiometry/constant/illuminant_spectrum.hpp"
-#include "radiometry/plugin/spectrum_distribution/multiplied.hpp"
-#include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
-#include "utils/library.hpp"
+#include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/multiplied.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
+#include "pbpt/utils/library.hpp"
 
 namespace pbpt::radiometry {
 // Light Variant

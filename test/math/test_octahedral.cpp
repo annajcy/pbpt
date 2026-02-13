@@ -12,7 +12,7 @@
 #include <type_traits>
 #include <random>
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 namespace pbpt::math::testing {
 

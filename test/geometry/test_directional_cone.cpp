@@ -10,7 +10,7 @@
 #include <limits>
 #include <cmath>
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 using namespace pbpt::geometry;
 

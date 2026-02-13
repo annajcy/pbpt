@@ -4,9 +4,9 @@
  */
 #pragma once
 
-#include "math/function.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
 
 #include "2d.hpp"
 

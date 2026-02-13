@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "geometry/transform.hpp"
+#include "pbpt/geometry/transform.hpp"
 
 namespace pbpt::camera {
 

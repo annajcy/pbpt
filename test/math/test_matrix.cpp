@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 #include <cmath>
 #include <iostream>

@@ -2,9 +2,9 @@
 
 #include <variant>
 #include "area_light.hpp"
-#include "radiometry/plugin/spectrum_distribution/spectrum_distribution_type.hpp"
-#include "shape/plugin/shape/triangle.hpp"
-#include "utils/library.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/spectrum_distribution_type.hpp"
+#include "pbpt/shape/plugin/shape/triangle.hpp"
+#include "pbpt/utils/library.hpp"
 
 namespace pbpt::light {
 

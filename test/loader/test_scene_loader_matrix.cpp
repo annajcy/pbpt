@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include "loader/scene_loader.hpp"
+#include "pbpt/loader/scene_loader.hpp"
 
 namespace {
 

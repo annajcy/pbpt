@@ -55,9 +55,8 @@ def generate_directory_header(dir_path: Path, headers: List[Path], src_dir: Path
             if header == output_file:
                 continue
                 
-            # Use relative path from the directory
-            rel_path = header.relative_to(dir_path)
-            include_path = str(rel_path).replace('\\', '/')
+            rel_path = header.relative_to(src_dir)
+            include_path = f"pbpt/{str(rel_path).replace('\\', '/')}"
             f.write(f'#include "{include_path}"\n')
     
     return output_file
@@ -87,7 +86,7 @@ def generate_main_pbpt_hpp(src_dir: Path, directory_headers: List[Path]):
         # Write includes for each directory header
         for dir_header in sorted_headers:
             rel_path = dir_header.relative_to(src_dir)
-            include_path = str(rel_path).replace('\\', '/')
+            include_path = f"pbpt/{str(rel_path).replace('\\', '/')}"
             f.write(f'#include "{include_path}"\n')
     
     return output_file

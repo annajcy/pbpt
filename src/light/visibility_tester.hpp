@@ -1,11 +1,11 @@
 #pragma once
 
 #include <optional>
-#include "geometry/transform.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "shape/shape.hpp"
+#include "pbpt/geometry/transform.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/shape/shape.hpp"
 
 namespace pbpt::light {
 

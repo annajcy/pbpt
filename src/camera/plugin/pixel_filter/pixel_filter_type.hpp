@@ -1,8 +1,8 @@
 #pragma once
 #include <variant>
-#include "camera/plugin/pixel_filter/box_filter.hpp"
-#include "camera/plugin/pixel_filter/gaussian_filter.hpp"
-#include "camera/plugin/pixel_filter/tent_filter.hpp"
+#include "pbpt/camera/plugin/pixel_filter/box_filter.hpp"
+#include "pbpt/camera/plugin/pixel_filter/gaussian_filter.hpp"
+#include "pbpt/camera/plugin/pixel_filter/tent_filter.hpp"
 
 namespace pbpt::camera {
     

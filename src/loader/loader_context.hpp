@@ -2,7 +2,7 @@
 
 #include <string>
 #include <filesystem>
-#include "scene/scene.hpp"
+#include "pbpt/scene/scene.hpp"
 
 namespace pbpt::loader {
 

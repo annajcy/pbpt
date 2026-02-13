@@ -4,12 +4,12 @@
 #include <cstdlib>
 #include <optional>
 
-#include "geometry/spherical.hpp"
-#include "material/bxdf.hpp"
-#include "math/vector.hpp"
-#include "radiometry/sampled_spectrum.hpp"
+#include "pbpt/geometry/spherical.hpp"
+#include "pbpt/material/bxdf.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
 
-#include "material/optics.hpp"
+#include "pbpt/material/optics.hpp"
 
 namespace pbpt::material {
 

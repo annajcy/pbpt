@@ -2,8 +2,8 @@
 
 #include <array>
 
-#include "math/function.hpp"
-#include "math/polynomial.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/math/polynomial.hpp"
 
 namespace pbpt::radiometry {
 

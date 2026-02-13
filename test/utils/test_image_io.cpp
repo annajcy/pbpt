@@ -2,9 +2,9 @@
 #include <filesystem>
 #include <vector>
 #include <cmath>
-#include "utils/image_io.hpp"
-#include "texture/image.hpp"
-#include "math/vector.hpp"
+#include "pbpt/utils/image_io.hpp"
+#include "pbpt/texture/image.hpp"
+#include "pbpt/math/vector.hpp"
 
 using namespace pbpt;
 

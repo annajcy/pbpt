@@ -2,7 +2,7 @@
 
 #include <sstream>  // 用于测试流输出
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 // 将测试代码放在一个独立的命名空间中是一种好习惯
 namespace pbpt::math::testing {

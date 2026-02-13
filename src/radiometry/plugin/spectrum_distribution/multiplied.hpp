@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "radiometry/spectrum_distribution.hpp"
+#include "pbpt/radiometry/spectrum_distribution.hpp"
 
 namespace pbpt::radiometry {
 

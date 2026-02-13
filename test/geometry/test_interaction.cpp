@@ -3,7 +3,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 namespace pbpt::geometry::testing {
 

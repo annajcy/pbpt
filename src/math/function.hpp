@@ -8,7 +8,7 @@
 #include <cmath>
 #include <type_traits>
 
-#include "math/utils.hpp"
+#include "pbpt/math/utils.hpp"
 #include "type_alias.hpp"
 
 namespace pbpt::math {

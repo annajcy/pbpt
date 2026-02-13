@@ -6,8 +6,8 @@
 #include <charconv>
 #include <pugixml.hpp>
 
-#include "math/vector.hpp"
-#include "math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/math/point.hpp"
 
 namespace pbpt::loader {
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "material/bsdf.hpp"
-#include "material/material.hpp"
-#include "material/plugin/bxdf/dielectric_rough_bxdf.hpp"
+#include "pbpt/material/bsdf.hpp"
+#include "pbpt/material/material.hpp"
+#include "pbpt/material/plugin/bxdf/dielectric_rough_bxdf.hpp"
 
 namespace pbpt::material {
 

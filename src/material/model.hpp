@@ -2,12 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
-#include "geometry/spherical.hpp"
-#include "math/function.hpp"
-#include "math/normal.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "sampler/2d.hpp"
+#include "pbpt/geometry/spherical.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/sampler/2d.hpp"
 
 namespace pbpt::material {
 

@@ -8,10 +8,10 @@
 #include <string>
 #include <vector>
 
-#include "pbpt.h"
-#include "integrator/domain.hpp"
-#include "integrator/plugin/integrator/path_integrator.hpp"
-#include "loader/scene_loader.hpp"
+#include "pbpt/pbpt.h"
+#include "pbpt/integrator/domain.hpp"
+#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
+#include "pbpt/loader/scene_loader.hpp"
 
 namespace pbpt::integrator::testing {
 

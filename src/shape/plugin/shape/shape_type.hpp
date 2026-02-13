@@ -3,7 +3,7 @@
 #include <variant>
 #include "sphere.hpp"
 #include "triangle.hpp"
-#include "utils/library.hpp"
+#include "pbpt/utils/library.hpp"
 
 namespace pbpt::shape {
 

@@ -2,14 +2,14 @@
 
 #include "scene.hpp"
 
-#include "aggregate/plugin/aggregate/embree_aggregate.hpp"
-#include "camera/plugin/camera/projective_cameras.hpp"
-#include "camera/plugin/film/hdr_film.hpp"
-#include "camera/plugin/pixel_filter/gaussian_filter.hpp"
-#include "light/plugin/light/area_light.hpp"
-#include "material/plugin/material/lambertian_material.hpp"
-#include "shape/plugin/shape/triangle.hpp"
-#include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
+#include "pbpt/aggregate/plugin/aggregate/embree_aggregate.hpp"
+#include "pbpt/camera/plugin/camera/projective_cameras.hpp"
+#include "pbpt/camera/plugin/film/hdr_film.hpp"
+#include "pbpt/camera/plugin/pixel_filter/gaussian_filter.hpp"
+#include "pbpt/light/plugin/light/area_light.hpp"
+#include "pbpt/material/plugin/material/lambertian_material.hpp"
+#include "pbpt/shape/plugin/shape/triangle.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 
 namespace pbpt::scene {
 

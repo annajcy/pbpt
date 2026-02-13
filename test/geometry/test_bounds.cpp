@@ -4,8 +4,8 @@
 #include <sstream>
 #include <optional>
 
-#include "math/type_alias.hpp"
-#include "pbpt.h"
+#include "pbpt/math/type_alias.hpp"
+#include "pbpt/pbpt.h"
 
 using namespace pbpt::geometry;
 

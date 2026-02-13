@@ -12,30 +12,30 @@
 #include <vector>
 #include <pugixml.hpp>
 
-#include "scene/scene.hpp"
-#include "loader/basic_parser.hpp"
-#include "loader/transform_loader.hpp"
-#include "loader/loader_context.hpp"
+#include "pbpt/scene/scene.hpp"
+#include "pbpt/loader/basic_parser.hpp"
+#include "pbpt/loader/transform_loader.hpp"
+#include "pbpt/loader/loader_context.hpp"
 
 // Component headers
-#include "camera/plugin/camera/projective_cameras.hpp"
-#include "camera/plugin/film/hdr_film.hpp"
-#include "camera/plugin/pixel_filter/gaussian_filter.hpp"
-#include "camera/pixel_sensor.hpp"
-#include "material/plugin/material/lambertian_material.hpp"
-#include "material/plugin/material/dielectric_material.hpp"
-#include "material/plugin/material/dielectric_specular_material.hpp"
-#include "material/plugin/material/dielectric_rough_material.hpp"
-#include "material/plugin/material/conductor_material.hpp"
-#include "material/plugin/material/conductor_specular_material.hpp"
-#include "material/plugin/material/conductor_rough_material.hpp"
-#include "shape/plugin/shape/triangle.hpp" // Contains Triangle and TriangleMesh
-#include "light/plugin/light/area_light.hpp"
-#include "aggregate/plugin/aggregate/embree_aggregate.hpp"
-#include "radiometry/constant/illuminant_spectrum.hpp"
-#include "radiometry/constant/lambda.hpp"
-#include "radiometry/constant/xyz_spectrum.hpp"
-#include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
+#include "pbpt/camera/plugin/camera/projective_cameras.hpp"
+#include "pbpt/camera/plugin/film/hdr_film.hpp"
+#include "pbpt/camera/plugin/pixel_filter/gaussian_filter.hpp"
+#include "pbpt/camera/pixel_sensor.hpp"
+#include "pbpt/material/plugin/material/lambertian_material.hpp"
+#include "pbpt/material/plugin/material/dielectric_material.hpp"
+#include "pbpt/material/plugin/material/dielectric_specular_material.hpp"
+#include "pbpt/material/plugin/material/dielectric_rough_material.hpp"
+#include "pbpt/material/plugin/material/conductor_material.hpp"
+#include "pbpt/material/plugin/material/conductor_specular_material.hpp"
+#include "pbpt/material/plugin/material/conductor_rough_material.hpp"
+#include "pbpt/shape/plugin/shape/triangle.hpp" // Contains Triangle and TriangleMesh
+#include "pbpt/light/plugin/light/area_light.hpp"
+#include "pbpt/aggregate/plugin/aggregate/embree_aggregate.hpp"
+#include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
+#include "pbpt/radiometry/constant/lambda.hpp"
+#include "pbpt/radiometry/constant/xyz_spectrum.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 
 namespace pbpt::loader {
 

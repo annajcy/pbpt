@@ -3,11 +3,11 @@
 #include <cmath>
 #include <optional>
 
-#include "material/bxdf.hpp"
-#include "math/function.hpp"
-#include "sampler/3d.hpp"
+#include "pbpt/material/bxdf.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/sampler/3d.hpp"
 
-#include "material/optics.hpp"
+#include "pbpt/material/optics.hpp"
 
 namespace pbpt::material {
 

@@ -11,11 +11,11 @@
 #include <cmath>
 #include <numbers>
 
-#include "camera/camera.h"
-#include "geometry/ray.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "math/format.hpp"
+#include "pbpt/camera/camera.h"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/math/format.hpp"
 
 namespace pbpt::camera::testing {
 

@@ -3,9 +3,9 @@
 #include <iostream>
 #include <string>
 
-#include "integrator/plugin/integrator/path_integrator.hpp"
-#include "loader/scene_loader.hpp"
-#include "scene/scene.hpp"
+#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
+#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/scene/scene.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 2) {

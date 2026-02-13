@@ -8,10 +8,10 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
-#include "sampler/1d.hpp"
-#include "sampler/utils.hpp"
-#include "math/vector.hpp"
-#include "radiometry/constant/lambda.hpp"
+#include "pbpt/sampler/1d.hpp"
+#include "pbpt/sampler/utils.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/constant/lambda.hpp"
 
 namespace pbpt::radiometry {
 

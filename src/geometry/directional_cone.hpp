@@ -6,9 +6,9 @@
 
 #include <concepts>
 
-#include "math/function.hpp"
-#include "math/operator.hpp"
-#include "math/vector.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/math/operator.hpp"
+#include "pbpt/math/vector.hpp"
 
 #include "transform.hpp"
 

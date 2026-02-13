@@ -1,7 +1,7 @@
 #pragma once
 
 #include <variant>
-#include "camera/plugin/camera/projective_cameras.hpp"
+#include "pbpt/camera/plugin/camera/projective_cameras.hpp"
 
 namespace pbpt::camera {
 // Camera Variant

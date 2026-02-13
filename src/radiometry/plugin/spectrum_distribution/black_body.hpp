@@ -2,8 +2,8 @@
 
 #include <cmath>
 
-#include "math/function.hpp"
-#include "radiometry/spectrum_distribution.hpp"
+#include "pbpt/math/function.hpp"
+#include "pbpt/radiometry/spectrum_distribution.hpp"
 
 namespace pbpt::radiometry {
 

@@ -10,13 +10,13 @@
  */
 #pragma once
 
-#include "math/matrix.hpp"
-#include "math/point.hpp"
-#include "radiometry/color.hpp"
-#include "radiometry/color_space.hpp"
-#include "radiometry/constant/swatch_reflectances_spectrum.hpp"
-#include "radiometry/constant/xyz_spectrum.hpp"
-#include "radiometry/sampled_spectrum.hpp"
+#include "pbpt/math/matrix.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/radiometry/color.hpp"
+#include "pbpt/radiometry/color_space.hpp"
+#include "pbpt/radiometry/constant/swatch_reflectances_spectrum.hpp"
+#include "pbpt/radiometry/constant/xyz_spectrum.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::camera {
 

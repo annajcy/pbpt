@@ -1,9 +1,9 @@
 #pragma once
 
-#include "material/bsdf.hpp"
-#include "material/material.hpp"
-#include "material/plugin/bxdf/conductor_bxdf.hpp"
-#include "radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
+#include "pbpt/material/bsdf.hpp"
+#include "pbpt/material/material.hpp"
+#include "pbpt/material/plugin/bxdf/conductor_bxdf.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 
 namespace pbpt::material {
 

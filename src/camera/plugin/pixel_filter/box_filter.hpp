@@ -1,6 +1,6 @@
 #pragma once
 
-#include "camera/pixel_filter.hpp"
+#include "pbpt/camera/pixel_filter.hpp"
 
 namespace pbpt::camera {
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "lds/lds_sampler.hpp"
-#include "math/random_generator.hpp"
-#include "math/point.hpp"
+#include "pbpt/lds/lds_sampler.hpp"
+#include "pbpt/math/random_generator.hpp"
+#include "pbpt/math/point.hpp"
 
 
 namespace pbpt::lds {

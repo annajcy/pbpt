@@ -1,7 +1,7 @@
-#include "utils/image_io.hpp"
+#include "pbpt/utils/image_io.hpp"
 #include <iostream>
 
-#include "camera/camera.hpp"
+#include "pbpt/camera/camera.hpp"
 
 using namespace pbpt;
 

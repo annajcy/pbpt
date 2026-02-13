@@ -7,12 +7,12 @@
 #include <array>
 #include <format>
 
-#include "math/matrix.hpp"
-#include "math/point.hpp"
-#include "math/utils.hpp"
-#include "math/vector.hpp"
+#include "pbpt/math/matrix.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/utils.hpp"
+#include "pbpt/math/vector.hpp"
 
-#include "radiometry/plugin/spectrum_distribution/tabular.hpp"
+#include "pbpt/radiometry/plugin/spectrum_distribution/tabular.hpp"
 #include "sampled_spectrum.hpp"
 #include "constant/xyz_spectrum.hpp"
 #include "constant/lambda.hpp"

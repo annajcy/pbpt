@@ -7,9 +7,9 @@
 #include <array>
 #include <type_traits>
 
-#include "math/utils.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
+#include "pbpt/math/utils.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
 
 using namespace pbpt::math;
 

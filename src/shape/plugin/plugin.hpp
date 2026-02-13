@@ -1,5 +1,5 @@
 #pragma once
 
-#include "shape/plugin/shape/shape_type.hpp"
-#include "shape/plugin/shape/sphere.hpp"
-#include "shape/plugin/shape/triangle.hpp"
+#include "pbpt/shape/plugin/shape/shape_type.hpp"
+#include "pbpt/shape/plugin/shape/sphere.hpp"
+#include "pbpt/shape/plugin/shape/triangle.hpp"

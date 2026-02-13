@@ -3,13 +3,13 @@
 #include <optional>
 #include <variant>
 
-#include "material/bxdf.hpp"
-#include "material/model.hpp"
-#include "material/plugin/bxdf/dielectric_rough_bxdf.hpp"
-#include "material/plugin/bxdf/dielectric_specular_bxdf.hpp"
-#include "material/plugin/bxdf/null_bxdf.hpp"
-#include "math/vector.hpp"
-#include "radiometry/sampled_spectrum.hpp"
+#include "pbpt/material/bxdf.hpp"
+#include "pbpt/material/model.hpp"
+#include "pbpt/material/plugin/bxdf/dielectric_rough_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/dielectric_specular_bxdf.hpp"
+#include "pbpt/material/plugin/bxdf/null_bxdf.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::material {
 

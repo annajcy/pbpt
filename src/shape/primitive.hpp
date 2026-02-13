@@ -3,9 +3,9 @@
 #include <optional>
 #include <utility>
 #include <variant>
-#include "geometry/ray.hpp"
+#include "pbpt/geometry/ray.hpp"
 #include "shape.hpp" 
-#include "shape/plugin/shape/shape_type.hpp"
+#include "pbpt/shape/plugin/shape/shape_type.hpp"
 
 namespace pbpt::shape {
 

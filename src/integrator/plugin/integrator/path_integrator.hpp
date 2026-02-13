@@ -1,15 +1,15 @@
 #pragma once
 
-#include "integrator/integrator.hpp"
-#include "lds/plugin/lds/independent.hpp"
+#include "pbpt/integrator/integrator.hpp"
+#include "pbpt/lds/plugin/lds/independent.hpp"
 
 #include <cstddef>
 #include <variant>
 #include <cmath>
-#include "geometry/ray.hpp"
-#include "material/bsdf.hpp"
-#include "radiometry/sampled_spectrum.hpp"
-#include "shape/primitive.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/material/bsdf.hpp"
+#include "pbpt/radiometry/sampled_spectrum.hpp"
+#include "pbpt/shape/primitive.hpp"
 
 namespace pbpt::integrator {
 

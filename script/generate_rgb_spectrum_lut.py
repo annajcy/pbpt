@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         // Source: {args.input}
         // Data originates from PBRT's rgb2spec optimization (Apache-2.0).
 
-        #include "radiometry/color_spectrum_lut.hpp"
+        #include "pbpt/radiometry/color_spectrum_lut.hpp"
 
         """
     )

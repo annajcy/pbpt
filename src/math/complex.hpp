@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include "math/vector.hpp"
+#include "pbpt/math/vector.hpp"
 
 namespace pbpt::math {
 

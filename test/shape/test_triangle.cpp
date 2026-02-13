@@ -2,11 +2,11 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "geometry/ray.hpp"
-#include "geometry/transform.hpp"
-#include "math/point.hpp"
-#include "math/vector.hpp"
-#include "shape/plugin/shape/triangle.hpp"
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/geometry/transform.hpp"
+#include "pbpt/math/point.hpp"
+#include "pbpt/math/vector.hpp"
+#include "pbpt/shape/plugin/shape/triangle.hpp"
 
 namespace pbpt::shape::testing {
 

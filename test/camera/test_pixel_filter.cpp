@@ -1,9 +1,9 @@
 #include <cmath>
 #include <gtest/gtest.h>
 
-#include "camera/plugin/pixel_filter/box_filter.hpp"
-#include "camera/plugin/pixel_filter/tent_filter.hpp"
-#include "math/point.hpp"
+#include "pbpt/camera/plugin/pixel_filter/box_filter.hpp"
+#include "pbpt/camera/plugin/pixel_filter/tent_filter.hpp"
+#include "pbpt/math/point.hpp"
 
 namespace pbpt::camera::testing {
 

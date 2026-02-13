@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "math/normal.hpp"
-#include "math/point.hpp"
+#include "pbpt/math/normal.hpp"
+#include "pbpt/math/point.hpp"
 
 namespace pbpt::utils {
 

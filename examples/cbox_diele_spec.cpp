@@ -1,9 +1,9 @@
 #include <format>
 #include <vector>
 
-#include "integrator/plugin/integrator/path_integrator.hpp"
-#include "loader/scene_loader.hpp"
-#include "scene/scene.hpp"
+#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
+#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/scene/scene.hpp"
 
 int main() {
     pbpt::scene::Scene<double> scene =

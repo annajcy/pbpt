@@ -3,7 +3,7 @@
 #include <cmath>
 #include <type_traits>
 
-#include "pbpt.h"
+#include "pbpt/pbpt.h"
 
 namespace pbpt::geometry::testing {
 
