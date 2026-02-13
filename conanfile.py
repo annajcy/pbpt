@@ -87,7 +87,7 @@ class PbptConan(ConanFile):
         )
 
         if self.options.with_tests:
-            self.requires("gtest/[>=1.14 <2]")
+            self.test_requires("gtest/[>=1.14 <2]")
 
     def build_requirements(self):
         self.tool_requires("cmake/3.27.9")
