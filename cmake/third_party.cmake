@@ -1,11 +1,9 @@
 # find and configure third-party libraries
-if(PBPT_BUILD_TESTS AND PROJECT_IS_TOP_LEVEL)
+if(PBPT_BUILD_TESTS)
   find_package(GTest CONFIG REQUIRED)
-  message(STATUS "PBPT_BUILD_TESTS is ON; GoogleTest found. Use symbol gtest::gtest for linking.")
-elseif(PBPT_BUILD_TESTS)
-  message(STATUS "PBPT_BUILD_TESTS is ON but skipped for embedded build.")
+  message(STATUS "PBPT_BUILD_TESTS is ON; GoogleTest will be configured for tests.")
 else()
-  message(STATUS "PBPT_BUILD_TESTS is OFF; skipping GoogleTest setup. To enable tests, set PBPT_BUILD_TESTS to ON.")
+  message(STATUS "PBPT_BUILD_TESTS is OFF; GoogleTest will NOT be configured.")
 endif()
 
 find_package(stb            CONFIG REQUIRED)
