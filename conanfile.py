@@ -29,6 +29,7 @@ class PbptConan(ConanFile):
         "float_64bit": False,
         "int_64bit": False,
         "embree/*:shared": True,
+        "hwloc/*:shared": True,
     }
 
     generators = "CMakeDeps", "VirtualBuildEnv", "VirtualRunEnv"
