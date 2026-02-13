@@ -142,7 +142,7 @@ texture::Image<math::Vector<T, 3>> read_hdr_image(const std::filesystem::path& i
             for (int x = 0; x < width; ++x) {
                 int flipped_y = height - 1 - y;  // Flip Y axis for EXR coordinate system
                 std::size_t src_idx = (
-                    static_cast<std::size_t>(y) * static_cast<std::size_t>(width) + 
+                    static_cast<std::size_t>(flipped_y) * static_cast<std::size_t>(width) + 
                     static_cast<std::size_t>(x)
                 ) * 3;
                 
@@ -232,7 +232,7 @@ texture::Image<math::Vector<T, 3>> read_ldr_image(const std::filesystem::path& i
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int flipped_y = height - 1 - y;  // Flip Y axis for EXR coordinate system
-            std::size_t idx = (static_cast<std::size_t>(y) * width + x) * 3;
+            std::size_t idx = (static_cast<std::size_t>(flipped_y) * width + x) * 3;
             image.get_pixel(x, y) = math::Vector<T, 3>(
                 static_cast<T>(data[idx + 0]) * scale,
                 static_cast<T>(data[idx + 1]) * scale,
