@@ -21,6 +21,8 @@ Use `uv run` to execute Python/Conan commands; no manual environment activation 
 
 ### Conan Build
 
+`profiles/pbpt` keeps PBPT on C++23 and pins `embree/*:compiler.cppstd=20` for compatibility.
+
 ```bash
 uv run conan profile detect --force
 ```
