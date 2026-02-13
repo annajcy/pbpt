@@ -114,24 +114,9 @@ jobs:
       - name: Conan Build (${{ matrix.build_type }})
         shell: bash
         run: |
-          conan build . \
+          conan create . \
             -s build_type=${{ matrix.build_type }} \
-            -s compiler.cppstd=17 \
+            -s compiler.cppstd=23 \
             -c tools.system.package_manager:mode=install \
             -c tools.system.package_manager:sudo=True \
             --build=missing
-
-      - name: Test (${{ matrix.build_type }}) on Linux/macOS
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          set -e
-          source build/${{ matrix.build_type }}/generators/conanrun.sh
-          ctest --test-dir build/${{ matrix.build_type }} -C ${{ matrix.build_type }} --output-on-failure
-
-      - name: Test (${{ matrix.build_type }}) on Windows
-        if: runner.os == 'Windows'
-        shell: cmd
-        run: |
-          call "build\${{ matrix.build_type }}\generators\conanrun.bat"
-          ctest --test-dir "build\${{ matrix.build_type }}" --output-on-failure

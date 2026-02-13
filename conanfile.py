@@ -1,4 +1,5 @@
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import copy
 
@@ -7,13 +8,10 @@ required_conan_version = ">=2.0"
 
 class PbptConan(ConanFile):
     name = "pbpt"
-    version = "0.1.0"
-    package_type = "library"
+    package_type = "static-library"
 
     settings = "os", "arch", "compiler", "build_type"
     options = {
-        "shared": [True, False],
-        "fPIC": [True, False],
         "with_tests": [True, False],
         "with_examples": [True, False],
         "with_docs": [True, False],
@@ -22,8 +20,6 @@ class PbptConan(ConanFile):
         "slang_version": ["ANY"],
     }
     default_options = {
-        "shared": False,
-        "fPIC": True,
         "with_tests": False,
         "with_examples": False,
         "with_docs": False,
@@ -35,12 +31,15 @@ class PbptConan(ConanFile):
 
     generators = "CMakeDeps", "VirtualBuildEnv", "VirtualRunEnv"
 
-    def config_options(self):
-        if self.settings.os == "Windows":
-            self.options.rm_safe("fPIC")
-
     def layout(self):
         cmake_layout(self, generator="Ninja")
+
+    def validate(self):
+        cppstd = str(self.settings.get_safe("compiler.cppstd") or "")
+        if cppstd not in ("23", "gnu23"):
+            raise ConanInvalidConfiguration(
+                f"pbpt requires compiler.cppstd=23 (or gnu23), got '{cppstd or 'unset'}'"
+            )
 
     def export_sources(self):
         copy(
@@ -66,15 +65,25 @@ class PbptConan(ConanFile):
         )
 
     def requirements(self):
-        self.requires("glfw/3.4")
         self.requires("assimp/5.4.3")
-        self.requires("imgui/1.92.2b")
         self.requires("stb/cci.20230920")
         self.requires("vulkan-loader/[>=1.3]")
-        self.requires("openexr/3.2.4")
+        self.requires(
+            "openexr/3.2.4",
+            transitive_headers=True,
+            transitive_libs=True,
+        )
         self.requires("pugixml/1.14")
-        self.requires("embree/4.4.0")
-        self.requires("onetbb/2021.12.0")
+        self.requires(
+            "embree/4.4.0",
+            transitive_headers=True,
+            transitive_libs=True,
+        )
+        self.requires(
+            "onetbb/2021.12.0",
+            transitive_headers=True,
+            transitive_libs=True,
+        )
 
         ver = str(self.options.slang_version)
         self.requires(f"slang/{ver}")
@@ -111,5 +120,22 @@ class PbptConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "pbpt")
-        self.cpp_info.set_property("cmake_target_name", "pbpt::pbpt")
-        self.cpp_info.libs = ["pbpt_rgb_spectrum_lut"]
+        self.cpp_info.components["rgb_spectrum_lut"].libs = ["pbpt_rgb_spectrum_lut"]
+
+        stb_component = self.cpp_info.components["stb_impl"]
+        stb_component.libs = ["pbpt_stb_impl"]
+        stb_component.requires = ["stb::stb"]
+
+        core_component = self.cpp_info.components["core"]
+        core_component.set_property("cmake_target_name", "pbpt::pbpt")
+        core_component.requires = [
+            "rgb_spectrum_lut",
+            "stb_impl",
+            "vulkan-loader::vulkan-loader",
+            "assimp::assimp",
+            "slang::slang",
+            "openexr::openexr",
+            "pugixml::pugixml",
+            "embree::embree",
+            "onetbb::onetbb",
+        ]

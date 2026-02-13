@@ -33,7 +33,7 @@ private:
         TransportMode mode
     ) const {
         if (!material::is_same_hemisphere(wo, wi)) return radiometry::SampledSpectrum<T, N>::filled(0);
-        return m_albedo * (1.0 / math::pi_v<T>);
+        return m_albedo * (T(1) / math::pi_v<T>);
     };
 
     std::optional<BxDFSampleRecord<T, N>> sample_f_impl(
@@ -71,7 +71,7 @@ private:
         if (!is_match_refl_trans(type_impl(), sample_flags)) return 0;
         if (!is_same_hemisphere(wo, wi)) return 0;
         // 注意：这里 wi 是局部坐标，AbsCosTheta 就是 abs(wi.z())
-        return std::abs(wi.z()) * (1.0 / math::pi_v<T>);
+        return std::abs(wi.z()) * (T(1) / math::pi_v<T>);
     }
 };
 

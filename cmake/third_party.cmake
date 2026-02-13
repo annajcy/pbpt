@@ -1,14 +1,14 @@
 # find and configure third-party libraries
-if(PBPT_BUILD_TESTS)
+if(PBPT_BUILD_TESTS AND PROJECT_IS_TOP_LEVEL)
   find_package(GTest CONFIG REQUIRED)
   message(STATUS "PBPT_BUILD_TESTS is ON; GoogleTest found. Use symbol gtest::gtest for linking.")
+elseif(PBPT_BUILD_TESTS)
+  message(STATUS "PBPT_BUILD_TESTS is ON but skipped for embedded build.")
 else()
   message(STATUS "PBPT_BUILD_TESTS is OFF; skipping GoogleTest setup. To enable tests, set PBPT_BUILD_TESTS to ON.")
 endif()
 
 find_package(VulkanLoader   CONFIG REQUIRED)
-find_package(glfw3          CONFIG REQUIRED)
-find_package(imgui          CONFIG REQUIRED)
 find_package(assimp         CONFIG REQUIRED)
 find_package(stb            CONFIG REQUIRED)
 find_package(slang          CONFIG REQUIRED)
@@ -16,50 +16,6 @@ find_package(OpenEXR       CONFIG REQUIRED)
 find_package(pugixml        CONFIG REQUIRED)
 find_package(embree         CONFIG REQUIRED)
 find_package(TBB            CONFIG REQUIRED)
-
-
-# build imgui with Vulkan and GLFW backends
-add_library(pbpt_imgui_vk STATIC)
-set(_IMGUI_PKG_ROOT "")
-if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND DEFINED imgui_PACKAGE_FOLDER_DEBUG)
-  set(_IMGUI_PKG_ROOT "${imgui_PACKAGE_FOLDER_DEBUG}")
-elseif (CMAKE_BUILD_TYPE STREQUAL "Release" AND DEFINED imgui_PACKAGE_FOLDER_RELEASE)
-  set(_IMGUI_PKG_ROOT "${imgui_PACKAGE_FOLDER_RELEASE}")
-elseif (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" AND DEFINED imgui_PACKAGE_FOLDER_RELWITHDEBINFO)
-  set(_IMGUI_PKG_ROOT "${imgui_PACKAGE_FOLDER_RELWITHDEBINFO}")
-elseif (CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" AND DEFINED imgui_PACKAGE_FOLDER_MINSIZEREL)
-  set(_IMGUI_PKG_ROOT "${imgui_PACKAGE_FOLDER_MINSIZEREL}")
-endif()
-message(STATUS "_IMGUI_PKG_ROOT: ${_IMGUI_PKG_ROOT}")
-
-if (_IMGUI_PKG_ROOT STREQUAL "")
-  message(FATAL_ERROR "Cannot resolve ImGui package folder; ensure you're using Conan's CMakeDeps & toolchain and set CMAKE_BUILD_TYPE correctly.")
-endif()
-
-message(STATUS "ImGui package root : ${_IMGUI_PKG_ROOT}")
-
-# 2) 头文件与后端源码目录
-set(IMGUI_INC_DIR      "${_IMGUI_PKG_ROOT}/include")
-set(IMGUI_BACKENDS_DIR "${_IMGUI_PKG_ROOT}/res/bindings")  
-
-message(STATUS "ImGui include dir  : ${IMGUI_INC_DIR}")
-message(STATUS "ImGui backends dir : ${IMGUI_BACKENDS_DIR}")
-
-target_sources(pbpt_imgui_vk PRIVATE
-  "${IMGUI_BACKENDS_DIR}/imgui_impl_glfw.cpp"
-  "${IMGUI_BACKENDS_DIR}/imgui_impl_vulkan.cpp"
-)
-
-target_include_directories(pbpt_imgui_vk PUBLIC
-  "${IMGUI_INC_DIR}"
-  "${IMGUI_BACKENDS_DIR}"
-)
-
-target_link_libraries(pbpt_imgui_vk PUBLIC
-  imgui::imgui
-  glfw
-  Vulkan::Loader
-)
 
 # build stb implementation
 set(STB_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")

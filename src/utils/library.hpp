@@ -1,13 +1,15 @@
 #pragma once
 
-#include <unordered_map>
+#include <map>
 #include <string>
+#include <stdexcept>
+#include <unordered_map>
 
 namespace pbpt::utils {
 template<typename T, typename ItemType>
 class Library {
 private:
-    std::unordered_map<int, ItemType> m_items;
+    std::map<int, ItemType> m_items;
     int m_next_id = 0;
 
 public:
