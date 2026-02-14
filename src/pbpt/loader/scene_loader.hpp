@@ -35,6 +35,7 @@
 #include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
 #include "pbpt/radiometry/constant/lambda.hpp"
 #include "pbpt/radiometry/constant/xyz_spectrum.hpp"
+#include "pbpt/radiometry/color_spectrum_lut.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 
 namespace pbpt::loader {
@@ -186,18 +187,53 @@ inline radiometry::PiecewiseLinearSpectrumDistribution<T> parse_piecewise_spectr
 }
 
 template <typename T>
+inline radiometry::RGB<T> parse_rgb_triplet(const std::string& value) {
+    std::string normalized = value;
+    std::replace(normalized.begin(), normalized.end(), ',', ' ');
+
+    std::istringstream iss(normalized);
+    T r = T(0);
+    T g = T(0);
+    T b = T(0);
+    if (!(iss >> r >> g >> b)) {
+        throw std::runtime_error("Invalid rgb reflectance value: " + value);
+    }
+    return radiometry::RGB<T>(r, g, b);
+}
+
+template <typename T>
+inline radiometry::PiecewiseLinearSpectrumDistribution<T> srgb_rgb_to_piecewise(
+    const radiometry::RGB<T>& rgb
+) {
+    const auto rsp = radiometry::lookup_srgb_to_rsp(rgb);
+    const auto albedo_spectrum =
+        radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(rsp);
+
+    std::vector<std::pair<T, T>> points{};
+    points.reserve(830 - 360 + 1);
+    for (int lambda = 360; lambda <= 830; ++lambda) {
+        points.emplace_back(static_cast<T>(lambda), albedo_spectrum.at(static_cast<T>(lambda)));
+    }
+
+    return radiometry::PiecewiseLinearSpectrumDistribution<T>(points);
+}
+
+template <typename T>
 void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
     std::string type = node.attribute("type").value();
     std::string id = node.attribute("id").value();
 
     if (type == "diffuse") {
         auto spectrum_value = find_child_value(node, "spectrum", "reflectance");
-        if (!spectrum_value) {
-            throw std::runtime_error("Diffuse BSDF missing reflectance spectrum: " + id);
-        }
-        
+        auto rgb_value = find_child_value(node, "rgb", "reflectance");
+
         std::string spec_name = id + "_reflectance";
-        auto spectrum = parse_piecewise_spectrum_value<T>(*spectrum_value, ctx);
+        radiometry::PiecewiseLinearSpectrumDistribution<T> spectrum = constant_spectrum<T>(T(0.7));
+        if (spectrum_value) {
+            spectrum = parse_piecewise_spectrum_value<T>(*spectrum_value, ctx);
+        } else if (rgb_value) {
+            spectrum = srgb_rgb_to_piecewise<T>(parse_rgb_triplet<T>(*rgb_value));
+        }
         ctx.resources.reflectance_spectrum_library.add_item(spec_name, std::move(spectrum));
         
         auto mat = material::LambertianMaterial<T>(ctx.resources.reflectance_spectrum_library.get(spec_name));
