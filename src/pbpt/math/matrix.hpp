@@ -348,6 +348,21 @@ public:
     constexpr Matrix() noexcept = default;
 
     /**
+     * @brief Constructs a square matrix with @p diagonal on the main diagonal.
+     *
+     * Off-diagonal entries are initialized to zero.
+     */
+    constexpr explicit Matrix(T diagonal) noexcept
+        requires(R == C)
+    {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                (*this)[r][c] = (r == c) ? diagonal : T(0);
+            }
+        }
+    }
+
+    /**
      * @brief Constructs a matrix from a flat list of R*C scalar values.
      *
      * Values are stored in row-major order.
@@ -367,6 +382,25 @@ public:
     constexpr Matrix(const Matrix<U, R, C>& other) noexcept {
         for (int i = 0; i < R * C; ++i) {
             m_data[i] = static_cast<T>(other.data()[i]);
+        }
+    }
+
+    /**
+     * @brief Converting constructor from a matrix with different dimensions.
+     *
+     * Copies overlapping entries and zero-fills the rest.
+     */
+    template <typename U, int R2, int C2>
+        requires std::convertible_to<U, T>
+    constexpr Matrix(const Matrix<U, R2, C2>& other) noexcept {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
+                if (r < R2 && c < C2) {
+                    (*this)[r][c] = static_cast<T>(other[r][c]);
+                } else {
+                    (*this)[r][c] = T(0);
+                }
+            }
         }
     }
 
@@ -1232,6 +1266,13 @@ using Mat4   = Matrix<Float, 4, 4>;
 using Mat3x4 = Matrix<Float, 3, 4>;
 /// @brief 4x3 matrix using the project's default Float type.
 using Mat4x3 = Matrix<Float, 4, 3>;
+
+// Lower-case aliases for migration from GLM-style naming.
+using mat2 = Mat2;
+using mat3 = Mat3;
+using mat4 = Mat4;
+using mat3x4 = Mat3x4;
+using mat4x3 = Mat4x3;
 
 /**
  * @brief Solve the least-mean-square problem `||M * A - B||`.

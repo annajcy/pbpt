@@ -30,3 +30,7 @@ gtest_discover_tests(test_octahedral)
 add_executable(test_complex test_complex.cpp)
 target_link_libraries(test_complex PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_complex)
+
+add_executable(test_quaternion test_quaternion.cpp)
+target_link_libraries(test_quaternion PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_quaternion)

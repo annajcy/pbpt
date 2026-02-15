@@ -70,6 +70,13 @@ public:
     // -- Constructors --
     constexpr Tuple() = default;
 
+    /// Constructs a tuple with all components set to the same scalar value.
+    constexpr explicit Tuple(T value) {
+        for (int i = 0; i < N; ++i) {
+            m_data[i] = value;
+        }
+    }
+
     /// Constructs a tuple from N scalar arguments.
     template<typename ...Args>
         requires(sizeof...(Args) == N)
@@ -84,6 +91,23 @@ public:
     constexpr Tuple(const Tuple<OtherDerived, U, N>& other) {
         for (int i = 0; i < N; ++i) {
             m_data[i] = static_cast<T>(other[i]);
+        }
+    }
+
+    /**
+     * @brief Converting constructor from another tuple-like object with different dimension.
+     *
+     * Copies min(N, M) components and zero-fills the rest.
+     */
+    template<template <typename, int> typename OtherDerived, typename U, int M>
+        requires(M > 0)
+    constexpr Tuple(const Tuple<OtherDerived, U, M>& other) {
+        const int count = (N < M) ? N : M;
+        for (int i = 0; i < count; ++i) {
+            m_data[i] = static_cast<T>(other[i]);
+        }
+        for (int i = count; i < N; ++i) {
+            m_data[i] = T(0);
         }
     }
 

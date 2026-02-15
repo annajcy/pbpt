@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <concepts>
+#include <type_traits>
 
 namespace pbpt::math {
 
@@ -28,6 +29,15 @@ private:
 
 public:
     using Base::Base;
+
+    template <typename U>
+        requires(N == 4 && std::is_convertible_v<U, T>)
+    constexpr Vector(const Vector<U, 3>& xyz, U w) : Base(
+        static_cast<T>(xyz.x()),
+        static_cast<T>(xyz.y()),
+        static_cast<T>(xyz.z()),
+        static_cast<T>(w)
+    ) {}
 };
 
 /**
@@ -99,5 +109,15 @@ using Vec2i = Vector<Int, 2>;
 using Vec3i = Vector<Int, 3>;
 /// @brief 4D vector using the project's default Int type.
 using Vec4i = Vector<Int, 4>;
+
+// Lower-case aliases for migration from GLM-style naming.
+using vec1 = Vec1;
+using vec2 = Vec2;
+using vec3 = Vec3;
+using vec4 = Vec4;
+using vec1i = Vec1i;
+using vec2i = Vec2i;
+using vec3i = Vec3i;
+using vec4i = Vec4i;
 
 }  // namespace pbpt::math

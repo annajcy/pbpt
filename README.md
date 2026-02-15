@@ -50,17 +50,15 @@ find_package(pbpt CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE pbpt::pbpt)
 ```
 
-### Version alignment with rtr
+### Usage with rtr
 
-When consumed by `rtr`, keep `pbpt` and `rtr` on the same dev version family:
+`rtr` now vendors `external/pbpt` directly.
 
 ```bash
 SHA=$(git rev-parse --short HEAD)
-PBPT_VER="0.1.0-dev.${SHA}"
 RTR_VER="0.1.0-dev.${SHA}"
 
-uv run conan create external/pbpt --version ${PBPT_VER} -pr:h=external/pbpt/profiles/pbpt -pr:b=external/pbpt/profiles/pbpt -s build_type=Debug --build=missing
-uv run conan create . --name=rtr --version ${RTR_VER} -pr=profiles/rtr2 -s build_type=Debug -s compiler.cppstd=23 -o "&:pbpt_version=${PBPT_VER}" --build=missing
+uv run conan create . --name=rtr --version ${RTR_VER} -pr=profiles/rtr2 -s build_type=Debug -s compiler.cppstd=23 --build=missing
 ```
 
-If `rtr` resolves an older `pbpt` from cache (for example `pbpt/0.1.0`), dependency variants can conflict (such as `imgui` vs `imgui-docking`).
+If cache/state is stale after option/profile changes, clear `rtr` cache entries and recreate the package.

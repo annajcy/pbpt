@@ -57,7 +57,7 @@ else()
   message(STATUS "PBPT_INT_64BIT is OFF; 32-bit integer type will be used.")
 endif()
 
-include(third_party) 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/third_party.cmake)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 add_subdirectory(src)
