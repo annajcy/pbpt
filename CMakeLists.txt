@@ -119,7 +119,7 @@ else()
 endif()
 
 if(PBPT_BUILD_DOCUMENTATION)
-  include(document)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/document.cmake)
   message(STATUS "PBPT_BUILD_DOCUMENTATION is ON; documentation will be built.")
 else()
   message(STATUS "PBPT_BUILD_DOCUMENTATION is OFF; documentation will NOT be built.")

@@ -1,13 +1,13 @@
 # Doxyfile.in
 
 # 项目信息
-PROJECT_NAME           = "@CMAKE_PROJECT_NAME@"
-PROJECT_VERSION        = "@CMAKE_PROJECT_VERSION@"
-OUTPUT_DIRECTORY       = "@CMAKE_SOURCE_DIR@/pbpt_docs"
+PROJECT_NAME           = "pbpt"
+PROJECT_NUMBER         = "0.1.0"
+OUTPUT_DIRECTORY       = "docs/api/doxygen"
 CREATE_SUBDIRS         = YES
 
 # 输入源
-INPUT                  = "@CMAKE_SOURCE_DIR@/src" 
+INPUT                  = "src"
 RECURSIVE              = YES
 FILE_PATTERNS          = *.hpp *.cpp *h
 

@@ -1,0 +1,14 @@
+site_name: PBPT
+site_description: Physically Based Path Tracer API and guides
+repo_url: https://github.com/your-org/pbpt
+
+docs_dir: docs
+
+theme:
+  name: readthedocs
+
+nav:
+  - Home: index.md
+  - Overview: overview.md
+  - Get Started: get-started.md
+  - API: api/index.md

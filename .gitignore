@@ -13,6 +13,8 @@ build/
 cmake-build-debug/
 cmake-build-release/
 
+site/
+
 # 忽略 CMake 生成的缓存文件
 CMakeFiles/
 CMakeCache.txt
@@ -75,6 +77,7 @@ __pycache__/
 *.py[oc]
 build/
 dist/
+docs/api/doxygen/
 wheels/
 *.egg-info
 

@@ -19,6 +19,21 @@ uv sync
 
 Use `uv run` to execute Python/Conan commands; no manual environment activation is needed.
 
+## Documentation
+
+Build docs locally:
+
+```bash
+uv run mkdocs build
+uv run mkdocs serve
+```
+
+Then open `http://127.0.0.1:8000`.
+
+- Home: `docs/index.md`
+- Overview: `docs/overview.md`
+- Get Started: `docs/get-started.md`
+
 ### Conan Build
 
 `profiles/pbpt` keeps PBPT on C++23 and pins `embree/*:compiler.cppstd=20` for compatibility.
