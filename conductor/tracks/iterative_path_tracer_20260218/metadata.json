@@ -1,0 +1,8 @@
+{
+  "track_id": "iterative_path_tracer_20260218",
+  "type": "refactor",
+  "status": "new",
+  "created_at": "2026-02-18T10:00:00Z",
+  "updated_at": "2026-02-18T10:00:00Z",
+  "description": "Refactor the recursive path tracer to an iterative implementation for performance and robustness."
+}

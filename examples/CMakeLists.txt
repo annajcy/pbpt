@@ -30,3 +30,6 @@ target_link_libraries(image_io PRIVATE pbpt)
 
 add_executable(render_scene render_scene.cpp)
 target_link_libraries(render_scene PRIVATE pbpt)
+
+add_executable(cbox_caustics cbox_caustics.cpp)
+target_link_libraries(cbox_caustics PRIVATE pbpt)
