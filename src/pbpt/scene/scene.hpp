@@ -27,7 +27,7 @@ struct RenderResources {
     // mesh and spectrum
     shape::NamedMeshLibrary<T> mesh_library;
     radiometry::NamedReflectanceSpectrumLibrary<T> reflectance_spectrum_library;
-    texture::NamedReflectanceTextureLibrary<T> reflectance_texture_library;
+    texture::NamedTextureLibrary<T> reflectance_texture_library;
 
     // mesh name to material id map
     std::unordered_map<std::string, int> mesh_material_map;
@@ -54,8 +54,7 @@ struct SceneContext {
  * 但通过 scene_types.hpp 中定义的 Types 实现了具体类型的解耦。
  */
 template <typename T>
-class Scene {
-public:
+struct Scene {
     // 渲染变换
     camera::RenderTransform<T> render_transform;
 

@@ -21,14 +21,14 @@ template <typename T>
 class LambertianMaterial : public Material<LambertianMaterial<T>, T> {
 private:
     using ReflectanceSource =
-        std::variant<radiometry::PiecewiseLinearSpectrumDistribution<T>, texture::AnyReflectanceTexture<T>>;
+        std::variant<radiometry::PiecewiseLinearSpectrumDistribution<T>, texture::AnyTexture<T>>;
     ReflectanceSource m_reflectance_source;
 
 public:
     explicit LambertianMaterial(const radiometry::PiecewiseLinearSpectrumDistribution<T>& albedo_distribution)
         : m_reflectance_source(albedo_distribution) {}
 
-    explicit LambertianMaterial(const texture::AnyReflectanceTexture<T>& reflectance_texture)
+    explicit LambertianMaterial(const texture::AnyTexture<T>& reflectance_texture)
         : m_reflectance_source(reflectance_texture) {}
 
     template <int N>

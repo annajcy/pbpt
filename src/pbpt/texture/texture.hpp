@@ -1,14 +1,10 @@
 #pragma once
 
-#include <cmath>
-#include <cstdint>
 #include <optional>
 
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/math/point.hpp"
 #include "pbpt/math/vector.hpp"
-#include "pbpt/radiometry/color.hpp"
-
 namespace pbpt::texture {
 
 enum class WrapMode { Repeat, Clamp };

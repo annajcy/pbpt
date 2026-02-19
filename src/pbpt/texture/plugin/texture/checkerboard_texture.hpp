@@ -7,7 +7,7 @@ namespace pbpt::texture {
 
 template <typename T>
 class CheckerboardTexture : public Texture<CheckerboardTexture<T>, T, radiometry::RGB<T>> {
-    // friend class Texture<CheckerboardTexture<T>, T, radiometry::RGB<T>>;
+    friend class Texture<CheckerboardTexture<T>, T, radiometry::RGB<T>>;
 private:
     radiometry::RGB<T> m_color0{T(0), T(0), T(0)};
     radiometry::RGB<T> m_color1{T(1), T(1), T(1)};

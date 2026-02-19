@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "pbpt/pbpt.h"
+#include "pbpt/integrator/concepts.hpp"
 #include "pbpt/integrator/domain.hpp"
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
 #include "pbpt/loader/scene_loader.hpp"
@@ -16,6 +17,97 @@
 namespace pbpt::integrator::testing {
 
 namespace {
+
+struct ConceptTestSampler {
+    double next_1d() { return 0.5; }
+    math::Point<double, 2> next_2d() { return math::Point<double, 2>(0.25, 0.75); }
+};
+
+struct ConceptTestCamera {
+    geometry::Ray<double, 3> generate_ray(const camera::CameraSample<double>& /*sample*/) const {
+        return geometry::Ray<double, 3>(math::Point<double, 3>(0.0, 0.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0));
+    }
+
+    geometry::RayDifferential<double, 3> generate_differential_ray(const camera::CameraSample<double>& /*sample*/) const {
+        geometry::Ray<double, 3> main_ray(math::Point<double, 3>(0.0, 0.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0));
+        std::array<geometry::Ray<double, 3>, 2> diffs{
+            geometry::Ray<double, 3>(math::Point<double, 3>(1.0, 0.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0)),
+            geometry::Ray<double, 3>(math::Point<double, 3>(0.0, 1.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0))};
+        return geometry::RayDifferential<double, 3>(main_ray, diffs);
+    }
+};
+
+struct ConceptTestPixelFilter {
+    struct FilteredSample {
+        math::Point<double, 2> film_position{};
+        double weight{};
+    };
+
+    FilteredSample sample_film_position(const math::Point<int, 2>& pixel, const math::Point<double, 2>& uv) const {
+        return {math::Point<double, 2>(static_cast<double>(pixel.x()) + uv.x(), static_cast<double>(pixel.y()) + uv.y()), 1.0};
+    }
+};
+
+struct ConceptTestFilm {
+    math::Vector<int, 2> resolution() const { return math::Vector<int, 2>(8, 8); }
+
+    template <int N>
+    void add_sample(const math::Point<int, 2>& /*pixel*/, const radiometry::SampledSpectrum<double, N>& /*radiance*/,
+                    const radiometry::SampledWavelength<double, N>& /*wavelengths*/,
+                    const radiometry::SampledPdf<double, N>& /*pdf*/, double /*weight*/) {}
+
+    int develop() const { return 0; }
+};
+
+struct ConceptTestCameraToRender {
+    geometry::Ray<double, 3> transform_ray_main(const geometry::Ray<double, 3>& ray) const { return ray; }
+
+    geometry::RayDifferential<double, 3> transform_ray_differential(
+        const geometry::RayDifferential<double, 3>& ray_diff) const {
+        return ray_diff;
+    }
+};
+
+struct ConceptTestRenderTransform {
+    ConceptTestCameraToRender camera_to_render() const { return {}; }
+};
+
+struct ConceptTestMaterialLibrary {
+    int get(int /*id*/) const { return 0; }
+};
+
+struct ConceptTestLightLibrary {
+    int get(int /*id*/) const { return 0; }
+};
+
+struct ConceptTestResources {
+    ConceptTestMaterialLibrary any_material_library{};
+    ConceptTestLightLibrary any_light_library{};
+};
+
+struct ConceptTestAggregate {
+    int intersect_ray(const geometry::Ray<double, 3>& /*ray*/) const { return 0; }
+    int intersect_ray_differential(const geometry::RayDifferential<double, 3>& /*ray_diff*/) const { return 0; }
+};
+
+struct ConceptTestSceneContext {
+    ConceptTestCamera camera{};
+    ConceptTestFilm film{};
+    ConceptTestPixelFilter pixel_filter{};
+    ConceptTestAggregate aggregate{};
+    ConceptTestRenderTransform render_transform{};
+    ConceptTestResources resources{};
+};
+
+struct ConceptTestBadSampler {
+    double next_1d() { return 0.0; }
+};
+
+static_assert(pbpt::lds::Sampler1D2DConcept<ConceptTestSampler, double>);
+static_assert(pbpt::integrator::IntegratorSamplerConcept<ConceptTestSampler, double>);
+static_assert(pbpt::integrator::RenderLoopContextConcept<ConceptTestSceneContext, double, 4>);
+static_assert(pbpt::integrator::PathTraceContextConcept<ConceptTestSceneContext, double, 4>);
+static_assert(!pbpt::lds::Sampler1D2DConcept<ConceptTestBadSampler, double>);
 
 struct TempDir {
     std::filesystem::path path{};

@@ -11,13 +11,17 @@
 namespace pbpt::texture {
 
 template <typename T>
-using AnyReflectanceTexture = std::variant<ConstantTexture<T, radiometry::RGB<T>>, CheckerboardTexture<T>,
-                                           BitmapTexture<T>, RSPSpectrumTexture<T>>;
+using AnyTexture = std::variant<
+    ConstantTexture<T, radiometry::RGB<T>>, 
+    CheckerboardTexture<T>,
+    BitmapTexture<T>, 
+    RSPSpectrumTexture<T>
+>;
 
 template <typename T>
-using ReflectanceTextureLibrary = utils::Library<T, AnyReflectanceTexture<T>>;
+using TextureLibrary = utils::Library<T, AnyTexture<T>>;
 
 template <typename T>
-using NamedReflectanceTextureLibrary = utils::NamedLibrary<T, AnyReflectanceTexture<T>>;
+using NamedTextureLibrary = utils::NamedLibrary<T, AnyTexture<T>>;
 
 }  // namespace pbpt::texture

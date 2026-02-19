@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "pbpt/radiometry/color.hpp"
 #include "pbpt/texture/mipmap.hpp"
 #include "pbpt/texture/texture.hpp"
 #include "pbpt/utils/image_io.hpp"
@@ -11,7 +12,6 @@ namespace pbpt::texture {
 template <typename T>
 class BitmapTexture : public Texture<BitmapTexture<T>, T, radiometry::RGB<T>> {
     friend class Texture<BitmapTexture<T>, T, radiometry::RGB<T>>;
-
 private:
     MipMap<T, math::Vector<T, 3>> m_mipmap{};
 

@@ -1,13 +1,15 @@
 #pragma once
 
+#include <cmath>
+#include <cstddef>
+#include <limits>
+#include <optional>
+#include <variant>
+
+#include "pbpt/geometry/ray.hpp"
+#include "pbpt/integrator/concepts.hpp"
 #include "pbpt/integrator/integrator.hpp"
 #include "pbpt/lds/plugin/lds/independent.hpp"
-
-#include <cstddef>
-#include <variant>
-#include <cmath>
-#include <optional>
-#include "pbpt/geometry/ray.hpp"
 #include "pbpt/material/bsdf.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 #include "pbpt/shape/primitive.hpp"
@@ -15,214 +17,191 @@
 namespace pbpt::integrator {
 
 template <typename T, int N, typename Sampler = pbpt::lds::IndependentSampler<T>>
+    requires IntegratorSamplerConcept<Sampler, T>
 class PathIntegrator : public Integrator<PathIntegrator<T, N, Sampler>, T, N, Sampler> {
     friend class Integrator<PathIntegrator<T, N, Sampler>, T, N, Sampler>;
 
 private:
     unsigned m_max_depth = -1;
-    T m_rr_threshold = T(0.9);
+    T m_rr = T(0.9);
 
 public:
-    PathIntegrator(unsigned max_depth = -1, T rr_threshold = T(0.9))
-        : m_max_depth(max_depth), m_rr_threshold(rr_threshold) {}
+    PathIntegrator(unsigned max_depth = -1, T rr = T(0.9))
+        : m_max_depth(max_depth), m_rr(rr) {}
 
     unsigned max_depth() const { return m_max_depth; }
-    T rr_threshold() const { return m_rr_threshold; }
+    T rr_threshold() const { return m_rr; }
 
 private:
     template <typename SceneContextT>
+        requires PathTraceContextConcept<SceneContextT, T, N>
     radiometry::SampledSpectrum<T, N> Li_ray_impl(const SceneContextT& context, const geometry::Ray<T, 3>& ray,
                                                   const radiometry::SampledWavelength<T, N>& wavelength_sample,
                                                   Sampler& sampler) {
-        return this->Li_dfs_ray(context, ray, wavelength_sample, 0, sampler);
+        return this->Li_loop_ray(context, ray, wavelength_sample, sampler);
     }
 
     template <typename SceneContextT>
+        requires PathTraceContextConcept<SceneContextT, T, N>
     radiometry::SampledSpectrum<T, N> Li_ray_differential_impl(
         const SceneContextT& context, const geometry::RayDifferential<T, 3>& ray_diff,
         const radiometry::SampledWavelength<T, N>& wavelength_sample, Sampler& sampler) {
-        return this->Li_dfs_ray_differential(context, ray_diff, wavelength_sample, 0, sampler);
+        return this->Li_loop_ray_differential(context, ray_diff, wavelength_sample, sampler);
     }
 
 private:
-    template <typename SceneContextT>
-    radiometry::SampledSpectrum<T, N> Li_dfs_ray(const SceneContextT& context, const geometry::Ray<T, 3>& ray,
-                                                 const radiometry::SampledWavelength<T, N>& wavelength_sample,
-                                                 int depth, Sampler& sampler) {
-        auto hit_opt = context.aggregate.intersect_ray(ray);
-
-        if (hit_opt) {
-            return this->hit_shader(context, ray, hit_opt.value(), wavelength_sample, depth, sampler);
-        } else {
-            return this->miss_shader(wavelength_sample);
-        }
+    bool is_reached_max_depth(int depth) const {
+        return m_max_depth != std::numeric_limits<unsigned>::max() && static_cast<unsigned>(depth) >= m_max_depth;
     }
 
     template <typename SceneContextT>
-    radiometry::SampledSpectrum<T, N> Li_dfs_ray_differential(
-        const SceneContextT& context, const geometry::RayDifferential<T, 3>& ray_diff,
-        const radiometry::SampledWavelength<T, N>& wavelength_sample, int depth, Sampler& sampler) {
-        auto hit_opt = context.aggregate.intersect_ray_differential(ray_diff);
+        requires PathTraceContextConcept<SceneContextT, T, N>
+    radiometry::SampledSpectrum<T, N> Li_loop_ray(const SceneContextT& context, geometry::Ray<T, 3> ray,
+                                                  const radiometry::SampledWavelength<T, N>& wavelength_sample,
+                                                  Sampler& sampler) {
+        radiometry::SampledSpectrum<T, N> radiance = radiometry::SampledSpectrum<T, N>::filled(0);
+        radiometry::SampledSpectrum<T, N> throughput = radiometry::SampledSpectrum<T, N>::filled(1);
 
-        if (hit_opt) {
-            return this->hit_shader_differential(context, ray_diff, hit_opt.value(), wavelength_sample, depth, sampler);
-        } else {
-            return this->miss_shader(wavelength_sample);
-        }
-    }
+        for (int depth = 0; !is_reached_max_depth(depth); ++depth) {
+            // Intersect ray with the scene
+            std::optional<shape::PrimitiveIntersectionRecord<T>> hit_opt = context.aggregate.intersect_ray(ray);
+            if (!hit_opt) { break; }
 
-    template <typename SceneContextT>
-    radiometry::SampledSpectrum<T, N> hit_shader(const SceneContextT& context, const geometry::Ray<T, 3>& /*ray*/,
-                                                 const shape::PrimitiveIntersectionRecord<T>& prim_intersection_rec,
-                                                 const radiometry::SampledWavelength<T, N>& wavelength_sample,
-                                                 int depth, Sampler& sampler) {
-        auto material = context.resources.any_material_library.get(prim_intersection_rec.material_id);
-        material::BSDF<T, N> bsdf = std::visit(
-            [&](const auto& mat) {
-                return mat.template compute_bsdf<N>(prim_intersection_rec.intersection.interaction,
-                                                    prim_intersection_rec.intersection.shading, wavelength_sample,
-                                                    std::nullopt);
-            },
-            material);
+            const auto& hit = hit_opt.value();
+            // Compute BSDF at the intersection point
+            auto material = context.resources.any_material_library.get(hit.material_id);
+            material::BSDF<T, N> bsdf = std::visit(
+                [&](const auto& mat) {
+                    return mat.template compute_bsdf<N>(hit.intersection.interaction,
+                                                        hit.intersection.shading, wavelength_sample,
+                                                        std::nullopt);
+                }, material);
 
-        radiometry::SampledSpectrum<T, N> result = radiometry::SampledSpectrum<T, N>::filled(0);
-
-        // hit light source
-        if (prim_intersection_rec.light_id != -1) {
-            const auto& any_light = context.resources.any_light_library.get(prim_intersection_rec.light_id);
-            std::visit(
-                [&](const auto& light) {
-                    result += light.emission_spectrum(wavelength_sample,
-                                                      prim_intersection_rec.intersection.interaction.point(),
-                                                      prim_intersection_rec.intersection.interaction.n(),
-                                                      prim_intersection_rec.intersection.interaction.wo());
-                },
-                any_light);
-
-            return result;
-        }
-
-        // not hit light source
-        auto bsdf_sample_record =
-            bsdf.sample_f(wavelength_sample, prim_intersection_rec.intersection.interaction.wo(), sampler.next_1d(),
-                          sampler.next_2d(), material::TransportMode::Radiance);
-
-        if (!bsdf_sample_record || bsdf_sample_record->pdf <= 0) {
-            return result;
-        }
-
-        if (depth == m_max_depth) {
-            return result;
-        }
-
-        if (depth > 3) {
-            // Russian roulette
-            if (sampler.next_1d() > m_rr_threshold) {
-                return result;
+            // If the ray hits a light source, evaluate the emitted radiance and add it to the accumulated radiance
+            if (hit.light_id != -1) {
+                const auto& any_light = context.resources.any_light_library.get(hit.light_id);
+                std::visit(
+                    [&](const auto& light) {
+                        radiance += throughput *
+                                   light.emission_spectrum(wavelength_sample,
+                                                           hit.intersection.interaction.point(),
+                                                           hit.intersection.interaction.n(),
+                                                           hit.intersection.interaction.wo());
+                    },
+                    any_light);
             }
-            // re-scaling: / p_rr
-            result +=
-                bsdf_sample_record->f *
-                std::abs(bsdf_sample_record->wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) /
-                bsdf_sample_record->pdf / m_rr_threshold *
-                this->Li_dfs_ray(context,
-                                 prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record->wi),
-                                 wavelength_sample, depth + 1, sampler);
 
-            return result;
-        } else {
-            result +=
-                bsdf_sample_record->f *
-                std::abs(bsdf_sample_record->wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) /
-                bsdf_sample_record->pdf *
-                this->Li_dfs_ray(context,
-                                 prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record->wi),
-                                 wavelength_sample, depth + 1, sampler);
-            return result;
+            // Sample the BSDF to get the next ray direction and update the throughput
+            auto bsdf_sample_record_opt =
+                bsdf.sample_f(wavelength_sample, hit.intersection.interaction.wo(), sampler.next_1d(),
+                              sampler.next_2d(), material::TransportMode::Radiance);
+
+            // If the BSDF sampling fails (e.g., due to total internal reflection), terminate the path
+            if (!bsdf_sample_record_opt) { break; }
+            auto& bsdf_sample_record = bsdf_sample_record_opt.value();
+
+            // If the sampled direction has zero contribution, terminate the path
+            if (bsdf_sample_record.pdf <= 0) { break; }
+            const T cos_term =
+                std::abs(bsdf_sample_record.wi.dot(hit.intersection.interaction.n().to_vector()));
+            throughput = throughput * bsdf_sample_record.f * (cos_term / bsdf_sample_record.pdf);
+
+            if (depth > 3) {
+                if (sampler.next_1d() > m_rr) { break; }
+                throughput = throughput / m_rr;
+            }
+
+            ray = hit.intersection.interaction.spawn_ray(bsdf_sample_record.wi);
         }
+
+        return radiance;
     }
 
     template <typename SceneContextT>
-    radiometry::SampledSpectrum<T, N> hit_shader_differential(
-        const SceneContextT& context, const geometry::RayDifferential<T, 3>& ray_diff,
-        const shape::PrimitiveIntersectionRecord<T>& prim_intersection_rec,
-        const radiometry::SampledWavelength<T, N>& wavelength_sample, int depth, Sampler& sampler) {
-        auto material = context.resources.any_material_library.get(prim_intersection_rec.material_id);
-        material::BSDF<T, N> bsdf = std::visit(
-            [&](const auto& mat) {
-                return mat.template compute_bsdf<N>(prim_intersection_rec.intersection.interaction,
-                                                    prim_intersection_rec.intersection.shading, wavelength_sample,
-                                                    prim_intersection_rec.intersection.differentials);
-            },
-            material);
+        requires PathTraceContextConcept<SceneContextT, T, N>
+    radiometry::SampledSpectrum<T, N> Li_loop_ray_differential(
+        const SceneContextT& context, geometry::RayDifferential<T, 3> ray_diff,
+        const radiometry::SampledWavelength<T, N>& wavelength_sample, Sampler& sampler) {
+        radiometry::SampledSpectrum<T, N> radiance = radiometry::SampledSpectrum<T, N>::filled(0);
+        radiometry::SampledSpectrum<T, N> throughput = radiometry::SampledSpectrum<T, N>::filled(1);
 
-        radiometry::SampledSpectrum<T, N> result = radiometry::SampledSpectrum<T, N>::filled(0);
+        int depth = 0;
+        bool trace_differential = true;
+        geometry::Ray<T, 3> ray = ray_diff.main_ray();
 
-        // hit light source
-        if (prim_intersection_rec.light_id != -1) {
-            const auto& any_light = context.resources.any_light_library.get(prim_intersection_rec.light_id);
-            std::visit(
-                [&](const auto& light) {
-                    result += light.emission_spectrum(wavelength_sample,
-                                                      prim_intersection_rec.intersection.interaction.point(),
-                                                      prim_intersection_rec.intersection.interaction.n(),
-                                                      prim_intersection_rec.intersection.interaction.wo());
+        for (int depth = 0; !is_reached_max_depth(depth); ++depth) {
+            auto hit_opt = trace_differential ? context.aggregate.intersect_ray_differential(ray_diff)
+                                              : context.aggregate.intersect_ray(ray);
+            if (!hit_opt) { break; }
+
+            const auto& prim_intersection_rec = hit_opt.value();
+            auto material = context.resources.any_material_library.get(prim_intersection_rec.material_id);
+
+            const auto si_differentials =
+                trace_differential ? prim_intersection_rec.intersection.differentials : std::nullopt;
+
+            material::BSDF<T, N> bsdf = std::visit(
+                [&](const auto& mat) {
+                    return mat.template compute_bsdf<N>(prim_intersection_rec.intersection.interaction,
+                                                        prim_intersection_rec.intersection.shading, wavelength_sample,
+                                                        si_differentials);
                 },
-                any_light);
+                material);
 
-            return result;
-        }
+            if (prim_intersection_rec.light_id != -1) {
+                const auto& any_light = context.resources.any_light_library.get(prim_intersection_rec.light_id);
+                std::visit(
+                    [&](const auto& light) {
+                        radiance += throughput *
+                                   light.emission_spectrum(wavelength_sample,
+                                                           prim_intersection_rec.intersection.interaction.point(),
+                                                           prim_intersection_rec.intersection.interaction.n(),
+                                                           prim_intersection_rec.intersection.interaction.wo());
+                    },
+                    any_light);
+            }
 
-        auto bsdf_sample_record =
-            bsdf.sample_f(wavelength_sample, prim_intersection_rec.intersection.interaction.wo(), sampler.next_1d(),
-                          sampler.next_2d(), material::TransportMode::Radiance);
+            auto bsdf_sample_record_opt =
+                bsdf.sample_f(wavelength_sample, prim_intersection_rec.intersection.interaction.wo(), sampler.next_1d(),
+                              sampler.next_2d(), material::TransportMode::Radiance);
 
-        if (!bsdf_sample_record || bsdf_sample_record->pdf <= 0) {
-            return result;
-        }
+            if (!bsdf_sample_record_opt) { break; }
 
-        if (depth == m_max_depth) {
-            return result;
-        }
+            auto& bsdf_sample_record = bsdf_sample_record_opt.value();
+            if (bsdf_sample_record.pdf <= 0) { break; }
 
-        auto trace_next = [&]() {
-            const bool has_hit_differentials = prim_intersection_rec.intersection.differentials.has_value();
-            if (has_hit_differentials) {
+            const T cos_term =
+                std::abs(bsdf_sample_record.wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector()));
+            throughput = throughput * bsdf_sample_record.f * (cos_term / bsdf_sample_record.pdf);
+
+            if (depth > 3) {
+                if (sampler.next_1d() > m_rr) {
+                    break;
+                }
+                throughput = throughput / m_rr;
+            }
+
+            bool has_next_differential = false;
+            if (trace_differential && prim_intersection_rec.intersection.differentials.has_value()) {
                 auto diffs_offset_opt = material::make_ray_differential_offset(
-                    bsdf_sample_record->sampled_flags, ray_diff, prim_intersection_rec.intersection.interaction,
+                    bsdf_sample_record.sampled_flags, ray_diff, prim_intersection_rec.intersection.interaction,
                     prim_intersection_rec.intersection.shading, *prim_intersection_rec.intersection.differentials,
-                    bsdf_sample_record->wi, bsdf_sample_record->eta);
+                    bsdf_sample_record.wi, bsdf_sample_record.eta);
                 if (diffs_offset_opt) {
-                    auto ray_next_diff = prim_intersection_rec.intersection.interaction.spawn_ray_differential(
-                        bsdf_sample_record->wi, *diffs_offset_opt);
-                    return this->Li_dfs_ray_differential(context, ray_next_diff, wavelength_sample, depth + 1, sampler);
+                    ray_diff = prim_intersection_rec.intersection.interaction.spawn_ray_differential(
+                        bsdf_sample_record.wi, *diffs_offset_opt);
+                    ray = ray_diff.main_ray();
+                    has_next_differential = true;
                 }
             }
 
-            return this->Li_dfs_ray(context,
-                                    prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record->wi),
-                                    wavelength_sample, depth + 1, sampler);
-        };
-
-        if (depth > 3) {
-            // Russian roulette
-            if (sampler.next_1d() > m_rr_threshold) {
-                return result;
+            if (!has_next_differential) {
+                ray = prim_intersection_rec.intersection.interaction.spawn_ray(bsdf_sample_record.wi);
+                trace_differential = false;
             }
-            // re-scaling: / p_rr
-            result +=
-                bsdf_sample_record->f *
-                std::abs(bsdf_sample_record->wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) /
-                bsdf_sample_record->pdf / m_rr_threshold * trace_next();
-
-            return result;
-        } else {
-            result +=
-                bsdf_sample_record->f *
-                std::abs(bsdf_sample_record->wi.dot(prim_intersection_rec.intersection.interaction.n().to_vector())) /
-                bsdf_sample_record->pdf * trace_next();
-            return result;
         }
+
+        return radiance;
     }
 
     radiometry::SampledSpectrum<T, N> miss_shader(const radiometry::SampledWavelength<T, N>& wavelength_sample) const {

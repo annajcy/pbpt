@@ -10,6 +10,8 @@
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 #include "pbpt/camera/camera.hpp"
 
+#include "pbpt/integrator/concepts.hpp"
+
 #include "pbpt/math/point.hpp"
 #include "pbpt/sampler/2d.hpp"
 #include "pbpt/utils/image_io.hpp"
@@ -29,6 +31,7 @@ public:
 };
 
 template <typename Derived, typename T, int N, typename Sampler>
+    requires IntegratorSamplerConcept<Sampler, T>
 class Integrator {
 public:
     Integrator() = default;
@@ -56,6 +59,7 @@ public:
 
 protected:
     template <typename SceneContextT>
+        requires RenderLoopContextConcept<SceneContextT, T, N>
     void render_loop(const SceneContextT& context, int spp, const std::string& output_path,
                      bool is_trace_ray_differential, const RenderObserver& observer) {
         auto resolution = context.film.resolution();
@@ -117,6 +121,7 @@ protected:
 
 private:
     template <typename SceneContextT>
+        requires RenderLoopContextConcept<SceneContextT, T, N>
     radiometry::SampledSpectrum<T, N> Li_ray(const SceneContextT& context, const geometry::Ray<T, 3>& ray,
                                              const radiometry::SampledWavelength<T, N>& wavelength_sample,
                                              Sampler& sampler) {
@@ -124,6 +129,7 @@ private:
     }
 
     template <typename SceneContextT>
+        requires RenderLoopContextConcept<SceneContextT, T, N>
     radiometry::SampledSpectrum<T, N> Li_ray_differential(const SceneContextT& context,
                                                           const geometry::RayDifferential<T, 3>& ray_diff,
                                                           const radiometry::SampledWavelength<T, N>& wavelength_sample,

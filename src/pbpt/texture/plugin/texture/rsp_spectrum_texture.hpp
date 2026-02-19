@@ -17,7 +17,6 @@ namespace pbpt::texture {
 template <typename T>
 class RSPSpectrumTexture : public Texture<RSPSpectrumTexture<T>, T, radiometry::RGBSigmoidPolynomialNormalized<T>> {
     friend class Texture<RSPSpectrumTexture<T>, T, radiometry::RGBSigmoidPolynomialNormalized<T>>;
-
 private:
     // Store coefficients as Vector3 for MipMap compatibility (c0, c1, c2)
     MipMap<T, math::Vector<T, 3>> m_mipmap{};
