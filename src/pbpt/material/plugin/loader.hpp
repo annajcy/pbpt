@@ -14,10 +14,8 @@
 namespace pbpt::loader {
 
 template <typename T>
-void register_material_loaders() {
-    using Registry = MaterialLoaderRegistry<T>;
-
-    Registry::register_loader(
+void register_material_loaders(MaterialLoaderRegistry<T>& registry) {
+    registry.register_loader(
         "diffuse", [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
             auto spectrum_value = find_child_value(node, "spectrum", "reflectance");
             auto rgb_value = find_child_value(node, "rgb", "reflectance");
@@ -44,39 +42,39 @@ void register_material_loaders() {
             return material::LambertianMaterial<T>(ctx.resources.reflectance_spectrum_library.get(spec_name));
         });
 
-    Registry::register_loader("dielectric",
-                              [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
-                                  auto eta_opt = find_float_property<T>(node, "eta");
-                                  if (!eta_opt) {
-                                      eta_opt = find_float_property<T>(node, "intIOR");
-                                  }
-                                  T eta = eta_opt.value_or(T(1.5));
-                                  auto microfacet_model = parse_microfacet_model<T>(node);
-                                  return material::DielectricMaterial<T>(eta, microfacet_model);
-                              });
+    registry.register_loader("dielectric",
+                             [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
+                                 auto eta_opt = find_float_property<T>(node, "eta");
+                                 if (!eta_opt) {
+                                     eta_opt = find_float_property<T>(node, "intIOR");
+                                 }
+                                 T eta = eta_opt.value_or(T(1.5));
+                                 auto microfacet_model = parse_microfacet_model<T>(node);
+                                 return material::DielectricMaterial<T>(eta, microfacet_model);
+                             });
 
-    Registry::register_loader("dielectric_specular",
-                              [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
-                                  auto eta_opt = find_float_property<T>(node, "eta");
-                                  if (!eta_opt) {
-                                      eta_opt = find_float_property<T>(node, "intIOR");
-                                  }
-                                  T eta = eta_opt.value_or(T(1.5));
-                                  return material::DielectricSpecularMaterial<T>(eta);
-                              });
+    registry.register_loader("dielectric_specular",
+                             [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
+                                 auto eta_opt = find_float_property<T>(node, "eta");
+                                 if (!eta_opt) {
+                                     eta_opt = find_float_property<T>(node, "intIOR");
+                                 }
+                                 T eta = eta_opt.value_or(T(1.5));
+                                 return material::DielectricSpecularMaterial<T>(eta);
+                             });
 
-    Registry::register_loader("dielectric_rough",
-                              [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
-                                  auto eta_opt = find_float_property<T>(node, "eta");
-                                  if (!eta_opt) {
-                                      eta_opt = find_float_property<T>(node, "intIOR");
-                                  }
-                                  T eta = eta_opt.value_or(T(1.5));
-                                  auto microfacet_model = parse_microfacet_model<T>(node);
-                                  return material::DielectricRoughMaterial<T>(eta, microfacet_model);
-                              });
+    registry.register_loader("dielectric_rough",
+                             [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
+                                 auto eta_opt = find_float_property<T>(node, "eta");
+                                 if (!eta_opt) {
+                                     eta_opt = find_float_property<T>(node, "intIOR");
+                                 }
+                                 T eta = eta_opt.value_or(T(1.5));
+                                 auto microfacet_model = parse_microfacet_model<T>(node);
+                                 return material::DielectricRoughMaterial<T>(eta, microfacet_model);
+                             });
 
-    Registry::register_loader(
+    registry.register_loader(
         "conductor", [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
             auto eta_value = find_child_value(node, "spectrum", "eta");
             if (!eta_value) {
@@ -106,7 +104,7 @@ void register_material_loaders() {
             return material::ConductorMaterial<T>(std::move(eta_dist), std::move(k_dist), microfacet_model);
         });
 
-    Registry::register_loader(
+    registry.register_loader(
         "conductor_specular", [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
             auto eta_value = find_child_value(node, "spectrum", "eta");
             if (!eta_value) {
@@ -135,7 +133,7 @@ void register_material_loaders() {
             return material::ConductorSpecularMaterial<T>(std::move(eta_dist), std::move(k_dist));
         });
 
-    Registry::register_loader(
+    registry.register_loader(
         "conductor_rough", [](const pugi::xml_node& node, LoaderContext<T>& ctx) -> material::AnyMaterial<T> {
             auto eta_value = find_child_value(node, "spectrum", "eta");
             if (!eta_value) {

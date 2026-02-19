@@ -10,10 +10,8 @@
 namespace pbpt::loader {
 
 template <typename T>
-void register_shape_loaders() {
-    using Registry = ShapeLoaderRegistry<T>;
-
-    Registry::register_loader("obj", [](const pugi::xml_node& node, LoaderContext<T>& ctx) {
+void register_shape_loaders(ShapeLoaderRegistry<T>& registry) {
+    registry.register_loader("obj", [](const pugi::xml_node& node, LoaderContext<T>& ctx) {
         std::string filename = "";
         // Find filename property
         for (auto child : node.children("string")) {

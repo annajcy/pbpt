@@ -10,14 +10,13 @@
 
 #include "pbpt/scene/scene.hpp"
 #include "pbpt/loader/loader_context.hpp"
-#include "pbpt/loader/parser_utils.hpp"
 #include "pbpt/loader/component_loader.hpp"
 #include "pbpt/loader/transform_loader.hpp"
 
 // Include component loaders (header-only) to ensure registration functions are available
-#include "pbpt/loader/impl/texture_loader.hpp"
-#include "pbpt/loader/impl/material_loader.hpp"
-#include "pbpt/loader/impl/shape_loader.hpp"
+#include "pbpt/texture/plugin/loader.hpp"
+#include "pbpt/material/plugin/loader.hpp"
+#include "pbpt/shape/plugin/loader.hpp"
 
 // Component headers for Scene assembly
 #include "pbpt/camera/plugin/camera/projective_cameras.hpp"
@@ -29,13 +28,6 @@
 namespace pbpt::loader {
 
 template <typename T>
-void register_all_loaders() {
-    register_texture_loaders<T>();
-    register_material_loaders<T>();
-    register_shape_loaders<T>();
-}
-
-template <typename T>
 void parse_texture_node(const pugi::xml_node& node, LoaderContext<T>& ctx) {
     const std::string type = node.attribute("type").value();
     const std::string id = node.attribute("id").value();
@@ -43,8 +35,8 @@ void parse_texture_node(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         return;
     }
 
-    if (TextureLoaderRegistry<T>::has_loader(type)) {
-        auto tex = TextureLoaderRegistry<T>::create(type, node, ctx);
+    if (ctx.texture_registry.has_loader(type)) {
+        auto tex = ctx.texture_registry.create(type, node, ctx);
         ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
     } else {
         std::cerr << "Warning: Unknown texture type: " << type << std::endl;
@@ -56,8 +48,8 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
     std::string type = node.attribute("type").value();
     std::string id = node.attribute("id").value();
 
-    if (MaterialLoaderRegistry<T>::has_loader(type)) {
-        auto mat = MaterialLoaderRegistry<T>::create(type, node, ctx);
+    if (ctx.material_registry.has_loader(type)) {
+        auto mat = ctx.material_registry.create(type, node, ctx);
         ctx.resources.any_material_library.add_item(id, std::move(mat));
     } else {
         std::cerr << "Warning: Unknown BSDF type: " << type << std::endl;
@@ -68,8 +60,8 @@ template <typename T>
 void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx) {
     std::string type = node.attribute("type").value();
 
-    if (ShapeLoaderRegistry<T>::has_loader(type)) {
-        ShapeLoaderRegistry<T>::create(type, node, ctx);
+    if (ctx.shape_registry.has_loader(type)) {
+        ctx.shape_registry.create(type, node, ctx);
     } else {
         std::cerr << "Warning: Unknown shape type: " << type << std::endl;
     }
@@ -77,8 +69,15 @@ void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx) {
 
 template <typename T>
 scene::Scene<T> load_scene(const std::string& filename) {
-    // Ensure all loaders are registered
-    register_all_loaders<T>();
+    // 1. Instantiate Registries locally
+    TextureLoaderRegistry<T> texture_registry;
+    MaterialLoaderRegistry<T> material_registry;
+    ShapeLoaderRegistry<T> shape_registry;
+
+    // 2. Register known loaders
+    register_texture_loaders(texture_registry);
+    register_material_loaders(material_registry);
+    register_shape_loaders(shape_registry);
 
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(filename.c_str());
@@ -98,19 +97,19 @@ scene::Scene<T> load_scene(const std::string& filename) {
         }
     }
 
-    LoaderContext<T> ctx(scene.resources, scene.render_transform, std::filesystem::path(filename).parent_path());
+    // 3. Create Context with registries
+    LoaderContext<T> ctx(scene.resources, scene.render_transform, std::filesystem::path(filename).parent_path(),
+                         material_registry, texture_registry, shape_registry);
 
-    // 1. Textures
+    // 4. Standard Parsing Flow
     for (auto node : root.children("texture")) {
         parse_texture_node(node, ctx);
     }
 
-    // 2. BSDFs
     for (auto node : root.children("bsdf")) {
         parse_bsdf(node, ctx);
     }
 
-    // 3. Sensor (Complete parsing)
     if (sensor_node) {
         float fov = parse_property<float>(sensor_node, "fov");
         float focus_dist = parse_property<float>(sensor_node, "focusDistance");
