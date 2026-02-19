@@ -9,6 +9,7 @@
 #include "pbpt/material/plugin/material/material_type.hpp"
 #include "pbpt/camera/render_transform.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/spectrum_distribution_type.hpp"
+#include "pbpt/texture/plugin/texture/texture_type.hpp"
 
 #include "pbpt/light/plugin/light/light_type.hpp" 
 #include "pbpt/camera/plugin/camera/camera_type.hpp"
@@ -26,6 +27,7 @@ struct RenderResources {
     // mesh and spectrum
     shape::NamedMeshLibrary<T> mesh_library;
     radiometry::NamedReflectanceSpectrumLibrary<T> reflectance_spectrum_library;
+    texture::NamedReflectanceTextureLibrary<T> reflectance_texture_library;
 
     // mesh name to material id map
     std::unordered_map<std::string, int> mesh_material_map;

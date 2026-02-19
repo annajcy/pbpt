@@ -30,7 +30,8 @@ public:
     BSDF<T, N> compute_bsdf_impl(
         const geometry::SurfaceInteraction<T>& si,
         const geometry::ShadingInfo<T>& shading,
-        const radiometry::SampledWavelength<T, N>& wavelengths
+        const radiometry::SampledWavelength<T, N>& wavelengths,
+        const std::optional<geometry::SurfaceDifferentials<T>>&
     ) const {
         auto eta = m_eta_dist.template sample<N>(wavelengths);
         auto k = m_k_dist.template sample<N>(wavelengths);

@@ -91,12 +91,17 @@
 		<ref id="red"/>
 	</shape>
 
-	<!-- Large box kept as white diffuse to serve as a caustic receiver surface -->
 	<shape type="obj">
+		<string name="filename" value="meshes/cbox_smallbox.obj"/>
+		<ref id="box"/>
+	</shape>
+
+	<!-- Large box kept as white diffuse to serve as a caustic receiver surface -->
+	<!-- <shape type="obj">
 		<string name="filename" value="meshes/cbox_largebox.obj"/>
 
 		<ref id="white"/>
-	</shape>
+	</shape> -->
 
 	<!-- Glass sphere (radius=82) placed at the position of the original small box.
 	     The sphere refracts light from the area light above, projecting caustic
@@ -104,10 +109,9 @@
 	<shape type="obj">
 		<string name="filename" value="meshes/uv_sphere.obj"/>
 		<transform name="toWorld">
-			<scale value="82"/>
-			<translate x="186" y="82" z="169"/>
+			<translate x="368.5" y="120" z="351.5"/>
+			<scale x="120" y="120" z="120"/>
 		</transform>
-
 		<ref id="glass"/>
 	</shape>
 

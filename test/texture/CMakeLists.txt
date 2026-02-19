@@ -1,0 +1,7 @@
+add_executable(test_mipmap test_mipmap.cpp)
+target_link_libraries(test_mipmap PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_mipmap)
+
+add_executable(test_texture_sampling test_texture_sampling.cpp)
+target_link_libraries(test_texture_sampling PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_texture_sampling)

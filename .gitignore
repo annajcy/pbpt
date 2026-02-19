@@ -86,3 +86,7 @@ wheels/
 .mypy_cache/
 
 merged_sources.txt
+
+.claude/
+.gemini/
+gha-creds-*.json

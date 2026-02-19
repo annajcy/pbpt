@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <filesystem>
 #include <format>
@@ -37,6 +38,8 @@
 #include "pbpt/radiometry/constant/xyz_spectrum.hpp"
 #include "pbpt/radiometry/color_spectrum_lut.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
+#include "pbpt/texture/bitmap_texture.hpp"
+#include "pbpt/texture/plugin/texture/texture_type.hpp"
 
 namespace pbpt::loader {
 
@@ -60,6 +63,21 @@ inline std::optional<std::string> find_child_value(
             const char* value = child.attribute("value").value();
             if (value && value[0] != '\0') {
                 return std::string(value);
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+inline std::optional<std::string> find_child_reference_id(
+    const pugi::xml_node& node,
+    const std::string& name
+) {
+    for (auto child : node.children("ref")) {
+        if (std::string(child.attribute("name").value()) == name) {
+            const char* id = child.attribute("id").value();
+            if (id && id[0] != '\0') {
+                return std::string(id);
             }
         }
     }
@@ -195,10 +213,21 @@ inline radiometry::RGB<T> parse_rgb_triplet(const std::string& value) {
     T r = T(0);
     T g = T(0);
     T b = T(0);
-    if (!(iss >> r >> g >> b)) {
+    if (!(iss >> r)) {
         throw std::runtime_error("Invalid rgb reflectance value: " + value);
     }
+    if (!(iss >> g)) g = r;
+    if (!(iss >> b)) b = r;
     return radiometry::RGB<T>(r, g, b);
+}
+
+inline texture::WrapMode parse_wrap_mode(const std::string& value) {
+    std::string mode = value;
+    std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (mode == "clamp") {
+        return texture::WrapMode::Clamp;
+    }
+    return texture::WrapMode::Repeat;
 }
 
 template <typename T>
@@ -219,6 +248,47 @@ inline radiometry::PiecewiseLinearSpectrumDistribution<T> srgb_rgb_to_piecewise(
 }
 
 template <typename T>
+void parse_texture_node(const pugi::xml_node& node, LoaderContext<T>& ctx) {
+    const std::string type = node.attribute("type").value();
+    const std::string id = node.attribute("id").value();
+    if (id.empty()) {
+        return;
+    }
+
+    if (type == "bitmap") {
+        auto filename = find_child_value(node, "string", "filename");
+        if (!filename) {
+            throw std::runtime_error("bitmap texture missing filename: " + id);
+        }
+
+        auto wrap_u_str = find_child_value(node, "string", "wrapModeU").value_or("repeat");
+        auto wrap_v_str = find_child_value(node, "string", "wrapModeV").value_or("repeat");
+        auto wrap_u = parse_wrap_mode(wrap_u_str);
+        auto wrap_v = parse_wrap_mode(wrap_v_str);
+
+        auto tex = texture::BitmapTexture<T>(ctx.resolve_path(*filename), wrap_u, wrap_v);
+        ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
+    } else if (type == "checkerboard") {
+        auto color0 = find_child_value(node, "rgb", "color0").value_or("0");
+        auto color1 = find_child_value(node, "rgb", "color1").value_or("1");
+        auto uscale = find_float_property<T>(node, "uscale").value_or(T(1));
+        auto vscale = find_float_property<T>(node, "vscale").value_or(T(1));
+        auto uoffset = find_float_property<T>(node, "uoffset").value_or(T(0));
+        auto voffset = find_float_property<T>(node, "voffset").value_or(T(0));
+
+        auto tex = texture::CheckerboardTexture<T>(
+            parse_rgb_triplet<T>(color0),
+            parse_rgb_triplet<T>(color1),
+            uscale,
+            vscale,
+            uoffset,
+            voffset
+        );
+        ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
+    }
+}
+
+template <typename T>
 void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
     std::string type = node.attribute("type").value();
     std::string id = node.attribute("id").value();
@@ -226,6 +296,18 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
     if (type == "diffuse") {
         auto spectrum_value = find_child_value(node, "spectrum", "reflectance");
         auto rgb_value = find_child_value(node, "rgb", "reflectance");
+        auto reflectance_ref = find_child_reference_id(node, "reflectance");
+
+        if (reflectance_ref) {
+            if (ctx.resources.reflectance_texture_library.name_to_id().contains(*reflectance_ref)) {
+                auto mat = material::LambertianMaterial<T>(
+                    ctx.resources.reflectance_texture_library.get(*reflectance_ref)
+                );
+                ctx.resources.any_material_library.add_item(id, std::move(mat));
+                return;
+            }
+            throw std::runtime_error("Unknown reflectance texture reference: " + *reflectance_ref);
+        }
 
         std::string spec_name = id + "_reflectance";
         radiometry::PiecewiseLinearSpectrumDistribution<T> spectrum = constant_spectrum<T>(T(0.7));
@@ -444,12 +526,17 @@ scene::Scene<T> load_scene(const std::string& filename) {
     pugi::xml_node root = doc.child("scene");
     LoaderContext<T> ctx(scene.resources, std::filesystem::path(filename).parent_path());
     
-    // 1. BSDFs
+    // 1. Textures
+    for (auto node : root.children("texture")) {
+        parse_texture_node(node, ctx);
+    }
+
+    // 2. BSDFs
     for (auto node : root.children("bsdf")) {
         parse_bsdf(node, ctx);
     }
     
-    // 2. Sensor
+    // 3. Sensor
     auto sensor_node = root.child("sensor");
     if (sensor_node) {
         // Transform
@@ -501,12 +588,12 @@ scene::Scene<T> load_scene(const std::string& filename) {
         }, scene.camera);
     }
     
-    // 3. Shapes
+    // 4. Shapes
     for (auto node : root.children("shape")) {
         parse_shape(node, ctx, scene.render_transform);
     }
     
-    // 4. Aggregate
+    // 5. Aggregate
     std::vector<shape::Primitive<T>> primitives;
     for (const auto& [mesh_name, mesh_id] : scene.resources.mesh_library.name_to_id()) {
         const auto& mesh = scene.resources.mesh_library.get(mesh_id);

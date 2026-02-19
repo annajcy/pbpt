@@ -33,3 +33,6 @@ target_link_libraries(render_scene PRIVATE pbpt)
 
 add_executable(cbox_caustics cbox_caustics.cpp)
 target_link_libraries(cbox_caustics PRIVATE pbpt)
+
+add_executable(cbox_checkerboard_texture cbox_checkerboard_texture.cpp)
+target_link_libraries(cbox_checkerboard_texture PRIVATE pbpt)

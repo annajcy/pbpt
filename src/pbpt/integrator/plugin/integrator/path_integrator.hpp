@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <variant>
 #include <cmath>
+#include <optional>
 #include "pbpt/geometry/ray.hpp"
 #include "pbpt/material/bsdf.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
@@ -122,7 +123,8 @@ private:
             return mat.template compute_bsdf<N>(
                 prim_intersection_rec.intersection.interaction,
                 prim_intersection_rec.intersection.shading,
-                wavelength_sample
+                wavelength_sample,
+                std::nullopt
             );
         }, material);
 
@@ -203,7 +205,8 @@ private:
             return mat.template compute_bsdf<N>(
                 prim_intersection_rec.intersection.interaction,
                 prim_intersection_rec.intersection.shading,
-                wavelength_sample
+                wavelength_sample,
+                prim_intersection_rec.intersection.differentials
             );
         }, material);
 

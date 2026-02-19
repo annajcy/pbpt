@@ -4,6 +4,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <optional>
 
 #include "pbpt/geometry/frame.hpp"
 #include "pbpt/geometry/interaction.hpp"
@@ -23,9 +24,10 @@ public:
     BSDF<T, N> compute_bsdf(
         const geometry::SurfaceInteraction<T>& si,
         const geometry::ShadingInfo<T>& shading,
-        const radiometry::SampledWavelength<T, N>& wavelengths
+        const radiometry::SampledWavelength<T, N>& wavelengths,
+        const std::optional<geometry::SurfaceDifferentials<T>>& differentials = std::nullopt
     ) const {
-        return as_derived().template compute_bsdf_impl<N>(si, shading, wavelengths);
+        return as_derived().template compute_bsdf_impl<N>(si, shading, wavelengths, differentials);
     }
 
     Derived& as_derived() {

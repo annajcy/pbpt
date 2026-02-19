@@ -23,7 +23,8 @@ public:
     BSDF<T, N> compute_bsdf_impl(
         const geometry::SurfaceInteraction<T>& si,
         const geometry::ShadingInfo<T>& shading,
-        const radiometry::SampledWavelength<T, N>& wavelengths
+        const radiometry::SampledWavelength<T, N>& wavelengths,
+        const std::optional<geometry::SurfaceDifferentials<T>>&
     ) const {
         return BSDF<T, N>(si, shading, DielectricBxDF<T, N>(m_eta, m_microfacet_model));
     }
