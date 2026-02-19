@@ -69,7 +69,7 @@ private:
 
             const auto& hit = hit_opt.value();
             // Compute BSDF at the intersection point
-            auto material = context.resources.any_material_library.get(hit.material_id);
+            const auto& material = context.resources.any_material_library.get(hit.material_id);
             material::BSDF<T, N> bsdf = std::visit(
                 [&](const auto& mat) {
                     return mat.template compute_bsdf<N>(hit.intersection.interaction,
@@ -135,7 +135,7 @@ private:
             if (!hit_opt) { break; }
 
             const auto& prim_intersection_rec = hit_opt.value();
-            auto material = context.resources.any_material_library.get(prim_intersection_rec.material_id);
+            const auto& material = context.resources.any_material_library.get(prim_intersection_rec.material_id);
 
             const auto si_differentials =
                 trace_differential ? prim_intersection_rec.intersection.differentials : std::nullopt;

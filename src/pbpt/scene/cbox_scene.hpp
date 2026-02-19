@@ -163,7 +163,7 @@ inline Scene<T> create_cbox_scene(
             std::format("cbox_luminaire_{}", i),
             light::AreaLight<T, shape::Triangle<T>, decltype(light_spectrum)>(
                 shape::Triangle<T>(light_mesh, i), light_spectrum, light::AreaLightSamplingDomain::Shape));
-        scene.resources.mesh_light_map[std::format("cbox_luminaire_{}", i)] = new_light_id;
+        scene.resources.mesh_light_map[make_mesh_triangle_key("cbox_luminaire", i)] = new_light_id;
     }
 
     // 6. Setup Aggregate
@@ -174,9 +174,10 @@ inline Scene<T> create_cbox_scene(
         for (int i = 0; i < mesh.triangle_count(); ++i) {
             int light_id = -1;
             // Note: mesh_name is the key in mesh_library (e.g. "cbox_floor")
-            // light_map keys are like "cbox_luminaire_0"
-            if (scene.resources.mesh_light_map.contains(std::format("{}_{}", mesh_name, i))) {
-                light_id = scene.resources.mesh_light_map.at(std::format("{}_{}", mesh_name, i));
+            // light_map keys are MeshTriangleKey{mesh_name, triangle_index}
+            auto key = make_mesh_triangle_key(mesh_name, i);
+            if (scene.resources.mesh_light_map.contains(key)) {
+                light_id = scene.resources.mesh_light_map.at(key);
             }
             primitives.push_back(shape::Primitive<T>(shape::Triangle<T>(mesh, i), material_id, light_id));
         }

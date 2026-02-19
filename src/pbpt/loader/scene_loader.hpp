@@ -39,8 +39,6 @@
 #include "pbpt/radiometry/color_spectrum_lut.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
 #include "pbpt/texture/plugin/texture/bitmap_texture.hpp"
-#include "pbpt/texture/plugin/texture/rsp_spectrum_texture.hpp"
-#include "pbpt/texture/plugin/texture/texture_type.hpp"
 
 namespace pbpt::loader {
 
@@ -461,9 +459,13 @@ void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx,
         if (ref_node) {
             std::string mat_id = ref_node.attribute("id").value();
             auto& lib = ctx.resources.any_material_library;
-            if (lib.name_to_id().count(mat_id)) {
-                ctx.resources.mesh_material_map[name] = lib.name_to_id().at(mat_id);
+            if (mat_id.empty()) {
+                throw std::runtime_error("shape mesh reference has empty material id: " + name);
             }
+            if (!lib.name_to_id().contains(mat_id)) {
+                throw std::runtime_error("Unknown material reference: " + mat_id + " for mesh " + name);
+            }
+            ctx.resources.mesh_material_map[name] = lib.name_to_id().at(mat_id);
         }
 
         // Emitter
@@ -490,7 +492,8 @@ void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx,
                 auto al = light::AreaLight<T, shape::Triangle<T>, decltype(light_spectrum_dist)>(
                     shape::Triangle<T>(mesh, i), light_spectrum_dist, light::AreaLightSamplingDomain::Shape);
                 int lid = ctx.resources.any_light_library.add_item(light_name, std::move(al));
-                ctx.resources.mesh_light_map[light_name] = lid;  // This logic needs to match Aggregate construction
+                ctx.resources.mesh_light_map[scene::make_mesh_triangle_key(name, i)] =
+                    lid;  // This logic needs to match Aggregate construction
             }
         }
     }
@@ -571,15 +574,24 @@ scene::Scene<T> load_scene(const std::string& filename) {
     std::vector<shape::Primitive<T>> primitives;
     for (const auto& [mesh_name, mesh_id] : scene.resources.mesh_library.name_to_id()) {
         const auto& mesh = scene.resources.mesh_library.get(mesh_id);
-        int material_id = 0;
-        if (scene.resources.mesh_material_map.count(mesh_name))
-            material_id = scene.resources.mesh_material_map.at(mesh_name);
+        if (!scene.resources.mesh_material_map.contains(mesh_name)) {
+            throw std::runtime_error("Mesh has no material assignment: " + mesh_name);
+        }
+
+        int material_id = scene.resources.mesh_material_map.at(mesh_name);
+        if (!scene.resources.any_material_library.id_to_name().contains(material_id)) {
+            throw std::runtime_error("Mesh material id is invalid for mesh: " + mesh_name);
+        }
 
         for (int i = 0; i < mesh.triangle_count(); ++i) {
             int light_id = -1;
-            std::string light_key = std::format("{}_{}", mesh_name, i);
+            auto light_key = scene::make_mesh_triangle_key(mesh_name, i);
             if (scene.resources.mesh_light_map.contains(light_key)) {
                 light_id = scene.resources.mesh_light_map.at(light_key);
+                if (!scene.resources.any_light_library.id_to_name().contains(light_id)) {
+                    throw std::runtime_error(
+                        std::format("Mesh light id is invalid for key: {}_{}", mesh_name, i));
+                }
             }
             primitives.push_back(shape::Primitive<T>(shape::Triangle<T>(mesh, i), material_id, light_id));
         }

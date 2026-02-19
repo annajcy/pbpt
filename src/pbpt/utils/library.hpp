@@ -55,6 +55,9 @@ private:
 
 public:
     int add_item(const std::string& name, ItemType&& item) {
+        if (m_name_to_id.contains(name)) {
+            throw std::runtime_error("NamedLibrary: Duplicate item name: " + name);
+        }
         int id = m_library.add_item(std::move(item));
         m_name_to_id[name] = id;
         m_id_to_name[id] = name;

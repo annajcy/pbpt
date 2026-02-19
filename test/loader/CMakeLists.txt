@@ -9,3 +9,7 @@ gtest_discover_tests(test_scene_loader_reflectance_rgb)
 add_executable(test_scene_loader_texture_reflectance test_scene_loader_texture_reflectance.cpp)
 target_link_libraries(test_scene_loader_texture_reflectance PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_scene_loader_texture_reflectance)
+
+add_executable(test_scene_loader_fail_fast test_scene_loader_fail_fast.cpp)
+target_link_libraries(test_scene_loader_fail_fast PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_scene_loader_fail_fast)

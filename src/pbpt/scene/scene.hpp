@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <unordered_map>
 
@@ -17,6 +18,25 @@
 
 namespace pbpt::scene {
 
+struct MeshTriangleKey {
+    std::string mesh_name;
+    int triangle_index{-1};
+
+    bool operator==(const MeshTriangleKey& other) const = default;
+};
+
+struct MeshTriangleKeyHash {
+    std::size_t operator()(const MeshTriangleKey& key) const {
+        std::size_t h1 = std::hash<std::string>{}(key.mesh_name);
+        std::size_t h2 = std::hash<int>{}(key.triangle_index);
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+inline MeshTriangleKey make_mesh_triangle_key(const std::string& mesh_name, int triangle_index) {
+    return MeshTriangleKey{mesh_name, triangle_index};
+}
+
 template <typename T>
 struct RenderResources {
     // 资源库
@@ -31,9 +51,8 @@ struct RenderResources {
 
     // mesh name to material id map
     std::unordered_map<std::string, int> mesh_material_map;
-    // mesh name to light id map, per triangle
-    // format: "mesh_name_triangleIndex" -> lightID
-    std::unordered_map<std::string, int> mesh_light_map;
+    // mesh triangle to light id map
+    std::unordered_map<MeshTriangleKey, int, MeshTriangleKeyHash> mesh_light_map;
 };
 
 template <typename T, typename CameraT, typename FilmT, typename PixelFilterT, typename AggregateT>
