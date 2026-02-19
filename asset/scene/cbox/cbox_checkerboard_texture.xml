@@ -32,7 +32,8 @@
 		<float name="uscale" value="8"/>
 		<float name="vscale" value="8"/>
 	</texture>
-	<texture type="bitmap" id="smallbox_bitmap_tex">
+	
+	<texture type="bitmap" id="checkerboard_bitmap_tex">
 		<string name="filename" value="textures/checkerboard.bmp"/>
 		<string name="wrapModeU" value="repeat"/>
 		<string name="wrapModeV" value="repeat"/>
@@ -46,11 +47,12 @@
 		<rgb name="reflectance" value="0.78 0.78 0.78"/>
 	</bsdf>
 
-	<bsdf type="diffuse" id="checker_object">
+	<bsdf type="diffuse" id="checkerboard">
 		<ref name="reflectance" id="checker_uv"/>
 	</bsdf>
-	<bsdf type="diffuse" id="smallbox_bitmap">
-		<ref name="reflectance" id="smallbox_bitmap_tex"/>
+
+	<bsdf type="diffuse" id="checkerboard_bitmap">
+		<ref name="reflectance" id="checkerboard_bitmap_tex"/>
 	</bsdf>
 
 	<bsdf type="diffuse" id="red">
@@ -102,7 +104,7 @@
 			<translate x="204.5" y="-36.6" z="170.1"/>
 			<scale x="1100" y="1100" z="1100"/>
 		</transform>
-		<ref id="smallbox_bitmap"/>
+		<ref id="checkerboard_bitmap"/>
 	</shape>
 	<!-- <shape type="obj">
 		<string name="filename" value="meshes/cbox_largebox.obj"/>
@@ -114,6 +116,6 @@
 			<translate x="368.5" y="120" z="351.5"/>
 			<scale x="120" y="120" z="120"/>
 		</transform>
-		<ref id="checker_object"/>
+		<ref id="checkerboard"/>
 	</shape> -->
 </scene>

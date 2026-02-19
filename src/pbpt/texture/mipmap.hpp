@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -127,7 +128,7 @@ private:
         const T t = lambda - static_cast<T>(level0);
 
         const auto texel0 = sample_bilinear(static_cast<std::size_t>(level0), ctx.uv);
-        if (level0 == level1) {
+        if (level0 == level1 || std::abs(t) <= std::numeric_limits<T>::epsilon()) {
             return texel0;
         }
         const auto texel1 = sample_bilinear(static_cast<std::size_t>(level1), ctx.uv);
