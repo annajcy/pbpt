@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 namespace pbpt::utils {
-template<typename T, typename ItemType>
+template <typename T, typename ItemType>
 class Library {
 private:
     std::map<int, ItemType> m_items;
@@ -21,20 +21,20 @@ public:
 
     const ItemType& get(int id) const {
         auto it = m_items.find(id);
-        if (it == m_items.end()) 
+        if (it == m_items.end())
             throw std::out_of_range("Library: Invalid item ID");
         return it->second;
     }
 
     ItemType& get(int id) {
         auto it = m_items.find(id);
-        if (it == m_items.end()) 
+        if (it == m_items.end())
             throw std::out_of_range("Library: Invalid item ID");
         return it->second;
     }
 
     void remove(int id) {
-        if (m_items.erase(id) == 0) 
+        if (m_items.erase(id) == 0)
             throw std::out_of_range("Library: Invalid item ID");
     }
 
@@ -46,7 +46,7 @@ public:
     std::size_t size() const { return m_items.size(); }
 };
 
-template<typename T, typename ItemType>
+template <typename T, typename ItemType>
 class NamedLibrary {
 private:
     std::unordered_map<std::string, int> m_name_to_id;
@@ -61,31 +61,27 @@ public:
         return id;
     }
 
-    const ItemType& get(int id) const {
-        return m_library.get(id);
-    }
+    const ItemType& get(int id) const { return m_library.get(id); }
 
-    ItemType& get(int id) {
-        return m_library.get(id);
-    }
+    ItemType& get(int id) { return m_library.get(id); }
 
     const ItemType& get(const std::string& name) const {
         auto it = m_name_to_id.find(name);
-        if (it == m_name_to_id.end()) 
+        if (it == m_name_to_id.end())
             throw std::out_of_range("NamedLibrary: Invalid item name");
         return m_library.get(it->second);
     }
 
     ItemType& get(const std::string& name) {
         auto it = m_name_to_id.find(name);
-        if (it == m_name_to_id.end()) 
+        if (it == m_name_to_id.end())
             throw std::out_of_range("NamedLibrary: Invalid item name");
         return m_library.get(it->second);
     }
 
     void remove(int id) {
         auto it = m_id_to_name.find(id);
-        if (it == m_id_to_name.end()) 
+        if (it == m_id_to_name.end())
             throw std::out_of_range("NamedLibrary: Invalid item ID");
         m_name_to_id.erase(it->second);
         m_id_to_name.erase(it);
@@ -94,7 +90,7 @@ public:
 
     void remove(const std::string& name) {
         auto it = m_name_to_id.find(name);
-        if (it == m_name_to_id.end()) 
+        if (it == m_name_to_id.end())
             throw std::out_of_range("NamedLibrary: Invalid item name");
         int id = it->second;
         m_name_to_id.erase(it);
@@ -102,13 +98,9 @@ public:
         m_library.remove(id);
     }
 
-    const std::unordered_map<std::string, int>& name_to_id() const {
-        return m_name_to_id;
-    }
+    const std::unordered_map<std::string, int>& name_to_id() const { return m_name_to_id; }
 
-    const std::unordered_map<int, std::string>& id_to_name() const {
-        return m_id_to_name;
-    }
+    const std::unordered_map<int, std::string>& id_to_name() const { return m_id_to_name; }
 
     void clear() {
         m_name_to_id.clear();
@@ -119,4 +111,4 @@ public:
     std::size_t size() const { return m_library.size(); }
 };
 
-};
+};  // namespace pbpt::utils

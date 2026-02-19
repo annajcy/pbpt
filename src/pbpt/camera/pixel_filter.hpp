@@ -39,7 +39,8 @@ public:
         math::Point<T, 2> film_position;
         /// Offset from the pixel center in film coordinates.
         math::Vector<T, 2> offset;
-        /// Monte Carlo weight, typically f(x) / q(x) where f(x) is the reconstruction filter and q(x) is the sampling PDF.
+        /// Monte Carlo weight, typically f(x) / q(x) where f(x) is the reconstruction filter and q(x) is the sampling
+        /// PDF.
         T weight;
     };
 
@@ -52,7 +53,7 @@ protected:
      * inside [-m_filter_radius, m_filter_radius]^2.
      */
     T m_filter_radius{};
-    
+
 public:
     /**
      * @brief Construct a pixel filter with a given radius.
@@ -64,17 +65,13 @@ public:
      * @brief Get the filter radius (read-only).
      * @return Constant reference to the filter radius.
      */
-    const T& filter_radius() const {
-        return m_filter_radius;
-    }
+    const T& filter_radius() const { return m_filter_radius; }
 
     /**
      * @brief Get the filter radius (writable).
      * @return Reference to the filter radius.
      */
-    T& filter_radius() {
-        return m_filter_radius;
-    }
+    T& filter_radius() { return m_filter_radius; }
 
     /**
      * @brief Evaluate the sampling PDF of an offset.
@@ -85,9 +82,7 @@ public:
      * @param offset Offset from the pixel center.
      * @return Probability density at the given offset.
      */
-    T sample_offset_pdf(const math::Vector<T, 2>& offset) {
-        return as_derived().sample_offset_pdf_impl(offset);
-    }
+    T sample_offset_pdf(const math::Vector<T, 2>& offset) { return as_derived().sample_offset_pdf_impl(offset); }
 
     /**
      * @brief Evaluate the filter kernel at a given offset.
@@ -95,9 +90,7 @@ public:
      * @param offset Offset from the pixel center.
      * @return Filter kernel value f(offset).
      */
-    T filter_kernel(const math::Vector<T, 2>& offset) {
-        return as_derived().filter_kernel_impl(offset);
-    }
+    T filter_kernel(const math::Vector<T, 2>& offset) { return as_derived().filter_kernel_impl(offset); }
 
     /**
      * @brief Sample an offset from the filter's sampling distribution.
@@ -105,9 +98,7 @@ public:
      * @param uv 2D uniform sample in [0, 1)^2.
      * @return Offset relative to the pixel center.
      */
-    math::Vector<T, 2> sample_offset(const math::Point<T, 2>& uv) {
-        return as_derived().sample_offset_impl(uv);
-    }
+    math::Vector<T, 2> sample_offset(const math::Point<T, 2>& uv) { return as_derived().sample_offset_impl(uv); }
 
     /**
      * @brief Sample a filtered film position within a pixel.
@@ -120,14 +111,8 @@ public:
      * @param uv    2D uniform sample in [0, 1)^2.
      * @return Filtered camera sample containing film position, offset and weight.
      */
-    FilteredCameraSample sample_film_position(
-        const math::Point<int, 2>& pixel,
-        const math::Point<T, 2>& uv
-    ) const {
-        math::Point<T, 2> pixel_center(
-            static_cast<T>(pixel.x()) + T(0.5),
-            static_cast<T>(pixel.y()) + T(0.5)
-        );
+    FilteredCameraSample sample_film_position(const math::Point<int, 2>& pixel, const math::Point<T, 2>& uv) const {
+        math::Point<T, 2> pixel_center(static_cast<T>(pixel.x()) + T(0.5), static_cast<T>(pixel.y()) + T(0.5));
         // Sample offset according to q, then compute MC weight f/q.
         auto offset = as_derived().sample_offset_impl(uv);
         T f = as_derived().filter_kernel_impl(offset);
@@ -146,10 +131,7 @@ public:
      * @param v_sample_count Number of samples in the v direction.
      * @return Vector of UV points in [0, 1)^2.
      */
-    std::vector<math::Point<T, 2>> get_uv_samples(
-        int u_sample_count, 
-        int v_sample_count
-    ) const {
+    std::vector<math::Point<T, 2>> get_uv_samples(int u_sample_count, int v_sample_count) const {
         std::vector<math::Point<T, 2>> uvs;
         double u_stride = 1.0 / static_cast<T>(u_sample_count);
         double v_stride = 1.0 / static_cast<T>(v_sample_count);
@@ -165,16 +147,16 @@ public:
     }
 
     /**
-    * @brief Generate a regular grid of UV samples over [0, 1)^2.
-    *
-    * The samples correspond to the centers of a @p USampleCount by
-    * @p VSampleCount grid in UV space.
-    *
-    * @tparam USampleCount Number of samples in the u direction.
-    * @tparam VSampleCount Number of samples in the v direction.
-    * @return Array of UV points in [0, 1)^2.
-    */
-    template<int USampleCount, int VSampleCount>
+     * @brief Generate a regular grid of UV samples over [0, 1)^2.
+     *
+     * The samples correspond to the centers of a @p USampleCount by
+     * @p VSampleCount grid in UV space.
+     *
+     * @tparam USampleCount Number of samples in the u direction.
+     * @tparam VSampleCount Number of samples in the v direction.
+     * @return Array of UV points in [0, 1)^2.
+     */
+    template <int USampleCount, int VSampleCount>
     std::array<math::Point<T, 2>, USampleCount * VSampleCount> get_uv_samples() const {
         std::array<math::Point<T, 2>, USampleCount * VSampleCount> uvs{};
         double u_stride = 1.0 / static_cast<T>(USampleCount);
@@ -201,11 +183,8 @@ public:
      * @param v_sample_count  Number of samples in the v direction.
      * @return Vector of filtered camera samples for the pixel.
      */
-    std::vector<FilteredCameraSample> get_camera_samples(
-        const math::Point<int, 2>& pixel,
-        int u_sample_count,
-        int v_sample_count
-    ) const {
+    std::vector<FilteredCameraSample> get_camera_samples(const math::Point<int, 2>& pixel, int u_sample_count,
+                                                         int v_sample_count) const {
         std::vector<FilteredCameraSample> samples;
         auto uvs = get_uv_samples(u_sample_count, v_sample_count);
         samples.reserve(uvs.size());
@@ -222,10 +201,9 @@ public:
      * @param pixel           Integer pixel coordinates.
      * @return Array of filtered camera samples for the pixel.
      */
-    template<int USampleCount, int VSampleCount>
+    template <int USampleCount, int VSampleCount>
     std::array<FilteredCameraSample, USampleCount * VSampleCount> get_camera_samples(
-        const math::Point<int, 2>& pixel
-    ) const {
+        const math::Point<int, 2>& pixel) const {
         std::array<FilteredCameraSample, USampleCount * VSampleCount> samples;
         auto uvs = get_uv_samples<USampleCount, VSampleCount>();
         for (int i = 0; i < USampleCount * VSampleCount; ++i) {
@@ -242,9 +220,7 @@ protected:
      *
      * @return Reference to the derived type.
      */
-    Derived& as_derived() {
-        return static_cast<Derived&>(*this);
-    }
+    Derived& as_derived() { return static_cast<Derived&>(*this); }
 
     /**
      * @brief Access the derived implementation (const).
@@ -253,9 +229,7 @@ protected:
      *
      * @return Const reference to the derived type.
      */
-    const Derived& as_derived() const {
-        return static_cast<const Derived&>(*this);
-    }
+    const Derived& as_derived() const { return static_cast<const Derived&>(*this); }
 };
 
-};
+};  // namespace pbpt::camera

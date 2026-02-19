@@ -14,7 +14,7 @@ namespace pbpt::camera {
  *
  * @tparam T Scalar type (e.g. float or double).
  */
-template<typename T>
+template <typename T>
 class OrthographicCamera : public ProjectiveCamera<OrthographicCamera<T>, T> {
     friend class Camera<OrthographicCamera<T>, T>;
     friend class ProjectiveCamera<OrthographicCamera<T>, T>;
@@ -36,13 +36,9 @@ public:
      * @param resolution_x Film resolution in x (pixels).
      * @param resolution_y Film resolution in y (pixels).
      */
-    OrthographicCamera(
-        T left, T right, T bottom, T top, T near, T far,
-        T resolution_x, T resolution_y
-    ) : ProjectiveCamera<OrthographicCamera<T>, T>(CameraProjection<T>::orthographic(
-        left, right, bottom, top, near, far,
-        resolution_x, resolution_y)
-    ) { }
+    OrthographicCamera(T left, T right, T bottom, T top, T near, T far, T resolution_x, T resolution_y)
+        : ProjectiveCamera<OrthographicCamera<T>, T>(
+              CameraProjection<T>::orthographic(left, right, bottom, top, near, far, resolution_x, resolution_y)) {}
 
     /**
      * @brief Construct an orthographic camera from film parameters.
@@ -52,17 +48,10 @@ public:
      * @param near              Near plane in camera z.
      * @param far               Far plane in camera z.
      */
-    OrthographicCamera(
-        const math::Vector<int, 2>& film_resolution,
-        const math::Vector<T, 2>& film_physical_size,
-        T near, T far
-    ) : ProjectiveCamera<OrthographicCamera<T>, T>(
-        CameraProjection<T>::create_orthographic_projection(
-            film_resolution,
-            film_physical_size,
-            near, far
-        )
-    ) {}
+    OrthographicCamera(const math::Vector<int, 2>& film_resolution, const math::Vector<T, 2>& film_physical_size,
+                       T near, T far)
+        : ProjectiveCamera<OrthographicCamera<T>, T>(
+              CameraProjection<T>::create_orthographic_projection(film_resolution, film_physical_size, near, far)) {}
 
 private:
     /// Generate a primary ray for an orthographic camera.
@@ -80,8 +69,8 @@ private:
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0);
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
-        CameraSample<T> sample_x = { p_film_x, sample.p_lens };
-        CameraSample<T> sample_y = { p_film_y, sample.p_lens };
+        CameraSample<T> sample_x = {p_film_x, sample.p_lens};
+        CameraSample<T> sample_y = {p_film_y, sample.p_lens};
 
         geometry::Ray<T, 3> ray_x = this->generate_ray_impl(sample_x);
         geometry::Ray<T, 3> ray_y = this->generate_ray_impl(sample_y);
@@ -98,7 +87,7 @@ private:
  *
  * @tparam T Scalar type (e.g. float or double).
  */
-template<typename T>
+template <typename T>
 class PerspectiveCamera : public ProjectiveCamera<PerspectiveCamera<T>, T> {
     friend class Camera<PerspectiveCamera<T>, T>;
     friend class ProjectiveCamera<PerspectiveCamera<T>, T>;
@@ -115,17 +104,10 @@ public:
      * @param resolution_x Film resolution in x (pixels).
      * @param resolution_y Film resolution in y (pixels).
      */
-    PerspectiveCamera(
-        const T fov_y_rad,
-        const T aspect_xy,
-        const T near, const T far,
-        const T resolution_x, const T resolution_y
-    ) : ProjectiveCamera<PerspectiveCamera<T>, T>(CameraProjection<T>::perspective(
-        fov_y_rad,
-        aspect_xy,
-        near, far,
-        resolution_x, resolution_y)
-    ) { }
+    PerspectiveCamera(const T fov_y_rad, const T aspect_xy, const T near, const T far, const T resolution_x,
+                      const T resolution_y)
+        : ProjectiveCamera<PerspectiveCamera<T>, T>(
+              CameraProjection<T>::perspective(fov_y_rad, aspect_xy, near, far, resolution_x, resolution_y)) {}
 
     /**
      * @brief Construct a perspective camera from film parameters.
@@ -139,13 +121,10 @@ public:
      * @param near              Near plane in camera z.
      * @param far               Far plane in camera z.
      */
-    PerspectiveCamera(
-        const math::Vector<int, 2>& film_resolution,
-        const math::Vector<T, 2>& film_physical_size,
-        T near, T far
-    ) : ProjectiveCamera<PerspectiveCamera<T>, T>(
-        CameraProjection<T>::create_perspective_projection(film_resolution, film_physical_size, near, far)
-    ) {}
+    PerspectiveCamera(const math::Vector<int, 2>& film_resolution, const math::Vector<T, 2>& film_physical_size, T near,
+                      T far)
+        : ProjectiveCamera<PerspectiveCamera<T>, T>(
+              CameraProjection<T>::create_perspective_projection(film_resolution, film_physical_size, near, far)) {}
 
 private:
     /// Generate a primary ray for a perspective camera.
@@ -163,8 +142,8 @@ private:
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0);
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
-        CameraSample<T> sample_x = { p_film_x, sample.p_lens };
-        CameraSample<T> sample_y = { p_film_y, sample.p_lens };
+        CameraSample<T> sample_x = {p_film_x, sample.p_lens};
+        CameraSample<T> sample_y = {p_film_y, sample.p_lens};
 
         geometry::Ray<T, 3> ray_x = this->generate_ray_impl(sample_x);
         geometry::Ray<T, 3> ray_y = this->generate_ray_impl(sample_y);
@@ -184,7 +163,7 @@ private:
  *
  * @tparam T Scalar type (e.g. float or double).
  */
-template<typename T>
+template <typename T>
 class ThinLensOrthographicCamera : public ProjectiveCamera<ThinLensOrthographicCamera<T>, T> {
     friend class Camera<ThinLensOrthographicCamera<T>, T>;
     friend class ProjectiveCamera<ThinLensOrthographicCamera<T>, T>;
@@ -210,14 +189,11 @@ public:
      * @param lens_radius   Radius of the circular lens aperture.
      * @param focal_distance Distance from lens to focal plane along +z.
      */
-    ThinLensOrthographicCamera(
-        T left, T right, T bottom, T top, T near, T far,
-        T resolution_x, T resolution_y,
-        T focal_distance
-    ) : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(CameraProjection<T>::orthographic(
-        left, right, bottom, top, near, far,
-        resolution_x, resolution_y)
-    ), m_focal_distance(focal_distance) { }
+    ThinLensOrthographicCamera(T left, T right, T bottom, T top, T near, T far, T resolution_x, T resolution_y,
+                               T focal_distance)
+        : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
+              CameraProjection<T>::orthographic(left, right, bottom, top, near, far, resolution_x, resolution_y)),
+          m_focal_distance(focal_distance) {}
 
     /**
      * @brief Construct a thin-lens orthographic camera from film parameters.
@@ -229,17 +205,11 @@ public:
      * @param lens_radius        Radius of the circular lens aperture.
      * @param focal_distance     Distance from lens to focal plane along +z.
      */
-    ThinLensOrthographicCamera(
-        const math::Vector<int, 2>& film_resolution,
-        const math::Vector<T, 2>& film_physical_size,
-        T near, T far, T focal_distance
-    ) : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
-            CameraProjection<T>::create_orthographic_projection(
-                film_resolution,
-                film_physical_size,
-                near, far
-            )
-        ), m_focal_distance(focal_distance) {}
+    ThinLensOrthographicCamera(const math::Vector<int, 2>& film_resolution,
+                               const math::Vector<T, 2>& film_physical_size, T near, T far, T focal_distance)
+        : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
+              CameraProjection<T>::create_orthographic_projection(film_resolution, film_physical_size, near, far)),
+          m_focal_distance(focal_distance) {}
 
 private:
     /**
@@ -278,8 +248,8 @@ private:
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0);
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
-        CameraSample<T> sample_x = { p_film_x, sample.p_lens };
-        CameraSample<T> sample_y = { p_film_y, sample.p_lens };
+        CameraSample<T> sample_x = {p_film_x, sample.p_lens};
+        CameraSample<T> sample_y = {p_film_y, sample.p_lens};
 
         geometry::Ray<T, 3> ray_x = this->generate_ray_impl(sample_x);
         geometry::Ray<T, 3> ray_y = this->generate_ray_impl(sample_y);
@@ -297,8 +267,8 @@ private:
  *
  * @tparam T Scalar type (e.g. float or double).
  */
-template<typename T>
-class ThinLensPerspectiveCamera : public ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>{
+template <typename T>
+class ThinLensPerspectiveCamera : public ProjectiveCamera<ThinLensPerspectiveCamera<T>, T> {
     friend class Camera<ThinLensPerspectiveCamera<T>, T>;
     friend class ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>;
 
@@ -322,18 +292,12 @@ public:
      * @param far                Far plane in camera z.
      * @param lens_radius        Radius of the circular lens aperture.
      * @param focal_distance     Distance from lens to focal plane along +z.
-    ***/
-    ThinLensPerspectiveCamera(
-        const math::Vector<T, 2>& film_resolution,
-        T fov_degrees, const std::string& fov_axis,
-        T near, T far, T focal_distance
-    ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
-        CameraProjection<T>::create_perspective_projection_by_fov(
-            film_resolution,
-            fov_degrees, fov_axis,
-            near, far
-        )
-    ), m_focal_distance(focal_distance) {}
+     ***/
+    ThinLensPerspectiveCamera(const math::Vector<T, 2>& film_resolution, T fov_degrees, const std::string& fov_axis,
+                              T near, T far, T focal_distance)
+        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(CameraProjection<T>::create_perspective_projection_by_fov(
+              film_resolution, fov_degrees, fov_axis, near, far)),
+          m_focal_distance(focal_distance) {}
 
     /**
      * @brief Construct a thin-lens perspective camera from explicit frustum.
@@ -347,18 +311,11 @@ public:
      * @param lens_radius   Radius of the circular lens aperture.
      * @param focal_distance Distance from lens to focal plane along +z.
      */
-    ThinLensPerspectiveCamera(
-        const T fov_y_rad,
-        const T aspect_xy,
-        const T near, const T far,
-        const T resolution_x, const T resolution_y, T focal_distance
-    ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(CameraProjection<T>::perspective(
-        fov_y_rad,
-        aspect_xy,
-        near, far,
-        resolution_x, resolution_y)
-    ), m_focal_distance(focal_distance) { }
-
+    ThinLensPerspectiveCamera(const T fov_y_rad, const T aspect_xy, const T near, const T far, const T resolution_x,
+                              const T resolution_y, T focal_distance)
+        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
+              CameraProjection<T>::perspective(fov_y_rad, aspect_xy, near, far, resolution_x, resolution_y)),
+          m_focal_distance(focal_distance) {}
 
     /**
      * @brief Construct a thin-lens perspective camera from film parameters.
@@ -373,13 +330,11 @@ public:
      * @param lens_radius        Radius of the circular lens aperture.
      * @param focal_distance     Distance from lens to focal plane along +z.
      */
-    ThinLensPerspectiveCamera(
-        const math::Vector<int, 2>& film_resolution,
-        const math::Vector<T, 2>& film_physical_size,
-        T near, T far, T focal_distance
-    ) : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
-            CameraProjection<T>::create_perspective_projection(film_resolution, film_physical_size, near, far)
-        ), m_focal_distance(focal_distance) {}
+    ThinLensPerspectiveCamera(const math::Vector<int, 2>& film_resolution, const math::Vector<T, 2>& film_physical_size,
+                              T near, T far, T focal_distance)
+        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
+              CameraProjection<T>::create_perspective_projection(film_resolution, film_physical_size, near, far)),
+          m_focal_distance(focal_distance) {}
 
 private:
     /**
@@ -395,7 +350,7 @@ private:
      */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
         auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
-        //auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
+        // auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(sample.p_lens.x(), sample.p_lens.y(), 0);
         auto pinhole_ray = geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), p_camera);
         T t = -m_focal_distance / pinhole_ray.direction().z();
@@ -412,8 +367,8 @@ private:
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0);
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
-        CameraSample<T> sample_x = { p_film_x, sample.p_lens };
-        CameraSample<T> sample_y = { p_film_y, sample.p_lens };
+        CameraSample<T> sample_x = {p_film_x, sample.p_lens};
+        CameraSample<T> sample_y = {p_film_y, sample.p_lens};
 
         geometry::Ray<T, 3> ray_x = this->generate_ray_impl(sample_x);
         geometry::Ray<T, 3> ray_y = this->generate_ray_impl(sample_y);
@@ -422,4 +377,4 @@ private:
     }
 };
 
-} // namespace pbpt::camera
+}  // namespace pbpt::camera

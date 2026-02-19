@@ -30,11 +30,8 @@ public:
     template <typename U>
         requires std::is_convertible_v<U, T>
     constexpr explicit Quaternion(const Vector<U, 3>& euler_xyz_rad) {
-        *this = from_euler_xyz(Vector<T, 3>(
-            static_cast<T>(euler_xyz_rad.x()),
-            static_cast<T>(euler_xyz_rad.y()),
-            static_cast<T>(euler_xyz_rad.z())
-        ));
+        *this = from_euler_xyz(Vector<T, 3>(static_cast<T>(euler_xyz_rad.x()), static_cast<T>(euler_xyz_rad.y()),
+                                            static_cast<T>(euler_xyz_rad.z())));
     }
 
     static constexpr Quaternion identity() { return Quaternion(T(1), T(0), T(0), T(0)); }
@@ -58,9 +55,7 @@ public:
         return Quaternion(m_w / len, m_x / len, m_y / len, m_z / len);
     }
 
-    constexpr Quaternion conjugated() const {
-        return Quaternion(m_w, -m_x, -m_y, -m_z);
-    }
+    constexpr Quaternion conjugated() const { return Quaternion(m_w, -m_x, -m_y, -m_z); }
 
     constexpr Quaternion inversed() const {
         const T ls = length_squared();
@@ -69,17 +64,13 @@ public:
     }
 
     constexpr Quaternion operator*(const Quaternion& rhs) const {
-        return Quaternion(
-            m_w * rhs.m_w - m_x * rhs.m_x - m_y * rhs.m_y - m_z * rhs.m_z,
-            m_w * rhs.m_x + m_x * rhs.m_w + m_y * rhs.m_z - m_z * rhs.m_y,
-            m_w * rhs.m_y - m_x * rhs.m_z + m_y * rhs.m_w + m_z * rhs.m_x,
-            m_w * rhs.m_z + m_x * rhs.m_y - m_y * rhs.m_x + m_z * rhs.m_w
-        );
+        return Quaternion(m_w * rhs.m_w - m_x * rhs.m_x - m_y * rhs.m_y - m_z * rhs.m_z,
+                          m_w * rhs.m_x + m_x * rhs.m_w + m_y * rhs.m_z - m_z * rhs.m_y,
+                          m_w * rhs.m_y - m_x * rhs.m_z + m_y * rhs.m_w + m_z * rhs.m_x,
+                          m_w * rhs.m_z + m_x * rhs.m_y - m_y * rhs.m_x + m_z * rhs.m_w);
     }
 
-    constexpr Quaternion operator*(T rhs) const {
-        return Quaternion(m_w * rhs, m_x * rhs, m_y * rhs, m_z * rhs);
-    }
+    constexpr Quaternion operator*(T rhs) const { return Quaternion(m_w * rhs, m_x * rhs, m_y * rhs, m_z * rhs); }
 
     constexpr Quaternion operator/(T rhs) const {
         assert_if([&]() { return is_equal(rhs, T(0)); }, "Quaternion division by zero");
@@ -92,13 +83,10 @@ public:
     }
 
     constexpr bool operator==(const Quaternion& rhs) const {
-        return is_equal(m_w, rhs.m_w) && is_equal(m_x, rhs.m_x) &&
-               is_equal(m_y, rhs.m_y) && is_equal(m_z, rhs.m_z);
+        return is_equal(m_w, rhs.m_w) && is_equal(m_x, rhs.m_x) && is_equal(m_y, rhs.m_y) && is_equal(m_z, rhs.m_z);
     }
 
-    constexpr bool operator!=(const Quaternion& rhs) const {
-        return !(*this == rhs);
-    }
+    constexpr bool operator!=(const Quaternion& rhs) const { return !(*this == rhs); }
 
     constexpr Vector<T, 3> rotate_vector(const Vector<T, 3>& v) const {
         const Quaternion qv(T(0), v.x(), v.y(), v.z());
@@ -106,9 +94,7 @@ public:
         return Vector<T, 3>(qr.x(), qr.y(), qr.z());
     }
 
-    constexpr Vector<T, 3> operator*(const Vector<T, 3>& v) const {
-        return rotate_vector(v);
-    }
+    constexpr Vector<T, 3> operator*(const Vector<T, 3>& v) const { return rotate_vector(v); }
 
     constexpr Matrix<T, 3, 3> to_mat3() const {
         const Quaternion q = normalized();
@@ -122,11 +108,9 @@ public:
         const T wy = q.w() * q.y();
         const T wz = q.w() * q.z();
 
-        return Matrix<T, 3, 3>(
-            T(1) - T(2) * (yy + zz), T(2) * (xy - wz),       T(2) * (xz + wy),
-            T(2) * (xy + wz),       T(1) - T(2) * (xx + zz), T(2) * (yz - wx),
-            T(2) * (xz - wy),       T(2) * (yz + wx),       T(1) - T(2) * (xx + yy)
-        );
+        return Matrix<T, 3, 3>(T(1) - T(2) * (yy + zz), T(2) * (xy - wz), T(2) * (xz + wy), T(2) * (xy + wz),
+                               T(1) - T(2) * (xx + zz), T(2) * (yz - wx), T(2) * (xz - wy), T(2) * (yz + wx),
+                               T(1) - T(2) * (xx + yy));
     }
 
     constexpr Matrix<T, 4, 4> to_mat4() const {
@@ -224,12 +208,7 @@ public:
         const Vector<T, 3> axis = cross(f, t);
         const T s = std::sqrt((T(1) + cos_theta) * T(2));
         const T inv_s = T(1) / s;
-        return Quaternion(
-            s * T(0.5),
-            axis.x() * inv_s,
-            axis.y() * inv_s,
-            axis.z() * inv_s
-        ).normalized();
+        return Quaternion(s * T(0.5), axis.x() * inv_s, axis.y() * inv_s, axis.z() * inv_s).normalized();
     }
 };
 

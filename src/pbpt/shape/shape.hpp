@@ -1,7 +1,7 @@
 /**
  * @file shape.hpp
  * @brief Geometric shape interface and transformed shape wrapper.
- * 
+ *
  */
 
 #pragma once
@@ -18,7 +18,7 @@
 
 namespace pbpt::shape {
 
-template<typename T>
+template <typename T>
 struct IntersectionRecord {
     geometry::SurfaceInteraction<T> interaction;
     geometry::ShadingInfo<T> shading;
@@ -34,7 +34,7 @@ struct IntersectionRecord {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 struct ShapeSample {
     /// Sampled point on the surface (render space).
     math::Point<T, 3> point;
@@ -57,41 +57,27 @@ struct ShapeSample {
  * @tparam Derived Concrete shape type (CRTP).
  * @tparam T       Scalar type.
  */
-template<typename Derived, typename T>
+template <typename Derived, typename T>
 class Shape {
 public:
     /// Returns a reference to the derived shape (non-const).
-    constexpr Derived& as_derived() noexcept {
-        return static_cast<Derived&>(*this);
-    }
+    constexpr Derived& as_derived() noexcept { return static_cast<Derived&>(*this); }
 
     /// Returns a reference to the derived shape (const).
-    constexpr const Derived& as_derived() const noexcept {
-        return static_cast<const Derived&>(*this);
-    }
+    constexpr const Derived& as_derived() const noexcept { return static_cast<const Derived&>(*this); }
 
     /// Total surface area of the shape.
-    T area() const {
-        return as_derived().area_impl();
-    }
+    T area() const { return as_derived().area_impl(); }
 
-    geometry::Transform<T> object_to_render_transform() const {
-        return as_derived().object_to_render_transform_impl();
-    }
+    geometry::Transform<T> object_to_render_transform() const { return as_derived().object_to_render_transform_impl(); }
 
-    geometry::Transform<T> render_to_object_transform() const {
-        return as_derived().render_to_object_transform_impl();
-    }
+    geometry::Transform<T> render_to_object_transform() const { return as_derived().render_to_object_transform_impl(); }
 
     /// Axis-aligned bounding box of the shape in render space.
-    geometry::Bounds<T, 3> bounding_box() const {
-        return as_derived().bounding_box_impl();
-    }
+    geometry::Bounds<T, 3> bounding_box() const { return as_derived().bounding_box_impl(); }
 
     /// Bounding cone that contains all surface normals of the shape.
-    geometry::DirectionalCone<T> normal_bounding_cone() const {
-        return as_derived().normal_bounding_cone_impl();
-    }
+    geometry::DirectionalCone<T> normal_bounding_cone() const { return as_derived().normal_bounding_cone_impl(); }
 
     /**
      * @brief Tests whether a ray intersects the shape.
@@ -109,15 +95,12 @@ public:
      * When an intersection exists, returns the surface interaction
      * (position, normal, UV, etc.) together with the hit distance t.
      */
-    std::optional<IntersectionRecord<T>> intersect_ray(
-        const geometry::Ray<T, 3>& ray
-    ) const {
+    std::optional<IntersectionRecord<T>> intersect_ray(const geometry::Ray<T, 3>& ray) const {
         return as_derived().intersect_ray_impl(ray);
     }
 
     std::optional<IntersectionRecord<T>> intersect_ray_differential(
-        const geometry::RayDifferential<T, 3>& ray_diff
-    ) const {
+        const geometry::RayDifferential<T, 3>& ray_diff) const {
         return as_derived().intersect_ray_differential_impl(ray_diff);
     }
 
@@ -127,9 +110,7 @@ public:
      * @param u_sample 2D sample in [0,1]^2.
      * @return Shape sample and its area-domain PDF.
      */
-    ShapeSample<T> sample_on_shape(
-        const math::Point<T, 2>& u_sample
-    ) const {
+    ShapeSample<T> sample_on_shape(const math::Point<T, 2>& u_sample) const {
         return as_derived().sample_on_shape_impl(u_sample);
     }
 
@@ -139,9 +120,7 @@ public:
      * @param p_surface Surface point in object space.
      * @return PDF value with respect to area measure.
      */
-    T sample_on_shape_pdf(
-        const math::Point<T, 3>& p_surface
-    ) const {
+    T sample_on_shape_pdf(const math::Point<T, 3>& p_surface) const {
         return as_derived().sample_on_shape_pdf_impl(p_surface);
     }
 
@@ -152,10 +131,7 @@ public:
      * @param u_sample  2D sample in [0,1]^2.
      * @return Shape sample and its solid-angle PDF.
      */
-    ShapeSample<T> sample_on_solid_angle(
-        const math::Point<T, 3>& reference,
-        const math::Point<T, 2>& u_sample
-    ) const {
+    ShapeSample<T> sample_on_solid_angle(const math::Point<T, 3>& reference, const math::Point<T, 2>& u_sample) const {
         return as_derived().sample_on_solid_angle_impl(reference, u_sample);
     }
 
@@ -166,12 +142,9 @@ public:
      * @param p_surface Surface point in object space.
      * @return PDF value with respect to solid angle measure.
      */
-    T sample_on_solid_angle_pdf(
-        const math::Point<T, 3>& reference,
-        const math::Point<T, 3>& p_surface
-    ) const {
+    T sample_on_solid_angle_pdf(const math::Point<T, 3>& reference, const math::Point<T, 3>& p_surface) const {
         return as_derived().sample_on_solid_angle_pdf_impl(reference, p_surface);
     }
 };
 
-};
+};  // namespace pbpt::shape

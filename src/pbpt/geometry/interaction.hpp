@@ -28,7 +28,7 @@ namespace pbpt::geometry {
  * proportional to a small gamma factor, which helps avoid "overshooting"
  * due to floating-point error when tracing to a known distance.
  */
-template<typename T>
+template <typename T>
 inline T safe_ray_tmax(T dist, T factor = static_cast<T>(3.0)) {
     // 缩短一点点 t_max 以防止精度误差导致的穿透
     return dist * (static_cast<T>(1) - math::epsilon_v<T> * factor);
@@ -37,29 +37,23 @@ inline T safe_ray_tmax(T dist, T factor = static_cast<T>(3.0)) {
 /**
  * @brief Offset a ray origin to avoid self-intersection (Shadow Acne).
  */
-template<typename T>
-inline math::Point<T, 3> offset_ray_origin(
-    const math::Point<T, 3>& p_lower,
-    const math::Point<T, 3>& p_upper,
-    const math::Vector<T, 3>& dir, // Direction of the NEW ray
-    const math::Normal<T, 3>& n
-) {
+template <typename T>
+inline math::Point<T, 3> offset_ray_origin(const math::Point<T, 3>& p_lower, const math::Point<T, 3>& p_upper,
+                                           const math::Vector<T, 3>& dir,  // Direction of the NEW ray
+                                           const math::Normal<T, 3>& n) {
     // Determine the offset magnitude based on the error box projection onto the normal
-    auto d = std::abs(n.x()) * (p_upper.x() - p_lower.x()) + 
-             std::abs(n.y()) * (p_upper.y() - p_lower.y()) + 
+    auto d = std::abs(n.x()) * (p_upper.x() - p_lower.x()) + std::abs(n.y()) * (p_upper.y() - p_lower.y()) +
              std::abs(n.z()) * (p_upper.z() - p_lower.z());
 
     auto p_mid = p_lower.mid(p_upper);
 
     // Scaling factor for robustness (gamma(7) is standard in PBRT)
     // Assuming math::gamma<T>(7) exists. If not, use (7 * machine_epsilon).
-    constexpr T gamma7 = math::gamma<T>(7); 
+    constexpr T gamma7 = math::gamma<T>(7);
 
-    d += static_cast<T>(2) * gamma7 * (
-            std::abs(p_mid.x() * std::abs(n.x())) + 
-            std::abs(p_mid.y() * std::abs(n.y())) + 
-            std::abs(p_mid.z() * std::abs(n.z()))
-        );
+    d += static_cast<T>(2) * gamma7 *
+         (std::abs(p_mid.x() * std::abs(n.x())) + std::abs(p_mid.y() * std::abs(n.y())) +
+          std::abs(p_mid.z() * std::abs(n.z())));
 
     // Minimal offset to handle cases where calculation yields zero (e.g. at origin)
     if (d < math::epsilon_v<T> * static_cast<T>(1024)) {
@@ -81,7 +75,7 @@ inline math::Point<T, 3> offset_ray_origin(
 // Shading Info (separate from geometric interaction)
 // -----------------------------------------------------------------------------
 
-template<typename T>
+template <typename T>
 struct ShadingInfo {
     math::Normal<T, 3> n{};
     math::Normal<T, 3> dndu{};
@@ -92,7 +86,7 @@ struct ShadingInfo {
 // Surface Differentials
 // -----------------------------------------------------------------------------
 
-template<typename T>
+template <typename T>
 struct SurfaceDifferentials {
     math::Vector<T, 3> dpdx{};
     math::Vector<T, 3> dpdy{};
@@ -109,7 +103,7 @@ struct SurfaceDifferentials {
 /**
  * @brief Full surface interaction with geometric frame only.
  */
-template<typename T>
+template <typename T>
 class SurfaceInteraction {
 private:
     /// Lower bound of the hit position (Render Space).
@@ -130,29 +124,34 @@ private:
 public:
     SurfaceInteraction() = default;
 
-    SurfaceInteraction(
-        const math::Point<T, 3>& p_lower,
-        const math::Point<T, 3>& p_upper,
-        const math::Vector<T, 3>& wo,
-        const math::Normal<T, 3>& n,
-        const math::Point<T, 2>& uv,
-        const math::Vector<T, 3>& dpdu,
-        const math::Vector<T, 3>& dpdv,
-        const math::Normal<T, 3>& dndu = math::Normal<T, 3>(0, 0, 0),
-        const math::Normal<T, 3>& dndv = math::Normal<T, 3>(0, 0, 0)
-    ) : m_p_lower(p_lower), m_p_upper(p_upper), m_wo(wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
+    SurfaceInteraction(const math::Point<T, 3>& p_lower, const math::Point<T, 3>& p_upper, const math::Vector<T, 3>& wo,
+                       const math::Normal<T, 3>& n, const math::Point<T, 2>& uv, const math::Vector<T, 3>& dpdu,
+                       const math::Vector<T, 3>& dpdv, const math::Normal<T, 3>& dndu = math::Normal<T, 3>(0, 0, 0),
+                       const math::Normal<T, 3>& dndv = math::Normal<T, 3>(0, 0, 0))
+        : m_p_lower(p_lower),
+          m_p_upper(p_upper),
+          m_wo(wo),
+          m_n(n),
+          m_uv(uv),
+          m_dpdu(dpdu),
+          m_dpdv(dpdv),
+          m_dndu(dndu),
+          m_dndv(dndv) {}
 
-    SurfaceInteraction(
-        const math::Point<T, 3>& p,
-        const math::Vector<T, 3>& wo,
-        const math::Normal<T, 3>& n,
-        const math::Point<T, 2>& uv,
-        const math::Vector<T, 3>& dpdu,
-        const math::Vector<T, 3>& dpdv,
-        const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0},
-        const math::Normal<T, 3>& dndu = math::Normal<T, 3>(0, 0, 0),
-        const math::Normal<T, 3>& dndv = math::Normal<T, 3>(0, 0, 0)
-    ) : m_p_lower(p - error_margin), m_p_upper(p + error_margin), m_wo(wo), m_n(n), m_uv(uv), m_dpdu(dpdu), m_dpdv(dpdv), m_dndu(dndu), m_dndv(dndv) {}
+    SurfaceInteraction(const math::Point<T, 3>& p, const math::Vector<T, 3>& wo, const math::Normal<T, 3>& n,
+                       const math::Point<T, 2>& uv, const math::Vector<T, 3>& dpdu, const math::Vector<T, 3>& dpdv,
+                       const math::Vector<T, 3>& error_margin = math::Vector<T, 3>{0, 0, 0},
+                       const math::Normal<T, 3>& dndu = math::Normal<T, 3>(0, 0, 0),
+                       const math::Normal<T, 3>& dndv = math::Normal<T, 3>(0, 0, 0))
+        : m_p_lower(p - error_margin),
+          m_p_upper(p + error_margin),
+          m_wo(wo),
+          m_n(n),
+          m_uv(uv),
+          m_dpdu(dpdu),
+          m_dpdv(dpdv),
+          m_dndu(dndu),
+          m_dndv(dndv) {}
 
     // --- Accessors ---
     const math::Vector<T, 3>& wo() const { return m_wo; }
@@ -173,10 +172,8 @@ public:
         return Ray<T, 3>(o, wi);
     }
 
-    RayDifferential<T, 3> spawn_ray_differential(
-        const math::Vector<T, 3>& wi,
-        const RayDifferentialOffset<T>& diffs_offset
-    ) const {
+    RayDifferential<T, 3> spawn_ray_differential(const math::Vector<T, 3>& wi,
+                                                 const RayDifferentialOffset<T>& diffs_offset) const {
         // 1. Compute main ray origin with Shadow Acne avoidance
         auto o = offset_ray_origin(m_p_lower, m_p_upper, wi, m_n);
         Ray<T, 3> main_ray(o, wi);
@@ -203,7 +200,7 @@ public:
         auto o = offset_ray_origin(m_p_lower, m_p_upper, dir, m_n);
 
         auto dist = dir.length();
-        dir = dir / dist; // Normalize
+        dir = dir / dist;  // Normalize
 
         return Ray<T, 3>(o, dir, safe_ray_tmax(dist));
     }
@@ -215,8 +212,7 @@ public:
     }
 
     std::optional<SurfaceDifferentials<T>> compute_differentials(
-        const geometry::RayDifferential<T, 3>& ray_diff
-    ) const {
+        const geometry::RayDifferential<T, 3>& ray_diff) const {
         // Treat "no perturbation" differential rays as invalid differentials.
         const auto& main_ray = ray_diff.main_ray();
         auto is_same_ray = [&](const geometry::Ray<T, 3>& ray) {
@@ -240,7 +236,7 @@ public:
 
         T x_d = -n_vec.dot(ray_diff.x().origin() - p);
         T y_d = -n_vec.dot(ray_diff.y().origin() - p);
-        
+
         T tx = x_d / tx_denom;
         T ty = y_d / ty_denom;
 
@@ -271,7 +267,8 @@ public:
 
         T limit = static_cast<T>(1e8);
         auto clamp_val = [&](T val) {
-            if (!std::isfinite(val)) return T(0);
+            if (!std::isfinite(val))
+                return T(0);
             return std::clamp(val, -limit, limit);
         };
 
@@ -284,4 +281,4 @@ public:
     }
 };
 
-} // namespace pbpt::geometry
+}  // namespace pbpt::geometry

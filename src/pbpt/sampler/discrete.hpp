@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <cstdint>
 #include <array>
 #include <optional>
@@ -12,12 +11,11 @@
 #include <vector>
 #include <optional>
 #include <algorithm>
-#include <tuple> // 用于返回三个值
-
+#include <tuple>  // 用于返回三个值
 
 namespace pbpt::sampler {
 
-template<typename T>
+template <typename T>
 struct DiscreteSampleResult {
     int index;
     T pdf;
@@ -25,12 +23,8 @@ struct DiscreteSampleResult {
 };
 
 // 返回值：{ index, pdf, u_remapped }
-template<typename T>
-inline DiscreteSampleResult<T> sample_discrete(
-    const std::vector<T>& weights,
-    std::vector<T>& cdf_buffer,
-    T u
-) {
+template <typename T>
+inline DiscreteSampleResult<T> sample_discrete(const std::vector<T>& weights, std::vector<T>& cdf_buffer, T u) {
     if (weights.empty()) {
         return DiscreteSampleResult<T>{-1, T(0), T(0)};
     }
@@ -45,7 +39,7 @@ inline DiscreteSampleResult<T> sample_discrete(
     for (int i = 1; i < n; i++) {
         cdf[i] = cdf[i - 1] + weights[i];
     }
-    
+
     T total_weight = cdf[n - 1];
     if (total_weight == T(0)) {
         return DiscreteSampleResult<T>{-1, T(0), T(0)};
@@ -56,7 +50,7 @@ inline DiscreteSampleResult<T> sample_discrete(
     T u_scaled = u * total_weight;
 
     auto it = std::upper_bound(cdf.begin(), cdf.end(), u_scaled);
-    
+
     int idx = 0;
     if (it == cdf.end()) {
         idx = n - 1;
@@ -73,17 +67,16 @@ inline DiscreteSampleResult<T> sample_discrete(
     T u_remapped = (u_scaled - cdf_prev) / weights[idx];
 
     // 钳制防止浮点误差
-    if (u_remapped >= T(1)) u_remapped = T(1) - std::numeric_limits<T>::epsilon();
-    if (u_remapped < T(0)) u_remapped = T(0);
+    if (u_remapped >= T(1))
+        u_remapped = T(1) - std::numeric_limits<T>::epsilon();
+    if (u_remapped < T(0))
+        u_remapped = T(0);
 
     return DiscreteSampleResult<T>{idx, pdf, u_remapped};
 }
 
-template<typename T>
-inline T sample_discrete_pdf(
-    const std::vector<T>& weights,
-    int index
-) {
+template <typename T>
+inline T sample_discrete_pdf(const std::vector<T>& weights, int index) {
     if (weights.empty() || index >= weights.size()) {
         return T(0);
     }
@@ -99,5 +92,4 @@ inline T sample_discrete_pdf(
     return weights[index] / total_weight;
 }
 
-
-};
+};  // namespace pbpt::sampler

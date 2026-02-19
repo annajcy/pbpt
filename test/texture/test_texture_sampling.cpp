@@ -2,17 +2,14 @@
 
 #include "pbpt/math/point.hpp"
 #include "pbpt/math/vector.hpp"
-#include "pbpt/texture/bitmap_texture.hpp"
+#include "pbpt/texture/plugin/texture/bitmap_texture.hpp"
+#include "pbpt/texture/plugin/texture/checkerboard_texture.hpp"
 #include "pbpt/texture/image.hpp"
 #include "pbpt/texture/texture.hpp"
 
 TEST(TextureSamplingTest, CheckerboardAlternatesCells) {
     using RGB = pbpt::radiometry::RGB<float>;
-    pbpt::texture::CheckerboardTexture<float> tex(
-        RGB(0.1f, 0.2f, 0.3f),
-        RGB(0.9f, 0.8f, 0.7f),
-        2.0f, 2.0f
-    );
+    pbpt::texture::CheckerboardTexture<float> tex(RGB(0.1f, 0.2f, 0.3f), RGB(0.9f, 0.8f, 0.7f), 2.0f, 2.0f);
 
     pbpt::texture::TextureEvalContext<float> c0{};
     c0.uv = pbpt::math::Point<float, 2>(0.1f, 0.1f);
@@ -37,7 +34,8 @@ TEST(TextureSamplingTest, BitmapTextureSamplesImageData) {
     image.get_pixel(0, 1) = pbpt::math::Vector<float, 3>(0.0f, 0.0f, 1.0f);
     image.get_pixel(1, 1) = pbpt::math::Vector<float, 3>(1.0f, 1.0f, 1.0f);
 
-    pbpt::texture::BitmapTexture<float> tex(std::move(image), pbpt::texture::WrapMode::Clamp, pbpt::texture::WrapMode::Clamp);
+    pbpt::texture::BitmapTexture<float> tex(std::move(image), pbpt::texture::WrapMode::Clamp,
+                                            pbpt::texture::WrapMode::Clamp);
 
     pbpt::texture::TextureEvalContext<float> ctx{};
     ctx.uv = pbpt::math::Point<float, 2>(0.5f, 0.5f);

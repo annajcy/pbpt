@@ -30,13 +30,12 @@ namespace pbpt::geometry {
 template <typename T, int N>
 class Ray {
 private:
-    Point<T, N>  m_origin{};
+    Point<T, N> m_origin{};
     Vector<T, N> m_direction{};
     T m_tmax{};
     T m_tmin{};
 
 public:
-
     /**
      * @brief Construct a ray from an origin and a direction assumed to be unit length.
      *
@@ -49,12 +48,9 @@ public:
      * @param tmin      Lower bound of the valid parameter interval.
      * @return Ray with the given attributes.
      */
-    static constexpr Ray<T, N> from_unit_direction(
-        const Point<T, N>& origin,
-        const Vector<T, N>& direction,
-        T tmax = std::numeric_limits<T>::infinity(),
-        T tmin = -std::numeric_limits<T>::infinity()
-    ) {
+    static constexpr Ray<T, N> from_unit_direction(const Point<T, N>& origin, const Vector<T, N>& direction,
+                                                   T tmax = std::numeric_limits<T>::infinity(),
+                                                   T tmin = -std::numeric_limits<T>::infinity()) {
         Ray<T, N> ray(origin, direction, tmax, tmin);
         return ray;
     }
@@ -65,11 +61,11 @@ public:
      * The origin is set to the zero point, the direction to (1, 0, ...),
      * and the parameter range to [-inf, +inf].
      */
-    constexpr Ray<T, N>() : 
-    m_origin(Point<T, N>::zeros()), 
-    m_direction(Vector<T, N>::zeros()), 
-    m_tmax(std::numeric_limits<T>::infinity()), 
-    m_tmin(-std::numeric_limits<T>::infinity()) {
+    constexpr Ray<T, N>()
+        : m_origin(Point<T, N>::zeros()),
+          m_direction(Vector<T, N>::zeros()),
+          m_tmax(std::numeric_limits<T>::infinity()),
+          m_tmin(-std::numeric_limits<T>::infinity()) {
         m_direction.x() = 1.0;
     }
 
@@ -85,8 +81,9 @@ public:
      * @param t_max     Upper bound of the valid parameter interval.
      * @param t_min     Lower bound of the valid parameter interval.
      */
-    template<typename U>
-    constexpr Ray<T, N>(const Point<U, N>& origin, const Vector<U, N>& direction, T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
+    template <typename U>
+    constexpr Ray<T, N>(const Point<U, N>& origin, const Vector<U, N>& direction,
+                        T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
         : m_origin(origin), m_direction(direction.normalized()), m_tmax(t_max), m_tmin(t_min) {}
 
     /**
@@ -95,14 +92,15 @@ public:
      * The direction is the normalized vector (target - origin). The
      * default parameter range is [0, +inf).
      */
-    template<typename U>
-    constexpr Ray<T, N>(const Point<U, N>& origin, const Point<U, N>& target, T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
+    template <typename U>
+    constexpr Ray<T, N>(const Point<U, N>& origin, const Point<U, N>& target,
+                        T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
         : m_origin(origin), m_direction((target - origin).normalized()), m_tmax(t_max), m_tmin(t_min) {}
 
     /// Get the ray origin (const).
     constexpr const auto& origin() const { return m_origin; }
     /// Get the ray direction (const).
-    constexpr const auto& direction() const { return m_direction; }  
+    constexpr const auto& direction() const { return m_direction; }
 
     /// Get the ray origin (mutable).
     constexpr auto& origin() { return m_origin; }
@@ -117,7 +115,6 @@ public:
     constexpr const T& t_min() const { return m_tmin; }
     /// Get the lower bound of the valid parameter interval (mutable).
     constexpr T& t_min() { return m_tmin; }
-
 
     /**
      * @brief Evaluate a point on the ray at parameter t.
@@ -165,20 +162,34 @@ public:
      * @param ray              Main ray.
      * @param differential_rays Array of offset rays (size N-1).
      */
-    constexpr RayDifferential<T, N>(
-        const Ray<T, N>& ray,
-        const std::array<Ray<T, N>, N - 1>& differential_rays
-    ) : m_main_ray(ray), m_differential_rays(differential_rays) {}
+    constexpr RayDifferential<T, N>(const Ray<T, N>& ray, const std::array<Ray<T, N>, N - 1>& differential_rays)
+        : m_main_ray(ray), m_differential_rays(differential_rays) {}
 
     /// Access the x-directional differential ray (const).
-    constexpr const Ray<T, N>& x() const requires (N > 0) { return m_differential_rays[0]; }
+    constexpr const Ray<T, N>& x() const
+        requires(N > 0)
+    {
+        return m_differential_rays[0];
+    }
     /// Access the x-directional differential ray (mutable).
-    constexpr Ray<T, N>& x() requires (N > 0) { return m_differential_rays[0]; }
+    constexpr Ray<T, N>& x()
+        requires(N > 0)
+    {
+        return m_differential_rays[0];
+    }
 
     /// Access the y-directional differential ray (const, only for N > 1).
-    constexpr const Ray<T, N>& y() const requires (N > 1) { return m_differential_rays[1]; }
+    constexpr const Ray<T, N>& y() const
+        requires(N > 1)
+    {
+        return m_differential_rays[1];
+    }
     /// Access the y-directional differential ray (mutable, only for N > 1).
-    constexpr Ray<T, N>& y() requires (N > 1) { return m_differential_rays[1]; }
+    constexpr Ray<T, N>& y()
+        requires(N > 1)
+    {
+        return m_differential_rays[1];
+    }
 
     /// Access a differential ray by index (mutable), with bounds checking.
     constexpr Ray<T, N>& differential_ray(int index) {
@@ -213,8 +224,8 @@ public:
      * @param scale  Scale factor applied to differentials.
      * @return Reference to this differential ray.
      */
-    template<typename U>
-    requires std::is_arithmetic_v<U>
+    template <typename U>
+        requires std::is_arithmetic_v<U>
     auto& scale(U scale) {
         auto& main_o = m_main_ray.origin();
         auto& main_d = m_main_ray.direction();
@@ -238,7 +249,7 @@ public:
      * @param scale Array of scale factors, one per differential ray.
      * @return Reference to this differential ray.
      */
-    template<typename U>
+    template <typename U>
     auto& scale(const std::array<U, N - 1>& scale) {
         auto& main_o = m_main_ray.origin();
         auto& main_d = m_main_ray.direction();
@@ -260,8 +271,8 @@ public:
      * @param scale Uniform scale factor.
      * @return New @c RayDifferential with scaled differentials.
      */
-    template<typename U>
-    requires std::is_arithmetic_v<U>
+    template <typename U>
+        requires std::is_arithmetic_v<U>
     auto scaled(U scale) const {
         auto rd = *this;
         rd.scale(scale);
@@ -275,13 +286,12 @@ public:
      * @param scale Array of scale factors, one per differential ray.
      * @return New @c RayDifferential with scaled differentials.
      */
-    template<typename U>
+    template <typename U>
     auto scaled(const std::array<U, N - 1>& scale) const {
         auto rd = *this;
         rd.scale(scale);
         return rd;
     }
-    
 };
 
 /**

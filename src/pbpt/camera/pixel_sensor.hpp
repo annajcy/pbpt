@@ -39,13 +39,14 @@ namespace pbpt::camera {
  * @tparam StandardIlluminantSpectrumType Spectrum type of the standard illuminant.
  * @tparam SensorResponseSpectrumType  Spectrum type describing the 3-channel sensor response.
  */
-template<typename T, typename SceneIlluminantSpectrumType, typename StandardIlluminantSpectrumType, typename SensorResponseSpectrumType>
+template <typename T, typename SceneIlluminantSpectrumType, typename StandardIlluminantSpectrumType,
+          typename SensorResponseSpectrumType>
 class PixelSensor {
 private:
     /// Spectral power distribution of the scene illuminant used for rendering.
     SceneIlluminantSpectrumType m_scene_illuminant;
     /// Reference standard illuminant used to define the XYZ color space (e.g. D65).
-    StandardIlluminantSpectrumType m_standard_illuminant;   
+    StandardIlluminantSpectrumType m_standard_illuminant;
     /// Target RGB color space into which XYZ values are converted.
     radiometry::RGBColorSpace<T> m_color_space;
     /// Spectral response of the 3 sensor channels.
@@ -57,7 +58,7 @@ private:
 
 public:
     PixelSensor() = default;
-    
+
     /**
      * @brief Construct a pixel sensor with an explicit sensor response and calibration.
      *
@@ -82,55 +83,41 @@ public:
      * @param sensor_response     Spectral response of the 3-channel sensor.
      * @param image_ratio         Global scale factor applied to sensor RGB.
      */
-    PixelSensor(
-        const SceneIlluminantSpectrumType& scene_illuminant,
-        const StandardIlluminantSpectrumType& standard_illuminant,
-        const radiometry::RGBColorSpace<T>& color_space,
-        const radiometry::ResponseSpectrum<SensorResponseSpectrumType>& sensor_response,
-        T image_ratio = T{1.0}
-    ) : m_scene_illuminant(scene_illuminant),
-        m_standard_illuminant(standard_illuminant),
-        m_sensor_response(sensor_response), 
-        m_color_space(color_space),
-        m_image_ratio(image_ratio) {
+    PixelSensor(const SceneIlluminantSpectrumType& scene_illuminant,
+                const StandardIlluminantSpectrumType& standard_illuminant,
+                const radiometry::RGBColorSpace<T>& color_space,
+                const radiometry::ResponseSpectrum<SensorResponseSpectrumType>& sensor_response, T image_ratio = T{1.0})
+        : m_scene_illuminant(scene_illuminant),
+          m_standard_illuminant(standard_illuminant),
+          m_sensor_response(sensor_response),
+          m_color_space(color_space),
+          m_image_ratio(image_ratio) {
+        math::Matrix<T, 3, radiometry::constant::swatch_reflectances_count> rgb_camera{};
+        for (int i = 0; i < radiometry::constant::swatch_reflectances_count; ++i) {
+            auto reflectance = radiometry::constant::swatch_reflectances<T>[i];
+            auto rgb = radiometry::project_reflectance<T, radiometry::RGB>(reflectance, m_scene_illuminant,
+                                                                           m_sensor_response, false);
+            rgb_camera[0][i] = rgb[0];
+            rgb_camera[1][i] = rgb[1];
+            rgb_camera[2][i] = rgb[2];
+        }
 
-            math::Matrix<T, 3, radiometry::constant::swatch_reflectances_count> rgb_camera{};
-            for (int i = 0; i < radiometry::constant::swatch_reflectances_count; ++i) {
-                auto reflectance = radiometry::constant::swatch_reflectances<T>[i];
-                auto rgb = radiometry::project_reflectance<T, radiometry::RGB>(
-                    reflectance, 
-                    m_scene_illuminant, 
-                    m_sensor_response, 
-                    false
-                );
-                rgb_camera[0][i] = rgb[0];
-                rgb_camera[1][i] = rgb[1];
-                rgb_camera[2][i] = rgb[2];
-            }
+        math::Matrix<T, 3, radiometry::constant::swatch_reflectances_count> xyz_output{};
+        for (int i = 0; i < radiometry::constant::swatch_reflectances_count; ++i) {
+            auto reflectance = radiometry::constant::swatch_reflectances<T>[i];
+            auto xyz = radiometry::project_reflectance<T, radiometry::XYZ>(
+                reflectance, m_standard_illuminant,
+                radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
+                    radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+                false);
+            xyz_output[0][i] = xyz[0];
+            xyz_output[1][i] = xyz[1];
+            xyz_output[2][i] = xyz[2];
+        }
 
-            math::Matrix<T, 3, radiometry::constant::swatch_reflectances_count> xyz_output{};
-            for (int i = 0; i < radiometry::constant::swatch_reflectances_count; ++i) {
-                auto reflectance = radiometry::constant::swatch_reflectances<T>[i];
-                auto xyz = radiometry::project_reflectance<T, radiometry::XYZ>(
-                    reflectance, 
-                    m_standard_illuminant, 
-                    radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-                        radiometry::constant::CIE_X<T>,
-                        radiometry::constant::CIE_Y<T>,
-                        radiometry::constant::CIE_Z<T>
-                    ), 
-                    false);
-                xyz_output[0][i] = xyz[0];
-                xyz_output[1][i] = xyz[1];
-                xyz_output[2][i] = xyz[2];  
-            }
-
-            m_sensor_rgb_to_xyz = math::solve_LMS(
-                rgb_camera,
-                xyz_output
-            );
+        m_sensor_rgb_to_xyz = math::solve_LMS(rgb_camera, xyz_output);
     }
-    
+
     /**
      * @brief Convert spectral radiance to sensor RGB using full spectra.
      *
@@ -143,15 +130,11 @@ public:
      * @param radiance      Spectral radiance at the pixel.
      * @return Sensor RGB triplet proportional to the captured signal.
      */
-    template<typename SpectrumType>
-    radiometry::RGB<T> radiance_to_sensor_rgb(
-        const SpectrumType& radiance
-    ) const {
-        auto sensor_rgb = radiometry::project_emission<T, radiometry::RGB, SpectrumType, SceneIlluminantSpectrumType, SensorResponseSpectrumType>(
-            radiance,
-            m_scene_illuminant,
-            m_sensor_response
-        );
+    template <typename SpectrumType>
+    radiometry::RGB<T> radiance_to_sensor_rgb(const SpectrumType& radiance) const {
+        auto sensor_rgb =
+            radiometry::project_emission<T, radiometry::RGB, SpectrumType, SceneIlluminantSpectrumType,
+                                         SensorResponseSpectrumType>(radiance, m_scene_illuminant, m_sensor_response);
         return sensor_rgb * m_image_ratio;
     }
 
@@ -171,20 +154,15 @@ public:
      * @param pdf          Sampling PDF for each wavelength sample.
      * @return Sensor RGB triplet estimated from the sampled spectrum.
      */
-    template<int N>
-    radiometry::RGB<T> radiance_to_sensor_rgb(
-        const radiometry::SampledSpectrum<T, N>& radiance, 
-        const radiometry::SampledWavelength<T, N>& wavelengths,
-        const radiometry::SampledPdf<T, N> &pdf
-    ) const {
+    template <int N>
+    radiometry::RGB<T> radiance_to_sensor_rgb(const radiometry::SampledSpectrum<T, N>& radiance,
+                                              const radiometry::SampledWavelength<T, N>& wavelengths,
+                                              const radiometry::SampledPdf<T, N>& pdf) const {
         auto sampled_illuminant = m_scene_illuminant.template sample<N>(wavelengths);
-        auto sensor_rgb = radiometry::project_sampled_emission<T, radiometry::RGB, N, radiometry::SampledSpectrum<T, N>, radiometry::SampledSpectrum<T, N>, SensorResponseSpectrumType>(
-            radiance,
-            sampled_illuminant,
-            wavelengths,
-            pdf,
-            m_sensor_response
-        );
+        auto sensor_rgb =
+            radiometry::project_sampled_emission<T, radiometry::RGB, N, radiometry::SampledSpectrum<T, N>,
+                                                 radiometry::SampledSpectrum<T, N>, SensorResponseSpectrumType>(
+                radiance, sampled_illuminant, wavelengths, pdf, m_sensor_response);
         return sensor_rgb * m_image_ratio;
     }
 
@@ -197,9 +175,7 @@ public:
      *
      * @return Sensor-RGB-to-XYZ transformation matrix.
      */
-    math::Matrix<T, 3, 3> sensor_rgb_to_xyz_matrix() const {
-        return m_sensor_rgb_to_xyz;
-    }
+    math::Matrix<T, 3, 3> sensor_rgb_to_xyz_matrix() const { return m_sensor_rgb_to_xyz; }
 
     /**
      * @brief Transform sensor RGB values to CIE XYZ using a 3×3 matrix.
@@ -228,7 +204,6 @@ public:
         radiometry::XYZ<T> xyz = sensor_rgb_to_xyz(sensor_rgb);
         return m_color_space.to_rgb(xyz);
     }
-
 };
 
-};
+};  // namespace pbpt::camera

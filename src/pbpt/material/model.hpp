@@ -18,13 +18,9 @@ private:
     T m_alpha_y;
 
 public:
-    static T roughness_to_alpha(T roughness) {
-        return std::sqrt(roughness);
-    }
+    static T roughness_to_alpha(T roughness) { return std::sqrt(roughness); }
 
-    static T alpha_to_roughness(T alpha) {
-        return alpha * alpha;
-    }
+    static T alpha_to_roughness(T alpha) { return alpha * alpha; }
 
     static MicrofacetModel<T> from_roughness(T roughness_x, T roughness_y) {
         T alpha_x = roughness_to_alpha(roughness_x);
@@ -32,9 +28,7 @@ public:
         return MicrofacetModel<T>(alpha_x, alpha_y);
     }
 
-    static MicrofacetModel<T> from_alphas(T alpha_x, T alpha_y) {
-        return MicrofacetModel<T>(alpha_x, alpha_y);
-    }
+    static MicrofacetModel<T> from_alphas(T alpha_x, T alpha_y) { return MicrofacetModel<T>(alpha_x, alpha_y); }
 
 public:
     MicrofacetModel(T alpha_x, T alpha_y) : m_alpha_x(alpha_x), m_alpha_y(alpha_y) {}
@@ -63,13 +57,11 @@ public:
             return T(0);
         }
         T a2 = (geometry::cos_phi(w) * m_alpha_x) * (geometry::cos_phi(w) * m_alpha_x) +
-                    (geometry::sin_phi(w) * m_alpha_y) * (geometry::sin_phi(w) * m_alpha_y);
-        return (-1 + std::sqrt(1 + tan2_theta * a2)) / T(2); 
+               (geometry::sin_phi(w) * m_alpha_y) * (geometry::sin_phi(w) * m_alpha_y);
+        return (-1 + std::sqrt(1 + tan2_theta * a2)) / T(2);
     }
 
-    T G1(const math::Vector<T, 3>& w) const {
-        return T(1) / (T(1) + lambda(w));
-    }
+    T G1(const math::Vector<T, 3>& w) const { return T(1) / (T(1) + lambda(w)); }
 
     T G(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi) const {
         return T(1) / ((T(1) + lambda(wo)) * (T(1) + lambda(wi)));
@@ -79,9 +71,7 @@ public:
         return D(wm) * G1(wo) * std::abs(wo.dot(wm)) / std::abs(geometry::cos_theta(wo));
     }
 
-    T pdf_wm(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wm) const {
-        return D_visible(wo, wm);
-    }
+    T pdf_wm(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wm) const { return D_visible(wo, wm); }
 
     math::Vector<T, 3> sample_wm(const math::Vector<T, 3>& wo, const math::Point<T, 2>& u2d) const {
         // transform the view direction to the hemisphere configuration
@@ -92,9 +82,8 @@ public:
 
         // Section 1: Construct PBRT-style Frame
         // T1 is forced to be perpendicular to macroscopic normal (0, 0, 1) and wh
-        math::Vector<T, 3> T1 = (wh.z() < T(0.99999))
-                                    ? math::cross(math::Vector<T, 3>(0, 0, 1), wh).normalized()
-                                    : math::Vector<T, 3>(1, 0, 0);
+        math::Vector<T, 3> T1 = (wh.z() < T(0.99999)) ? math::cross(math::Vector<T, 3>(0, 0, 1), wh).normalized()
+                                                      : math::Vector<T, 3>(1, 0, 0);
         math::Vector<T, 3> T2 = math::cross(wh, T1);
 
         // Section 2: Sample uniform disk
@@ -114,11 +103,7 @@ public:
         return wm;
     }
 
-    bool is_delta() const {
-        return std::max(m_alpha_x, m_alpha_y) < T(1e-3);
-    }
-
+    bool is_delta() const { return std::max(m_alpha_x, m_alpha_y) < T(1e-3); }
 };
-
 
 }  // namespace pbpt::material

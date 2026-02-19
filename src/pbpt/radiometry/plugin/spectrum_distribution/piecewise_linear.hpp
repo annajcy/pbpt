@@ -18,22 +18,25 @@ namespace pbpt::radiometry {
  * Sample points are (wavelength, value) pairs; the spectrum value
  * is linearly interpolated between neighboring points.
  */
-template<typename T>
+template <typename T>
 class PiecewiseLinearSpectrumDistribution : public SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T> {
     friend class SpectrumDistribution<PiecewiseLinearSpectrumDistribution<T>, T>;
+
 public:
     static PiecewiseLinearSpectrumDistribution from_string(const std::string& str) {
         std::vector<std::pair<T, T>> points;
         for (int i = 0, c = 0; i < str.size();) {
-            while (i < str.size() && std::isspace(str[i])) i++;
-            for (c = i; c < str.size() && str[c] != ','; c++);
+            while (i < str.size() && std::isspace(str[i]))
+                i++;
+            for (c = i; c < str.size() && str[c] != ','; c++)
+                ;
             std::string point_str = str.substr(i, c - i);
             size_t sep = point_str.find(':');
             if (sep == std::string::npos) {
                 throw std::invalid_argument("Invalid point format in PiecewiseLinearSpectrumDistribution");
             }
             T lambda = static_cast<T>(std::atof(point_str.substr(0, sep).c_str()));
-            T value  = static_cast<T>(std::atof(point_str.substr(sep + 1).c_str()));
+            T value = static_cast<T>(std::atof(point_str.substr(sep + 1).c_str()));
             points.emplace_back(lambda, value);
             i = ++c;
         }
@@ -41,7 +44,7 @@ public:
     }
 
 private:
-    std::vector<std::pair<T, T>> m_points; // (lambda, value)
+    std::vector<std::pair<T, T>> m_points;  // (lambda, value)
 
 public:
     /**
@@ -49,10 +52,9 @@ public:
      *
      * Values between knots are obtained by linear interpolation.
      */
-    PiecewiseLinearSpectrumDistribution(const std::vector<std::pair<T, T>>& points)
-        : m_points(points) {
-            sort_points();
-        }
+    PiecewiseLinearSpectrumDistribution(const std::vector<std::pair<T, T>>& points) : m_points(points) {
+        sort_points();
+    }
 
 private:
     constexpr T at_impl(T lambda) const {
@@ -68,23 +70,17 @@ private:
             return m_points.back().second;
         }
 
-        auto it = std::lower_bound(
-            m_points.begin(), 
-            m_points.end(), 
-            lambda,
-            [](const auto& point, T value) { return point.first < value; }
-        );
+        auto it = std::lower_bound(m_points.begin(), m_points.end(), lambda,
+                                   [](const auto& point, T value) { return point.first < value; });
 
         const auto& [lambda1, value1] = *it;
         const auto& [lambda0, value0] = *(it - 1);
-        
+
         return value0 + (value1 - value0) * (lambda - lambda0) / (lambda1 - lambda0);
     }
 
     void sort_points() {
-        std::sort(m_points.begin(), m_points.end(), [](const auto& a, const auto& b) {
-            return a.first < b.first;
-        });
+        std::sort(m_points.begin(), m_points.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
     }
 
     /**
@@ -93,9 +89,7 @@ private:
      * The new point is inserted without re-sorting; call sort_points()
      * afterwards if you rely on the ordering of the knot list.
      */
-    void add_point(T lambda, T value) {
-        m_points.emplace_back(lambda, value);
-    }
+    void add_point(T lambda, T value) { m_points.emplace_back(lambda, value); }
 
     /**
      * @brief Removes all knots with the given wavelength.
@@ -103,9 +97,7 @@ private:
      * If multiple points share the same wavelength, they are all removed.
      */
     void remove_point(T lambda) {
-        std::erase_if(m_points, [lambda](const auto& p) {
-            return p.first == lambda;
-        });
+        std::erase_if(m_points, [lambda](const auto& p) { return p.first == lambda; });
     }
 };
 

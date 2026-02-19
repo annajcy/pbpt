@@ -22,7 +22,7 @@ namespace pbpt::sampler {
  * @param radius Radius of the hemisphere.
  * @return math::Point<T, 3> Sampled point on the hemisphere.
  */
-template<typename T>
+template <typename T>
 inline math::Point<T, 3> sample_uniform_hemisphere(const math::Point<T, 2>& u2d, T radius = 1.0) {
     T z = u2d.x();
     T r = std::sqrt(std::max(T(0), T(1) - z * z));
@@ -37,7 +37,7 @@ inline math::Point<T, 3> sample_uniform_hemisphere(const math::Point<T, 2>& u2d,
  * @param radius Radius of the hemisphere.
  * @return T Probability density function value.
  */
-template<typename T>
+template <typename T>
 inline T sample_uniform_hemisphere_pdf(T radius = static_cast<T>(1.0)) {
     return 1.0 / (2.0 * math::pi_v<T> * radius * radius);
 }
@@ -48,9 +48,9 @@ inline T sample_uniform_hemisphere_pdf(T radius = static_cast<T>(1.0)) {
  * * The algorithm works in two steps:
  * 1. Uniformly sample a point (u, v) on the unit disk using concentric mapping.
  * 2. Project this point vertically onto the hemisphere: z = sqrt(1 - u^2 - v^2).
- * * According to Malley's method, this geometric projection generates sample directions 
+ * * According to Malley's method, this geometric projection generates sample directions
  * with a probability density proportional to the cosine of the zenith angle (theta).
- * This is perfect for importance sampling Lambertian (diffuse) surfaces, as it exactly 
+ * This is perfect for importance sampling Lambertian (diffuse) surfaces, as it exactly
  * cancels out the cosine term in the rendering equation.
  *
  * PDF(omega) = cos(theta) / pi
@@ -60,7 +60,7 @@ inline T sample_uniform_hemisphere_pdf(T radius = static_cast<T>(1.0)) {
  * @param radius Radius of the hemisphere (usually 1.0 for direction sampling).
  * @return math::Point<T, 3> Sampled point on the hemisphere.
  */
-template<typename T>
+template <typename T>
 math::Point<T, 3> sample_cosine_weighted_hemisphere(const math::Point<T, 2>& u2d, T radius = 1.0) {
     auto d = sample_uniform_disk_concentric(u2d);
     auto r2 = d.x() * d.x() + d.y() * d.y();
@@ -72,14 +72,14 @@ math::Point<T, 3> sample_cosine_weighted_hemisphere(const math::Point<T, 2>& u2d
  * @brief Compute the probability density function (PDF) for cosine-weighted hemisphere sampling.
  * * The PDF with respect to solid angle is proportional to the cosine of the zenith angle theta:
  * p(omega) = cos(theta) / pi
- * * Ideally, this function pairs with any sampler that generates a cosine-weighted distribution 
+ * * Ideally, this function pairs with any sampler that generates a cosine-weighted distribution
  * (like sample_cosine_hemisphere_concentric).
  * * @tparam T Numeric type.
  * @param p The point on the hemisphere to evaluate the PDF at.
  * @param radius Radius of the hemisphere (default 1.0).
  * @return T Probability density function value (w.r.t solid angle).
  */
-template<typename T>
+template <typename T>
 inline T sample_cosine_weighted_hemisphere_pdf(const math::Point<T, 3>& u2d, T radius = 1.0) {
     // Calculate cos(theta). For a point on a sphere, z = r * cos(theta).
     // Therefore, cos(theta) = z / r.
@@ -104,7 +104,7 @@ inline T sample_cosine_weighted_hemisphere_pdf(const math::Point<T, 3>& u2d, T r
  * @param radius Radius of the sphere.
  * @return math::Point<T, 3> Sampled point on the sphere.
  */
-template<typename T>
+template <typename T>
 inline math::Point<T, 3> sample_uniform_sphere(const math::Point<T, 2>& u2d, T radius = 1.0) {
     T z = 1.0 - 2.0 * u2d.x();
     T r = std::sqrt(std::max(T(0), T(1) - z * z));
@@ -119,7 +119,7 @@ inline math::Point<T, 3> sample_uniform_sphere(const math::Point<T, 2>& u2d, T r
  * @param radius Radius of the sphere.
  * @return T Probability density function value.
  */
-template<typename T>
+template <typename T>
 inline T sample_uniform_sphere_pdf(T radius = 1.0) {
     return 1.0 / (4.0 * math::pi_v<T> * radius * radius);
 }
@@ -127,26 +127,26 @@ inline T sample_uniform_sphere_pdf(T radius = 1.0) {
  * @brief Uniformly samples a point on the surface of a 3D triangle.
  *
  * This function implements the Uniform Triangle Sampling algorithm using the
- * Inverse Transform Sampling method to ensure a constant probability density 
+ * Inverse Transform Sampling method to ensure a constant probability density
  * across the triangle's surface area.
  *
  * @details
  *
  * 1. The Naive Approach (Incorrect)
- * A naive strategy might be to sample b1 uniformly from [0, 1] and then sample 
- * b2 uniformly from [0, 1 - b1]. This is incorrect because the "width" 
- * (differential area) of the triangle decreases linearly as b1 increases. 
- * Uniformly sampling b1 would result in a higher density of points near the 
+ * A naive strategy might be to sample b1 uniformly from [0, 1] and then sample
+ * b2 uniformly from [0, 1 - b1]. This is incorrect because the "width"
+ * (differential area) of the triangle decreases linearly as b1 increases.
+ * Uniformly sampling b1 would result in a higher density of points near the
  * triangle's "tip" (where b1 is large).
  *
  * 2. Marginal Probability Density Function (PDF)
- * To achieve uniform distribution over the area, the probability of selecting a specific 
+ * To achieve uniform distribution over the area, the probability of selecting a specific
  * b1 must be proportional to the triangle's width at that point (which is 1 - b1).
  * Therefore, the marginal PDF for b1 is:
  * * p(b1) proportional to (1 - b1)
  *
  * 3. Inverse Transform Sampling
- * We seek a transformation b1 = T(u1) mapping a uniform random number u1 
+ * We seek a transformation b1 = T(u1) mapping a uniform random number u1
  * to the target distribution.
  * First, we compute the Cumulative Distribution Function (CDF) by integrating the PDF:
  * * u1 proportional to integral(1 - b1) db1  =>  u1 = (1 - b1)^2
@@ -154,7 +154,7 @@ inline T sample_uniform_sphere_pdf(T radius = 1.0) {
  * * b1 = 1 - sqrt(u1)
  *
  * 4. Conditional Sampling
- * Once b1 is fixed, b2 must be sampled uniformly along the remaining 
+ * Once b1 is fixed, b2 must be sampled uniformly along the remaining
  * vertical segment length (1 - b1):
  * * b2 = u2 * (1 - b1)
  *
@@ -165,13 +165,9 @@ inline T sample_uniform_sphere_pdf(T radius = 1.0) {
  * @param v2 The third vertex of the triangle.
  * @return math::Point<T, 3> A random point uniformly distributed on the triangle surface.
  */
-template<typename T>
-inline math::Point<T, 3> sample_uniform_triangle(
-    const math::Point<T, 2>& u2d,
-    const math::Point<T, 3>& v0,
-    const math::Point<T, 3>& v1,
-    const math::Point<T, 3>& v2
-) {
+template <typename T>
+inline math::Point<T, 3> sample_uniform_triangle(const math::Point<T, 2>& u2d, const math::Point<T, 3>& v0,
+                                                 const math::Point<T, 3>& v1, const math::Point<T, 3>& v2) {
     // 1. Sample the first barycentric coordinate b1 (associated with v1).
     // The sqrt pushes samples towards smaller values where the triangle is wider.
     T b1 = 1.0 - std::sqrt(u2d.x());
@@ -185,17 +181,13 @@ inline math::Point<T, 3> sample_uniform_triangle(
 
     // 4. Interpolate vertices to get the final point P.
     // P = b0*v0 + b1*v1 + b2*v2
-    return math::Point<T, 3>(
-        b0 * v0.to_vector() + 
-        b1 * v1.to_vector() + 
-        b2 * v2.to_vector()
-    );
+    return math::Point<T, 3>(b0 * v0.to_vector() + b1 * v1.to_vector() + b2 * v2.to_vector());
 }
 
 /**
  * @brief Computes the Probability Density Function (PDF) for uniform triangle sampling.
  *
- * Since the sampling is uniform over the surface area, the PDF is constant 
+ * Since the sampling is uniform over the surface area, the PDF is constant
  * across the entire triangle.
  *
  * @details
@@ -210,12 +202,9 @@ inline math::Point<T, 3> sample_uniform_triangle(
  * @param v2 The third vertex of the triangle.
  * @return T The PDF value (1.0 / Area). Returns 0 if the area is zero (degenerate triangle).
  */
-template<typename T>
-inline T sample_uniform_triangle_pdf(
-    const math::Point<T, 3>& v0,
-    const math::Point<T, 3>& v1,
-    const math::Point<T, 3>& v2
-) {
+template <typename T>
+inline T sample_uniform_triangle_pdf(const math::Point<T, 3>& v0, const math::Point<T, 3>& v1,
+                                     const math::Point<T, 3>& v2) {
     auto edge1 = v1 - v0;
     auto edge2 = v2 - v0;
     // Calculate triangle area: half of the magnitude of the cross product.
@@ -229,11 +218,8 @@ inline T sample_uniform_triangle_pdf(
     return 1.0 / area;
 }
 
-
-template<typename T>
-inline math::Point<T, 3> sample_uniform_triangle_barycentric(
-    const math::Point<T, 2>& u2d
-) {
+template <typename T>
+inline math::Point<T, 3> sample_uniform_triangle_barycentric(const math::Point<T, 2>& u2d) {
     // 1. Sample the first barycentric coordinate b1 (associated with v1).
     // The sqrt pushes samples towards smaller values where the triangle is wider.
     T b1 = 1.0 - std::sqrt(u2d.x());
@@ -248,9 +234,9 @@ inline math::Point<T, 3> sample_uniform_triangle_barycentric(
     return math::Point<T, 3>(b0, b1, b2);
 }
 
-template<typename T>
+template <typename T>
 inline T sample_uniform_triangle_barycentric_pdf(const math::Point<T, 3>& barycentric) {
     return T(2);
 }
 
-}
+}  // namespace pbpt::sampler

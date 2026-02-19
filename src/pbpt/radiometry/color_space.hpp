@@ -21,7 +21,7 @@ namespace pbpt::radiometry {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 class RGBColorSpace {
 private:
     math::Point<T, 2> m_r_xy;
@@ -36,7 +36,7 @@ private:
 public:
     /// Default constructor - creates an uninitialized color space.
     RGBColorSpace() = default;
-    
+
     /**
      * @brief Constructs an RGB color space from primaries and white point.
      *
@@ -50,29 +50,18 @@ public:
      * @param b_xy        Chromaticity of the blue primary.
      * @param m_white_point Reference white point in XYZ.
      */
-    RGBColorSpace(
-        const math::Point<T, 2>& r_xy, 
-        const math::Point<T, 2>& g_xy, 
-        const math::Point<T, 2>& b_xy, 
-        const XYZ<T>& m_white_point
-    ) : m_r_xy(r_xy), m_g_xy(g_xy), m_b_xy(b_xy), m_white_point(m_white_point) {
+    RGBColorSpace(const math::Point<T, 2>& r_xy, const math::Point<T, 2>& g_xy, const math::Point<T, 2>& b_xy,
+                  const XYZ<T>& m_white_point)
+        : m_r_xy(r_xy), m_g_xy(g_xy), m_b_xy(b_xy), m_white_point(m_white_point) {
         XYZ<T> r_chroma = XYZ<T>::from_xyY(r_xy);
         XYZ<T> g_chroma = XYZ<T>::from_xyY(g_xy);
         XYZ<T> b_chroma = XYZ<T>::from_xyY(b_xy);
 
-        math::Matrix<T, 3, 3> M = math::Matrix<T, 3, 3>::from_cols(
-            r_chroma, 
-            g_chroma, 
-            b_chroma
-        );
+        math::Matrix<T, 3, 3> M = math::Matrix<T, 3, 3>::from_cols(r_chroma, g_chroma, b_chroma);
 
         math::Vector<T, 3> s = M.inversed() * m_white_point;
 
-        m_rgb_to_xyz = math::Matrix<T, 3, 3>::from_cols( 
-            s.x() * r_chroma, 
-            s.y() * g_chroma, 
-            s.z() * b_chroma
-        );
+        m_rgb_to_xyz = math::Matrix<T, 3, 3>::from_cols(s.x() * r_chroma, s.y() * g_chroma, s.z() * b_chroma);
 
         m_xyz_to_rgb = m_rgb_to_xyz.inversed();
     }
@@ -92,15 +81,10 @@ public:
     const math::Matrix<T, 3, 3>& xyz_to_rgb_matrix() const { return m_xyz_to_rgb; }
 
     /// Converts a color from RGB to XYZ using this color space.
-    XYZ<T> to_xyz(const RGB<T>& rgb) const {
-        return m_rgb_to_xyz * rgb;
-    }
+    XYZ<T> to_xyz(const RGB<T>& rgb) const { return m_rgb_to_xyz * rgb; }
 
     /// Converts a color from XYZ to RGB using this color space.
-    RGB<T> to_rgb(const XYZ<T>& xyz) const {
-        return m_xyz_to_rgb * xyz;
-    }
-
+    RGB<T> to_rgb(const XYZ<T>& xyz) const { return m_xyz_to_rgb * xyz; }
 };
 
-} 
+}  // namespace pbpt::radiometry

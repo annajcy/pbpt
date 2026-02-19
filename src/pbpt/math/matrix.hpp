@@ -42,7 +42,7 @@ protected:
     /// Pointer to the first element in the underlying storage.
     const T* m_start_ptr;
     /// Stride (in elements) between consecutive entries.
-    int      m_stride;
+    int m_stride;
 
 public:
     /// @brief Creates a non-owning view of data elements with specified stride.
@@ -56,21 +56,20 @@ public:
      * underlying data, and that at least N elements are addressable
      * with the given stride.
      */
-    [[nodiscard]] constexpr VectorView(const T* start, int stride) 
-        : m_start_ptr(start), m_stride(stride) {
-        assert_if_ex<std::invalid_argument>([&]() { return start == nullptr; }, 
-                                           "VectorView requires non-null data pointer");
+    [[nodiscard]] constexpr VectorView(const T* start, int stride) : m_start_ptr(start), m_stride(stride) {
+        assert_if_ex<std::invalid_argument>([&]() { return start == nullptr; },
+                                            "VectorView requires non-null data pointer");
     }
 
     /// Returns element @p i without bounds checking.
     constexpr const T& operator[](int i) const { return m_start_ptr[i * m_stride]; }
     /// Returns element @p i without bounds checking (mutable).
-    constexpr T&       operator[](int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
+    constexpr T& operator[](int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
 
     /// Returns element @p i (same as operator[]).
     constexpr const T& at(int i) const { return m_start_ptr[i * m_stride]; }
     /// Returns element @p i (same as operator[]; mutable).
-    constexpr T&       at(int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
+    constexpr T& at(int i) { return const_cast<T&>(this->m_start_ptr[i * this->m_stride]); }
 
     /// Number of elements in the view.
     constexpr int dims() const noexcept { return N; }
@@ -140,9 +139,9 @@ protected:
     /// Reference to the original matrix that owns the data.
     const Matrix<T, R, C>& m_original;
     /// Row index of the top-left element of the view.
-    int                    m_row_start{};
+    int m_row_start{};
     /// Column index of the top-left element of the view.
-    int                    m_col_start{};
+    int m_col_start{};
 
 public:
     /// View type for a row inside the submatrix.
@@ -196,7 +195,7 @@ public:
     }
 
     /// Visits all elements in the view (mutable).
-    template<std::invocable<T&, int, int> F>
+    template <std::invocable<T&, int, int> F>
     void visit(F func) {
         for (int i = 0; i < ViewR; ++i) {
             for (int j = 0; j < ViewC; ++j) {
@@ -206,7 +205,7 @@ public:
     }
 
     /// Visits all elements in the view (const).
-    template<std::invocable<const T&, int, int> F>
+    template <std::invocable<const T&, int, int> F>
     void visit(F func) const {
         for (int i = 0; i < ViewR; ++i) {
             for (int j = 0; j < ViewC; ++j) {
@@ -246,7 +245,7 @@ public:
     // Static factory methods (unified with Vector design)
     /// Returns a matrix with all entries initialized to zero.
     static constexpr Matrix zeros() noexcept { return Matrix{}; }
-    
+
     /// Returns a matrix with all entries initialized to @p value.
     static constexpr Matrix filled(T value) noexcept {
         Matrix result{};
@@ -254,10 +253,10 @@ public:
             result.m_data[i] = value;
         return result;
     }
-    
+
     /// Returns a matrix with all entries equal to one.
     static constexpr Matrix ones() noexcept { return filled(T(1)); }
-    
+
     /**
      * @brief Returns the identity matrix (only defined for square matrices).
      */
@@ -308,7 +307,7 @@ public:
              ++col_index;
          })(),
          ...);
-        return result;  
+        return result;
     }
 
     /**
@@ -316,7 +315,7 @@ public:
      *
      * Expects exactly R row vectors of type `Vector<T,C>`.
      */
-    template<typename... Vecs>
+    template <typename... Vecs>
         requires(sizeof...(Vecs) == R && (std::is_convertible_v<Vecs, Vector<T, C>> && ...))
     constexpr static Matrix from_rows(Vecs&&... row_vecs) {
         int row_index = 0;
@@ -328,7 +327,7 @@ public:
              ++row_index;
          })(),
          ...);
-        return result;  
+        return result;
     }
 
     /**
@@ -407,15 +406,15 @@ public:
     // Accessors with improved error handling
     /// Returns the element at (row, column) with bounds checking (const).
     constexpr const T& at(int x, int y) const {
-        assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; }, 
-                                       "Matrix index out of range");
+        assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; },
+                                        "Matrix index out of range");
         return m_data[x * C + y];
     }
 
     /// Returns the element at (row, column) with bounds checking (mutable).
     constexpr T& at(int x, int y) {
-        assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; }, 
-                                       "Matrix index out of range");
+        assert_if_ex<std::out_of_range>([&]() { return x < 0 || x >= R || y < 0 || y >= C; },
+                                        "Matrix index out of range");
         return m_data[x * C + y];
     }
 
@@ -444,8 +443,8 @@ public:
     /// Pointer to the underlying contiguous storage (const).
     const T* data() const noexcept { return m_data.data(); }
     /// Pointer to the underlying contiguous storage (mutable).
-    T*       data() noexcept { return m_data.data(); }
-    
+    T* data() noexcept { return m_data.data(); }
+
     /// Returns a copy of the underlying array storage.
     constexpr std::array<T, R * C> to_array() const noexcept { return m_data; }
 
@@ -458,21 +457,19 @@ public:
     template <typename U>
     constexpr bool operator==(const Matrix<U, R, C>& rhs) const noexcept {
         // Use std::ranges::equal with custom comparator for floating-point comparison
-        return std::ranges::equal(m_data, rhs.to_array(), 
-                                 [](const T& a, const U& b) { 
-                                     return is_equal(a, static_cast<T>(b)); 
-                                 });
+        return std::ranges::equal(m_data, rhs.to_array(),
+                                  [](const T& a, const U& b) { return is_equal(a, static_cast<T>(b)); });
     }
 
     /// Logical negation of operator==.
     template <typename U>
-    constexpr bool operator!=(const Matrix<U, R, C>& rhs) const noexcept { 
-        return !(*this == rhs); 
+    constexpr bool operator!=(const Matrix<U, R, C>& rhs) const noexcept {
+        return !(*this == rhs);
     }
 
     /// @brief Check if any element in the matrix is NaN
     /// @return true if any element is NaN, false otherwise
-    [[nodiscard]] constexpr bool has_nan() const noexcept 
+    [[nodiscard]] constexpr bool has_nan() const noexcept
         requires std::is_floating_point_v<T>
     {
         return std::ranges::any_of(m_data, [](T val) { return std::isnan(val); });
@@ -508,8 +505,8 @@ public:
     template <typename U>
         requires std::is_arithmetic_v<U>
     constexpr Matrix& operator/=(const U& scalar) noexcept {
-        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
-                                       "Division by zero in matrix division");
+        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); },
+                                        "Division by zero in matrix division");
         for (int i = 0; i < R * C; ++i)
             m_data[i] /= static_cast<T>(scalar);
         return *this;
@@ -588,8 +585,7 @@ public:
         requires(R == C)
     {
         T det = determinant();
-        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, 
-                                       "Cannot invert a singular matrix");
+        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, "Cannot invert a singular matrix");
 
         // Optimized hardcoded versions for small matrices
         if constexpr (R == 1) {
@@ -607,7 +603,7 @@ public:
             Matrix cofactor_matrix{};
             for (int r = 0; r < R; ++r) {
                 for (int c = 0; c < C; ++c) {
-                    T sign                = ((r + c) % 2 == 0) ? T(1) : T(-1);
+                    T sign = ((r + c) % 2 == 0) ? T(1) : T(-1);
                     cofactor_matrix[r][c] = sign * minor_matrix(r, c).determinant();
                 }
             }
@@ -624,47 +620,46 @@ public:
         requires(R == C)
     {
         T det = determinant();
-        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, 
-                                       "Cannot invert a singular matrix");
+        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, "Cannot invert a singular matrix");
 
         Matrix cofactor_matrix{};
         for (int r = 0; r < R; ++r) {
             for (int c = 0; c < C; ++c) {
-                T sign                = ((r + c) % 2 == 0) ? T(1) : T(-1);
+                T sign = ((r + c) % 2 == 0) ? T(1) : T(-1);
                 cofactor_matrix[r][c] = sign * minor_matrix(r, c).determinant();
             }
         }
 
         Matrix adjugate_matrix = cofactor_matrix.transposed();
-        *this                  = adjugate_matrix * (T(1) / det);
+        *this = adjugate_matrix * (T(1) / det);
         return *this;
     }
 
     /// Returns a view of a submatrix starting at (row_start, col_start).
     template <int ViewR, int ViewC>
     constexpr Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) {
-        assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; }, 
-                                       "View dimensions exceed matrix bounds");
+        assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; },
+                                        "View dimensions exceed matrix bounds");
         return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
 
     /// Returns a const view of a submatrix starting at (row_start, col_start).
     template <int ViewR, int ViewC>
     constexpr const Matrix::MatView<ViewR, ViewC> view(int row_start, int col_start) const {
-        assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; }, 
-                                       "View dimensions exceed matrix bounds");
+        assert_if_ex<std::out_of_range>([&]() { return row_start + ViewR > R || col_start + ViewC > C; },
+                                        "View dimensions exceed matrix bounds");
         return Matrix::MatView<ViewR, ViewC>(*this, row_start, col_start);
     }
 
     /// @brief Creates a minor matrix by removing specified row and column.
     /// @param row_to_remove The row index to remove (0-based)
-    /// @param col_to_remove The column index to remove (0-based) 
+    /// @param col_to_remove The column index to remove (0-based)
     /// @return A (R-1)×(C-1) matrix with the specified row and column removed
     constexpr auto minor_matrix(int row_to_remove, int col_to_remove) const
         requires(R == C)
     {
         Matrix<T, R - 1, C - 1> minor{};
-        int                     minor_r = 0;
+        int minor_r = 0;
         for (int r = 0; r < R; ++r) {
             if (r == row_to_remove)
                 continue;
@@ -690,13 +685,13 @@ private:
         T det = (*this).determinant();
         T inv_det = T(1) / det;
         Matrix result{};
-        
+
         // For 2x2 matrix [[a, b], [c, d]], inverse is (1/det) * [[d, -b], [-c, a]]
-        result.at(0, 0) =  (*this).at(1, 1) * inv_det;  // d
+        result.at(0, 0) = (*this).at(1, 1) * inv_det;   // d
         result.at(0, 1) = -(*this).at(0, 1) * inv_det;  // -b
         result.at(1, 0) = -(*this).at(1, 0) * inv_det;  // -c
-        result.at(1, 1) =  (*this).at(0, 0) * inv_det;  // a
-        
+        result.at(1, 1) = (*this).at(0, 0) * inv_det;   // a
+
         return result;
     }
 
@@ -709,23 +704,23 @@ private:
         T det = (*this).determinant();
         T inv_det = T(1) / det;
         Matrix result{};
-        
+
         // Compute cofactor matrix elements directly
         // Row 0
         result.at(0, 0) = ((*this).at(1, 1) * (*this).at(2, 2) - (*this).at(1, 2) * (*this).at(2, 1)) * inv_det;
         result.at(0, 1) = ((*this).at(0, 2) * (*this).at(2, 1) - (*this).at(0, 1) * (*this).at(2, 2)) * inv_det;
         result.at(0, 2) = ((*this).at(0, 1) * (*this).at(1, 2) - (*this).at(0, 2) * (*this).at(1, 1)) * inv_det;
-        
+
         // Row 1
         result.at(1, 0) = ((*this).at(1, 2) * (*this).at(2, 0) - (*this).at(1, 0) * (*this).at(2, 2)) * inv_det;
         result.at(1, 1) = ((*this).at(0, 0) * (*this).at(2, 2) - (*this).at(0, 2) * (*this).at(2, 0)) * inv_det;
         result.at(1, 2) = ((*this).at(0, 2) * (*this).at(1, 0) - (*this).at(0, 0) * (*this).at(1, 2)) * inv_det;
-        
+
         // Row 2
         result.at(2, 0) = ((*this).at(1, 0) * (*this).at(2, 1) - (*this).at(1, 1) * (*this).at(2, 0)) * inv_det;
         result.at(2, 1) = ((*this).at(0, 1) * (*this).at(2, 0) - (*this).at(0, 0) * (*this).at(2, 1)) * inv_det;
         result.at(2, 2) = ((*this).at(0, 0) * (*this).at(1, 1) - (*this).at(0, 1) * (*this).at(1, 0)) * inv_det;
-        
+
         return result;
     }
 
@@ -779,28 +774,35 @@ private:
 
         // Calculate determinant using first row
         const T det = a00 * cof00 + a01 * cof01 + a02 * cof02 + a03 * cof03;
-        
-        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); }, 
-                                       "Cannot invert a singular 4x4 matrix");
-        
+
+        assert_if_ex<std::domain_error>([&det]() { return is_equal(det, T(0)); },
+                                        "Cannot invert a singular 4x4 matrix");
+
         const T inv_det = T(1) / det;
 
         // Build result matrix (transposed cofactor matrix / determinant)
         Matrix result{};
-        result.at(0, 0) = cof00 * inv_det; result.at(0, 1) = cof10 * inv_det; 
-        result.at(0, 2) = cof20 * inv_det; result.at(0, 3) = cof30 * inv_det;
-        result.at(1, 0) = cof01 * inv_det; result.at(1, 1) = cof11 * inv_det;
-        result.at(1, 2) = cof21 * inv_det; result.at(1, 3) = cof31 * inv_det;
-        result.at(2, 0) = cof02 * inv_det; result.at(2, 1) = cof12 * inv_det;
-        result.at(2, 2) = cof22 * inv_det; result.at(2, 3) = cof32 * inv_det;
-        result.at(3, 0) = cof03 * inv_det; result.at(3, 1) = cof13 * inv_det;
-        result.at(3, 2) = cof23 * inv_det; result.at(3, 3) = cof33 * inv_det;
+        result.at(0, 0) = cof00 * inv_det;
+        result.at(0, 1) = cof10 * inv_det;
+        result.at(0, 2) = cof20 * inv_det;
+        result.at(0, 3) = cof30 * inv_det;
+        result.at(1, 0) = cof01 * inv_det;
+        result.at(1, 1) = cof11 * inv_det;
+        result.at(1, 2) = cof21 * inv_det;
+        result.at(1, 3) = cof31 * inv_det;
+        result.at(2, 0) = cof02 * inv_det;
+        result.at(2, 1) = cof12 * inv_det;
+        result.at(2, 2) = cof22 * inv_det;
+        result.at(2, 3) = cof32 * inv_det;
+        result.at(3, 0) = cof03 * inv_det;
+        result.at(3, 1) = cof13 * inv_det;
+        result.at(3, 2) = cof23 * inv_det;
+        result.at(3, 3) = cof33 * inv_det;
 
         return result;
     }
 
 public:
-
     // Arithmetic operators with type promotion
     /// Matrix addition with type promotion.
     template <typename U>
@@ -808,8 +810,7 @@ public:
         using ResultType = std::common_type_t<T, U>;
         Matrix<ResultType, R, C> result{};
         for (int i = 0; i < R * C; ++i) {
-            result.data()[i] = static_cast<ResultType>(m_data[i]) + 
-                              static_cast<ResultType>(rhs.data()[i]);
+            result.data()[i] = static_cast<ResultType>(m_data[i]) + static_cast<ResultType>(rhs.data()[i]);
         }
         return result;
     }
@@ -820,8 +821,7 @@ public:
         using ResultType = std::common_type_t<T, U>;
         Matrix<ResultType, R, C> result{};
         for (int i = 0; i < R * C; ++i) {
-            result.data()[i] = static_cast<ResultType>(m_data[i]) - 
-                              static_cast<ResultType>(rhs.data()[i]);
+            result.data()[i] = static_cast<ResultType>(m_data[i]) - static_cast<ResultType>(rhs.data()[i]);
         }
         return result;
     }
@@ -841,8 +841,7 @@ public:
         using ResultType = std::common_type_t<T, U>;
         Matrix<ResultType, R, C> result{};
         for (int i = 0; i < R * C; ++i) {
-            result.data()[i] = static_cast<ResultType>(m_data[i]) * 
-                              static_cast<ResultType>(scalar);
+            result.data()[i] = static_cast<ResultType>(m_data[i]) * static_cast<ResultType>(scalar);
         }
         return result;
     }
@@ -859,12 +858,11 @@ public:
         requires std::is_arithmetic_v<U>
     constexpr auto operator/(const U& scalar) const noexcept {
         using ResultType = std::common_type_t<T, U>;
-        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); }, 
-                                       "Division by zero in matrix division");
+        assert_if_ex<std::domain_error>([&scalar]() { return is_equal(scalar, U(0)); },
+                                        "Division by zero in matrix division");
         Matrix<ResultType, R, C> result{};
         for (int i = 0; i < R * C; ++i) {
-            result.data()[i] = static_cast<ResultType>(m_data[i]) / 
-                              static_cast<ResultType>(scalar);
+            result.data()[i] = static_cast<ResultType>(m_data[i]) / static_cast<ResultType>(scalar);
         }
         return result;
     }
@@ -967,10 +965,7 @@ public:
     // elementary row operations
     /// Swaps two rows in-place; returns *this.
     constexpr Matrix<T, R, C>& swap_rows(int r1, int r2) {
-        assert_if_ex<std::out_of_range>(
-            r1 < 0 || r1 >= R || r2 < 0 || r2 >= R, 
-            "Row index out of range in swap_rows"
-        );
+        assert_if_ex<std::out_of_range>(r1 < 0 || r1 >= R || r2 < 0 || r2 >= R, "Row index out of range in swap_rows");
 
         for (int c = 0; c < C; ++c) {
             std::swap((*this).at(r1, c), (*this).at(r2, c));
@@ -980,10 +975,7 @@ public:
 
     /// Scales a row by the given scalar; returns *this.
     constexpr Matrix<T, R, C>& scale_row(int r, T scalar) {
-        assert_if_ex<std::out_of_range>(
-            r < 0 || r >= R, 
-            "Row index out of range in scale_row"
-        );
+        assert_if_ex<std::out_of_range>(r < 0 || r >= R, "Row index out of range in scale_row");
 
         for (int c = 0; c < C; ++c) {
             (*this).at(r, c) *= scalar;
@@ -993,10 +985,8 @@ public:
 
     /// Adds a scaled source row to a destination row; returns *this.
     constexpr Matrix<T, R, C>& add_scaled_row(int dest_r, int src_r, T scalar) {
-        assert_if_ex<std::out_of_range>(
-            dest_r < 0 || dest_r >= R || src_r < 0 || src_r >= R, 
-            "Row index out of range in add_scaled_row"
-        );
+        assert_if_ex<std::out_of_range>(dest_r < 0 || dest_r >= R || src_r < 0 || src_r >= R,
+                                        "Row index out of range in add_scaled_row");
 
         for (int c = 0; c < C; ++c) {
             (*this).at(dest_r, c) += scalar * (*this).at(src_r, c);
@@ -1006,10 +996,8 @@ public:
 
     /// Swaps two columns in-place; returns *this.
     constexpr Matrix<T, R, C>& swap_cols(int c1, int c2) {
-        assert_if_ex<std::out_of_range>(
-            c1 < 0 || c1 >= C || c2 < 0 || c2 >= C, 
-            "Column index out of range in swap_cols"
-        );
+        assert_if_ex<std::out_of_range>(c1 < 0 || c1 >= C || c2 < 0 || c2 >= C,
+                                        "Column index out of range in swap_cols");
         for (int r = 0; r < R; ++r) {
             std::swap((*this).at(r, c1), (*this).at(r, c2));
         }
@@ -1018,10 +1006,7 @@ public:
 
     /// Scales a column by the given scalar; returns *this.
     constexpr Matrix<T, R, C>& scale_col(int c, T scalar) {
-        assert_if_ex<std::out_of_range>(
-            c < 0 || c >= C, 
-            "Column index out of range in scale_col"
-        );
+        assert_if_ex<std::out_of_range>(c < 0 || c >= C, "Column index out of range in scale_col");
         for (int r = 0; r < R; ++r) {
             (*this).at(r, c) *= scalar;
         }
@@ -1030,23 +1015,18 @@ public:
 
     /// Adds a scaled source column to a destination column; returns *this.
     constexpr Matrix<T, R, C>& add_scaled_col(int dest_c, int src_c, T scalar) {
-        assert_if_ex<std::out_of_range>(
-            dest_c < 0 || dest_c >= C || src_c < 0 || src_c >= C, 
-            "Column index out of range in add_scaled_col"
-        );
+        assert_if_ex<std::out_of_range>(dest_c < 0 || dest_c >= C || src_c < 0 || src_c >= C,
+                                        "Column index out of range in add_scaled_col");
         for (int r = 0; r < R; ++r) {
             (*this).at(r, dest_c) += scalar * (*this).at(r, src_c);
         }
         return *this;
     }
 
-    //helpers: find index of max abs value in row/col
+    // helpers: find index of max abs value in row/col
     /// Returns index and value of maximum absolute entry in a column slice.
     constexpr std::pair<int, T> argmax_abs_in_col(int c, int start_row = 0, int end_row = R) const {
-        assert_if_ex<std::out_of_range>(
-            c < 0 || c >= C, 
-            "Column index out of range in argmax_abs_in_col"
-        );
+        assert_if_ex<std::out_of_range>(c < 0 || c >= C, "Column index out of range in argmax_abs_in_col");
 
         int max_index = start_row;
         T max_value = (*this).at(start_row, c);
@@ -1064,10 +1044,7 @@ public:
 
     /// Returns index and value of maximum absolute entry in a row slice.
     constexpr std::pair<int, T> argmax_abs_in_row(int r, int start_col = 0, int end_col = C) const {
-        assert_if_ex<std::out_of_range>(
-            r < 0 || r >= R, 
-            "Row index out of range in argmax_abs_in_row"
-        );
+        assert_if_ex<std::out_of_range>(r < 0 || r >= R, "Row index out of range in argmax_abs_in_row");
 
         int max_index = start_col;
         T max_value = (*this).at(r, start_col);
@@ -1082,7 +1059,7 @@ public:
         }
         return {max_index, max_value};
     }
-    
+
     /**
      * @brief Result of Gaussian elimination in row echelon form.
      *
@@ -1098,10 +1075,10 @@ public:
         /// Number of row swaps performed (for determinant sign).
         int row_swaps{};
         /// Inverse of the product of all scaling factors used.
-        T total_scale_inv{1}; // the inverse of the product of all scaling factors used
+        T total_scale_inv{1};  // the inverse of the product of all scaling factors used
     };
 
-    //transform to row echelon form and reduced row echelon form, return rank and number of row swaps
+    // transform to row echelon form and reduced row echelon form, return rank and number of row swaps
     /**
      * @brief Transforms the matrix to row echelon form in-place.
      *
@@ -1113,29 +1090,33 @@ public:
         int r = 0;
         int swaps = 0;
         T total_scale_inv = T(1);
-        
+
         // Compute adaptive pivot threshold based on matrix magnitude
         T max_abs = T(0);
         for (int i = 0; i < R * C; i++) {
             T abs_val = pbpt::math::abs(m_data[i]);
-            if (abs_val > max_abs) max_abs = abs_val;
+            if (abs_val > max_abs)
+                max_abs = abs_val;
         }
         // Use minimum threshold of 1e-10 to handle zero/near-zero matrices
         T pivot_threshold = (max_abs * T(1e-10) > T(1e-10)) ? max_abs * T(1e-10) : T(1e-10);
-        
-        for (int c = 0; c < C && r < R; c ++) {
+
+        for (int c = 0; c < C && r < R; c++) {
             auto [pr, pv] = argmax_abs_in_col(c, r);
-            if (pbpt::math::abs(pv) < pivot_threshold) { continue; }
-            if (pr != r) swap_rows(r, pr), swaps ++; 
+            if (pbpt::math::abs(pv) < pivot_threshold) {
+                continue;
+            }
+            if (pr != r)
+                swap_rows(r, pr), swaps++;
             scale_row(r, T(1) / pv), total_scale_inv *= pv;
-            for (int rr = r + 1; rr < R; rr ++) {
+            for (int rr = r + 1; rr < R; rr++) {
                 T s = -(*this).at(rr, c);
                 add_scaled_row(rr, r, s);
             }
-            r ++;
+            r++;
         }
         return {(*this), r, swaps, total_scale_inv};
-    } 
+    }
 
     /// Returns a copy of this matrix in row echelon form.
     constexpr EchelonResult ref() const {
@@ -1150,27 +1131,32 @@ public:
         int r = 0;
         int swaps = 0;
         T total_scale_inv = T(1);
-        
+
         // Compute adaptive pivot threshold based on matrix magnitude
         T max_abs = T(0);
         for (int i = 0; i < R * C; i++) {
             T abs_val = pbpt::math::abs(m_data[i]);
-            if (abs_val > max_abs) max_abs = abs_val;
+            if (abs_val > max_abs)
+                max_abs = abs_val;
         }
         // Use minimum threshold of 1e-10 to handle zero/near-zero matrices
         T pivot_threshold = (max_abs * T(1e-10) > T(1e-10)) ? max_abs * T(1e-10) : T(1e-10);
-        
-        for (int c = 0; c < C && r < R; c ++) {
+
+        for (int c = 0; c < C && r < R; c++) {
             auto [pr, pv] = argmax_abs_in_col(c, r);
-            if (pbpt::math::abs(pv) < pivot_threshold) {continue; }
-            if (pr != r) swap_rows(r, pr), swaps ++;
+            if (pbpt::math::abs(pv) < pivot_threshold) {
+                continue;
+            }
+            if (pr != r)
+                swap_rows(r, pr), swaps++;
             scale_row(r, T(1) / pv), total_scale_inv *= pv;
-            for (int rr = 0; rr < R; rr ++) {
-                if (rr == r) continue;
+            for (int rr = 0; rr < R; rr++) {
+                if (rr == r)
+                    continue;
                 T s = -(*this).at(rr, c);
                 add_scaled_row(rr, r, s);
             }
-            r ++;
+            r++;
         }
         return {(*this), r, swaps, total_scale_inv};
     }
@@ -1189,7 +1175,9 @@ public:
     }
 
     /// Returns true if the matrix is invertible (square matrices only).
-    bool is_invertible() const requires(R == C) {
+    bool is_invertible() const
+        requires(R == C)
+    {
         Matrix<T, R, C> temp = *this;
         auto [mat, rank, swaps, _] = temp.ref_inplace();
         return rank == R;
@@ -1198,19 +1186,21 @@ public:
     /**
      * @brief Inverse computed via augmented RREF (returned as a new matrix).
      */
-    Matrix<T, R, C> inversed_rref() const requires(R == C) {
+    Matrix<T, R, C> inversed_rref() const
+        requires(R == C)
+    {
         Matrix<T, R, 2 * C> augmented{};
         // Create augmented matrix [A | I]
-        for (int r = 0; r < R; r ++) {
-            for (int c = 0; c < C; c ++) {
-                augmented.at(r, c) = (*this).at(r, c);  
+        for (int r = 0; r < R; r++) {
+            for (int c = 0; c < C; c++) {
+                augmented.at(r, c) = (*this).at(r, c);
                 augmented.at(r, c + C) = (r == c) ? T(1) : T(0);
             }
         }
         augmented.rref_inplace();
         Matrix<T, R, C> result{};
-        for (int r = 0; r < R; r ++) {
-            for (int c = 0; c < C; c ++) {
+        for (int r = 0; r < R; r++) {
+            for (int c = 0; c < C; c++) {
                 result.at(r, c) = augmented.at(r, c + C);
             }
         }
@@ -1220,18 +1210,20 @@ public:
     /**
      * @brief In-place inversion via the augmented RREF method.
      */
-    Matrix<T, R, C>& inverse_rref() requires(R == C) {
+    Matrix<T, R, C>& inverse_rref()
+        requires(R == C)
+    {
         Matrix<T, R, 2 * C> augmented{};
         // Create augmented matrix [A | I]
-        for (int r = 0; r < R; r ++) {
-            for (int c = 0; c < C; c ++) {
-                augmented.at(r, c) = (*this).at(r, c);  
+        for (int r = 0; r < R; r++) {
+            for (int c = 0; c < C; c++) {
+                augmented.at(r, c) = (*this).at(r, c);
                 augmented.at(r, c + C) = (r == c) ? T(1) : T(0);
             }
         }
         augmented.rref_inplace();
-        for (int r = 0; r < R; r ++) {
-            for (int c = 0; c < C; c ++) {
+        for (int r = 0; r < R; r++) {
+            for (int c = 0; c < C; c++) {
                 (*this).at(r, c) = augmented.at(r, c + C);
             }
         }
@@ -1244,24 +1236,25 @@ public:
      * Uses ref_inplace() and accounts for row swaps and scaling to
      * reconstruct the determinant.
      */
-    T determinant_ref() const requires(R == C) {
+    T determinant_ref() const
+        requires(R == C)
+    {
         Matrix<T, R, C> temp = *this;
         auto [mat, rank, swaps, total_scale_inv] = temp.ref_inplace();
         T det = (swaps % 2 == 0) ? T(1) : T(-1);
-        for (int i = 0; i < R; i ++) {
+        for (int i = 0; i < R; i++) {
             det *= temp.at(i, i);
         }
         return det * total_scale_inv;
     }
-    
 };
 
 /// @brief 2x2 matrix using the project's default Float type.
-using Mat2   = Matrix<Float, 2, 2>;
+using Mat2 = Matrix<Float, 2, 2>;
 /// @brief 3x3 matrix using the project's default Float type.
-using Mat3   = Matrix<Float, 3, 3>;
+using Mat3 = Matrix<Float, 3, 3>;
 /// @brief 4x4 matrix using the project's default Float type.
-using Mat4   = Matrix<Float, 4, 4>;
+using Mat4 = Matrix<Float, 4, 4>;
 /// @brief 3x4 matrix using the project's default Float type.
 using Mat3x4 = Matrix<Float, 3, 4>;
 /// @brief 4x3 matrix using the project's default Float type.
@@ -1280,10 +1273,8 @@ using mat4x3 = Mat4x3;
  * Computes `(B * A^T) * (A * A^T)^{-1}` using matrix inversion via RREF.
  */
 template <typename T, int N, int ConstraintsCount>
-inline constexpr Matrix<T, N, N> solve_LMS(
-    const Matrix<T, N, ConstraintsCount>& A, 
-    const Matrix<T, N, ConstraintsCount>& B
-) {
+inline constexpr Matrix<T, N, N> solve_LMS(const Matrix<T, N, ConstraintsCount>& A,
+                                           const Matrix<T, N, ConstraintsCount>& B) {
     Matrix<T, N, N> result = Matrix<T, N, N>::zeros();
     auto At = A.transposed();
     auto AAt = A * At;

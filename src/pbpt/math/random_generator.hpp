@@ -17,8 +17,8 @@ namespace pbpt::math {
  * @tparam T Scalar type.
  * @tparam N Number of random components per sample.
  */
-template<typename T, int N>
-class RandomGenerator { 
+template <typename T, int N>
+class RandomGenerator {
 private:
     /// Underlying Mersenne Twister engine.
     std::mt19937 engine{};
@@ -71,6 +71,7 @@ class RandomGenerator<T, 1> {
 private:
     /// Underlying Mersenne Twister engine.
     std::mt19937 engine{};
+
 public:
     /// Number of components generated per call.
     static constexpr int dimensions = 1;
@@ -98,4 +99,4 @@ public:
     }
 };
 
-}; 
+};  // namespace pbpt::math

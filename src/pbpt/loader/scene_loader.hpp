@@ -30,7 +30,7 @@
 #include "pbpt/material/plugin/material/conductor_material.hpp"
 #include "pbpt/material/plugin/material/conductor_specular_material.hpp"
 #include "pbpt/material/plugin/material/conductor_rough_material.hpp"
-#include "pbpt/shape/plugin/shape/triangle.hpp" // Contains Triangle and TriangleMesh
+#include "pbpt/shape/plugin/shape/triangle.hpp"  // Contains Triangle and TriangleMesh
 #include "pbpt/light/plugin/light/area_light.hpp"
 #include "pbpt/aggregate/plugin/aggregate/embree_aggregate.hpp"
 #include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
@@ -38,26 +38,25 @@
 #include "pbpt/radiometry/constant/xyz_spectrum.hpp"
 #include "pbpt/radiometry/color_spectrum_lut.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
-#include "pbpt/texture/bitmap_texture.hpp"
+#include "pbpt/texture/plugin/texture/rsp_spectrum_texture.hpp"
 #include "pbpt/texture/plugin/texture/texture_type.hpp"
 
 namespace pbpt::loader {
 
 inline bool ends_with(const std::string& str, const std::string& suffix) {
-    if (str.size() < suffix.size()) return false;
+    if (str.size() < suffix.size())
+        return false;
     return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
 }
 
 inline bool starts_with(const std::string& str, const std::string& prefix) {
-    if (str.size() < prefix.size()) return false;
+    if (str.size() < prefix.size())
+        return false;
     return std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
-inline std::optional<std::string> find_child_value(
-    const pugi::xml_node& node,
-    const std::string& tag,
-    const std::string& name
-) {
+inline std::optional<std::string> find_child_value(const pugi::xml_node& node, const std::string& tag,
+                                                   const std::string& name) {
     for (auto child : node.children(tag.c_str())) {
         if (std::string(child.attribute("name").value()) == name) {
             const char* value = child.attribute("value").value();
@@ -69,10 +68,7 @@ inline std::optional<std::string> find_child_value(
     return std::nullopt;
 }
 
-inline std::optional<std::string> find_child_reference_id(
-    const pugi::xml_node& node,
-    const std::string& name
-) {
+inline std::optional<std::string> find_child_reference_id(const pugi::xml_node& node, const std::string& name) {
     for (auto child : node.children("ref")) {
         if (std::string(child.attribute("name").value()) == name) {
             const char* id = child.attribute("id").value();
@@ -157,16 +153,13 @@ inline material::MicrofacetModel<T> parse_microfacet_model(const pugi::xml_node&
 
 template <typename T>
 inline radiometry::PiecewiseLinearSpectrumDistribution<T> constant_spectrum(T value) {
-    return radiometry::PiecewiseLinearSpectrumDistribution<T>({
-        {radiometry::constant::lambda_min<T>, value},
-        {radiometry::constant::lambda_max<T>, value}
-    });
+    return radiometry::PiecewiseLinearSpectrumDistribution<T>(
+        {{radiometry::constant::lambda_min<T>, value}, {radiometry::constant::lambda_max<T>, value}});
 }
 
 template <typename T>
 inline radiometry::PiecewiseLinearSpectrumDistribution<T> load_piecewise_spectrum_from_csv(
-    const std::string& abs_path
-) {
+    const std::string& abs_path) {
     std::ifstream fin(abs_path);
     if (!fin) {
         throw std::runtime_error("Cannot open spectrum CSV: " + abs_path);
@@ -175,12 +168,14 @@ inline radiometry::PiecewiseLinearSpectrumDistribution<T> load_piecewise_spectru
     std::vector<std::pair<T, T>> points;
     std::string line;
     while (std::getline(fin, line)) {
-        if (line.empty() || line[0] == '#') continue;
+        if (line.empty() || line[0] == '#')
+            continue;
         std::replace(line.begin(), line.end(), ',', ' ');
         std::istringstream iss(line);
         T lambda = T(0);
         T value = T(0);
-        if (!(iss >> lambda >> value)) continue;
+        if (!(iss >> lambda >> value))
+            continue;
         points.emplace_back(lambda, value);
     }
     if (points.empty()) {
@@ -190,10 +185,8 @@ inline radiometry::PiecewiseLinearSpectrumDistribution<T> load_piecewise_spectru
 }
 
 template <typename T>
-inline radiometry::PiecewiseLinearSpectrumDistribution<T> parse_piecewise_spectrum_value(
-    const std::string& value,
-    const LoaderContext<T>& ctx
-) {
+inline radiometry::PiecewiseLinearSpectrumDistribution<T> parse_piecewise_spectrum_value(const std::string& value,
+                                                                                         const LoaderContext<T>& ctx) {
     if (starts_with(value, "file:")) {
         auto rel_path = value.substr(5);
         return load_piecewise_spectrum_from_csv<T>(ctx.resolve_path(rel_path));
@@ -216,14 +209,17 @@ inline radiometry::RGB<T> parse_rgb_triplet(const std::string& value) {
     if (!(iss >> r)) {
         throw std::runtime_error("Invalid rgb reflectance value: " + value);
     }
-    if (!(iss >> g)) g = r;
-    if (!(iss >> b)) b = r;
+    if (!(iss >> g))
+        g = r;
+    if (!(iss >> b))
+        b = r;
     return radiometry::RGB<T>(r, g, b);
 }
 
 inline texture::WrapMode parse_wrap_mode(const std::string& value) {
     std::string mode = value;
-    std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(mode.begin(), mode.end(), mode.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     if (mode == "clamp") {
         return texture::WrapMode::Clamp;
     }
@@ -231,9 +227,7 @@ inline texture::WrapMode parse_wrap_mode(const std::string& value) {
 }
 
 template <typename T>
-inline radiometry::PiecewiseLinearSpectrumDistribution<T> srgb_rgb_to_piecewise(
-    const radiometry::RGB<T>& rgb
-) {
+inline radiometry::PiecewiseLinearSpectrumDistribution<T> srgb_rgb_to_piecewise(const radiometry::RGB<T>& rgb) {
     const auto rsp = radiometry::lookup_srgb_to_rsp(rgb);
     const auto albedo_spectrum =
         radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(rsp);
@@ -266,7 +260,7 @@ void parse_texture_node(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         auto wrap_u = parse_wrap_mode(wrap_u_str);
         auto wrap_v = parse_wrap_mode(wrap_v_str);
 
-        auto tex = texture::BitmapTexture<T>(ctx.resolve_path(*filename), wrap_u, wrap_v);
+        auto tex = texture::RSPSpectrumTexture<T>(ctx.resolve_path(*filename), wrap_u, wrap_v);
         ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
     } else if (type == "checkerboard") {
         auto color0 = find_child_value(node, "rgb", "color0").value_or("0");
@@ -276,14 +270,8 @@ void parse_texture_node(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         auto uoffset = find_float_property<T>(node, "uoffset").value_or(T(0));
         auto voffset = find_float_property<T>(node, "voffset").value_or(T(0));
 
-        auto tex = texture::CheckerboardTexture<T>(
-            parse_rgb_triplet<T>(color0),
-            parse_rgb_triplet<T>(color1),
-            uscale,
-            vscale,
-            uoffset,
-            voffset
-        );
+        auto tex = texture::CheckerboardTexture<T>(parse_rgb_triplet<T>(color0), parse_rgb_triplet<T>(color1), uscale,
+                                                   vscale, uoffset, voffset);
         ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
     }
 }
@@ -300,9 +288,8 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
 
         if (reflectance_ref) {
             if (ctx.resources.reflectance_texture_library.name_to_id().contains(*reflectance_ref)) {
-                auto mat = material::LambertianMaterial<T>(
-                    ctx.resources.reflectance_texture_library.get(*reflectance_ref)
-                );
+                auto mat =
+                    material::LambertianMaterial<T>(ctx.resources.reflectance_texture_library.get(*reflectance_ref));
                 ctx.resources.any_material_library.add_item(id, std::move(mat));
                 return;
             }
@@ -317,7 +304,7 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
             spectrum = srgb_rgb_to_piecewise<T>(parse_rgb_triplet<T>(*rgb_value));
         }
         ctx.resources.reflectance_spectrum_library.add_item(spec_name, std::move(spectrum));
-        
+
         auto mat = material::LambertianMaterial<T>(ctx.resources.reflectance_spectrum_library.get(spec_name));
         ctx.resources.any_material_library.add_item(id, std::move(mat));
     } else if (type == "dielectric") {
@@ -372,11 +359,7 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         }
 
         auto microfacet_model = parse_microfacet_model<T>(node);
-        auto mat = material::ConductorMaterial<T>(
-            std::move(eta_dist),
-            std::move(k_dist),
-            microfacet_model
-        );
+        auto mat = material::ConductorMaterial<T>(std::move(eta_dist), std::move(k_dist), microfacet_model);
         ctx.resources.any_material_library.add_item(id, std::move(mat));
     } else if (type == "conductor_specular") {
         auto eta_value = find_child_value(node, "spectrum", "eta");
@@ -431,17 +414,14 @@ void parse_bsdf(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         }
 
         auto microfacet_model = parse_microfacet_model<T>(node);
-        auto mat = material::ConductorRoughMaterial<T>(
-            std::move(eta_dist),
-            std::move(k_dist),
-            microfacet_model
-        );
+        auto mat = material::ConductorRoughMaterial<T>(std::move(eta_dist), std::move(k_dist), microfacet_model);
         ctx.resources.any_material_library.add_item(id, std::move(mat));
     }
 }
 
 template <typename T>
-void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx, const camera::RenderTransform<T>& render_transform) {
+void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx,
+                 const camera::RenderTransform<T>& render_transform) {
     std::string type = node.attribute("type").value();
     if (type == "obj") {
         std::string filename = "";
@@ -451,24 +431,25 @@ void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx, const camera
                 filename = child.attribute("value").value();
             }
         }
-        if (filename.empty()) return;
+        if (filename.empty())
+            return;
 
         std::string abs_path = ctx.resolve_path(filename);
-        
+
         auto transform_node = node.child("transform");
         geometry::Transform<T> obj_to_world = geometry::Transform<T>::identity();
         if (transform_node) {
-             obj_to_world = load_transform<T>(transform_node);
+            obj_to_world = load_transform<T>(transform_node);
         }
-        
+
         auto to_render = render_transform.object_to_render_from_object_to_world(obj_to_world);
-        
+
         // Generate name from filename (e.g. "meshes/cbox_floor.obj" -> "cbox_floor")
         std::filesystem::path mesh_path(filename);
         std::string name = mesh_path.stem().string();
-        
+
         ctx.resources.mesh_library.add_item(name, shape::TriangleMesh<T>(to_render, abs_path, false));
-        
+
         // Ref material
         auto ref_node = node.child("ref");
         if (ref_node) {
@@ -478,37 +459,32 @@ void parse_shape(const pugi::xml_node& node, LoaderContext<T>& ctx, const camera
                 ctx.resources.mesh_material_map[name] = lib.name_to_id().at(mat_id);
             }
         }
-        
+
         // Emitter
         auto emitter_node = node.child("emitter");
         if (emitter_node) {
             std::string radiance_str;
             for (auto child : emitter_node.children("spectrum")) {
                 if (std::string(child.attribute("name").value()) == "radiance") {
-                     radiance_str = child.attribute("value").value();
+                    radiance_str = child.attribute("value").value();
                 }
             }
-            
+
             std::string spec_name = name + "_emission";
-            ctx.resources.reflectance_spectrum_library.add_item(spec_name, 
-                radiometry::PiecewiseLinearSpectrumDistribution<T>::from_string(radiance_str));
-            
+            ctx.resources.reflectance_spectrum_library.add_item(
+                spec_name, radiometry::PiecewiseLinearSpectrumDistribution<T>::from_string(radiance_str));
+
             const auto& emission_spec = ctx.resources.reflectance_spectrum_library.get(spec_name);
-            auto light_spectrum_dist = radiometry::StandardEmissionSpectrum<T>(
-                emission_spec,
-                radiometry::constant::CIE_D65_ilum<T>
-            );
-            
+            auto light_spectrum_dist =
+                radiometry::StandardEmissionSpectrum<T>(emission_spec, radiometry::constant::CIE_D65_ilum<T>);
+
             const auto& mesh = ctx.resources.mesh_library.get(name);
             for (int i = 0; i < mesh.triangle_count(); ++i) {
                 std::string light_name = std::format("{}_{}", name, i);
                 auto al = light::AreaLight<T, shape::Triangle<T>, decltype(light_spectrum_dist)>(
-                    shape::Triangle<T>(mesh, i),
-                    light_spectrum_dist,
-                    light::AreaLightSamplingDomain::Shape
-                );
+                    shape::Triangle<T>(mesh, i), light_spectrum_dist, light::AreaLightSamplingDomain::Shape);
                 int lid = ctx.resources.any_light_library.add_item(light_name, std::move(al));
-                ctx.resources.mesh_light_map[light_name] = lid; // This logic needs to match Aggregate construction
+                ctx.resources.mesh_light_map[light_name] = lid;  // This logic needs to match Aggregate construction
             }
         }
     }
@@ -521,11 +497,11 @@ scene::Scene<T> load_scene(const std::string& filename) {
     if (!result) {
         throw std::runtime_error(std::string("XML Load Error: ") + result.description());
     }
-    
+
     scene::Scene<T> scene;
     pugi::xml_node root = doc.child("scene");
     LoaderContext<T> ctx(scene.resources, std::filesystem::path(filename).parent_path());
-    
+
     // 1. Textures
     for (auto node : root.children("texture")) {
         parse_texture_node(node, ctx);
@@ -535,64 +511,56 @@ scene::Scene<T> load_scene(const std::string& filename) {
     for (auto node : root.children("bsdf")) {
         parse_bsdf(node, ctx);
     }
-    
+
     // 3. Sensor
     auto sensor_node = root.child("sensor");
     if (sensor_node) {
         // Transform
         auto transform_node = sensor_node.child("transform");
         if (transform_node) {
-             scene.render_transform = load_render_transform<T>(transform_node);
+            scene.render_transform = load_render_transform<T>(transform_node);
         }
-        
+
         float fov = parse_property<float>(sensor_node, "fov");
         float focus_dist = parse_property<float>(sensor_node, "focusDistance");
         float near_clip = -parse_property<float>(sensor_node, "nearClip", 0.1f);
         float far_clip = -parse_property<float>(sensor_node, "farClip", 10000.0f);
-        
+
         int width = 512, height = 512;
         auto film_node = sensor_node.child("film");
         if (film_node) {
-             width = parse_property<int>(film_node, "width", width);
-             height = parse_property<int>(film_node, "height", height);
+            width = parse_property<int>(film_node, "width", width);
+            height = parse_property<int>(film_node, "height", height);
         }
-        
-        scene.camera = camera::ThinLensPerspectiveCamera<T>(
-            math::Vector<int, 2>(width, height),
-            fov, "smaller",
-            near_clip, far_clip, T(focus_dist)
-        );
-        
+
+        scene.camera = camera::ThinLensPerspectiveCamera<T>(math::Vector<int, 2>(width, height), fov, "smaller",
+                                                            near_clip, far_clip, T(focus_dist));
+
         // Pixel Filter
-        scene.pixel_filter = camera::GaussianFilter<T>(T(1.5), T(0.5)); // Hardcoded for now or parse
-        
+        scene.pixel_filter = camera::GaussianFilter<T>(T(1.5), T(0.5));  // Hardcoded for now or parse
+
         // Film
-        scene.film = std::visit([&](auto& cam) {
-            auto pixel_sensor = camera::PixelSensor<T, 
-                radiometry::constant::CIED65SpectrumType<T>, 
-                radiometry::constant::CIED65SpectrumType<T>, 
-                radiometry::constant::XYZSpectrumType<T>
-            >(
-                radiometry::constant::CIE_D65_ilum<T>,
-                radiometry::constant::CIE_D65_ilum<T>,
-                radiometry::constant::sRGB<T>,
-                radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-                    radiometry::constant::CIE_X<T>,
-                    radiometry::constant::CIE_Y<T>,
-                    radiometry::constant::CIE_Z<T>
-                ),
-                T{1.0}
-            );
-            // Construct HDRFilm with this sensor
-             return camera::AnyFilm<T>(camera::HDRFilm<T, decltype(pixel_sensor)>(cam, pixel_sensor));
-        }, scene.camera);
+        scene.film = std::visit(
+            [&](auto& cam) {
+                auto pixel_sensor = camera::PixelSensor<T, radiometry::constant::CIED65SpectrumType<T>,
+                                                        radiometry::constant::CIED65SpectrumType<T>,
+                                                        radiometry::constant::XYZSpectrumType<T>>(
+                    radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::CIE_D65_ilum<T>,
+                    radiometry::constant::sRGB<T>,
+                    radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
+                        radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+                    T{1.0});
+                // Construct HDRFilm with this sensor
+                return camera::AnyFilm<T>(camera::HDRFilm<T, decltype(pixel_sensor)>(cam, pixel_sensor));
+            },
+            scene.camera);
     }
-    
+
     // 4. Shapes
     for (auto node : root.children("shape")) {
         parse_shape(node, ctx, scene.render_transform);
     }
-    
+
     // 5. Aggregate
     std::vector<shape::Primitive<T>> primitives;
     for (const auto& [mesh_name, mesh_id] : scene.resources.mesh_library.name_to_id()) {
@@ -600,25 +568,19 @@ scene::Scene<T> load_scene(const std::string& filename) {
         int material_id = 0;
         if (scene.resources.mesh_material_map.count(mesh_name))
             material_id = scene.resources.mesh_material_map.at(mesh_name);
-            
+
         for (int i = 0; i < mesh.triangle_count(); ++i) {
             int light_id = -1;
             std::string light_key = std::format("{}_{}", mesh_name, i);
             if (scene.resources.mesh_light_map.contains(light_key)) {
                 light_id = scene.resources.mesh_light_map.at(light_key);
             }
-            primitives.push_back(
-                shape::Primitive<T>(
-                    shape::Triangle<T>(mesh, i),
-                    material_id,
-                    light_id
-                )
-            );
+            primitives.push_back(shape::Primitive<T>(shape::Triangle<T>(mesh, i), material_id, light_id));
         }
     }
     scene.aggregate = aggregate::EmbreeAggregate<T>(std::move(primitives));
-    
+
     return scene;
 }
 
-}
+}  // namespace pbpt::loader

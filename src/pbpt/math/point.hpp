@@ -48,9 +48,7 @@ public:
     }
 
     /// Converts this point to a `Vector<T,N>` with the same coordinates.
-    constexpr auto to_vector() const {
-        return Vector<T, N>::from_array(this->to_array());
-    }
+    constexpr auto to_vector() const { return Vector<T, N>::from_array(this->to_array()); }
 
     /// Translates the point by a vector and returns the result.
     template <typename U>
@@ -103,7 +101,7 @@ public:
     /// Euclidean distance to another point.
     constexpr auto distance_squared(const Point<U, N>& other) const {
         using R = std::common_type_t<T, U>;
-        R sum   = R(0);
+        R sum = R(0);
         for (int i = 0; i < N; ++i) {
             R d = static_cast<R>(this->m_data[i]) - static_cast<R>(other[i]);
             sum += d * d;
@@ -128,7 +126,7 @@ public:
         return out;
     }
 
-    template<typename U>
+    template <typename U>
     /// Arithmetic midpoint of a non-empty set of points.
     static constexpr auto mid(const std::vector<Point<U, N>>& points) {
         using R = std::common_type_t<T, U>;
@@ -155,13 +153,13 @@ constexpr auto operator+(const Vector<U, N>& v, const Point<T, N>& p) {
 
 // Aliases
 /// @brief 1D point using the project's default Float type.
-using Pt1  = Point<Float, 1>;
+using Pt1 = Point<Float, 1>;
 /// @brief 2D point using the project's default Float type.
-using Pt2  = Point<Float, 2>;
+using Pt2 = Point<Float, 2>;
 /// @brief 3D point using the project's default Float type.
-using Pt3  = Point<Float, 3>;
+using Pt3 = Point<Float, 3>;
 /// @brief 4D point using the project's default Float type.
-using Pt4  = Point<Float, 4>;
+using Pt4 = Point<Float, 4>;
 /// @brief 1D point using the project's default Int type.
 using Pt1i = Point<Int, 1>;
 /// @brief 2D point using the project's default Int type.
@@ -171,4 +169,4 @@ using Pt3i = Point<Int, 3>;
 /// @brief 4D point using the project's default Int type.
 using Pt4i = Point<Int, 4>;
 
-} // namespace pbpt::math
+}  // namespace pbpt::math

@@ -2,14 +2,14 @@
 
 #include "../plugin/spectrum_distribution/tabular.hpp"
 
-namespace pbpt::radiometry{
-    
-template<typename ResponseSpectrumType>
+namespace pbpt::radiometry {
+
+template <typename ResponseSpectrumType>
 class ResponseSpectrum;
 
 namespace constant {
 
-using XYZRange         = TabularSpectrumRange<360, 830>;
+using XYZRange = TabularSpectrumRange<360, 830>;
 
 template <typename T>
 using CIEXYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue>;
@@ -86,8 +86,7 @@ inline static TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMax
     0.000005851304, 0.000005455118, 0.000005085868, 0.000004741466, 0.000004420236, 0.000004120783, 0.000003841716,
     0.000003581652, 0.000003339127, 0.000003112949, 0.000002902121, 0.000002705645, 0.000002522525, 0.000002351726,
     0.000002192415, 0.000002043902, 0.000001905497, 0.000001776509, 0.000001656215, 0.000001544022, 0.000001439440,
-    0.000001341977, 0.000001251141
-);
+    0.000001341977, 0.000001251141);
 
 template <typename T>
 inline static TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue> CIE_Y(
@@ -158,8 +157,7 @@ inline static TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMax
     0.000002113013, 0.000001969943, 0.000001836600, 0.000001712230, 0.000001596228, 0.000001488090, 0.000001387314,
     0.000001293400, 0.000001205820, 0.000001124143, 0.000001048009, 0.000000977058, 0.000000910930, 0.000000849251,
     0.000000791721, 0.000000738090, 0.000000688110, 0.000000641530, 0.000000598089, 0.000000557575, 0.000000519808,
-    0.000000484612, 0.000000451810
-);
+    0.000000484612, 0.000000451810);
 
 template <typename T>
 inline static TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue> CIE_Z(
@@ -230,8 +228,7 @@ inline static TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMax
     0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000,
     0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000,
     0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000,
-    0.000000000000, 0.000000000000
-);
+    0.000000000000, 0.000000000000);
 
 template <typename T>
 using XYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue>;
@@ -239,15 +236,12 @@ using XYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZR
 template <typename T>
 using XYZSpectrumType = TabularSpectrumDistribution<T, XYZRange::LMinValue, XYZRange::LMaxValue>;
 
-template<typename T>
+template <typename T>
 inline radiometry::ResponseSpectrum<constant::XYZSpectrumType<T>> get_xyz_spectrum() {
-    return radiometry::ResponseSpectrum<constant::XYZSpectrumType<T>>(
-        constant::CIE_X<T>,
-        constant::CIE_Y<T>,
-        constant::CIE_Z<T>
-    );
+    return radiometry::ResponseSpectrum<constant::XYZSpectrumType<T>>(constant::CIE_X<T>, constant::CIE_Y<T>,
+                                                                      constant::CIE_Z<T>);
 }
 
-};
+};  // namespace constant
 
 };  // namespace pbpt::radiometry

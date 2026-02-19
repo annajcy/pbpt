@@ -139,12 +139,8 @@ constexpr Matrix<T, 4, 4> lookAt(const Vector<T, 3>& eye, const Vector<T, 3>& ta
     const Vector<T, 3> s = cross(f, up).normalized();
     const Vector<T, 3> u = cross(s, f);
 
-    return Matrix<T, 4, 4>(
-        s.x(), s.y(), s.z(), -s.dot(eye),
-        u.x(), u.y(), u.z(), -u.dot(eye),
-        -f.x(), -f.y(), -f.z(), f.dot(eye),
-        T(0), T(0), T(0), T(1)
-    );
+    return Matrix<T, 4, 4>(s.x(), s.y(), s.z(), -s.dot(eye), u.x(), u.y(), u.z(), -u.dot(eye), -f.x(), -f.y(), -f.z(),
+                           f.dot(eye), T(0), T(0), T(0), T(1));
 }
 
 template <typename T>

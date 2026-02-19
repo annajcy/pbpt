@@ -16,11 +16,7 @@ namespace pbpt::camera {
  *   from world translation (useful for improving numerical stability).
  * - World: rendering is done directly in world space.
  */
-enum class RenderSpace{
-    Camera, 
-    CameraWorld,
-    World
-};
+enum class RenderSpace { Camera, CameraWorld, World };
 
 /**
  * @brief Manages transforms between camera, render, and world spaces.
@@ -33,8 +29,8 @@ enum class RenderSpace{
  *
  * @tparam T Scalar type (e.g. float or double).
  */
-template<typename T>
-class RenderTransform {  
+template <typename T>
+class RenderTransform {
 private:
     /// Transform from camera space to render space.
     geometry::Transform<T> m_camera_to_render{};
@@ -47,20 +43,16 @@ private:
 
 public:
     RenderTransform() = default;
-    
+
     /// Create from a camera-to-world transform.
-    static RenderTransform<T> from_camera_to_world(
-        const geometry::Transform<T>& camera_to_world, 
-        RenderSpace space = RenderSpace::CameraWorld
-    ) {
+    static RenderTransform<T> from_camera_to_world(const geometry::Transform<T>& camera_to_world,
+                                                   RenderSpace space = RenderSpace::CameraWorld) {
         return RenderTransform<T>(camera_to_world, space);
     }
 
     /// Create from a world-to-camera transform.
-    static RenderTransform<T> from_world_to_camera(
-        const geometry::Transform<T>& world_to_camera, 
-        RenderSpace space = RenderSpace::CameraWorld
-    ) {
+    static RenderTransform<T> from_world_to_camera(const geometry::Transform<T>& world_to_camera,
+                                                   RenderSpace space = RenderSpace::CameraWorld) {
         return RenderTransform<T>(world_to_camera.inversed(), space);
     }
 
@@ -71,12 +63,8 @@ public:
      * a world-to-camera matrix and then derives the render-space
      * transforms from it.
      */
-    static RenderTransform<T> look_at(
-        const math::Point<T, 3>& eye,
-        const math::Point<T, 3>& target,
-        const math::Vector<T, 3>& up,
-        RenderSpace space = RenderSpace::CameraWorld
-    ) {
+    static RenderTransform<T> look_at(const math::Point<T, 3>& eye, const math::Point<T, 3>& target,
+                                      const math::Vector<T, 3>& up, RenderSpace space = RenderSpace::CameraWorld) {
         auto world_to_camera = geometry::Transform<T>::look_at(eye, target, up);
         return from_world_to_camera(world_to_camera, space);
     }
@@ -91,10 +79,8 @@ public:
      *   world space contains the translation component.
      * - World: render space equals world space.
      */
-    RenderTransform(
-        const geometry::Transform<T>& camera_to_world, 
-        RenderSpace space = RenderSpace::CameraWorld
-    ) : m_camera_to_world(camera_to_world), m_render_space(space) {
+    RenderTransform(const geometry::Transform<T>& camera_to_world, RenderSpace space = RenderSpace::CameraWorld)
+        : m_camera_to_world(camera_to_world), m_render_space(space) {
         if (space == RenderSpace::Camera) {
             m_camera_to_render = geometry::Transform<T>::identity();
             m_render_to_world = camera_to_world;
@@ -109,39 +95,25 @@ public:
     }
 
     /// Get the current render space mode.
-    RenderSpace render_space() const {
-        return m_render_space;
-    }
+    RenderSpace render_space() const { return m_render_space; }
 
     /// Transform from camera space to render space.
-    geometry::Transform<T> camera_to_render() const {
-        return m_camera_to_render;
-    }
+    geometry::Transform<T> camera_to_render() const { return m_camera_to_render; }
 
     /// Transform from render space back to camera space.
-    geometry::Transform<T> render_to_camera() const {
-        return m_camera_to_render.inversed();
-    }
+    geometry::Transform<T> render_to_camera() const { return m_camera_to_render.inversed(); }
 
     /// Transform from render space to world space.
-    geometry::Transform<T> render_to_world() const {
-        return m_render_to_world;
-    }
+    geometry::Transform<T> render_to_world() const { return m_render_to_world; }
 
     /// Transform from world space to render space.
-    geometry::Transform<T> world_to_render() const {
-        return m_render_to_world.inversed();
-    }
+    geometry::Transform<T> world_to_render() const { return m_render_to_world.inversed(); }
 
     /// Original transform from camera space to world space.
-    geometry::Transform<T> camera_to_world() const {
-        return m_camera_to_world;
-    }
+    geometry::Transform<T> camera_to_world() const { return m_camera_to_world; }
 
     /// Transform from world space back to camera space.
-    geometry::Transform<T> world_to_camera() const {
-        return m_camera_to_world.inversed();
-    }
+    geometry::Transform<T> world_to_camera() const { return m_camera_to_world.inversed(); }
 
     /**
      * @brief Convert an object-to-world transform into object-to-render.
@@ -149,9 +121,7 @@ public:
      * Useful for building shapes in world space while shading in the chosen
      * render space.
      */
-    geometry::Transform<T> object_to_render_from_object_to_world(
-        const geometry::Transform<T>& object_to_world
-    ) const {
+    geometry::Transform<T> object_to_render_from_object_to_world(const geometry::Transform<T>& object_to_world) const {
         return world_to_render() * object_to_world;
     }
 
@@ -172,9 +142,7 @@ public:
      * @param space Target render space.
      * @return New RenderTransform using the same camera-to-world transform.
      */
-    RenderTransform<T> to_render_space(RenderSpace space) const {
-        return RenderTransform<T>(m_camera_to_world, space);
-    }
+    RenderTransform<T> to_render_space(RenderSpace space) const { return RenderTransform<T>(m_camera_to_world, space); }
 };
 
-}; // namespace pbpt::camera
+};  // namespace pbpt::camera

@@ -20,12 +20,10 @@ namespace pbpt::sampler {
  * @param y_range Range of the box in the y dimension.
  * @return math::Point<T, 2> Sampled point in the box.
  */
-template <typename T>  
-inline math::Point<T, 2> sample_uniform_2d(
-    const math::Point<T, 2>& u2d, 
-    const math::Vector<T, 2>& x_range = math::Vector<T, 2>(T(0), T(1)), 
-    const math::Vector<T, 2>& y_range = math::Vector<T, 2>(T(0), T(1))
-) {
+template <typename T>
+inline math::Point<T, 2> sample_uniform_2d(const math::Point<T, 2>& u2d,
+                                           const math::Vector<T, 2>& x_range = math::Vector<T, 2>(T(0), T(1)),
+                                           const math::Vector<T, 2>& y_range = math::Vector<T, 2>(T(0), T(1))) {
     T x = sample_uniform(u2d.x(), x_range.x(), x_range.y());
     T y = sample_uniform(u2d.y(), y_range.x(), y_range.y());
     return math::Point<T, 2>(x, y);
@@ -40,12 +38,10 @@ inline math::Point<T, 2> sample_uniform_2d(
  * @param y_range Range of the box in the y dimension.
  * @return T Probability density function value.
  */
-template<typename T>
-inline T sample_uniform_2d_pdf(
-    const math::Point<T, 2>& p,
-    const math::Vector<T, 2>& x_range = math::Vector<T, 2>(T(0), T(1)), 
-    const math::Vector<T, 2>& y_range = math::Vector<T, 2>(T(0), T(1))
-) {
+template <typename T>
+inline T sample_uniform_2d_pdf(const math::Point<T, 2>& p,
+                               const math::Vector<T, 2>& x_range = math::Vector<T, 2>(T(0), T(1)),
+                               const math::Vector<T, 2>& y_range = math::Vector<T, 2>(T(0), T(1))) {
     return sample_uniform_pdf(p.x(), x_range.x(), x_range.y()) * sample_uniform_pdf(p.y(), y_range.x(), y_range.y());
 }
 
@@ -57,7 +53,7 @@ inline T sample_uniform_2d_pdf(
  * @param ry Range of the tent distribution in the y dimension.
  * @return math::Point<T, 2> Sampled point from the 2D tent distribution.
  */
-template<typename T>
+template <typename T>
 inline math::Point<T, 2> sample_tent_2d(const math::Point<T, 2>& u2d, T rx = 1.0, T ry = 1.0) {
     T x = sample_tent(u2d.x(), rx);
     T y = sample_tent(u2d.y(), ry);
@@ -72,7 +68,8 @@ inline math::Point<T, 2> sample_tent_2d(const math::Point<T, 2>& u2d, T rx = 1.0
  * @param rx Range of the tent distribution in the x dimension.
  * @param ry Range of the tent distribution in the y dimension.
  * @return T Probability density function value.
- */template<typename T>
+ */
+template <typename T>
 inline T sample_tent_2d_pdf(const math::Point<T, 2>& p, T rx = 1.0, T ry = 1.0) {
     return sample_tent_pdf(p.x(), rx) * sample_tent_pdf(p.y(), ry);
 }
@@ -80,10 +77,10 @@ inline T sample_tent_2d_pdf(const math::Point<T, 2>& p, T rx = 1.0, T ry = 1.0) 
 /**
  * @brief Sample a point uniformly distributed on a disk.
  * For theta, we uniformly sample [0, 2pi) by multiplying uv.y() in [0, 1] by 2pi.
- * For radius, we use the inverse transform sampling method. In order to preserve area uniformity, we calculate the integral of the differntial area element in polar coordinates:
- * A = ∫(0 to r) ∫(0 to 2pi) r' dr' dtheta = 2 * pi * ∫ (0 to r) r' dr' = pi * r^2
- * To sample r uniformly, we set A = u * A_max, where u is a uniform random variable in [0, 1] and A_max = pi * R^2 is the area of the disk with radius R.
- * Thus, we have: A = u * pi * R^2
+ * For radius, we use the inverse transform sampling method. In order to preserve area uniformity, we calculate the
+ * integral of the differntial area element in polar coordinates: A = ∫(0 to r) ∫(0 to 2pi) r' dr' dtheta = 2 * pi * ∫
+ * (0 to r) r' dr' = pi * r^2 To sample r uniformly, we set A = u * A_max, where u is a uniform random variable in [0,
+ * 1] and A_max = pi * R^2 is the area of the disk with radius R. Thus, we have: A = u * pi * R^2
  * => pi * r^2 = u * pi * R^2
  * => r^2 = u * R^2
  * => r = sqrt(u) * R
@@ -93,7 +90,7 @@ inline T sample_tent_2d_pdf(const math::Point<T, 2>& p, T rx = 1.0, T ry = 1.0) 
  * @param radius Radius of the disk.
  * @return math::Point<T, 2> Sampled point on the disk.
  */
-template<typename T>
+template <typename T>
 inline math::Point<T, 2> sample_uniform_disk(const math::Point<T, 2>& u2d, T radius = 1.0) {
     T r = std::sqrt(u2d.x()) * radius;
     T theta = 2.0 * math::pi_v<T> * u2d.y();
@@ -115,7 +112,7 @@ inline math::Point<T, 2> sample_uniform_disk(const math::Point<T, 2>& u2d, T rad
  *
  * When sx = sy, the point lies on the branch boundaries which gives π / 4
  * When sx = -sy, the point lies on the branch boundaries which gives -π / 4
- * When sy = 0, the point lies on x-axis which gives 0 to  
+ * When sy = 0, the point lies on x-axis which gives 0 to
  * When sx = 0, the point lies on y-axis which gives π / 2
  *
  * where the branch boundary |sx| = |sy| aligns with the diagonals that split
@@ -128,7 +125,7 @@ inline math::Point<T, 2> sample_uniform_disk(const math::Point<T, 2>& u2d, T rad
  * @param radius Radius of the disk.
  * @return math::Point<T, 2> Sampled point on the disk.
  */
-template<typename T>
+template <typename T>
 inline math::Point<T, 2> sample_uniform_disk_concentric(const math::Point<T, 2>& u2d, T radius = 1.0) {
     math::Point<T, 2> p_offset = 2.0 * u2d.to_vector() - math::Vector<T, 2>(1, 1);
 
@@ -150,12 +147,12 @@ inline math::Point<T, 2> sample_uniform_disk_concentric(const math::Point<T, 2>&
 
 /**
  * @brief Compute the probability density function for uniform disk sampling.
- * The PDF is the reciprocal of the area of the disk.   
+ * The PDF is the reciprocal of the area of the disk.
  * @tparam T Numeric type.
  * @param radius Radius of the disk.
  * @return T Probability density function value.
  */
-template<typename T>
+template <typename T>
 inline T sample_uniform_disk_pdf(T radius = 1.0) {
     return 1.0 / (math::pi_v<T> * radius * radius);
 }
@@ -170,11 +167,9 @@ inline T sample_uniform_disk_pdf(T radius = 1.0) {
  * @return math::Point<T, 2> Sampled point.
  */
 template <typename T>
-inline math::Point<T, 2> sample_gaussian_2d(
-    const math::Point<T, 2>& u2d,
-    const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
-    const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
-) {
+inline math::Point<T, 2> sample_gaussian_2d(const math::Point<T, 2>& u2d,
+                                            const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
+                                            const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))) {
     // Treat X and Y independently
     T x = sample_gaussian(u2d.x(), mean.x(), stddev.x());
     T y = sample_gaussian(u2d.y(), mean.y(), stddev.y());
@@ -192,30 +187,27 @@ inline math::Point<T, 2> sample_gaussian_2d(
  * @return math::Point<T, 2> Sampled point.
  */
 template <typename T>
-inline math::Point<T, 2> sample_gaussian_2d_box_muller(
-    const math::Point<T, 2>& u2d,
-    const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
-    const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
-) {
+inline math::Point<T, 2> sample_gaussian_2d_box_muller(const math::Point<T, 2>& u2d,
+                                                       const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
+                                                       const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1),
+                                                                                                             T(1))) {
     T u1 = u2d.x();
     T u2 = u2d.y();
     // 1. 防止 log(0)
-    if (u1 < 1e-6) u1 = 1e-6;
+    if (u1 < 1e-6)
+        u1 = 1e-6;
 
     // 2. Box-Muller 基础公式生成标准正态分布 Z ~ N(0, 1)
     T r = std::sqrt(T(-2) * std::log(u1));
     T theta = T(2) * math::pi_v<T> * u2;
-    
+
     T z0 = r * std::cos(theta);
     T z1 = r * std::sin(theta);
 
     // 3. 线性变换应用 mean 和 stddev
     // x = mu_x + sigma_x * z0
     // y = mu_y + sigma_y * z1
-    return math::Point<T, 2>(
-        mean.x() + stddev.x() * z0,
-        mean.y() + stddev.y() * z1
-    );
+    return math::Point<T, 2>(mean.x() + stddev.x() * z0, mean.y() + stddev.y() * z1);
 }
 
 /**
@@ -228,13 +220,10 @@ inline math::Point<T, 2> sample_gaussian_2d_box_muller(
  * @return T Probability density.
  */
 template <typename T>
-inline T sample_gaussian_2d_pdf(
-    const math::Point<T, 2>& p,
-    const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
-    const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))
-) {
-    return sample_gaussian_pdf(p.x(), mean.x(), stddev.x()) * 
-            sample_gaussian_pdf(p.y(), mean.y(), stddev.y());
+inline T sample_gaussian_2d_pdf(const math::Point<T, 2>& p,
+                                const math::Point<T, 2>& mean = math::Point<T, 2>(T(0), T(0)),
+                                const math::Vector<T, 2>& stddev = math::Vector<T, 2>(T(1), T(1))) {
+    return sample_gaussian_pdf(p.x(), mean.x(), stddev.x()) * sample_gaussian_pdf(p.y(), mean.y(), stddev.y());
 }
 
-}
+}  // namespace pbpt::sampler

@@ -11,13 +11,13 @@
 #include "pbpt/radiometry/plugin/spectrum_distribution/spectrum_distribution_type.hpp"
 #include "pbpt/texture/plugin/texture/texture_type.hpp"
 
-#include "pbpt/light/plugin/light/light_type.hpp" 
+#include "pbpt/light/plugin/light/light_type.hpp"
 #include "pbpt/camera/plugin/camera/camera_type.hpp"
 #include "pbpt/shape/plugin/shape/shape_type.hpp"
 
 namespace pbpt::scene {
 
-template<typename T>
+template <typename T>
 struct RenderResources {
     // 资源库
     // light material
@@ -36,7 +36,7 @@ struct RenderResources {
     std::unordered_map<std::string, int> mesh_light_map;
 };
 
-template<typename T, typename CameraT, typename FilmT, typename PixelFilterT, typename AggregateT>
+template <typename T, typename CameraT, typename FilmT, typename PixelFilterT, typename AggregateT>
 struct SceneContext {
     const CameraT& camera;
     FilmT& film;
@@ -48,12 +48,12 @@ struct SceneContext {
 
 /**
  * @brief 数据驱动的 Scene 类
- * 
+ *
  * 不再是一个巨大的模板类，而是持有 Variant 数据的容器。
  * 它本身是非模板的（或者仅保留 T 模板如果非常必要），
  * 但通过 scene_types.hpp 中定义的 Types 实现了具体类型的解耦。
  */
-template<typename T>
+template <typename T>
 class Scene {
 public:
     // 渲染变换
@@ -63,12 +63,12 @@ public:
     camera::AnyCamera<T> camera;
     camera::AnyFilm<T> film;
     camera::AnyPixelFilter<T> pixel_filter;
-    
+
     // 几何加速结构
     aggregate::AnyAggregate<T> aggregate;
-    
+
     // 场景几何与材质
     RenderResources<T> resources;
 };
 
-}
+}  // namespace pbpt::scene

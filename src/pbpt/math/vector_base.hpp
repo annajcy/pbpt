@@ -29,7 +29,7 @@ protected:
     /// Base tuple type that stores the underlying array.
     using Base = Tuple<Derived, T, N>;
     using Base::m_data;
-    
+
 public:
     using Base::Base;
     using Base::operator-;
@@ -103,9 +103,9 @@ public:
      * normalizing the zero vector.
      */
     constexpr auto normalized() const {
-        using R             = promote_int_to_float_t<T>;
+        using R = promote_int_to_float_t<T>;
         Derived<R, N> result{};
-        auto         len    = length();
+        auto len = length();
         assert_if([&len]() { return is_equal(len, 0.0); }, "Cannot normalize a zero vector");
         for (int i = 0; i < N; i++)
             result[i] = static_cast<R>((*this)[i]) / static_cast<R>(len);
@@ -113,14 +113,12 @@ public:
     }
 
     /// Returns true if the vector is approximately of unit length.
-    constexpr bool is_normalized() const { 
-        return is_equal(length(), T(1.0)); 
-    }
+    constexpr bool is_normalized() const { return is_equal(length(), T(1.0)); }
 
     /// Dot product with the same type of object.
     template <typename U>
     constexpr auto dot(const Derived<U, N>& rhs) const {
-        using R  = std::common_type_t<T, U>;
+        using R = std::common_type_t<T, U>;
         R result = 0;
         for (int i = 0; i < N; i++)
             result += static_cast<R>((*this)[i]) * static_cast<R>(rhs[i]);

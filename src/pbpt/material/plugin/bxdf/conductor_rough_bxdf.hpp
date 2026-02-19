@@ -16,64 +16,48 @@
 
 namespace pbpt::material {
 
-template<typename T, int N>
+template <typename T, int N>
 class ConductorRoughBxDF : public BxDF<ConductorRoughBxDF<T, N>, T, N> {
     friend class BxDF<ConductorRoughBxDF<T, N>, T, N>;
+
 private:
     radiometry::SampledSpectrum<T, N> m_eta;
     radiometry::SampledSpectrum<T, N> m_k;
     MicrofacetModel<T> m_microfacet_model;
 
 public:
-    ConductorRoughBxDF(
-        const radiometry::SampledSpectrum<T, N>& eta, 
-        const radiometry::SampledSpectrum<T, N>& k,
-        const MicrofacetModel<T>& microfacet_model
-    ) : m_eta(eta), m_k(k), m_microfacet_model(microfacet_model) {}
+    ConductorRoughBxDF(const radiometry::SampledSpectrum<T, N>& eta, const radiometry::SampledSpectrum<T, N>& k,
+                       const MicrofacetModel<T>& microfacet_model)
+        : m_eta(eta), m_k(k), m_microfacet_model(microfacet_model) {}
 
     const radiometry::SampledSpectrum<T, N>& eta() const { return m_eta; }
     const radiometry::SampledSpectrum<T, N>& k() const { return m_k; }
 
 private:
-    BxDFFlags type_impl() const {
-        return BxDFFlags::GlossyReflection;
-    }
+    BxDFFlags type_impl() const { return BxDFFlags::GlossyReflection; }
 
-    radiometry::SampledSpectrum<T, N> f_impl(
-        const radiometry::SampledWavelength<T, N>&,
-        const math::Vector<T, 3>& wo,
-        const math::Vector<T, 3>& wi,
-        TransportMode mode
-    ) const {
+    radiometry::SampledSpectrum<T, N> f_impl(const radiometry::SampledWavelength<T, N>&, const math::Vector<T, 3>& wo,
+                                             const math::Vector<T, 3>& wi, TransportMode mode) const {
         math::Vector<T, 3> wm = wi + wo;
-        if (math::is_zero(wm.length())) return radiometry::SampledSpectrum<T, N>::filled(0);
+        if (math::is_zero(wm.length()))
+            return radiometry::SampledSpectrum<T, N>::filled(0);
         wm = wm.normalized();
 
-        auto F = fresnel_conductor(
-            std::abs(wo.dot(wm)),
-            m_eta,
-            m_k
-        );
+        auto F = fresnel_conductor(std::abs(wo.dot(wm)), m_eta, m_k);
 
         auto cos_theta_i = geometry::cos_theta(wi), abs_cos_theta_i = std::abs(cos_theta_i);
         auto cos_theta_o = geometry::cos_theta(wo), abs_cos_theta_o = std::abs(cos_theta_o);
 
-        if (abs_cos_theta_i == 0 || abs_cos_theta_o == 0) 
+        if (abs_cos_theta_i == 0 || abs_cos_theta_o == 0)
             return radiometry::SampledSpectrum<T, N>::filled(0);
-        
-        return m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * F /
-                (T(4) * abs_cos_theta_i * abs_cos_theta_o);
-   
+
+        return m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * F / (T(4) * abs_cos_theta_i * abs_cos_theta_o);
     };
 
     std::optional<BxDFSampleRecord<T, N>> sample_f_impl(
-        const radiometry::SampledWavelength<T, N>& swl,
-        const math::Vector<T, 3>& wo,
-        const T,
-        const math::Point<T, 2>& u2d,
-        TransportMode mode,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+        const radiometry::SampledWavelength<T, N>& swl, const math::Vector<T, 3>& wo, const T,
+        const math::Point<T, 2>& u2d, TransportMode mode,
+        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         if (!is_match_refl_trans(type_impl(), sample_flags)) {
             return std::nullopt;
         }
@@ -98,12 +82,8 @@ private:
         return record;
     }
 
-    T pdf_impl(
-        const math::Vector<T, 3>& wo,
-        const math::Vector<T, 3>& wi,
-        TransportMode,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+    T pdf_impl(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi, TransportMode,
+               const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         if (!is_match_refl_trans(type_impl(), sample_flags)) {
             return 0;
         }
@@ -120,4 +100,4 @@ private:
     }
 };
 
-} // namespace pbpt::material
+}  // namespace pbpt::material

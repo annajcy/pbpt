@@ -34,8 +34,7 @@ private:
     const CoefficientArray* m_coeffs;
 
 public:
-    RGBToSpectrumLUT(const float* zNodes, const CoefficientArray* coeffs) :
-        m_z_nodes(zNodes), m_coeffs(coeffs) {}
+    RGBToSpectrumLUT(const float* zNodes, const CoefficientArray* coeffs) : m_z_nodes(zNodes), m_coeffs(coeffs) {}
 
     /**
      * @brief Look up sigmoid-polynomial coefficients for an RGB triple.
@@ -49,12 +48,10 @@ public:
         if (rgb.r() == rgb.g() && rgb.g() == rgb.b()) {
             T v = rgb.r();
             if (v <= 0) {
-                return RGBSigmoidPolynomialNormalized<T>(
-                    -std::numeric_limits<T>::infinity(), 0, 0);
+                return RGBSigmoidPolynomialNormalized<T>(-std::numeric_limits<T>::infinity(), 0, 0);
             }
             if (v >= 1) {
-                return RGBSigmoidPolynomialNormalized<T>(
-                    std::numeric_limits<T>::infinity(), 0, 0);
+                return RGBSigmoidPolynomialNormalized<T>(std::numeric_limits<T>::infinity(), 0, 0);
             }
             T c = (v - T(0.5)) / std::sqrt(v * (T(1) - v));
             return RGBSigmoidPolynomialNormalized<T>(c, 0, 0);
@@ -63,9 +60,8 @@ public:
         auto clamp_zero = [](T v) { return std::max<T>(0, v); };
         RGB<T> safe_rgb(clamp_zero(rgb.r()), clamp_zero(rgb.g()), clamp_zero(rgb.b()));
 
-        int maxc = (safe_rgb[0] > safe_rgb[1])
-            ? ((safe_rgb[0] > safe_rgb[2]) ? 0 : 2)
-            : ((safe_rgb[1] > safe_rgb[2]) ? 1 : 2);
+        int maxc =
+            (safe_rgb[0] > safe_rgb[1]) ? ((safe_rgb[0] > safe_rgb[2]) ? 0 : 2) : ((safe_rgb[1] > safe_rgb[2]) ? 1 : 2);
 
         float z = static_cast<float>(safe_rgb[maxc]);
         float x = static_cast<float>(safe_rgb[(maxc + 1) % 3]) * (res - 1) / z;
@@ -115,17 +111,15 @@ public:
         constexpr double inv_range_sq = inv_range * inv_range;
         constexpr double lambda_inv = lambda0 * inv_range;
 
-        double A = unnormalized[2] / inv_range_sq;                                   // quadratic term
-        double B = (unnormalized[1] + 2.0 * A * lambda0 * inv_range_sq) / inv_range; // linear term
-        double C = unnormalized[0] + B * lambda_inv - A * lambda_inv * lambda_inv;   // constant term
+        double A = unnormalized[2] / inv_range_sq;                                    // quadratic term
+        double B = (unnormalized[1] + 2.0 * A * lambda0 * inv_range_sq) / inv_range;  // linear term
+        double C = unnormalized[0] + B * lambda_inv - A * lambda_inv * lambda_inv;    // constant term
 
-        return RGBSigmoidPolynomialNormalized<T>(
-            static_cast<T>(C), static_cast<T>(B), static_cast<T>(A)
-        );
+        return RGBSigmoidPolynomialNormalized<T>(static_cast<T>(C), static_cast<T>(B), static_cast<T>(A));
     }
 };
 
-///sRGB to spectrum lookup table data generated from PBRT's rgb2spec
+/// sRGB to spectrum lookup table data generated from PBRT's rgb2spec
 extern const int sRGBToSpectrumTable_Res;
 extern const float sRGBToSpectrumTable_Scale[64];
 extern const float sRGBToSpectrumTable_Data[3][64][64][64][3];
@@ -152,13 +146,9 @@ inline RGBSigmoidPolynomialNormalized<T> lookup_srgb_to_rsp(const RGB<T>& rgb) {
  * spectrum whose perceived color matches the given RGB (approximately)
  * under the reference illuminant.
  */
-template<typename T>
-RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum(
-    const RGB<T>& rgb
-) {
-    return RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized>(
-        lookup_srgb_to_rsp(rgb)
-    );
+template <typename T>
+RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum(const RGB<T>& rgb) {
+    return RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized>(lookup_srgb_to_rsp(rgb));
 }
 
 }  // namespace pbpt::radiometry

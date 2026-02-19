@@ -41,7 +41,7 @@ std::vector<T> parse_numeric_values(std::string text, const std::string& field_n
     return values;
 }
 
-} // namespace detail
+}  // namespace detail
 
 template <typename T>
 math::Matrix<T, 4, 4> parse_matrix_4x4_value(const std::string& value_str) {
@@ -111,8 +111,7 @@ camera::RenderTransform<T> load_render_transform(const pugi::xml_node& node) {
             const auto origin = parse_point<T, 3>(child.attribute("origin").value());
             const auto target = parse_point<T, 3>(child.attribute("target").value());
             const auto up = parse_vector<T, 3>(child.attribute("up").value());
-            look_at_transform =
-                camera::RenderTransform<T>::look_at(origin, target, up, camera::RenderSpace::World);
+            look_at_transform = camera::RenderTransform<T>::look_at(origin, target, up, camera::RenderSpace::World);
             has_look_at = true;
         } else if (name == "matrix") {
             if (has_look_at) {
@@ -131,16 +130,11 @@ camera::RenderTransform<T> load_render_transform(const pugi::xml_node& node) {
         return look_at_transform;
     }
     if (has_matrix) {
-        return camera::RenderTransform<T>::from_camera_to_world(
-            matrix_camera_to_world,
-            camera::RenderSpace::World
-        );
+        return camera::RenderTransform<T>::from_camera_to_world(matrix_camera_to_world, camera::RenderSpace::World);
     }
 
-    return camera::RenderTransform<T>::from_camera_to_world(
-        geometry::Transform<T>::identity(),
-        camera::RenderSpace::World
-    );
+    return camera::RenderTransform<T>::from_camera_to_world(geometry::Transform<T>::identity(),
+                                                            camera::RenderSpace::World);
 }
 
-} // namespace pbpt::loader
+}  // namespace pbpt::loader

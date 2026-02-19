@@ -5,3 +5,7 @@ gtest_discover_tests(test_mipmap)
 add_executable(test_texture_sampling test_texture_sampling.cpp)
 target_link_libraries(test_texture_sampling PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_texture_sampling)
+
+add_executable(test_rsp_spectrum_texture test_rsp_spectrum_texture.cpp)
+target_link_libraries(test_rsp_spectrum_texture PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_rsp_spectrum_texture)

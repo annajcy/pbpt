@@ -16,12 +16,12 @@ using Float = float;
 
 #ifdef PBPT_INT_64BIT
 /// @brief Signed integer type for math utilities (64-bit when PBPT_INT_64BIT is defined).
-using Int  = long long;
+using Int = long long;
 /// @brief Unsigned integer type for math utilities (64-bit when PBPT_INT_64BIT is defined).
 using UInt = unsigned long long;
 #else
 /// @brief Signed integer type for math utilities (defaults to 32-bit).
-using Int  = int;
+using Int = int;
 /// @brief Unsigned integer type for math utilities (defaults to 32-bit).
 using UInt = unsigned int;
 #endif

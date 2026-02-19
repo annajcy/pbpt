@@ -28,7 +28,7 @@ namespace pbpt::math {
  * to produce a string such as `Vector<float, 3>`.
  */
 template <template <typename, int> typename Derived, typename T, int N>
-std::string tuple_name() { 
+std::string tuple_name() {
     if constexpr (std::is_same_v<Derived<T, N>, Vector<T, N>>) {
         return std::format("Vector<{}, {}>", typeid(T).name(), N);
     } else if constexpr (std::is_same_v<Derived<T, N>, Point<T, N>>) {
@@ -74,7 +74,8 @@ std::string to_string(const Matrix<T, R, C>& m) {
     for (int r = 0; r < R; ++r) {
         oss << "\t[";
         for (int c = 0; c < C; ++c) {
-            if (c > 0) oss << ", ";
+            if (c > 0)
+                oss << ", ";
             oss << m[r][c];
         }
         oss << "]\n";
@@ -144,12 +145,14 @@ std::string to_string_precision(const Matrix<T, R, C>& m, int precision) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(precision);
     oss << std::format("Matrix<{}, {}, {}>(", typeid(T).name(), R, C);
-    
+
     for (int r = 0; r < R; ++r) {
-        if (r > 0) oss << ", ";
+        if (r > 0)
+            oss << ", ";
         oss << "[";
         for (int c = 0; c < C; ++c) {
-            if (c > 0) oss << ", ";
+            if (c > 0)
+                oss << ", ";
             oss << m[r][c];
         }
         oss << "]";
@@ -185,11 +188,13 @@ std::string to_string_compact(const Matrix<T, R, C>& m) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(3);
     oss << "[";
-    
+
     for (int r = 0; r < R; ++r) {
-        if (r > 0) oss << "; ";
+        if (r > 0)
+            oss << "; ";
         for (int c = 0; c < C; ++c) {
-            if (c > 0) oss << " ";
+            if (c > 0)
+                oss << " ";
             oss << m[r][c];
         }
     }

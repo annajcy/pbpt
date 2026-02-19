@@ -37,7 +37,7 @@ inline constexpr T pi_v = static_cast<T>(M_PI);
  * Computes `(n * ε) / (1 - n * ε)` using machine epsilon for the
  * requested type.
  */
-template<typename T>
+template <typename T>
 constexpr inline T gamma(int n) {
     T ε = std::numeric_limits<T>::epsilon();
     return (n * ε) / (1 - n * ε);
@@ -103,22 +103,25 @@ constexpr T safe_acos(T x) {
  *
  * Handles negative exponents by inverting the base.
  */
-template<typename T>
+template <typename T>
 constexpr T pow(T x, int n) {
-    if (n < 0) return 1 / pow(x, -n);
-    if (n == 0) return 1;
-    if (n == 1) return x;
+    if (n < 0)
+        return 1 / pow(x, -n);
+    if (n == 0)
+        return 1;
+    if (n == 1)
+        return x;
     T half = pow(x, n / 2);
     return n % 2 == 0 ? half * half : half * half * x;
 }
 
-//TODO: implement fast_exp
+// TODO: implement fast_exp
 /**
  * @brief Placeholder exponential implementation.
  *
  * Falls back to std::exp until a faster approximation is provided.
  */
-template<typename T>
+template <typename T>
 constexpr T fast_exp(T x) {
     return std::exp(x);
 }
@@ -126,7 +129,7 @@ constexpr T fast_exp(T x) {
 /**
  * @brief Numerically stable sigmoid approximation.
  */
-template<typename T>
+template <typename T>
 constexpr T sigmoid(T x) {
     if (!std::isfinite(x)) {
         return x > T(0) ? T(1) : T(0);
@@ -138,11 +141,10 @@ constexpr T sigmoid(T x) {
 /**
  * @brief Inverse of the stable sigmoid approximation.
  */
-template<typename T>
+template <typename T>
 constexpr T inverse_sigmoid(T s) {
     math::assert_if(s <= 0 && s >= 1, "s must be in (0, 1)");
     return (s - 0.5) / std::sqrt(s * (1.0 - s));
 }
-
 
 }  // namespace pbpt::math

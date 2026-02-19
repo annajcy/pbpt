@@ -18,7 +18,7 @@ namespace pbpt::light {
  * @tparam T Scalar type (e.g. float or double).
  * @tparam NormalInteractionType Type representing a surface interaction with normal.
  */
-template<typename T, typename NormalInteractionType>
+template <typename T, typename NormalInteractionType>
 class VisibilityTester {
 private:
     /// Points in render space, between which visibility is tested.
@@ -27,24 +27,18 @@ private:
     math::Point<T, 3> m_dst_p;
 
 public:
-    VisibilityTester(
-        const NormalInteractionType& src_interaction, 
-        const math::Point<T, 3>& dst_point
-    ) : m_src_i(src_interaction), m_dst_p(dst_point) {}
-   
-    template<typename Aggregate>
+    VisibilityTester(const NormalInteractionType& src_interaction, const math::Point<T, 3>& dst_point)
+        : m_src_i(src_interaction), m_dst_p(dst_point) {}
+
+    template <typename Aggregate>
     bool is_unoccluded(const Aggregate& aggregate) const {
         auto ray = m_src_i.spawn_ray_to(m_dst_p);
-        return !aggregate.is_intersected_ray(ray);        
+        return !aggregate.is_intersected_ray(ray);
     }
 
-    const NormalInteractionType& src_interaction() const {
-        return m_src_i;
-    }
+    const NormalInteractionType& src_interaction() const { return m_src_i; }
 
-    const math::Point<T, 3>& dst_point() const {
-        return m_dst_p;
-    }
+    const math::Point<T, 3>& dst_point() const { return m_dst_p; }
 };
 
-};
+};  // namespace pbpt::light

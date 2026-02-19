@@ -50,8 +50,7 @@ private:
         const auto secs = total_seconds % 60;
 
         std::ostringstream oss;
-        oss << std::setfill('0') << std::setw(2) << hours << ':'
-            << std::setfill('0') << std::setw(2) << minutes << ':'
+        oss << std::setfill('0') << std::setw(2) << hours << ':' << std::setfill('0') << std::setw(2) << minutes << ':'
             << std::setfill('0') << std::setw(2) << secs;
         return oss.str();
     }
@@ -67,17 +66,12 @@ private:
     }
 
     /// Renders the current state of the bar to the given stream.
-    std::ostream &render(std::ostream &os) {
+    std::ostream& render(std::ostream& os) {
         const auto current_step = std::min(m_completed_steps, m_total_steps);
-        const double clamped = (
-            m_total_steps == 0
-                ? 1.0
-                : std::clamp(
-                      static_cast<double>(current_step) / static_cast<double>(m_total_steps),
-                      0.0,
-                      1.0
-                  )
-        );
+        const double clamped =
+            (m_total_steps == 0
+                 ? 1.0
+                 : std::clamp(static_cast<double>(current_step) / static_cast<double>(m_total_steps), 0.0, 1.0));
         const auto now = std::chrono::steady_clock::now();
         const double elapsed_seconds = std::chrono::duration<double>(now - m_start_time).count();
         const int filled = static_cast<int>(clamped * static_cast<double>(m_bar_width));
@@ -92,12 +86,10 @@ private:
         }
         os << "| " << current_step << "/" << m_total_steps << " ";
 
-        const auto eta_seconds = clamped > 0.0
-            ? elapsed_seconds * (1.0 - clamped) / clamped
-            : -1.0;
+        const auto eta_seconds = clamped > 0.0 ? elapsed_seconds * (1.0 - clamped) / clamped : -1.0;
         os << "[" << format_duration(elapsed_seconds) << "<"
-           << (eta_seconds >= 0.0 ? format_duration(eta_seconds) : "??:??:??")
-           << ", " << format_rate(current_step, elapsed_seconds) << "]";
+           << (eta_seconds >= 0.0 ? format_duration(eta_seconds) : "??:??:??") << ", "
+           << format_rate(current_step, elapsed_seconds) << "]";
         os.flush();
         return os;
     }
@@ -116,24 +108,16 @@ public:
           m_description(std::move(description)) {}
 
     /// Returns the current description string (read-only).
-    const std::string& description() const {
-        return m_description;
-    }
+    const std::string& description() const { return m_description; }
 
     /// Returns the current description string (modifiable).
-    std::string& description() {
-        return m_description;
-    }
+    std::string& description() { return m_description; }
 
     /// Returns the total number of steps (read-only).
-    const std::size_t& total_steps() const {
-        return m_total_steps;
-    }
+    const std::size_t& total_steps() const { return m_total_steps; }
 
     /// Returns the total number of steps (modifiable).
-    std::size_t& total_steps() {
-        return m_total_steps;
-    }
+    std::size_t& total_steps() { return m_total_steps; }
 
     /**
      * @brief Starts the progress bar and prints the initial state.
@@ -144,7 +128,7 @@ public:
      * @param os Output stream to render to.
      * @return Reference to the same stream, for chaining.
      */
-    std::ostream &start(std::ostream &os) {
+    std::ostream& start(std::ostream& os) {
         clear();
         return render(os);
     }
@@ -156,7 +140,7 @@ public:
      * @param steps Number of steps to add to the completed count (default 1).
      * @return Reference to the same stream, for chaining.
      */
-    std::ostream &update(std::ostream &os, std::size_t steps = 1) {
+    std::ostream& update(std::ostream& os, std::size_t steps = 1) {
         if (!m_started) {
             clear();
         }
@@ -180,7 +164,7 @@ public:
      * @param os Output stream to render to.
      * @return Reference to the same stream, for chaining.
      */
-    std::ostream &finish(std::ostream &os) {
+    std::ostream& finish(std::ostream& os) {
         if (!m_started) {
             os << "Progress bar was not started.\n";
             return os;
@@ -192,7 +176,6 @@ public:
         m_started = false;
         return os;
     }
-
 };
 
-}
+}  // namespace pbpt::utils

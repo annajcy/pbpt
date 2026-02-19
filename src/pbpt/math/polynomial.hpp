@@ -16,7 +16,7 @@ namespace pbpt::math {
  *
  * @tparam T Scalar type of the evaluation result.
  */
-template<typename T>
+template <typename T>
 class Polynomial {
 public:
     /**
@@ -25,7 +25,7 @@ public:
      * @param x Input value (unused).
      * @param c Constant coefficient.
      */
-    template<typename C>
+    template <typename C>
     static constexpr T evaluate(T x, C c) {
         return c;
     }
@@ -41,10 +41,10 @@ public:
      * @param c  Current coefficient.
      * @param cs Remaining coefficients.
      */
-    template<typename C, typename... Cs>
+    template <typename C, typename... Cs>
     static constexpr T evaluate(T x, C c, Cs... cs) {
         return std::fmal(x, evaluate(x, cs...), c);
     }
 };
 
-};
+};  // namespace pbpt::math

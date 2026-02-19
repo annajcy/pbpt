@@ -23,7 +23,7 @@ namespace pbpt::sampler {
  * @param u A uniform random variable in [0, 1) used for offsetting.
  * @return std::array<T, N> An array of N stratified samples in [0, 1).
  */
-template<typename T, int N>
+template <typename T, int N>
 inline std::array<T, N> generate_strified_array(T u) {
     std::array<T, N> us;
     for (int i = 0; i < N; ++i) {
@@ -36,4 +36,4 @@ inline std::array<T, N> generate_strified_array(T u) {
     return us;
 }
 
-}
+}  // namespace pbpt::sampler

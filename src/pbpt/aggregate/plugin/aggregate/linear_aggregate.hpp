@@ -8,15 +8,16 @@
 
 namespace pbpt::aggregate {
 
-template<typename T>
+template <typename T>
 class LinearAggregate : public Aggregate<LinearAggregate<T>, T> {
     friend class Aggregate<LinearAggregate<T>, T>;
+
 private:
     std::vector<shape::Primitive<T>> m_primitives;
 
 public:
     LinearAggregate() = default;
-    LinearAggregate(const std::vector<shape::Primitive<T>>& primitives): m_primitives(primitives) {}
+    LinearAggregate(const std::vector<shape::Primitive<T>>& primitives) : m_primitives(primitives) {}
 
 private:
     std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_ray_impl(const geometry::Ray<T, 3>& ray) const {
@@ -34,7 +35,8 @@ private:
         return closest_hit;
     }
 
-    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_ray_differential_impl(const geometry::RayDifferential<T, 3>& ray_diff) const {
+    std::optional<shape::PrimitiveIntersectionRecord<T>> intersect_ray_differential_impl(
+        const geometry::RayDifferential<T, 3>& ray_diff) const {
         std::optional<shape::PrimitiveIntersectionRecord<T>> closest_hit;
         T closest_t = std::numeric_limits<T>::infinity();
 

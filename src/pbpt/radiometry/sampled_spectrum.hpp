@@ -48,7 +48,7 @@ public:
  *
  * Each entry usually lies in the range covered by lambda_min/lambda_max.
  */
-template<typename T, int N> 
+template <typename T, int N>
 class SampledWavelength : public math::Vector<T, N> {
 public:
     /// Default-constructs an empty wavelength container.
@@ -67,7 +67,7 @@ public:
  * Used together with @c SampledSpectrum and @c SampledWavelength to form
  * unbiased Monte Carlo estimators over the spectrum.
  */
-template<typename T, int N>
+template <typename T, int N>
 class SampledPdf : public math::Vector<T, N> {
 public:
     /// Default-constructs an empty PDF container.
@@ -88,7 +88,7 @@ public:
  * @param u A uniform random sample in [0, 1).
  * @return T The sampled wavelength in nanometers.
  */
-template<typename T>
+template <typename T>
 inline T sample_uniform_wavelength(const T u) {
     return sampler::sample_uniform(u, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
 }
@@ -105,7 +105,8 @@ inline T sample_uniform_wavelength(const T u) {
  */
 template <typename T>
 inline T sample_uniform_wavelength_pdf(const T lambda) {
-    return sampler::sample_uniform_pdf(lambda, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
+    return sampler::sample_uniform_pdf(lambda, radiometry::constant::lambda_min<T>,
+                                       radiometry::constant::lambda_max<T>);
 }
 
 /**
@@ -135,7 +136,7 @@ inline SampledWavelength<T, N> sample_uniform_wavelengths(const std::array<T, N>
  * @param u A single uniform random variable in [0, 1).
  * @return SampledWavelength<T, N> An array of N stratified wavelengths.
  */
-template<typename T, int N>
+template <typename T, int N>
 inline SampledWavelength<T, N> sample_uniform_wavelengths_stratified(T u) {
     auto us = sampler::generate_strified_array<T, N>(u);
     return sample_uniform_wavelengths<T, N>(us);
@@ -161,8 +162,8 @@ inline SampledPdf<T, N> sample_uniform_wavelengths_pdf(const SampledWavelength<T
 /**
  * @brief Samples a wavelength using importance sampling based on human visual sensitivity.
  *
- * Uses the inverse CDF method with a fitted distribution that approximates the 
- * CIE Y response curve (and others) to reduce perceptual noise. The distribution 
+ * Uses the inverse CDF method with a fitted distribution that approximates the
+ * CIE Y response curve (and others) to reduce perceptual noise. The distribution
  * peaks around 538nm (Green).
  *
  * Analytical inverse CDF formula:
@@ -172,7 +173,7 @@ inline SampledPdf<T, N> sample_uniform_wavelengths_pdf(const SampledWavelength<T
  * @param u A uniform random sample in [0, 1).
  * @return T The sampled wavelength in nanometers.
  */
-template<typename T>
+template <typename T>
 inline T sample_visible_wavelengths(T u) {
     T lambda = T(538) - T(138.888889) * std::atanh(T(0.85691062) - T(1.82750197) * u);
     return std::clamp(lambda, radiometry::constant::lambda_min<T>, radiometry::constant::lambda_max<T>);
@@ -190,7 +191,7 @@ inline T sample_visible_wavelengths(T u) {
  * @param lambda The wavelength in nanometers.
  * @return T The probability density value.
  */
-template<typename T>
+template <typename T>
 inline T sample_visible_wavelengths_pdf(const T lambda) {
     if (lambda < radiometry::constant::lambda_min<T> || lambda > radiometry::constant::lambda_max<T>) {
         return T(0);
@@ -221,8 +222,8 @@ inline SampledWavelength<T, N> sample_visible_wavelengths(const std::array<T, N>
 /**
  * @brief Generates N stratified importance-sampled wavelength samples from a single random number.
  *
- * This is the preferred method for spectral rendering. It ensures that the wavelengths 
- * cover the visible spectrum thoroughly according to their visual importance, 
+ * This is the preferred method for spectral rendering. It ensures that the wavelengths
+ * cover the visible spectrum thoroughly according to their visual importance,
  * minimizing color noise.
  *
  * @tparam T Numeric type.
@@ -230,7 +231,7 @@ inline SampledWavelength<T, N> sample_visible_wavelengths(const std::array<T, N>
  * @param u A single uniform random variable in [0, 1).
  * @return SampledWavelength<T, N> An array of N stratified, importance-sampled wavelengths.
  */
-template<typename T, int N>
+template <typename T, int N>
 inline SampledWavelength<T, N> sample_visible_wavelengths_stratified(T u) {
     auto us = sampler::generate_strified_array<T, N>(u);
     return sample_visible_wavelengths<T, N>(us);
@@ -253,4 +254,4 @@ inline SampledPdf<T, N> sample_visible_wavelengths_pdf(const SampledWavelength<T
     return pdfs;
 };
 
-};
+};  // namespace pbpt::radiometry

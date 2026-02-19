@@ -12,21 +12,15 @@
 
 namespace pbpt::material {
 
-template<typename T>
-using AnyMaterial = std::variant<
-    LambertianMaterial<T>,
-    DielectricMaterial<T>,
-    DielectricSpecularMaterial<T>,
-    DielectricRoughMaterial<T>,
-    ConductorMaterial<T>,
-    ConductorSpecularMaterial<T>,
-    ConductorRoughMaterial<T>
->;
+template <typename T>
+using AnyMaterial = std::variant<LambertianMaterial<T>, DielectricMaterial<T>, DielectricSpecularMaterial<T>,
+                                 DielectricRoughMaterial<T>, ConductorMaterial<T>, ConductorSpecularMaterial<T>,
+                                 ConductorRoughMaterial<T>>;
 
-template<typename T>
+template <typename T>
 using AnyMaterialLibrary = utils::Library<T, AnyMaterial<T>>;
 
-template<typename T>
-using NamedAnyMaterialLibrary = utils::NamedLibrary<T, AnyMaterial<T>>;   
+template <typename T>
+using NamedAnyMaterialLibrary = utils::NamedLibrary<T, AnyMaterial<T>>;
 
-}
+}  // namespace pbpt::material

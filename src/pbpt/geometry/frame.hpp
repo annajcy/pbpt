@@ -15,9 +15,9 @@ namespace pbpt::geometry {
 template <typename T>
 class Frame {
 private:
-    math::Vector<T, 3> m_t; // x
-    math::Vector<T, 3> m_b; // y
-    math::Vector<T, 3> m_n; // z
+    math::Vector<T, 3> m_t;  // x
+    math::Vector<T, 3> m_b;  // y
+    math::Vector<T, 3> m_n;  // z
 
 public:
     constexpr Frame() = default;
@@ -28,7 +28,7 @@ public:
      */
     constexpr Frame(const math::Vector<T, 3>& n) {
         m_n = n.normalized();
-        
+
         // Robust method to generate basis (Frisvad / Duff)
         // Checks if n.z is close to -1 or 1 to avoid singularity
         if (m_n.z() < T(-0.9999999)) {
@@ -47,7 +47,7 @@ public:
         m_n = normal.normalized();
         m_t = tangent.normalized();
         // Gram-Schmidt orthogonalization to ensure t is perpendicular to n
-        m_t = (m_t - m_n * m_n.dot(m_t)).normalized(); // Optional but safer
+        m_t = (m_t - m_n * m_n.dot(m_t)).normalized();  // Optional but safer
         m_b = math::cross(m_n, m_t);
     }
 
@@ -61,11 +61,7 @@ public:
     /// World(Render) -> Local
     /// Projects v onto the basis vectors.
     constexpr math::Vector<T, 3> to_local(const math::Vector<T, 3>& v) const {
-        return math::Vector<T, 3>{
-            v.dot(m_t),
-            v.dot(m_b),
-            v.dot(m_n)
-        };
+        return math::Vector<T, 3>{v.dot(m_t), v.dot(m_b), v.dot(m_n)};
     }
 
     /// Local -> World(Render)
@@ -80,32 +76,26 @@ public:
     static constexpr T cos_theta(const math::Vector<T, 3>& w) { return w.z(); }
     static constexpr T cos2_theta(const math::Vector<T, 3>& w) { return w.z() * w.z(); }
     static constexpr T abs_cos_theta(const math::Vector<T, 3>& w) { return std::abs(w.z()); }
-    
-    static constexpr T sin2_theta(const math::Vector<T, 3>& w) {
-        return std::max(T(0), T(1) - cos2_theta(w));
-    }
 
-    static T sin_theta(const math::Vector<T, 3>& w) { // std::sqrt usually not constexpr
+    static constexpr T sin2_theta(const math::Vector<T, 3>& w) { return std::max(T(0), T(1) - cos2_theta(w)); }
+
+    static T sin_theta(const math::Vector<T, 3>& w) {  // std::sqrt usually not constexpr
         return std::sqrt(sin2_theta(w));
     }
 
-    static T tan_theta(const math::Vector<T, 3>& w) {
-        return sin_theta(w) / cos_theta(w);
-    }
+    static T tan_theta(const math::Vector<T, 3>& w) { return sin_theta(w) / cos_theta(w); }
 
     // --- Heavy Transforms (Avoid in inner loops) ---
     // Keep these if you need to export the frame to a matrix for other systems
 
-    constexpr Transform<T> local_to_render_transform() const { 
-        return Transform<T>::from_mat3x3(
-            Matrix<T, 3, 3>::from_cols(m_t, m_b, m_n)
-        );
+    constexpr Transform<T> local_to_render_transform() const {
+        return Transform<T>::from_mat3x3(Matrix<T, 3, 3>::from_cols(m_t, m_b, m_n));
     }
 
-    constexpr Transform<T> render_to_local_transform() const { 
+    constexpr Transform<T> render_to_local_transform() const {
         // For orthonormal basis, Inverse == Transpose
-        return local_to_render_transform().inversed(); 
+        return local_to_render_transform().inversed();
     }
 };
 
-} // namespace pbpt::geometry
+}  // namespace pbpt::geometry

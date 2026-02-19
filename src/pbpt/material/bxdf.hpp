@@ -15,10 +15,7 @@
 
 namespace pbpt::material {
 
-enum class TransportMode : int {
-    Radiance,
-    Importance
-};
+enum class TransportMode : int { Radiance, Importance };
 
 enum class BxDFFlags : int {
     Unset = 0,
@@ -55,7 +52,7 @@ inline BxDFFlags& operator|=(BxDFFlags& a, BxDFFlags b) {
     return a;
 }
 
-// is type the subset of filters? 
+// is type the subset of filters?
 inline bool is_match_flags(BxDFFlags type, BxDFFlags filters) {
     return filters == BxDFFlags::ANY || (type & filters) == type;
 }
@@ -98,112 +95,92 @@ inline bool has_flag(BxDFReflTransFlags type, BxDFReflTransFlags flag) {
 }
 
 inline bool is_match_refl_trans(BxDFFlags type, BxDFReflTransFlags flags) {
-    if (flags == BxDFReflTransFlags::All) return true;
-    if (flags == BxDFReflTransFlags::Unset) return false;
+    if (flags == BxDFReflTransFlags::All)
+        return true;
+    if (flags == BxDFReflTransFlags::Unset)
+        return false;
 
-    bool matches_reflection = has_flag(flags, BxDFReflTransFlags::Reflection) &&
-                              has_flag(type, BxDFFlags::Reflection);
-    bool matches_transmission = has_flag(flags, BxDFReflTransFlags::Transmission) &&
-                                has_flag(type, BxDFFlags::Transmission);
+    bool matches_reflection = has_flag(flags, BxDFReflTransFlags::Reflection) && has_flag(type, BxDFFlags::Reflection);
+    bool matches_transmission =
+        has_flag(flags, BxDFReflTransFlags::Transmission) && has_flag(type, BxDFFlags::Transmission);
     return matches_reflection || matches_transmission;
 }
 
-template<typename T, int N>
+template <typename T, int N>
 struct BxDFSampleRecord {
-    radiometry::SampledSpectrum<T, N> f; // BxDF值
-    math::Vector<T, 3> wi; // 入射方向
-    T pdf = 0; // 采样概率密度
-    T eta = 1; // 折射率比值
-    BxDFFlags sampled_flags = BxDFFlags::Unset; // 记录采样到的具体类型
+    radiometry::SampledSpectrum<T, N> f;         // BxDF值
+    math::Vector<T, 3> wi;                       // 入射方向
+    T pdf = 0;                                   // 采样概率密度
+    T eta = 1;                                   // 折射率比值
+    BxDFFlags sampled_flags = BxDFFlags::Unset;  // 记录采样到的具体类型
 };
 
-template<typename Derived, typename T, int N>
+template <typename Derived, typename T, int N>
 class BxDF {
 public:
     Derived& as_derived() { return static_cast<Derived&>(*this); }
     const Derived& as_derived() const { return static_cast<const Derived&>(*this); }
     BxDFFlags type() const { return as_derived().type_impl(); }
 
-    radiometry::SampledSpectrum<T, N> rou_hh(
-        const radiometry::SampledWavelength<T, N>& swl,
-        const std::vector<T>& uc, 
-        const std::vector<math::Point<T, 2>>& u2d_i,
-        const std::vector<math::Point<T, 2>>& u2d_o,
-        TransportMode mode = TransportMode::Radiance
-    ) {
+    radiometry::SampledSpectrum<T, N> rou_hh(const radiometry::SampledWavelength<T, N>& swl, const std::vector<T>& uc,
+                                             const std::vector<math::Point<T, 2>>& u2d_i,
+                                             const std::vector<math::Point<T, 2>>& u2d_o,
+                                             TransportMode mode = TransportMode::Radiance) {
         auto res = radiometry::SampledSpectrum<T, N>::zeros();
-        for (size_t i = 0; i < uc.size(); i ++) {
+        for (size_t i = 0; i < uc.size(); i++) {
             math::Vector<T, 3> wo = sampler::sample_uniform_hemisphere(u2d_o[i]);
-            if (wo.z() == 0) continue;
+            if (wo.z() == 0)
+                continue;
             T pdf_wo = sampler::sample_uniform_hemisphere_pdf<T>();
             auto bsdf_sample_rec_opt = this->sample_f(swl, wo, uc[i], u2d_i[i], mode);
             if (bsdf_sample_rec_opt) {
-                res += (bsdf_sample_rec_opt->f * std::abs(geometry::cos_theta(bsdf_sample_rec_opt->wi)) * std::abs(geometry::cos_theta(wo))) 
-                       / (bsdf_sample_rec_opt->pdf * pdf_wo);
+                res += (bsdf_sample_rec_opt->f * std::abs(geometry::cos_theta(bsdf_sample_rec_opt->wi)) *
+                        std::abs(geometry::cos_theta(wo))) /
+                       (bsdf_sample_rec_opt->pdf * pdf_wo);
             }
         }
         return res / static_cast<T>(uc.size() * math::pi_v<T>);
     }
 
-    radiometry::SampledSpectrum<T, N> rou_hd(
-        const radiometry::SampledWavelength<T, N>& swl,
-        const math::Vector<T, 3>& wo, 
-        const std::vector<T>& uc, 
-        const std::vector<math::Point<T, 2>>& u2d,
-        TransportMode mode = TransportMode::Radiance
-    ) {
+    radiometry::SampledSpectrum<T, N> rou_hd(const radiometry::SampledWavelength<T, N>& swl,
+                                             const math::Vector<T, 3>& wo, const std::vector<T>& uc,
+                                             const std::vector<math::Point<T, 2>>& u2d,
+                                             TransportMode mode = TransportMode::Radiance) {
         auto res = radiometry::SampledSpectrum<T, N>::zeros();
         for (size_t i = 0; i < uc.size(); ++i) {
             auto bsdf_sample_rec_opt = this->sample_f(swl, wo, uc[i], u2d[i], mode);
             if (bsdf_sample_rec_opt) {
-                res += bsdf_sample_rec_opt->f * std::abs(geometry::cos_theta(bsdf_sample_rec_opt->wi)) 
-                        / bsdf_sample_rec_opt->pdf;
+                res += bsdf_sample_rec_opt->f * std::abs(geometry::cos_theta(bsdf_sample_rec_opt->wi)) /
+                       bsdf_sample_rec_opt->pdf;
             }
         }
         return res / static_cast<T>(uc.size());
     }
 
-    radiometry::SampledSpectrum<T, N> f(
-        const radiometry::SampledWavelength<T, N>& swl,
-        const math::Vector<T, 3>& wo, 
-        const math::Vector<T, 3>& wi,
-        TransportMode mode = TransportMode::Radiance
-    ) const {
+    radiometry::SampledSpectrum<T, N> f(const radiometry::SampledWavelength<T, N>& swl, const math::Vector<T, 3>& wo,
+                                        const math::Vector<T, 3>& wi,
+                                        TransportMode mode = TransportMode::Radiance) const {
         return as_derived().f_impl(swl, wo, wi, mode);
     }
 
     std::optional<BxDFSampleRecord<T, N>> sample_f(
-        const radiometry::SampledWavelength<T, N>& swl,
-        const math::Vector<T, 3>& wo,
-        const T uc,
-        const math::Point<T, 2>& u2d,
-        TransportMode mode = TransportMode::Radiance,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+        const radiometry::SampledWavelength<T, N>& swl, const math::Vector<T, 3>& wo, const T uc,
+        const math::Point<T, 2>& u2d, TransportMode mode = TransportMode::Radiance,
+        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         return as_derived().sample_f_impl(swl, wo, uc, u2d, mode, sample_flags);
     }
 
-    T pdf(
-        const math::Vector<T, 3>& wo, 
-        const math::Vector<T, 3>& wi, 
-        TransportMode mode = TransportMode::Radiance,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
-        return as_derived().pdf_impl(wo, wi, mode, sample_flags); 
+    T pdf(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi, TransportMode mode = TransportMode::Radiance,
+          const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
+        return as_derived().pdf_impl(wo, wi, mode, sample_flags);
     }
 };
 
-
-template<typename T>
+template <typename T>
 inline std::optional<geometry::RayDifferentialOffset<T>> make_ray_differential_offset(
-    BxDFFlags bxdf_type,
-    const geometry::RayDifferential<T, 3>& ray_diff,
-    const geometry::SurfaceInteraction<T>& si,
-    const geometry::ShadingInfo<T>& shading,
-    const geometry::SurfaceDifferentials<T>& surface_diffs,
-    const math::Vector<T, 3>& wi,
-    T eta
-) {
+    BxDFFlags bxdf_type, const geometry::RayDifferential<T, 3>& ray_diff, const geometry::SurfaceInteraction<T>& si,
+    const geometry::ShadingInfo<T>& shading, const geometry::SurfaceDifferentials<T>& surface_diffs,
+    const math::Vector<T, 3>& wi, T eta) {
     geometry::RayDifferentialOffset<T> offset{};
 
     const bool is_specular = has_flag(bxdf_type, BxDFFlags::Specular);
@@ -226,10 +203,8 @@ inline std::optional<geometry::RayDifferentialOffset<T>> make_ray_differential_o
     }
     n = n.normalized();
 
-    auto dndx = shading.dndu.to_vector() * surface_diffs.dudx +
-                shading.dndv.to_vector() * surface_diffs.dvdx;
-    auto dndy = shading.dndu.to_vector() * surface_diffs.dudy +
-                shading.dndv.to_vector() * surface_diffs.dvdy;
+    auto dndx = shading.dndu.to_vector() * surface_diffs.dudx + shading.dndv.to_vector() * surface_diffs.dvdx;
+    auto dndy = shading.dndu.to_vector() * surface_diffs.dudy + shading.dndv.to_vector() * surface_diffs.dvdy;
 
     const auto& wo = si.wo();
     auto dwodx = -ray_diff.x().direction() - wo;
@@ -283,13 +258,11 @@ inline std::optional<geometry::RayDifferentialOffset<T>> make_ray_differential_o
     auto rx_direction = wi + offset.dwdx;
     auto ry_direction = wi + offset.dwdy;
 
-    bool invalid = !finite_vec(offset.dpdx) || !finite_vec(offset.dpdy) ||
-                   !finite_vec(offset.dwdx) || !finite_vec(offset.dwdy) ||
-                   !finite_point(rx_origin) || !finite_point(ry_origin) ||
+    bool invalid = !finite_vec(offset.dpdx) || !finite_vec(offset.dpdy) || !finite_vec(offset.dwdx) ||
+                   !finite_vec(offset.dwdy) || !finite_point(rx_origin) || !finite_point(ry_origin) ||
                    !finite_vec(rx_direction) || !finite_vec(ry_direction) ||
                    rx_origin.to_vector().length_squared() > kMaxLen2 ||
-                   ry_origin.to_vector().length_squared() > kMaxLen2 ||
-                   rx_direction.length_squared() > kMaxLen2 ||
+                   ry_origin.to_vector().length_squared() > kMaxLen2 || rx_direction.length_squared() > kMaxLen2 ||
                    ry_direction.length_squared() > kMaxLen2;
     if (invalid) {
         return std::nullopt;
@@ -298,5 +271,4 @@ inline std::optional<geometry::RayDifferentialOffset<T>> make_ray_differential_o
     return std::make_optional(offset);
 }
 
-
-} // namespace pbpt::material
+}  // namespace pbpt::material

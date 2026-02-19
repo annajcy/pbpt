@@ -11,7 +11,7 @@
 
 namespace pbpt::texture {
 
-template<typename T, typename Texel>
+template <typename T, typename Texel>
 class MipMap {
 private:
     std::vector<Image<Texel>> m_levels;
@@ -21,48 +21,39 @@ private:
 public:
     MipMap() = default;
 
-    MipMap(
-        Image<Texel> level0,
-        WrapMode wrap_u = WrapMode::Repeat,
-        WrapMode wrap_v = WrapMode::Repeat
-    ) : m_wrap_u(wrap_u), m_wrap_v(wrap_v) {
+    MipMap(Image<Texel> level0, WrapMode wrap_u = WrapMode::Repeat, WrapMode wrap_v = WrapMode::Repeat)
+        : m_wrap_u(wrap_u), m_wrap_v(wrap_v) {
         build_levels(std::move(level0));
     }
 
-    std::size_t level_count() const {
-        return m_levels.size();
-    }
+    std::size_t level_count() const { return m_levels.size(); }
 
-    const Image<Texel>& level(std::size_t index) const {
-        return m_levels.at(index);
-    }
+    const Image<Texel>& level(std::size_t index) const { return m_levels.at(index); }
 
-    Texel sample(
-        const TextureEvalContext<T>& ctx,
-        FilterMode = FilterMode::Trilinear
-    ) const {
+    Texel sample(const TextureEvalContext<T>& ctx, FilterMode = FilterMode::Trilinear) const {
         return sample_trilinear(ctx);
     }
 
 private:
-    static Texel lerp_texel(const Texel& a, const Texel& b, T t) {
-        return a * (T(1) - t) + b * t;
-    }
+    static Texel lerp_texel(const Texel& a, const Texel& b, T t) { return a * (T(1) - t) + b * t; }
 
     static T wrap_coord(T x, WrapMode mode) {
         if (mode == WrapMode::Repeat) {
             T wrapped = x - std::floor(x);
-            if (wrapped < T(0)) wrapped += T(1);
+            if (wrapped < T(0))
+                wrapped += T(1);
             return wrapped;
         }
         return std::clamp(x, T(0), T(1));
     }
 
     static int wrap_index(int i, int size, WrapMode mode) {
-        if (size <= 0) return 0;
+        if (size <= 0)
+            return 0;
         if (mode == WrapMode::Repeat) {
             int m = i % size;
-            if (m < 0) m += size;
+            if (m < 0)
+                m += size;
             return m;
         }
         return std::clamp(i, 0, size - 1);
@@ -104,8 +95,10 @@ private:
     }
 
     T estimate_lambda(const TextureEvalContext<T>& ctx) const {
-        if (m_levels.empty()) return T(0);
-        if (!ctx.differentials.has_value()) return T(0);
+        if (m_levels.empty())
+            return T(0);
+        if (!ctx.differentials.has_value())
+            return T(0);
 
         const auto& d = *ctx.differentials;
         const T width = static_cast<T>(m_levels.front().width());
@@ -174,4 +167,4 @@ private:
     }
 };
 
-}
+}  // namespace pbpt::texture

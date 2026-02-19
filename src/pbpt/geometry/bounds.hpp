@@ -51,8 +51,7 @@ public:
      */
     template <typename First, typename... Rest>
         requires std::same_as<Point<T, N>, First> && (std::same_as<Point<T, N>, Rest> && ...)
-    constexpr explicit Bounds(const First& first, const Rest&... rest)
-        : m_min(first), m_max(first) {
+    constexpr explicit Bounds(const First& first, const Rest&... rest) : m_min(first), m_max(first) {
         (unite(rest), ...);
     }
 
@@ -64,7 +63,7 @@ public:
      */
     Point<T, N> corner(int index) const {
         Point<T, N> p;
-        for (int i = 0; i < N; i ++) {
+        for (int i = 0; i < N; i++) {
             if ((index & (1 << i)) == 0) {
                 p[i] = m_min[i];
             } else {
@@ -154,11 +153,11 @@ public:
      */
     constexpr int max_extent() const {
         int max_extent = 0;
-        T   max_diff   = m_max[0] - m_min[0];
+        T max_diff = m_max[0] - m_min[0];
         for (int i = 1; i < N; ++i) {
             T diff = m_max[i] - m_min[i];
             if (diff > max_diff) {
-                max_diff   = diff;
+                max_diff = diff;
                 max_extent = i;
             }
         }
@@ -223,7 +222,6 @@ public:
         auto diag = diagonal();
         return 2 * (diag.x() * diag.y() + diag.y() * diag.z() + diag.z() * diag.x());
     }
-
 };
 
 /**
@@ -241,14 +239,9 @@ public:
  * @return Optional pair (t_min, t_max) if the box is hit.
  */
 template <typename T, int N>
-std::optional<std::pair<T, T>> intersect_ray_bounds(
-    const Ray<T, N>& ray,
-    const Bounds<T, N>& bounds,
-    std::pair<T, T> t_range = {
-        -std::numeric_limits<T>::infinity(),
-         std::numeric_limits<T>::infinity()
-    }
-) {
+std::optional<std::pair<T, T>> intersect_ray_bounds(const Ray<T, N>& ray, const Bounds<T, N>& bounds,
+                                                    std::pair<T, T> t_range = {-std::numeric_limits<T>::infinity(),
+                                                                               std::numeric_limits<T>::infinity()}) {
     T t_min = t_range.first;
     T t_max = t_range.second;
 
@@ -265,7 +258,8 @@ std::optional<std::pair<T, T>> intersect_ray_bounds(
             T t0 = (bounds.min()[i] - o[i]) * inv_d;
             T t1 = (bounds.max()[i] - o[i]) * inv_d;
 
-            if (t0 > t1) std::swap(t0, t1);
+            if (t0 > t1)
+                std::swap(t0, t1);
 
             t_min = std::max(t_min, t0);
             t_max = std::min(t_max, t1);

@@ -28,7 +28,7 @@ namespace pbpt::radiometry {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 struct RGBSigmoidPolynomialOptimizationResult {
     /// LAB difference between target color and fitted color (L*, a*, b*).
     math::Vector<T, 3> error;
@@ -70,19 +70,12 @@ struct RGBSigmoidPolynomialOptimizationResult {
  *
  * @return Optimization result containing the final LAB error and coefficients.
  */
-template<typename T, typename LuminantSpectrumType>
+template <typename T, typename LuminantSpectrumType>
 inline RGBSigmoidPolynomialOptimizationResult<T> optimize_albedo_rgb_sigmoid_polynomial(
-    const RGB<T>& target_rgb, 
-    const RGBColorSpace<T>& color_space,
-    const LuminantSpectrumType& reference_luminant_spectrum,
-    int max_iterations = 300, 
-    double learning_rate = 1.0,
-    double delta_x = 1e-4,
-    double error_threshold = 1e-2, 
-    const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0},
-    bool verbose = false
-) {
-
+    const RGB<T>& target_rgb, const RGBColorSpace<T>& color_space,
+    const LuminantSpectrumType& reference_luminant_spectrum, int max_iterations = 300, double learning_rate = 1.0,
+    double delta_x = 1e-4, double error_threshold = 1e-2, const std::array<T, 3>& initial_guess = {0.0, 0.0, 0.0},
+    bool verbose = false) {
     if (verbose) {
         std::cout << "Starting optimization for target RGB: " << target_rgb << std::endl;
     }
@@ -95,7 +88,7 @@ inline RGBSigmoidPolynomialOptimizationResult<T> optimize_albedo_rgb_sigmoid_pol
         std::cout << "Target LAB: " << target_lab << std::endl;
     }
 
-    auto eval_lab = [&](const std::array<T,3>& c) -> LAB<T> {
+    auto eval_lab = [&](const std::array<T, 3>& c) -> LAB<T> {
         RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> albedo({c[0], c[1], c[2]});
         XYZ<T> xyz = XYZ<T>::from_reflectance(albedo, reference_luminant_spectrum);
         return LAB<T>::from_xyz(xyz, color_space.white_point());
@@ -108,7 +101,7 @@ inline RGBSigmoidPolynomialOptimizationResult<T> optimize_albedo_rgb_sigmoid_pol
         return math::Vector<T, 3>{dL, da, db};
     };
 
-    auto eval_jacobian = [&](const std::array<T,3>& c) -> math::Matrix<T, 3, 3> {
+    auto eval_jacobian = [&](const std::array<T, 3>& c) -> math::Matrix<T, 3, 3> {
         const T epsilon = delta_x;
         math::Matrix<T, 3, 3> J;
         for (int i = 0; i < 3; i++) {
@@ -128,24 +121,24 @@ inline RGBSigmoidPolynomialOptimizationResult<T> optimize_albedo_rgb_sigmoid_pol
     bool converged = false;
     std::array<T, 3> coeffs = initial_guess;
     auto error = math::Vector<T, 3>::filled(std::numeric_limits<double>::max());
-    for (int i = 0; i < max_iterations; i ++) {
+    for (int i = 0; i < max_iterations; i++) {
         auto object_lab = eval_lab(coeffs);
-        //std::cout << "Object LAB: " << object_lab << std::endl;
+        // std::cout << "Object LAB: " << object_lab << std::endl;
         error = eval_error(object_lab);
 
         if (verbose) {
-            std::cout << "Iteration " << i << ": Error = " << error
-                      << ", Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
+            std::cout << "Iteration " << i << ": Error = " << error << ", Coeffs = (" << coeffs[0] << ", " << coeffs[1]
+                      << ", " << coeffs[2] << ")\n";
         }
 
         if ([&]() -> bool {
-            for (int j = 0; j < 3; j++) {
-                if (!math::is_less_equal(math::abs(error[j]), error_threshold)) {
-                    return false;
+                for (int j = 0; j < 3; j++) {
+                    if (!math::is_less_equal(math::abs(error[j]), error_threshold)) {
+                        return false;
+                    }
                 }
-            }
-            return true;
-        }()) {
+                return true;
+            }()) {
             if (verbose) {
                 std::cout << "Converged after " << i << " iterations.\n";
                 std::cout << "Final Coeffs = (" << coeffs[0] << ", " << coeffs[1] << ", " << coeffs[2] << ")\n";
@@ -202,12 +195,11 @@ struct ScaledRGB {
  * @param rgb Input (potentially unbounded) RGB color.
  * @return ScaledRGB containing a bounded RGB value and a positive scale.
  */
-template<typename T>
+template <typename T>
 inline ScaledRGB<T> scale_unbounded_rgb(const RGB<T>& rgb) {
     T max_component = std::max({rgb.r(), rgb.g(), rgb.b()});
     return ScaledRGB<T>{rgb / (2 * max_component), 2 * max_component};
 }
-
 
 /**
  * @brief Optimize a smooth sigmoid-polynomial spectrum to match an RGB color.
@@ -216,15 +208,9 @@ inline ScaledRGB<T> scale_unbounded_rgb(const RGB<T>& rgb) {
  * reproduce the given RGB in the standard sRGB color space under the
  * CIE D65 illuminant.
  */
-template<typename T>
-RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
-    const RGB<T>& rgb
-) {
-    auto optim_res = optimize_albedo_rgb_sigmoid_polynomial(
-        rgb,
-        constant::sRGB<T>,
-        constant::CIE_D65_ilum<T>
-    );
+template <typename T>
+RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(const RGB<T>& rgb) {
+    auto optim_res = optimize_albedo_rgb_sigmoid_polynomial(rgb, constant::sRGB<T>, constant::CIE_D65_ilum<T>);
     auto coeff = optim_res.normalized_coeffs;
     return RGBSigmoidPolynomialNormalized<T>{coeff};
 }
@@ -236,14 +222,10 @@ RGBSigmoidPolynomialNormalized<T> optimize_rgb_to_rsp(
  * spectrum whose perceived color matches the given RGB (approximately)
  * under the reference illuminant.
  */
-template<typename T>
+template <typename T>
 RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized> create_srgb_albedo_spectrum_by_optimization(
-    const RGB<T>& rgb
-) {
-    return RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized>(
-        optimize_rgb_to_rsp(rgb)
-    );
+    const RGB<T>& rgb) {
+    return RGBAlbedoSpectrumDistribution<T, RGBSigmoidPolynomialNormalized>(optimize_rgb_to_rsp(rgb));
 }
 
-
-}
+}  // namespace pbpt::radiometry

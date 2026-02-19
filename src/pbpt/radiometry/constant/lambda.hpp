@@ -10,4 +10,4 @@ constexpr T lambda_min = T(360.0);
 template <typename T>
 constexpr T lambda_max = T(830.0);
 
-}
+}  // namespace pbpt::radiometry::constant

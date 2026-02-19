@@ -34,16 +34,16 @@ private:
 
 public:
     using Base::Base;
-    
+
     /// Returns a homogeneous point at the origin (0,...,0,1).
-    static constexpr auto point_at_origin() { 
+    static constexpr auto point_at_origin() {
         Homogeneous<T, N> result;
         for (int i = 0; i < N; ++i)
             result[i] = T(0);
         result[N - 1] = T(1);  // w = 1 for point
         return result;
     }
-    
+
     /// Returns the homogeneous representation of the zero vector (0,...,0,0).
     static constexpr auto zero_vector() {
         Homogeneous<T, N> result;
@@ -89,7 +89,7 @@ public:
     constexpr int spatial_dims() const { return N - 1; }
 
     /// Returns true if this homogeneous value encodes a point (w != 0).
-    constexpr bool is_point() const { 
+    constexpr bool is_point() const {
         if constexpr (std::is_floating_point_v<T>) {
             return !is_zero((*this)[N - 1]);
         } else {
@@ -98,7 +98,7 @@ public:
     }
 
     /// Returns true if this homogeneous value encodes a vector (w == 0).
-    constexpr bool is_vector() const { 
+    constexpr bool is_vector() const {
         if constexpr (std::is_floating_point_v<T>) {
             return is_zero((*this)[N - 1]);
         } else {
@@ -107,15 +107,15 @@ public:
     }
 
     /**
-        * @brief Converts a homogeneous point to an inhomogeneous point.
-        *
-        * Divides spatial coordinates by w and asserts that the value
-        * represents a point (w != 0).
-        */
+     * @brief Converts a homogeneous point to an inhomogeneous point.
+     *
+     * Divides spatial coordinates by w and asserts that the value
+     * represents a point (w != 0).
+     */
     constexpr Point<T, N - 1> to_point() const {
-        assert_if_ex<std::domain_error>([&]() { return is_vector(); }, 
+        assert_if_ex<std::domain_error>([&]() { return is_vector(); },
                                         "Cannot convert homogeneous vector (w=0) to Point");
-        
+
         Vector<T, N - 1> result_coords;
         const T inv_w = T(1) / (*this)[N - 1];
         for (int i = 0; i < N - 1; ++i)
@@ -124,15 +124,15 @@ public:
     }
 
     /**
-        * @brief Converts a homogeneous vector to an inhomogeneous vector.
-        *
-        * Drops the homogeneous w component and asserts that the value
-        * represents a vector (w == 0).
-        */
+     * @brief Converts a homogeneous vector to an inhomogeneous vector.
+     *
+     * Drops the homogeneous w component and asserts that the value
+     * represents a vector (w == 0).
+     */
     constexpr Vector<T, N - 1> to_vector() const {
-        assert_if_ex<std::domain_error>([&]() { return is_point(); }, 
-                                    "Cannot convert homogeneous point (w!=0) to Vector");
-    
+        assert_if_ex<std::domain_error>([&]() { return is_point(); },
+                                        "Cannot convert homogeneous point (w!=0) to Vector");
+
         Vector<T, N - 1> result_coords;
         for (int i = 0; i < N - 1; ++i)
             result_coords[i] = (*this)[i];
@@ -148,9 +148,7 @@ public:
     }
 
     /// Returns a mutable reference to the underlying vector storage.
-    constexpr Vector<T, N>& to_vector_raw() {
-        return reinterpret_cast<Vector<T, N>&>(*this);
-    }
+    constexpr Vector<T, N>& to_vector_raw() { return reinterpret_cast<Vector<T, N>&>(*this); }
 
     /// Divides all homogeneous components by a scalar in-place.
     template <typename U>
@@ -176,7 +174,7 @@ public:
         if (is_vector()) {
             return *this;  // Cannot normalize a vector or w=0
         }
-        
+
         Homogeneous<T, N> result{};
         const T inv_w = T(1) / (*this)[N - 1];
         for (int i = 0; i < N - 1; ++i) {

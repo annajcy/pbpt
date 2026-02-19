@@ -10,9 +10,10 @@
 
 namespace pbpt::material {
 
-template<typename T, int N>
+template <typename T, int N>
 class DielectricSpecularBxDF : public BxDF<DielectricSpecularBxDF<T, N>, T, N> {
     friend class BxDF<DielectricSpecularBxDF<T, N>, T, N>;
+
 private:
     T m_eta;
 
@@ -20,27 +21,17 @@ public:
     DielectricSpecularBxDF(T eta) : m_eta(eta) {}
 
 private:
-    BxDFFlags type_impl() const {
-        return BxDFFlags::SpecularReflection | BxDFFlags::SpecularTransmission;
-    }
+    BxDFFlags type_impl() const { return BxDFFlags::SpecularReflection | BxDFFlags::SpecularTransmission; }
 
-    radiometry::SampledSpectrum<T, N> f_impl(
-        const radiometry::SampledWavelength<T, N>&,
-        const math::Vector<T, 3>& wo,
-        const math::Vector<T, 3>& wi,
-        TransportMode mode
-    ) const {
+    radiometry::SampledSpectrum<T, N> f_impl(const radiometry::SampledWavelength<T, N>&, const math::Vector<T, 3>& wo,
+                                             const math::Vector<T, 3>& wi, TransportMode mode) const {
         return radiometry::SampledSpectrum<T, N>::filled(0);
     };
 
     std::optional<BxDFSampleRecord<T, N>> sample_f_impl(
-        const radiometry::SampledWavelength<T, N>& swl,
-        const math::Vector<T, 3>& wo,
-        const T uc,
-        const math::Point<T, 2>& u2d,
-        TransportMode mode,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+        const radiometry::SampledWavelength<T, N>& swl, const math::Vector<T, 3>& wo, const T uc,
+        const math::Point<T, 2>& u2d, TransportMode mode,
+        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         if (!is_match_refl_trans(type_impl(), sample_flags)) {
             return std::nullopt;
         }
@@ -49,27 +40,26 @@ private:
         T Tr = T(1) - Re;
 
         T pr = Re, pt = Tr;
-        if (!(sample_flags & BxDFReflTransFlags::Reflection)) pr = T(0);
-        if (!(sample_flags & BxDFReflTransFlags::Transmission)) pt = T(0);
+        if (!(sample_flags & BxDFReflTransFlags::Reflection))
+            pr = T(0);
+        if (!(sample_flags & BxDFReflTransFlags::Transmission))
+            pt = T(0);
         if (pr == T(0) && pt == T(0)) {
             return std::nullopt;
         }
         T sum = pr + pt;
         pr /= sum, pt /= sum;
 
-
         if (uc < pr) {
             // reflection
             math::Vector<T, 3> wi = math::Vector<T, 3>(-wo.x(), -wo.y(), wo.z());
             auto cos_theta_i = geometry::cos_theta(wi);
             auto abs_cos_theta_i = std::abs(cos_theta_i);
-            return BxDFSampleRecord<T, N>{
-                .f = radiometry::SampledSpectrum<T, N>::filled(Re / abs_cos_theta_i),
-                .wi = wi,
-                .pdf = pr,
-                .eta = T(1),
-                .sampled_flags = BxDFFlags::SpecularReflection
-            };
+            return BxDFSampleRecord<T, N>{.f = radiometry::SampledSpectrum<T, N>::filled(Re / abs_cos_theta_i),
+                                          .wi = wi,
+                                          .pdf = pr,
+                                          .eta = T(1),
+                                          .sampled_flags = BxDFFlags::SpecularReflection};
         } else {
             // transmission
             auto refract_result_opt = refract(wo, math::Vector<T, 3>(0, 0, 1), m_eta);
@@ -80,7 +70,7 @@ private:
             auto refract_result = refract_result_opt.value();
             auto etap = refract_result.etap;
             auto wi = refract_result.wt;
-            
+
             if (is_same_hemisphere(wo, wi) || wi.z() == 0) {
                 return std::nullopt;
             }
@@ -90,24 +80,18 @@ private:
                 ft /= (etap * etap);
             }
 
-            return BxDFSampleRecord<T, N>{
-                .f = radiometry::SampledSpectrum<T, N>::filled(ft),
-                .wi = wi,
-                .pdf = pt,
-                .eta = etap,
-                .sampled_flags = BxDFFlags::SpecularTransmission
-            };
-        }       
+            return BxDFSampleRecord<T, N>{.f = radiometry::SampledSpectrum<T, N>::filled(ft),
+                                          .wi = wi,
+                                          .pdf = pt,
+                                          .eta = etap,
+                                          .sampled_flags = BxDFFlags::SpecularTransmission};
+        }
     }
 
-    T pdf_impl(
-        const math::Vector<T, 3>& wo,
-        const math::Vector<T, 3>& wi,
-        TransportMode trasport_mode,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+    T pdf_impl(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi, TransportMode trasport_mode,
+               const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         return T(0);
     }
 };
 
-} // namespace pbpt::material
+}  // namespace pbpt::material

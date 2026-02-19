@@ -36,11 +36,7 @@ public:
      * @return Offset sampled from the tent distribution.
      */
     math::Vector<T, 2> sample_offset_impl(const math::Point<T, 2>& uv) const {
-        return sampler::sample_tent_2d(
-            uv,
-            m_filter_radius,
-            m_filter_radius
-        ).to_vector();
+        return sampler::sample_tent_2d(uv, m_filter_radius, m_filter_radius).to_vector();
     }
 
     /**
@@ -50,11 +46,7 @@ public:
      * @return Probability density for @p offset.
      */
     T sample_offset_pdf_impl(const math::Vector<T, 2>& offset) const {
-        return sampler::sample_tent_2d_pdf(
-            math::Point<T, 2>(offset.x(), offset.y()),
-            m_filter_radius,
-            m_filter_radius
-        );
+        return sampler::sample_tent_2d_pdf(math::Point<T, 2>(offset.x(), offset.y()), m_filter_radius, m_filter_radius);
     }
 
     /**
@@ -75,4 +67,4 @@ public:
     }
 };
 
-} // namespace pbpt::camera
+}  // namespace pbpt::camera

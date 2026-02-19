@@ -28,7 +28,7 @@ namespace pbpt::radiometry {
  *
  * @tparam ResponseSpectrumType Underlying spectrum type for each channel.
  */
-template<typename ResponseSpectrumType>
+template <typename ResponseSpectrumType>
 class ResponseSpectrum {
 private:
     std::array<ResponseSpectrumType, 3> m_spectrum;
@@ -36,7 +36,7 @@ private:
 public:
     /// Default constructor - initializes all response channels with default-constructed spectra.
     ResponseSpectrum() = default;
-    
+
     /**
      * @brief Constructs a response spectrum from three channel spectra.
      *
@@ -51,11 +51,8 @@ public:
      * @param g Response spectrum for the second channel.
      * @param b Response spectrum for the third channel.
      */
-    ResponseSpectrum(
-        const ResponseSpectrumType& r,
-        const ResponseSpectrumType& g,
-        const ResponseSpectrumType& b
-    ) : m_spectrum{r,g,b} {}
+    ResponseSpectrum(const ResponseSpectrumType& r, const ResponseSpectrumType& g, const ResponseSpectrumType& b)
+        : m_spectrum{r, g, b} {}
 
     /// Returns the first (R-like) response channel.
     const ResponseSpectrumType& r() const { return m_spectrum[0]; }
@@ -81,7 +78,6 @@ public:
         math::assert_if(index >= 3, "Index out of bounds");
         return m_spectrum[index];
     }
-
 };
 
 /**
@@ -90,18 +86,16 @@ public:
  * Computes three channel values by summing spectrum(lambda) *
  * response.channel(lambda) over the tabular wavelength range.
  */
-template<typename T, template <typename> class Color, typename SpectrumType, typename ResponseSpectrumType> 
-inline constexpr Color<T> project_spectrum(
-    const SpectrumType& spectrum,
-    const ResponseSpectrum<ResponseSpectrumType>& response
-) {
+template <typename T, template <typename> class Color, typename SpectrumType, typename ResponseSpectrumType>
+inline constexpr Color<T> project_spectrum(const SpectrumType& spectrum,
+                                           const ResponseSpectrum<ResponseSpectrumType>& response) {
     T r{}, g{}, b{};
     for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
         r += spectrum.at(lambda) * response.r().at(lambda);
         g += spectrum.at(lambda) * response.g().at(lambda);
         b += spectrum.at(lambda) * response.b().at(lambda);
     }
-    return Color<T> (r, g, b);
+    return Color<T>(r, g, b);
 }
 
 /**
@@ -110,12 +104,10 @@ inline constexpr Color<T> project_spectrum(
  * If @p is_normalize_by_g is true and the green channel integral is
  * non-zero, the result is normalized so that the green channel is 1.
  */
-template<typename T, template <typename> class Color, typename IlluminantSpectrumType, typename ResponseSpectrumType> 
-inline constexpr Color<T> project_illuminant(
-    const IlluminantSpectrumType& illuminant,
-    const ResponseSpectrum<ResponseSpectrumType>& response,
-    bool is_normalize_by_g = true
-) {
+template <typename T, template <typename> class Color, typename IlluminantSpectrumType, typename ResponseSpectrumType>
+inline constexpr Color<T> project_illuminant(const IlluminantSpectrumType& illuminant,
+                                             const ResponseSpectrum<ResponseSpectrumType>& response,
+                                             bool is_normalize_by_g = true) {
     T r{}, g{}, b{};
     T g_integral{};
     for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
@@ -126,14 +118,10 @@ inline constexpr Color<T> project_illuminant(
     }
 
     if (!is_normalize_by_g || math::is_zero(g_integral)) {
-        return Color<T> (r, g, b);
+        return Color<T>(r, g, b);
     }
 
-    return Color<T> (
-        r / g_integral,
-        g / g_integral,
-        b / g_integral
-    );
+    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
 }
 
 /**
@@ -142,13 +130,12 @@ inline constexpr Color<T> project_illuminant(
  * Integrates reflectance(lambda) * illuminant(lambda) * response(lambda)
  * over wavelength, with optional normalization by the green channel.
  */
-template<typename T, template <typename> class Color, typename ReflectanceSpectrumType, typename IlluminantSpectrumType, typename ResponseSpectrumType> 
-inline constexpr Color<T> project_reflectance(
-    const ReflectanceSpectrumType& reflectance,
-    const IlluminantSpectrumType& illuminant,
-    const ResponseSpectrum<ResponseSpectrumType>& response,
-    bool is_normalize_by_g = true
-) {
+template <typename T, template <typename> class Color, typename ReflectanceSpectrumType,
+          typename IlluminantSpectrumType, typename ResponseSpectrumType>
+inline constexpr Color<T> project_reflectance(const ReflectanceSpectrumType& reflectance,
+                                              const IlluminantSpectrumType& illuminant,
+                                              const ResponseSpectrum<ResponseSpectrumType>& response,
+                                              bool is_normalize_by_g = true) {
     T r{}, g{}, b{};
     T g_integral{};
     for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
@@ -162,11 +149,7 @@ inline constexpr Color<T> project_reflectance(
         return Color<T>(r, g, b);
     }
 
-    return Color<T>(
-        r / g_integral,
-        g / g_integral,
-        b / g_integral
-    );
+    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
 }
 
 /**
@@ -175,13 +158,12 @@ inline constexpr Color<T> project_reflectance(
  * Similar to @c project_illuminant, but using an emission spectrum
  * instead of a reflectance.
  */
-template<typename T, template <typename> class Color, typename EmissionSpectrumType, typename IlluminantSpectrumType, typename ResponseSpectrumType> 
-inline constexpr Color<T> project_emission(
-    const EmissionSpectrumType& emission,
-    const IlluminantSpectrumType& illuminant,
-    const ResponseSpectrum<ResponseSpectrumType>& response,
-    bool is_normalize_by_g = true
-) {
+template <typename T, template <typename> class Color, typename EmissionSpectrumType, typename IlluminantSpectrumType,
+          typename ResponseSpectrumType>
+inline constexpr Color<T> project_emission(const EmissionSpectrumType& emission,
+                                           const IlluminantSpectrumType& illuminant,
+                                           const ResponseSpectrum<ResponseSpectrumType>& response,
+                                           bool is_normalize_by_g = true) {
     T r{}, g{}, b{};
     T g_integral{};
     for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
@@ -195,41 +177,31 @@ inline constexpr Color<T> project_emission(
         return Color<T>(r, g, b);
     }
 
-    return Color<T>(
-        r / g_integral,
-        g / g_integral,
-        b / g_integral
-    );
+    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
 }
 
 /**
  * @brief Monte Carlo version of @c project_spectrum using sampled wavelengths.
  */
-template<typename T, template <typename> class Color, int N, typename ResponseSpectrumType>
-inline constexpr Color<T> project_sampled_spectrum(
-    const SampledSpectrum<T, N>& spectrum, 
-    const SampledWavelength<T, N>& wavelengths, 
-    const SampledPdf<T, N>& pdf,
-    const ResponseSpectrum<ResponseSpectrumType>& response
-) {
-    return Color<T>(
-        (response.r().sample(wavelengths) * spectrum * pdf.inv()).average(), 
-        (response.g().sample(wavelengths) * spectrum * pdf.inv()).average(), 
-        (response.b().sample(wavelengths) * spectrum * pdf.inv()).average()
-    );
+template <typename T, template <typename> class Color, int N, typename ResponseSpectrumType>
+inline constexpr Color<T> project_sampled_spectrum(const SampledSpectrum<T, N>& spectrum,
+                                                   const SampledWavelength<T, N>& wavelengths,
+                                                   const SampledPdf<T, N>& pdf,
+                                                   const ResponseSpectrum<ResponseSpectrumType>& response) {
+    return Color<T>((response.r().sample(wavelengths) * spectrum * pdf.inv()).average(),
+                    (response.g().sample(wavelengths) * spectrum * pdf.inv()).average(),
+                    (response.b().sample(wavelengths) * spectrum * pdf.inv()).average());
 }
 
 /**
  * @brief Monte Carlo version of @c project_illuminant using sampled wavelengths.
  */
-template<typename T, template <typename> class Color, int N, typename ResponseSpectrumType>
-inline constexpr Color<T> project_sampled_illuminant(
-    const SampledSpectrum<T, N>& illuminant, 
-    const SampledWavelength<T, N>& wavelengths, 
-    const SampledPdf<T, N>& pdf,
-    const ResponseSpectrum<ResponseSpectrumType>& response,
-    bool is_normalize_by_g = true
-) {
+template <typename T, template <typename> class Color, int N, typename ResponseSpectrumType>
+inline constexpr Color<T> project_sampled_illuminant(const SampledSpectrum<T, N>& illuminant,
+                                                     const SampledWavelength<T, N>& wavelengths,
+                                                     const SampledPdf<T, N>& pdf,
+                                                     const ResponseSpectrum<ResponseSpectrumType>& response,
+                                                     bool is_normalize_by_g = true) {
     T r = (response.r().sample(wavelengths) * illuminant * pdf.inv()).average();
     T g = (response.g().sample(wavelengths) * illuminant * pdf.inv()).average();
     T b = (response.b().sample(wavelengths) * illuminant * pdf.inv()).average();
@@ -239,25 +211,20 @@ inline constexpr Color<T> project_sampled_illuminant(
         return Color<T>(r, g, b);
     }
 
-    return Color<T>(
-        r / g_integral,
-        g / g_integral,
-        b / g_integral
-    );
+    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
 }
 
 /**
  * @brief Monte Carlo version of @c project_reflectance using sampled wavelengths.
  */
-template<typename T, template <typename> class Color, int N, typename ReflectanceSpectrumType, typename IlluminantSpectrumType, typename ResponseSpectrumType>
-inline constexpr Color<T> project_sampled_reflectance(
-    const SampledSpectrum<T, N>& reflectance, 
-    const SampledSpectrum<T, N>& illuminant, 
-    const SampledWavelength<T, N>& wavelengths, 
-    const SampledPdf<T, N>& pdf,
-    const ResponseSpectrum<ResponseSpectrumType>& response,
-    bool is_normalize_by_g = true
-) {
+template <typename T, template <typename> class Color, int N, typename ReflectanceSpectrumType,
+          typename IlluminantSpectrumType, typename ResponseSpectrumType>
+inline constexpr Color<T> project_sampled_reflectance(const SampledSpectrum<T, N>& reflectance,
+                                                      const SampledSpectrum<T, N>& illuminant,
+                                                      const SampledWavelength<T, N>& wavelengths,
+                                                      const SampledPdf<T, N>& pdf,
+                                                      const ResponseSpectrum<ResponseSpectrumType>& response,
+                                                      bool is_normalize_by_g = true) {
     T r = (response.r().sample(wavelengths) * reflectance * illuminant * pdf.inv()).average();
     T g = (response.g().sample(wavelengths) * reflectance * illuminant * pdf.inv()).average();
     T b = (response.b().sample(wavelengths) * reflectance * illuminant * pdf.inv()).average();
@@ -265,25 +232,20 @@ inline constexpr Color<T> project_sampled_reflectance(
     if (!is_normalize_by_g || math::is_zero(g_integral)) {
         return Color<T>(r, g, b);
     }
-    return Color<T>(
-        r / g_integral,
-        g / g_integral,
-        b / g_integral
-    );
+    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
 }
 
 /**
  * @brief Monte Carlo version of @c project_emission using sampled wavelengths.
  */
-template<typename T, template <typename> class Color, int N, typename EmissionSpectrumType, typename IlluminantSpectrumType, typename ResponseSpectrumType>
-inline constexpr Color<T> project_sampled_emission(
-    const SampledSpectrum<T, N>& emission, 
-    const SampledSpectrum<T, N>& illuminant, 
-    const SampledWavelength<T, N>& wavelengths, 
-    const SampledPdf<T, N>& pdf,
-    const ResponseSpectrum<ResponseSpectrumType>& response,
-    bool is_normalize_by_g = true
-) {
+template <typename T, template <typename> class Color, int N, typename EmissionSpectrumType,
+          typename IlluminantSpectrumType, typename ResponseSpectrumType>
+inline constexpr Color<T> project_sampled_emission(const SampledSpectrum<T, N>& emission,
+                                                   const SampledSpectrum<T, N>& illuminant,
+                                                   const SampledWavelength<T, N>& wavelengths,
+                                                   const SampledPdf<T, N>& pdf,
+                                                   const ResponseSpectrum<ResponseSpectrumType>& response,
+                                                   bool is_normalize_by_g = true) {
     T r = (response.r().sample(wavelengths) * emission * pdf.inv()).average();
     T g = (response.g().sample(wavelengths) * emission * pdf.inv()).average();
     T b = (response.b().sample(wavelengths) * emission * pdf.inv()).average();
@@ -292,11 +254,7 @@ inline constexpr Color<T> project_sampled_emission(
         return Color<T>(r, g, b);
     }
 
-    return Color<T>(
-        r / g_integral,
-        g / g_integral,
-        b / g_integral
-    );
+    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
 }
 
 /**
@@ -308,7 +266,7 @@ inline constexpr Color<T> project_sampled_emission(
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 class XYZ : public math::Vector<T, 3> {
 public:
     /// Construct an XYZ color initialized to (0, 0, 0).
@@ -340,56 +298,38 @@ public:
      * Uses the tabulated CIE X, Y, Z color-matching functions and
      * `project_spectrum` over the standard wavelength range.
      */
-    template<typename SpectrumType>
+    template <typename SpectrumType>
     static XYZ<T> from_spectrum(const SpectrumType& spectrum) {
-        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
-            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        using ResponseSpectrumType =
+            TabularSpectrumDistribution<T, constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
         return project_spectrum<T, XYZ, SpectrumType, ResponseSpectrumType>(
-            spectrum, 
-            ResponseSpectrum<ResponseSpectrumType>{
-                constant::CIE_X<T>,
-                constant::CIE_Y<T>,
-                constant::CIE_Z<T>
-            }
-        );
+            spectrum,
+            ResponseSpectrum<ResponseSpectrumType>{constant::CIE_X<T>, constant::CIE_Y<T>, constant::CIE_Z<T>});
     }
 
     /**
      * @brief Construct XYZ of an illuminant under the CIE XYZ observer.
      */
-    template<typename IlluminantSpectrumType>
+    template <typename IlluminantSpectrumType>
     static XYZ<T> from_illuminant(const IlluminantSpectrumType& illuminant) {
-        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
-            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        using ResponseSpectrumType =
+            TabularSpectrumDistribution<T, constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
         return project_illuminant<T, XYZ, IlluminantSpectrumType, ResponseSpectrumType>(
-            illuminant, 
-            ResponseSpectrum<ResponseSpectrumType>{
-                constant::CIE_X<T>,
-                constant::CIE_Y<T>,
-                constant::CIE_Z<T>
-            }
-        );
+            illuminant,
+            ResponseSpectrum<ResponseSpectrumType>{constant::CIE_X<T>, constant::CIE_Y<T>, constant::CIE_Z<T>});
     }
 
     /**
      * @brief Construct XYZ of a reflectance under a given illuminant.
      */
-    template<typename ReflectanceSpectrumType, typename IlluminantSpectrumType>
-    static XYZ<T> from_reflectance(
-        const ReflectanceSpectrumType& reflectance,
-        const IlluminantSpectrumType& illuminant
-    ) {
-        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
-            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+    template <typename ReflectanceSpectrumType, typename IlluminantSpectrumType>
+    static XYZ<T> from_reflectance(const ReflectanceSpectrumType& reflectance,
+                                   const IlluminantSpectrumType& illuminant) {
+        using ResponseSpectrumType =
+            TabularSpectrumDistribution<T, constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
         return project_reflectance<T, XYZ, ReflectanceSpectrumType, IlluminantSpectrumType, ResponseSpectrumType>(
-            reflectance, 
-            illuminant, 
-            ResponseSpectrum<ResponseSpectrumType>{
-                constant::CIE_X<T>,
-                constant::CIE_Y<T>,
-                constant::CIE_Z<T>
-            }
-        );
+            reflectance, illuminant,
+            ResponseSpectrum<ResponseSpectrumType>{constant::CIE_X<T>, constant::CIE_Y<T>, constant::CIE_Z<T>});
     }
 
     // emission with referenced illuminant XYZ
@@ -399,45 +339,29 @@ public:
      * This is typically used when an emission is meant to be referenced
      * to a particular white point (e.g. D65).
      */
-    template<typename EmissionSpectrumType, typename IlluminantSpectrumType>
-    static XYZ<T> from_emission(
-        const EmissionSpectrumType& emission, 
-        const IlluminantSpectrumType& illuminant // e.g D65
+    template <typename EmissionSpectrumType, typename IlluminantSpectrumType>
+    static XYZ<T> from_emission(const EmissionSpectrumType& emission,
+                                const IlluminantSpectrumType& illuminant  // e.g D65
     ) {
-        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
-            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+        using ResponseSpectrumType =
+            TabularSpectrumDistribution<T, constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
         return project_emission<T, XYZ, EmissionSpectrumType, IlluminantSpectrumType, ResponseSpectrumType>(
-            emission, 
-            illuminant, 
-            ResponseSpectrum<ResponseSpectrumType>{
-                constant::CIE_X<T>,
-                constant::CIE_Y<T>,
-                constant::CIE_Z<T>
-            }
-        );
+            emission, illuminant,
+            ResponseSpectrum<ResponseSpectrumType>{constant::CIE_X<T>, constant::CIE_Y<T>, constant::CIE_Z<T>});
     }
 
     /**
      * @brief Construct XYZ from sampled spectrum data using Monte Carlo integration.
      */
-    template<int N>
-    static constexpr XYZ from_sampled_spectrum(
-        const SampledSpectrum<T, N>& spectrum, 
-        const SampledWavelength<T, N>& wavelengths, 
-        const SampledPdf<T, N>& pdf
-    ) {
-        using ResponseSpectrumType = TabularSpectrumDistribution<T, 
-            constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
+    template <int N>
+    static constexpr XYZ from_sampled_spectrum(const SampledSpectrum<T, N>& spectrum,
+                                               const SampledWavelength<T, N>& wavelengths,
+                                               const SampledPdf<T, N>& pdf) {
+        using ResponseSpectrumType =
+            TabularSpectrumDistribution<T, constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
         return project_sampled_spectrum<T, XYZ, N, ResponseSpectrumType>(
-            spectrum, 
-            wavelengths, 
-            pdf,
-            ResponseSpectrum<ResponseSpectrumType>{
-                constant::CIE_X<T>,
-                constant::CIE_Y<T>,
-                constant::CIE_Z<T>
-            }
-        );
+            spectrum, wavelengths, pdf,
+            ResponseSpectrum<ResponseSpectrumType>{constant::CIE_X<T>, constant::CIE_Y<T>, constant::CIE_Z<T>});
     }
 
     /// Get the X component.
@@ -448,12 +372,7 @@ public:
     T z() const { return this->operator[](2); }
 
     /// Convert XYZ to chromaticity coordinates (x, y) with Y used as relative luminance.
-    math::Point<T, 2> to_xy() const {
-        return math::Point<T, 2>(
-            x() / (x() + y() + z()), 
-            y() / (x() + y() + z())
-        );
-    }
+    math::Point<T, 2> to_xy() const { return math::Point<T, 2>(x() / (x() + y() + z()), y() / (x() + y() + z())); }
 
     XYZ<T>& normalize_to_y(T target_y = T{100}) {
         /// Normalize in-place so that the Y component equals @p target_y.
@@ -466,27 +385,21 @@ public:
     }
 
     /// Return a copy normalized so that Y equals target_y.
-    XYZ<T> normalized_to_y(T target_y = T{100}) const {
-        return XYZ<T>(*this).normalize_to_y(target_y);
-    }
+    XYZ<T> normalized_to_y(T target_y = T{100}) const { return XYZ<T>(*this).normalize_to_y(target_y); }
 };
 
 /**
  * @brief Convert XYZ color to a human-readable string.
  */
-template<typename T>
+template <typename T>
 std::string to_string(const XYZ<T>& xyz) {
-    return std::format("XYZ<{}>({}, {}, {})", 
-                       typeid(T).name(), 
-                       xyz.x(), 
-                       xyz.y(), 
-                       xyz.z());
+    return std::format("XYZ<{}>({}, {}, {})", typeid(T).name(), xyz.x(), xyz.y(), xyz.z());
 }
 
 /**
  * @brief Stream insertion operator for XYZ colors.
  */
-template<typename T>
+template <typename T>
 std::ostream& operator<<(std::ostream& os, const XYZ<T>& xyz) {
     return os << to_string(xyz);
 }
@@ -500,17 +413,13 @@ std::ostream& operator<<(std::ostream& os, const XYZ<T>& xyz) {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 class LMS : public math::Vector<T, 3> {
 public:
-
     /// Matrix that converts from LMS to XYZ in the Bradford space.
     static constexpr math::Matrix<T, 3, 3> lms_to_xyz_matrix() {
-        return math::Matrix<T, 3, 3>(
-            0.986993, -0.147054, 0.159963,
-            0.432305, 0.51836, 0.0492912,
-            -0.00852866, 0.0400428, 0.968487
-        );
+        return math::Matrix<T, 3, 3>(0.986993, -0.147054, 0.159963, 0.432305, 0.51836, 0.0492912, -0.00852866,
+                                     0.0400428, 0.968487);
     }
 
     /**
@@ -520,11 +429,7 @@ public:
      * XYZ tristimulus values to approximate cone responses.
      */
     static constexpr math::Matrix<T, 3, 3> xyz_to_lms_matrix() {
-        return math::Matrix<T, 3, 3>(
-            0.8951, 0.2664, -0.1614,
-            -0.7502, 1.7135, 0.0367,
-            0.0389, -0.0685, 1.0296
-        );
+        return math::Matrix<T, 3, 3>(0.8951, 0.2664, -0.1614, -0.7502, 1.7135, 0.0367, 0.0389, -0.0685, 1.0296);
     }
 
 public:
@@ -545,18 +450,14 @@ public:
     /**
      * @brief Converts this LMS color to XYZ using the Bradford matrix.
      */
-    XYZ<T> to_xyz() const {
-        return XYZ<T>(LMS<T>::lms_to_xyz_matrix() * (*this));
-    }
+    XYZ<T> to_xyz() const { return XYZ<T>(LMS<T>::lms_to_xyz_matrix() * (*this)); }
 
     /**
      * @brief Converts an XYZ color to LMS using the Bradford matrix.
      *
      * @param xyz Input color in XYZ space.
      */
-    static LMS<T> from_xyz(const XYZ<T>& xyz) {
-        return LMS<T>(LMS<T>::xyz_to_lms_matrix() * xyz);
-    }
+    static LMS<T> from_xyz(const XYZ<T>& xyz) { return LMS<T>(LMS<T>::xyz_to_lms_matrix() * xyz); }
 };
 
 /**
@@ -567,7 +468,7 @@ public:
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 class LAB : public math::Vector<T, 3> {
 public:
     /// Construct a LAB color initialized to (0, 0, 0).
@@ -622,19 +523,15 @@ public:
 /**
  * @brief Convert LAB color to a human-readable string.
  */
-template<typename T>
+template <typename T>
 std::string to_string(const LAB<T>& lab) {
-    return std::format("LAB<{}>({}, {}, {})", 
-                       typeid(T).name(), 
-                       lab.L(), 
-                       lab.a(), 
-                       lab.b());
+    return std::format("LAB<{}>({}, {}, {})", typeid(T).name(), lab.L(), lab.a(), lab.b());
 }
 
 /**
  * @brief Stream insertion operator for LAB colors.
  */
-template<typename T>
+template <typename T>
 std::ostream& operator<<(std::ostream& os, const LAB<T>& lab) {
     return os << to_string(lab);
 }
@@ -647,7 +544,7 @@ std::ostream& operator<<(std::ostream& os, const LAB<T>& lab) {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 class RGB : public math::Vector<T, 3> {
 public:
     /// Construct an RGB color initialized to (0, 0, 0).
@@ -678,11 +575,7 @@ public:
      * The default range [0,1] is suitable for normalized linear RGB.
      */
     RGB<T> clamp(T min = T{0}, T max = T{1}) {
-        return RGB<T>(
-            std::clamp(r(), min, max),
-            std::clamp(g(), min, max),
-            std::clamp(b(), min, max)
-        );
+        return RGB<T>(std::clamp(r(), min, max), std::clamp(g(), min, max), std::clamp(b(), min, max));
     }
 
     /**
@@ -697,15 +590,9 @@ public:
      * @param spectrum             Input spectral distribution.
      * @param response             Triplet of response spectra (R, G, B).
      */
-    template<typename SpectrumType, typename ResponseSpectrumType>
-    static RGB<T> from_spectrum(
-        const SpectrumType& spectrum,
-        const ResponseSpectrum<ResponseSpectrumType>& response
-    ) {
-        return project_spectrum<T, RGB, SpectrumType, ResponseSpectrumType>(
-            spectrum, 
-            response
-        );
+    template <typename SpectrumType, typename ResponseSpectrumType>
+    static RGB<T> from_spectrum(const SpectrumType& spectrum, const ResponseSpectrum<ResponseSpectrumType>& response) {
+        return project_spectrum<T, RGB, SpectrumType, ResponseSpectrumType>(spectrum, response);
     }
 
     /**
@@ -721,38 +608,26 @@ public:
      * @param pdf                   Sampling probability density for each sample.
      * @param response              Triplet of response spectra (R, G, B).
      */
-    template<int N, typename ResponseSpectrumType>
-    RGB<T> from_sampled_spectrum(
-        const SampledSpectrum<T, N>& spectrum, 
-        const SampledWavelength<T, N>& wavelengths,
-        const SampledPdf<T, N> &pdf,
-        const ResponseSpectrum<ResponseSpectrumType>& response
-    ) const {
-        return project_sampled_spectrum<T, RGB, N, ResponseSpectrumType>(
-            spectrum,
-            wavelengths,
-            pdf,
-            response
-        );
+    template <int N, typename ResponseSpectrumType>
+    RGB<T> from_sampled_spectrum(const SampledSpectrum<T, N>& spectrum, const SampledWavelength<T, N>& wavelengths,
+                                 const SampledPdf<T, N>& pdf,
+                                 const ResponseSpectrum<ResponseSpectrumType>& response) const {
+        return project_sampled_spectrum<T, RGB, N, ResponseSpectrumType>(spectrum, wavelengths, pdf, response);
     }
 };
 
 /**
  * @brief Convert RGB color to a human-readable string.
  */
-template<typename T>
+template <typename T>
 std::string to_string(const RGB<T>& rgb) {
-    return std::format("RGB<{}>({}, {}, {})", 
-                       typeid(T).name(), 
-                       rgb.r(), 
-                       rgb.g(), 
-                       rgb.b());
+    return std::format("RGB<{}>({}, {}, {})", typeid(T).name(), rgb.r(), rgb.g(), rgb.b());
 }
 
 /**
  * @brief Stream insertion operator for RGB colors.
  */
-template<typename T>
+template <typename T>
 std::ostream& operator<<(std::ostream& os, const RGB<T>& rgb) {
     return os << to_string(rgb);
 }
@@ -763,12 +638,10 @@ std::ostream& operator<<(std::ostream& os, const RGB<T>& rgb) {
  * Builds a diagonal scaling in LMS space that maps the source white
  * chromaticity to the destination white, and converts that back to XYZ.
  */
-template<typename T>
-inline constexpr math::Matrix<T, 3, 3> white_balance(
-    math::Point<T, 2> src_chroma_xy,
-    math::Point<T, 2> dst_chroma_xy
-) {
-    auto src_XYZ = radiometry::XYZ<T>::from_xyY(src_chroma_xy, T{1}), dst_XYZ = radiometry::XYZ<T>::from_xyY(dst_chroma_xy, T{1});
+template <typename T>
+inline constexpr math::Matrix<T, 3, 3> white_balance(math::Point<T, 2> src_chroma_xy, math::Point<T, 2> dst_chroma_xy) {
+    auto src_XYZ = radiometry::XYZ<T>::from_xyY(src_chroma_xy, T{1}),
+         dst_XYZ = radiometry::XYZ<T>::from_xyY(dst_chroma_xy, T{1});
     auto src_LMS = radiometry::LMS<T>::from_xyz(src_XYZ), dst_LMS = radiometry::LMS<T>::from_xyz(dst_XYZ);
     T scale_X = dst_LMS.x() / src_LMS.x();
     T scale_Y = dst_LMS.y() / src_LMS.y();
@@ -777,9 +650,7 @@ inline constexpr math::Matrix<T, 3, 3> white_balance(
     wb_matrix[0][0] = scale_X;
     wb_matrix[1][1] = scale_Y;
     wb_matrix[2][2] = scale_Z;
-    return  radiometry::LMS<T>::lms_to_xyz_matrix() * 
-            wb_matrix * 
-            radiometry::LMS<T>::xyz_to_lms_matrix();
+    return radiometry::LMS<T>::lms_to_xyz_matrix() * wb_matrix * radiometry::LMS<T>::xyz_to_lms_matrix();
 }
 
 /**
@@ -799,19 +670,16 @@ T encode_to_nonlinear_srgb_channel(T linear) {
  */
 template <typename T>
 RGB<T> encode_to_nonlinear_srgb(const RGB<T>& linear_rgb) {
-    return RGB<T>(
-        encode_to_nonlinear_srgb_channel(linear_rgb.r()),
-        encode_to_nonlinear_srgb_channel(linear_rgb.g()),
-        encode_to_nonlinear_srgb_channel(linear_rgb.b())
-    );
+    return RGB<T>(encode_to_nonlinear_srgb_channel(linear_rgb.r()), encode_to_nonlinear_srgb_channel(linear_rgb.g()),
+                  encode_to_nonlinear_srgb_channel(linear_rgb.b()));
 }
 
 /**
  * @brief Decode a single non-linear sRGB channel back to linear.
  */
-template<typename T>
+template <typename T>
 T decode_from_nonlinear_srgb_channel(T nonlinear) {
-    nonlinear =  std::clamp(nonlinear, T{0}, T{1});
+    nonlinear = std::clamp(nonlinear, T{0}, T{1});
     if (nonlinear <= T{0.04045}) {
         return nonlinear / T{12.92};
     }
@@ -821,13 +689,11 @@ T decode_from_nonlinear_srgb_channel(T nonlinear) {
 /**
  * @brief Decode non-linear sRGB RGB into linear RGB.
  */
-template<typename T>
+template <typename T>
 RGB<T> decode_from_nonlinear_srgb(const RGB<T>& nonlinear_rgb) {
-    return RGB<T>(
-        decode_from_nonlinear_srgb_channel(nonlinear_rgb.r()),
-        decode_from_nonlinear_srgb_channel(nonlinear_rgb.g()),
-        decode_from_nonlinear_srgb_channel(nonlinear_rgb.b())
-    );
+    return RGB<T>(decode_from_nonlinear_srgb_channel(nonlinear_rgb.r()),
+                  decode_from_nonlinear_srgb_channel(nonlinear_rgb.g()),
+                  decode_from_nonlinear_srgb_channel(nonlinear_rgb.b()));
 }
 
-} // namespace pbpt::radiometry
+}  // namespace pbpt::radiometry

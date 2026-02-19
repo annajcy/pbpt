@@ -12,15 +12,17 @@
 
 namespace pbpt::material {
 
-template<typename T, int N>
+template <typename T, int N>
 class DielectricRoughBxDF : public BxDF<DielectricRoughBxDF<T, N>, T, N> {
     friend class BxDF<DielectricRoughBxDF<T, N>, T, N>;
+
 private:
     T m_eta;
     MicrofacetModel<T> m_microfacet_model;
 
 public:
-    DielectricRoughBxDF(T eta, const MicrofacetModel<T>& microfacet_model) : m_eta(eta), m_microfacet_model(microfacet_model) {}
+    DielectricRoughBxDF(T eta, const MicrofacetModel<T>& microfacet_model)
+        : m_eta(eta), m_microfacet_model(microfacet_model) {}
 
 private:
     BxDFFlags type_impl() const {
@@ -30,12 +32,8 @@ private:
         return BxDFFlags::GlossyReflection | BxDFFlags::GlossyTransmission;
     }
 
-    radiometry::SampledSpectrum<T, N> f_impl(
-        const radiometry::SampledWavelength<T, N>&,
-        const math::Vector<T, 3>& wo,
-        const math::Vector<T, 3>& wi,
-        TransportMode mode
-    ) const {
+    radiometry::SampledSpectrum<T, N> f_impl(const radiometry::SampledWavelength<T, N>&, const math::Vector<T, 3>& wo,
+                                             const math::Vector<T, 3>& wi, TransportMode mode) const {
         T cos_theta_o = geometry::cos_theta(wo), cos_theta_i = geometry::cos_theta(wi);
         bool is_reflect = is_same_hemisphere(wo, wi);
         T etap = 1;
@@ -52,21 +50,20 @@ private:
 
         // discard cases where wm is not consistent with wo and wi
         if (wm.dot(wi) * cos_theta_i < 0 || wm.dot(wo) * cos_theta_o < 0)
-            return radiometry::SampledSpectrum<T,N>::filled(0);
+            return radiometry::SampledSpectrum<T, N>::filled(0);
 
         auto Re = fresnel_dielectric(wo.dot(wm), m_eta);
         auto Tr = T(1) - Re;
 
         if (is_reflect) {
             auto fr = m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * Re /
-                       (T(4) * std::abs(geometry::cos_theta(wo)) * std::abs(geometry::cos_theta(wi)));
+                      (T(4) * std::abs(geometry::cos_theta(wo)) * std::abs(geometry::cos_theta(wi)));
             return radiometry::SampledSpectrum<T, N>::filled(fr);
         } else {
             T denom = wi.dot(wm) + wo.dot(wm) / etap;
             denom = denom * denom;
-            auto ft = m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * Tr *
-                      std::abs(wi.dot(wm)) * std::abs(wo.dot(wm)) /
-                      std::abs(denom * geometry::cos_theta(wo) * geometry::cos_theta(wi));
+            auto ft = m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * Tr * std::abs(wi.dot(wm)) *
+                      std::abs(wo.dot(wm)) / std::abs(denom * geometry::cos_theta(wo) * geometry::cos_theta(wi));
 
             if (mode == TransportMode::Radiance) {
                 ft /= (etap * etap);
@@ -76,13 +73,9 @@ private:
     };
 
     std::optional<BxDFSampleRecord<T, N>> sample_f_impl(
-        const radiometry::SampledWavelength<T, N>& swl,
-        const math::Vector<T, 3>& wo,
-        const T uc,
-        const math::Point<T, 2>& u2d,
-        TransportMode mode,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+        const radiometry::SampledWavelength<T, N>& swl, const math::Vector<T, 3>& wo, const T uc,
+        const math::Point<T, 2>& u2d, TransportMode mode,
+        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         if (!is_match_refl_trans(type_impl(), sample_flags)) {
             return std::nullopt;
         }
@@ -92,8 +85,10 @@ private:
         auto Tr = T(1) - Re;
 
         auto pr = Re, pt = Tr;
-        if (!(sample_flags & BxDFReflTransFlags::Reflection)) pr = T(0);
-        if (!(sample_flags & BxDFReflTransFlags::Transmission)) pt = T(0);
+        if (!(sample_flags & BxDFReflTransFlags::Reflection))
+            pr = T(0);
+        if (!(sample_flags & BxDFReflTransFlags::Transmission))
+            pt = T(0);
         if (pr == T(0) && pt == T(0)) {
             return std::nullopt;
         }
@@ -111,15 +106,13 @@ private:
             T pdf = pdf_wm / (T(4) * std::abs(wo.dot(wm))) * pr;
 
             auto fr = m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * Re /
-                       (T(4) * std::abs(geometry::cos_theta(wo)) * std::abs(geometry::cos_theta(wi)));
+                      (T(4) * std::abs(geometry::cos_theta(wo)) * std::abs(geometry::cos_theta(wi)));
 
-            return BxDFSampleRecord<T, N>{
-                .f = radiometry::SampledSpectrum<T, N>::filled(fr),
-                .wi = wi,
-                .pdf = pdf,
-                .eta = T(1),
-                .sampled_flags = BxDFFlags::GlossyReflection
-            };
+            return BxDFSampleRecord<T, N>{.f = radiometry::SampledSpectrum<T, N>::filled(fr),
+                                          .wi = wi,
+                                          .pdf = pdf,
+                                          .eta = T(1),
+                                          .sampled_flags = BxDFFlags::GlossyReflection};
 
         } else {
             // transmission
@@ -141,31 +134,23 @@ private:
             T pdf_wm = m_microfacet_model.pdf_wm(wo, wm);
             T pdf = pdf_wm * dwm_dwi * pt;
 
-            auto ft = m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * Tr *
-                      std::abs(wi.dot(wm)) * std::abs(wo.dot(wm)) /
-                      std::abs(denom * geometry::cos_theta(wo) * geometry::cos_theta(wi));
+            auto ft = m_microfacet_model.D(wm) * m_microfacet_model.G(wo, wi) * Tr * std::abs(wi.dot(wm)) *
+                      std::abs(wo.dot(wm)) / std::abs(denom * geometry::cos_theta(wo) * geometry::cos_theta(wi));
 
             if (mode == TransportMode::Radiance) {
                 ft /= (etap * etap);
             }
 
-            return BxDFSampleRecord<T, N>{
-                .f = radiometry::SampledSpectrum<T, N>::filled(ft),
-                .wi = wi,
-                .pdf = pdf,
-                .eta = etap,
-                .sampled_flags = BxDFFlags::GlossyTransmission
-            };
-        
+            return BxDFSampleRecord<T, N>{.f = radiometry::SampledSpectrum<T, N>::filled(ft),
+                                          .wi = wi,
+                                          .pdf = pdf,
+                                          .eta = etap,
+                                          .sampled_flags = BxDFFlags::GlossyTransmission};
         }
     }
 
-    T pdf_impl(
-        const math::Vector<T, 3>& wo,
-        const math::Vector<T, 3>& wi,
-        TransportMode mode,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+    T pdf_impl(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi, TransportMode mode,
+               const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         T cos_theta_o = geometry::cos_theta(wo), cos_theta_i = geometry::cos_theta(wi);
         bool is_reflect = is_same_hemisphere(wo, wi);
         T etap = 1;
@@ -188,9 +173,11 @@ private:
         auto Tr = T(1) - Re;
 
         auto pr = Re, pt = Tr;
-        if (!(sample_flags & BxDFReflTransFlags::Reflection)) pr = 0;
-        if (!(sample_flags & BxDFReflTransFlags::Transmission)) pt = 0;
-        
+        if (!(sample_flags & BxDFReflTransFlags::Reflection))
+            pr = 0;
+        if (!(sample_flags & BxDFReflTransFlags::Transmission))
+            pt = 0;
+
         if (pr == T(0) && pt == T(0)) {
             return T(0);
         }
@@ -212,4 +199,4 @@ private:
     }
 };
 
-} // namespace pbpt::material
+}  // namespace pbpt::material

@@ -40,7 +40,7 @@ public:
         }
         return result;
     }
-    
+
     /// Constructs a normal from a plain vector by copying components.
     static constexpr auto from_vector(const Vector<T, N>& vec) {
         Normal<T, N> p;
@@ -50,9 +50,7 @@ public:
     }
 
     /// Converts this normal back to a plain vector with the same components.
-    constexpr auto to_vector() const {
-        return Vector<T, N>::from_array(this->to_array());
-    }
+    constexpr auto to_vector() const { return Vector<T, N>::from_array(this->to_array()); }
 
     /**
      * @brief Returns a copy of this normal oriented to face `vec`.
@@ -89,7 +87,7 @@ public:
         return *this;
     }
 
-    //dot product with vector 
+    // dot product with vector
     template <typename U>
     constexpr auto dot(const Vector<U, N>& rhs) {
         return this->to_vector().dot(rhs);

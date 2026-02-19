@@ -92,11 +92,15 @@ template <typename T>
 T parse_property(const pugi::xml_node& node, const std::string& name, T default_val = T{}) {
     // Determine tag name based on type
     std::string tag_type;
-    if constexpr (std::is_same_v<T, int>) tag_type = "integer";
-    else if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) tag_type = "float";
-    else if constexpr (std::is_same_v<T, bool>) tag_type = "boolean";
-    else if constexpr (std::is_same_v<T, std::string>) tag_type = "string";
-    
+    if constexpr (std::is_same_v<T, int>)
+        tag_type = "integer";
+    else if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>)
+        tag_type = "float";
+    else if constexpr (std::is_same_v<T, bool>)
+        tag_type = "boolean";
+    else if constexpr (std::is_same_v<T, std::string>)
+        tag_type = "string";
+
     for (auto child : node.children(tag_type.c_str())) {
         if (std::string(child.attribute("name").value()) == name) {
             return parse_value<T>(child.attribute("value").value());
@@ -105,4 +109,4 @@ T parse_property(const pugi::xml_node& node, const std::string& name, T default_
     return default_val;
 }
 
-}
+}  // namespace pbpt::loader

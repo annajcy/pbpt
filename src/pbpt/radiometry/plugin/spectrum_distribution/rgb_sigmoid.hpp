@@ -15,7 +15,7 @@ namespace pbpt::radiometry {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 struct RGBSigmoidPolynomial {
     /// Quadratic coefficient (constant term).
     T c0;
@@ -38,9 +38,7 @@ struct RGBSigmoidPolynomial {
      *
      * @param lambda Wavelength parameter (typically in nanometers).
      */
-    constexpr T at(T lambda) const {
-        return math::sigmoid(math::Polynomial<T>::evaluate(lambda, c0, c1, c2));
-    }
+    constexpr T at(T lambda) const { return math::sigmoid(math::Polynomial<T>::evaluate(lambda, c0, c1, c2)); }
 };
 
 /**
@@ -52,7 +50,7 @@ struct RGBSigmoidPolynomial {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 struct RGBSigmoidPolynomialNormalized {
     /// Normalized constant coefficient.
     T c0;
@@ -76,7 +74,7 @@ struct RGBSigmoidPolynomialNormalized {
      * @param lambda Wavelength in nanometers.
      */
     constexpr T at(T lambda) const {
-        const T t = (lambda - T(360)) / T(830 - 360);   // 归一化
+        const T t = (lambda - T(360)) / T(830 - 360);  // 归一化
         return math::sigmoid(math::Polynomial<T>::evaluate(t, c0, c1, c2));
     }
 
@@ -95,12 +93,9 @@ struct RGBSigmoidPolynomialNormalized {
         double A = c2, B = c1, C = c0;
         double c1_squared = c1_val * c1_val;
         double c0_c1 = c0_val * c1_val;
-        
-        return RGBSigmoidPolynomial<T>{
-            T(C - B * c0_val * c1_val + A * c0_c1 * c0_c1),
-            T(B * c1_val - 2 * A * c0_val * c1_squared), 
-            T(A * c1_squared)
-        };
+
+        return RGBSigmoidPolynomial<T>{T(C - B * c0_val * c1_val + A * c0_c1 * c0_c1),
+                                       T(B * c1_val - 2 * A * c0_val * c1_squared), T(A * c1_squared)};
     }
 };
 

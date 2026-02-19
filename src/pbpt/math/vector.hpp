@@ -32,12 +32,8 @@ public:
 
     template <typename U>
         requires(N == 4 && std::is_convertible_v<U, T>)
-    constexpr Vector(const Vector<U, 3>& xyz, U w) : Base(
-        static_cast<T>(xyz.x()),
-        static_cast<T>(xyz.y()),
-        static_cast<T>(xyz.z()),
-        static_cast<T>(w)
-    ) {}
+    constexpr Vector(const Vector<U, 3>& xyz, U w)
+        : Base(static_cast<T>(xyz.x()), static_cast<T>(xyz.y()), static_cast<T>(xyz.z()), static_cast<T>(w)) {}
 };
 
 /**
@@ -45,11 +41,8 @@ public:
  */
 template <typename T>
 constexpr auto cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
-    return Vector<T, 3>(
-        std::fma(lhs.y(), rhs.z(), -lhs.z() * rhs.y()), 
-        std::fma(lhs.z(), rhs.x(), -lhs.x() * rhs.z()),
-        std::fma(lhs.x(), rhs.y(), -lhs.y() * rhs.x())
-    );
+    return Vector<T, 3>(std::fma(lhs.y(), rhs.z(), -lhs.z() * rhs.y()), std::fma(lhs.z(), rhs.x(), -lhs.x() * rhs.z()),
+                        std::fma(lhs.x(), rhs.y(), -lhs.y() * rhs.x()));
 }
 
 /**
@@ -61,7 +54,8 @@ constexpr auto cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
  */
 template <typename T>
 constexpr promote_int_to_float_t<T> angle_between(const Vector<T, 3>& v1, const Vector<T, 3>& v2) {
-    assert_if([&v1, &v2]() { return v1.is_all_zero() || v2.is_all_zero(); }, "Cannot compute angle between zero vectors");
+    assert_if([&v1, &v2]() { return v1.is_all_zero() || v2.is_all_zero(); },
+              "Cannot compute angle between zero vectors");
     assert_if([&v1, &v2]() { return !v1.is_normalized() || !v2.is_normalized(); },
               "Vectors must be normalized to compute angle between them");
     if (v1.dot(v2) < 0) {
@@ -83,8 +77,8 @@ constexpr std::pair<Vector<T, 3>, Vector<T, 3>> coordinate_system(const Vector<T
     assert_if([&v1]() { return !v1.is_normalized(); }, "Input vector to coordinate_system_stable() must be normalized");
 
     const T sign = std::copysign(T(1), v1.z());
-    const T a    = T(-1) / (sign + v1.z());
-    const T b    = v1.x() * v1.y() * a;
+    const T a = T(-1) / (sign + v1.z());
+    const T b = v1.x() * v1.y() * a;
 
     Vector<T, 3> v2(T(1) + sign * v1.x() * v1.x() * a, sign * b, -sign * v1.x());
     Vector<T, 3> v3(b, sign + v1.y() * v1.y() * a, -v1.y());

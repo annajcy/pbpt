@@ -8,7 +8,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "vector.hpp" 
+#include "vector.hpp"
 
 namespace pbpt::math {
 
@@ -57,9 +57,7 @@ private:
         return static_cast<uint16_t>(std::clamp((v * T(0.5) + T(0.5)) * T(65535.0) + T(0.5), T(0), T(65535)));
     }
 
-    static constexpr T dequantize(uint16_t u) {
-        return T(u) / T(65535.0) * T(2.0) - T(1.0);
-    }
+    static constexpr T dequantize(uint16_t u) { return T(u) / T(65535.0) * T(2.0) - T(1.0); }
 
     static Vector<T, 2> encode_direction(const Vector<T, 3>& v) {
         T x = v[0], y = v[1], z = v[2];
@@ -93,4 +91,4 @@ private:
     }
 };
 
-} // namespace pbpt::math
+}  // namespace pbpt::math

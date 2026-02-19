@@ -12,3 +12,5 @@ nav:
   - Overview: overview.md
   - Get Started: get-started.md
   - API: api/index.md
+  - Features:
+    - RSPSpectrum Texture: rsp_spectrum_texture.md

@@ -25,14 +25,13 @@ namespace pbpt::geometry {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 class DirectionalCone {
 private:
     Vector<T, 3> m_direction;
     T m_cosine_theta;
 
 public:
-
     /**
      * @brief Construct a cone that covers a hemisphere.
      *
@@ -75,7 +74,8 @@ public:
      * opening angles intersect on the sphere.
      */
     constexpr bool is_overlapping(const DirectionalCone<T>& other) const {
-        if (other.is_degenerate() || this->is_degenerate()) return false;
+        if (other.is_degenerate() || this->is_degenerate())
+            return false;
 
         T theta_this = safe_acos(m_cosine_theta);
         T theta_other = safe_acos(other.m_cosine_theta);
@@ -91,8 +91,10 @@ public:
      * union covers the entire sphere, an @c entire_sphere cone is returned.
      */
     constexpr DirectionalCone<T> united(const DirectionalCone<T>& other) {
-        if (other.is_degenerate()) return *this;
-        if (this->is_degenerate()) return other;
+        if (other.is_degenerate())
+            return *this;
+        if (this->is_degenerate())
+            return other;
 
         T theta_delta = angle_between(m_direction, other.m_direction);
         T theta_this = safe_acos(m_cosine_theta);
@@ -123,29 +125,19 @@ public:
     }
 
     /// Check whether the cone is degenerate (infinite cosine, no valid angle).
-    constexpr bool is_degenerate() const {
-        return m_cosine_theta == std::numeric_limits<T>::infinity();
-    }
+    constexpr bool is_degenerate() const { return m_cosine_theta == std::numeric_limits<T>::infinity(); }
 
     /// Get the opening angle in radians.
-    constexpr T angle() const {
-        return safe_acos(m_cosine_theta);
-    }
+    constexpr T angle() const { return safe_acos(m_cosine_theta); }
 
     /// Get the cosine of the opening angle (const).
-    constexpr const T& cosine_theta() const {
-        return m_cosine_theta;
-    }
+    constexpr const T& cosine_theta() const { return m_cosine_theta; }
 
     /// Get the cosine of the opening angle (mutable).
-    constexpr T& cosine_theta() {
-        return m_cosine_theta;
-    }
+    constexpr T& cosine_theta() { return m_cosine_theta; }
 
     /// Get the cone axis direction.
-    constexpr Vector<T, 3> direction() const {
-        return m_direction;
-    }
+    constexpr Vector<T, 3> direction() const { return m_direction; }
 
     /**
      * @brief Bound all directions from a point to an axis-aligned box.
@@ -164,7 +156,7 @@ public:
         T sphere_radius = diagonal.length() / T(2);
         Vector<T, 3> direction = (sphere_center - p).normalized();
         T dist_to_center = p.distance(sphere_center);
-        
+
         T angle;
         if (dist_to_center <= sphere_radius) {
             return DirectionalCone<T>::entire_sphere(direction);
@@ -172,12 +164,9 @@ public:
             T sin_theta = sphere_radius / dist_to_center;
             angle = safe_asin(sin_theta);
         }
-        
+
         return DirectionalCone<T>(direction, angle);
     }
-
-
-
 };
 
-};
+};  // namespace pbpt::geometry

@@ -14,10 +14,7 @@ namespace pbpt::camera {
  * - EqualArea: image coordinates are warped so that each pixel covers
  *   approximately equal area on the unit sphere.
  */
-enum class SphericalCameraMapping {
-    EqualRectangular,
-    EqualArea
-};
+enum class SphericalCameraMapping { EqualRectangular, EqualArea };
 
 /**
  * @brief Spherical camera that generates rays covering the full sphere.
@@ -29,7 +26,7 @@ enum class SphericalCameraMapping {
  *
  * @tparam T Scalar type (e.g. float or double).
  */
-template<typename T>
+template <typename T>
 class SphericalCamera : public Camera<SphericalCamera<T>, T> {
     friend class Camera<SphericalCamera<T>, T>;
 
@@ -46,15 +43,12 @@ public:
      * @param film_resolution The resolution of the film/sensor in pixels.
      * @param mapping         How to map film coordinates to the sphere (default: Equirectangular).
      */
-    SphericalCamera(
-        const math::Vector<int, 2>& film_resolution,
-        SphericalCameraMapping mapping = SphericalCameraMapping::EqualRectangular
-    ) : m_mapping(mapping), m_film_resolution(film_resolution) {}
+    SphericalCamera(const math::Vector<int, 2>& film_resolution,
+                    SphericalCameraMapping mapping = SphericalCameraMapping::EqualRectangular)
+        : m_mapping(mapping), m_film_resolution(film_resolution) {}
 
     /// Get the current spherical mapping mode.
-    SphericalCameraMapping mapping() const {
-        return m_mapping;
-    }
+    SphericalCameraMapping mapping() const { return m_mapping; }
 
 private:
     /**
@@ -70,19 +64,15 @@ private:
      *    directions match the chosen convention.
      */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
-        math::Point<T, 2> uv = math::Point<T, 2>(
-            sample.p_film.x() / static_cast<T>(m_film_resolution.x()),
-            sample.p_film.y() / static_cast<T>(m_film_resolution.y())
-        );
+        math::Point<T, 2> uv = math::Point<T, 2>(sample.p_film.x() / static_cast<T>(m_film_resolution.x()),
+                                                 sample.p_film.y() / static_cast<T>(m_film_resolution.y()));
         T theta = math::pi_v<T> * uv.x(), phi = 2 * math::pi_v<T> * uv.y();
 
         math::Vector<T, 3> dir;
         if (m_mapping == SphericalCameraMapping::EqualRectangular) {
             dir = geometry::SphericalPoint<T, 3>(math::Vector<T, 2>{theta, phi}, 1).to_cartesian();
         } else if (m_mapping == SphericalCameraMapping::EqualArea) {
-            dir = geometry::equal_area_square_to_sphere(
-                geometry::warp_equal_area_square(uv).to_vector()
-            );
+            dir = geometry::equal_area_square_to_sphere(geometry::warp_equal_area_square(uv).to_vector());
         }
         std::swap(dir.y(), dir.z());
         return geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), dir);
@@ -96,8 +86,8 @@ private:
         auto p_film_x = sample.p_film + math::Vector<T, 2>(eps, 0);
         auto p_film_y = sample.p_film + math::Vector<T, 2>(0, eps);
 
-        CameraSample<T> sample_x = { p_film_x, sample.p_lens };
-        CameraSample<T> sample_y = { p_film_y, sample.p_lens };
+        CameraSample<T> sample_x = {p_film_x, sample.p_lens};
+        CameraSample<T> sample_y = {p_film_y, sample.p_lens};
 
         geometry::Ray<T, 3> ray_x = this->generate_ray_impl(sample_x);
         geometry::Ray<T, 3> ray_y = this->generate_ray_impl(sample_y);
@@ -106,9 +96,7 @@ private:
     }
 
     /// Return the film resolution in pixels.
-    math::Vector<int, 2> film_resolution_impl() const {
-        return m_film_resolution;
-    }
+    math::Vector<int, 2> film_resolution_impl() const { return m_film_resolution; }
 };
 
-} // namespace pbpt::camera
+}  // namespace pbpt::camera

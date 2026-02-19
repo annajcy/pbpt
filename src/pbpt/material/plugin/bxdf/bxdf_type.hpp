@@ -14,16 +14,9 @@
 namespace pbpt::material {
 
 // --- AnyBxDF 定义 ---
-template<typename T, int N>
-using AnyBxDF = std::variant<
-    NullBxDF<T, N>,
-    LambertianBxDF<T, N>,
-    DielectricBxDF<T, N>,
-    DielectricSpecularBxDF<T, N>,
-    DielectricRoughBxDF<T, N>,
-    ConductorBxDF<T, N>,
-    ConductorSpecularBxDF<T, N>,
-    ConductorRoughBxDF<T, N>
->;
+template <typename T, int N>
+using AnyBxDF = std::variant<NullBxDF<T, N>, LambertianBxDF<T, N>, DielectricBxDF<T, N>, DielectricSpecularBxDF<T, N>,
+                             DielectricRoughBxDF<T, N>, ConductorBxDF<T, N>, ConductorSpecularBxDF<T, N>,
+                             ConductorRoughBxDF<T, N> >;
 
-} // namespace pbpt::material
+}  // namespace pbpt::material

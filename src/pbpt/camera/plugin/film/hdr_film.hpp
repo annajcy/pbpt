@@ -14,7 +14,7 @@ namespace pbpt::camera {
  * @tparam T              Scalar type (e.g. float or double).
  * @tparam PixelSensorType Pixel sensor type used to convert spectra to RGB.
  */
-template<typename T, typename PixelSensorType>
+template <typename T, typename PixelSensorType>
 class HDRFilm : public Film<HDRFilm<T, PixelSensorType>, T> {
     friend class Film<HDRFilm<T, PixelSensorType>, T>;
 
@@ -33,11 +33,8 @@ public:
      * @param resolution    Pixel resolution (width, height).
      * @param pixel_sensor  Pixel sensor used for spectral to RGB conversion.
      */
-    HDRFilm(
-        const math::Vector<int, 2>& resolution,
-        const PixelSensorType& pixel_sensor
-    ) : Film<HDRFilm<T, PixelSensorType>, T>(resolution),
-        m_pixel_sensor(pixel_sensor) {
+    HDRFilm(const math::Vector<int, 2>& resolution, const PixelSensorType& pixel_sensor)
+        : Film<HDRFilm<T, PixelSensorType>, T>(resolution), m_pixel_sensor(pixel_sensor) {
         int width = this->resolution().x();
         int height = this->resolution().y();
         math::assert_if(width <= 0 || height <= 0, "RGBFilm requires a positive resolution");
@@ -51,11 +48,8 @@ public:
      * @param pixel_sensor  Pixel sensor used for spectral to RGB conversion.
      */
     template <typename CameraType>
-    HDRFilm(
-        const CameraType& camera,
-        const PixelSensorType& pixel_sensor
-    ) : Film<HDRFilm<T, PixelSensorType>, T>(camera),
-        m_pixel_sensor(pixel_sensor) {
+    HDRFilm(const CameraType& camera, const PixelSensorType& pixel_sensor)
+        : Film<HDRFilm<T, PixelSensorType>, T>(camera), m_pixel_sensor(pixel_sensor) {
         int width = this->resolution().x();
         int height = this->resolution().y();
         math::assert_if(width <= 0 || height <= 0, "RGBFilm requires a positive resolution");
@@ -70,14 +64,10 @@ private:
      * and then mapped into the target color space. The resulting RGB is
      * accumulated into the pixel buffer.
      */
-    template<int N>
-    void add_sample_impl(
-        const math::Point<int, 2>& p_film,
-        const radiometry::SampledSpectrum<T, N>& radiance,
-        const radiometry::SampledWavelength<T, N>& wavelengths,
-        const radiometry::SampledPdf<T, N>& pdf,
-        T weight
-    ) {
+    template <int N>
+    void add_sample_impl(const math::Point<int, 2>& p_film, const radiometry::SampledSpectrum<T, N>& radiance,
+                         const radiometry::SampledWavelength<T, N>& wavelengths,
+                         const radiometry::SampledPdf<T, N>& pdf, T weight) {
         Pixel<T>& pixel = pixel_at(p_film);
         auto sensor_rgb = m_pixel_sensor.template radiance_to_sensor_rgb<N>(radiance, wavelengths, pdf);
         auto display_rgb = m_pixel_sensor.sensor_rgb_to_color_space_rgb(sensor_rgb);
@@ -90,19 +80,15 @@ private:
      * This overload uses the pixel sensor's direct spectrum integration
      * method to convert radiance to sensor RGB, then to display RGB.
      */
-    template<typename SpectrumType>
-    void add_sample_impl(
-        const math::Point<int, 2>& p_film,
-        const SpectrumType& radiance,
-        T weight
-    ) {
+    template <typename SpectrumType>
+    void add_sample_impl(const math::Point<int, 2>& p_film, const SpectrumType& radiance, T weight) {
         Pixel<T>& pixel = pixel_at(p_film);
         auto sensor_rgb = m_pixel_sensor.radiance_to_sensor_rgb(radiance);
         auto display_rgb = m_pixel_sensor.sensor_rgb_to_color_space_rgb(sensor_rgb);
         pixel.add_sample(display_rgb, weight);
     }
 
-     /**
+    /**
      * @brief Develop the film into an Image.
      */
     texture::ImageN<T, 3> develop_impl() const {
@@ -127,11 +113,7 @@ public:
      * This is useful when the radiance has already been converted to
      * display RGB outside the film (for example, when debugging).
      */
-    void add_color_sample(
-        const math::Point<int, 2>& p_film,
-        const radiometry::RGB<T>& rgb,
-        T weight
-    ) {
+    void add_color_sample(const math::Point<int, 2>& p_film, const radiometry::RGB<T>& rgb, T weight) {
         Pixel<T>& pixel = pixel_at(p_film);
         pixel.add_sample(rgb, weight);
     }
@@ -142,9 +124,7 @@ public:
      * @param p_film Pixel coordinate.
      * @return Averaged RGB value for that pixel.
      */
-    radiometry::RGB<T> get_pixel_rgb(const math::Point<int, 2>& p_film) const {
-        return pixel_at(p_film).resolve();
-    }
+    radiometry::RGB<T> get_pixel_rgb(const math::Point<int, 2>& p_film) const { return pixel_at(p_film).resolve(); }
 
     /// Clear all pixel accumulators.
     void clear() {
@@ -154,24 +134,16 @@ public:
     }
 
     /// Get a const reference to the pixel sensor.
-    const PixelSensorType& pixel_sensor() const {
-        return m_pixel_sensor;
-    }
+    const PixelSensorType& pixel_sensor() const { return m_pixel_sensor; }
 
     /// Get a mutable reference to the pixel sensor.
-    PixelSensorType& pixel_sensor() {
-        return m_pixel_sensor;
-    }
+    PixelSensorType& pixel_sensor() { return m_pixel_sensor; }
 
     /// Get a const reference to the internal pixel buffer.
-    const std::vector<Pixel<T>>& pixels() const {
-        return m_pixels;
-    }
+    const std::vector<Pixel<T>>& pixels() const { return m_pixels; }
 
     /// Get a mutable reference to the internal pixel buffer.
-    std::vector<Pixel<T>>& pixels() {
-        return m_pixels;
-    }
+    std::vector<Pixel<T>>& pixels() { return m_pixels; }
 
 private:
     /// Access a pixel by integer coordinate (with bounds checks).
@@ -190,8 +162,7 @@ private:
     bool is_pixel_in_bounds(const math::Point<int, 2>& p_film) const {
         int width = this->resolution().x();
         int height = this->resolution().y();
-        return p_film.x() >= 0 && p_film.x() < width &&
-               p_film.y() >= 0 && p_film.y() < height;
+        return p_film.x() >= 0 && p_film.x() < width && p_film.y() >= 0 && p_film.y() < height;
     }
 
     /// Convert a 2D pixel coordinate to a linear index.
@@ -201,6 +172,6 @@ private:
     }
 };
 
-//TODO G-Buffer film
+// TODO G-Buffer film
 
 }  // namespace pbpt::camera

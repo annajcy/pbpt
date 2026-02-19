@@ -16,7 +16,7 @@
 
 namespace pbpt::utils {
 
-template<typename T>
+template <typename T>
 struct ObjMeshData {
     std::vector<int> indices;
     std::vector<math::Point<T, 3>> positions;
@@ -29,9 +29,7 @@ struct ObjVertexKey {
     int vt{-1};
     int vn{-1};
 
-    bool operator==(const ObjVertexKey& other) const {
-        return v == other.v && vt == other.vt && vn == other.vn;
-    }
+    bool operator==(const ObjVertexKey& other) const { return v == other.v && vt == other.vt && vn == other.vn; }
 };
 
 struct ObjVertexKeyHash {
@@ -75,12 +73,7 @@ inline ObjVertexIndex parse_obj_vertex_token(const std::string& token) {
     return idx;
 }
 
-inline int to_zero_based_index(
-    int idx,
-    std::size_t count,
-    const std::string& obj_path,
-    const char* label
-) {
+inline int to_zero_based_index(int idx, std::size_t count, const std::string& obj_path, const char* label) {
     if (idx == 0) {
         throw std::runtime_error("OBJ missing index in " + obj_path);
     }
@@ -91,7 +84,7 @@ inline int to_zero_based_index(
     return result;
 }
 
-template<typename T>
+template <typename T>
 ObjMeshData<T> load_obj_mesh(const std::string& obj_path) {
     std::ifstream fin(obj_path);
     if (!fin) {
@@ -207,4 +200,4 @@ ObjMeshData<T> load_obj_mesh(const std::string& obj_path) {
     }
     return data;
 }
-}
+}  // namespace pbpt::utils

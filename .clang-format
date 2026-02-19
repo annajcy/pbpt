@@ -10,8 +10,8 @@ SpaceAfterCStyleCast: false
 SpaceBeforeParens: ControlStatements
 PointerAlignment: Left
 DerivePointerAlignment: false
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
 AlignTrailingComments: true
 SortIncludes: false
 IncludeBlocks: Preserve

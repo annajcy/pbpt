@@ -25,7 +25,7 @@ concept AssertLambda = requires(F f) {
     { f() } -> std::convertible_to<bool>;
 };
 
-template<typename F>
+template <typename F>
 concept AssertCondition = std::is_convertible_v<F, bool>;
 
 // 原有的 assert_if 函数（向后兼容）
@@ -102,7 +102,7 @@ template <typename T>
 inline T rand(T min = std::numeric_limits<T>::lowest(), T max = std::numeric_limits<T>::max()) {
     thread_local static std::random_device rd;
     thread_local static std::mt19937 gen(rd());
-    
+
     if constexpr (std::is_integral_v<T>) {
         std::uniform_int_distribution<T> dist(min, max);
         return dist(gen);

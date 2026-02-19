@@ -14,9 +14,10 @@ namespace pbpt::radiometry {
  *
  * @tparam T Scalar type.
  */
-template<typename T>
+template <typename T>
 class FunctionalSpectrumDistribution : public SpectrumDistribution<FunctionalSpectrumDistribution<T>, T> {
     friend class SpectrumDistribution<FunctionalSpectrumDistribution<T>, T>;
+
 private:
     std::function<T(T)> m_f;
 
@@ -25,9 +26,7 @@ public:
     constexpr FunctionalSpectrumDistribution(const std::function<T(T)>& f) : m_f(f) {}
 
 private:
-    constexpr T at_impl(T lambda) const {
-        return m_f(lambda);
-    }
+    constexpr T at_impl(T lambda) const { return m_f(lambda); }
 };
 
 }  // namespace pbpt::radiometry

@@ -23,11 +23,14 @@ namespace pbpt::geometry {
  *
  * Repeatedly adds or subtracts 2π until the value lies in [0, 2π).
  */
-template<typename T>
+template <typename T>
 inline constexpr T wrap_angle_2pi(T phi) {
-    if (is_less(phi, T(0))) phi += T(2) * pi_v<T>;
-    else if (is_greater_equal(phi, T(2) * pi_v<T>)) phi -= T(2) * pi_v<T>;
-    else return phi;
+    if (is_less(phi, T(0)))
+        phi += T(2) * pi_v<T>;
+    else if (is_greater_equal(phi, T(2) * pi_v<T>))
+        phi -= T(2) * pi_v<T>;
+    else
+        return phi;
     return wrap_angle_2pi(phi);
 }
 
@@ -52,12 +55,10 @@ public:
     /// Angular parameters (N-1 angles: N-2 polar angles and one azimuth).
     Vector<T, N - 1> m_spherical;
     /// Radial distance from the origin.
-    T                m_radius;
+    T m_radius;
 
     /// Construct from a Cartesian point.
-    static constexpr auto from_cartesian(const Point<T, N>& cartesian) {
-        return SphericalPoint(cartesian);
-    }
+    static constexpr auto from_cartesian(const Point<T, N>& cartesian) { return SphericalPoint(cartesian); }
 
     /// Construct from angles and radius.
     constexpr SphericalPoint(const Vector<T, N - 1>& spherical, T radius) : m_spherical(spherical), m_radius(radius) {}
@@ -75,7 +76,7 @@ public:
             m_spherical[0] = wrap_angle_2pi(atan2(cartesian.y(), cartesian.x()));
         } else if constexpr (N == 3) {
             // 3D情况: θ = acos(z/r), φ = atan2(y, x)
-            m_spherical[0] = wrap_angle_2pi(acos(cartesian.z() / m_radius));  // 极角
+            m_spherical[0] = wrap_angle_2pi(acos(cartesian.z() / m_radius));       // 极角
             m_spherical[1] = wrap_angle_2pi(atan2(cartesian.y(), cartesian.x()));  // 方位角
         } else {
             // N维情况的递归计算
@@ -98,9 +99,9 @@ public:
         } else if constexpr (N == 3) {
             // 3D: x = r*sin(θ)*cos(φ), y = r*sin(θ)*sin(φ), z = r*cos(θ)
             T sin_theta = sin(m_spherical[0]);
-            result[0]   = m_radius * sin_theta * cos(m_spherical[1]);
-            result[1]   = m_radius * sin_theta * sin(m_spherical[1]);
-            result[2]   = m_radius * cos(m_spherical[0]);
+            result[0] = m_radius * sin_theta * cos(m_spherical[1]);
+            result[1] = m_radius * sin_theta * sin(m_spherical[1]);
+            result[2] = m_radius * cos(m_spherical[0]);
         } else {
             // N维情况
             spherical_to_cartesian_nd(result);
@@ -123,7 +124,6 @@ public:
     }
 
 private:
-
     constexpr void cartesian_to_spherical_nd(const Point<T, N>& cartesian) {
         // N维球坐标的一般公式（方位角在最后）
         // θᵢ = acos(xᵢ₊₂ / sqrt(x₁² + x₂² + ... + xᵢ₊₂²)) for i = 0, ..., N-3
@@ -165,8 +165,8 @@ private:
 
         // 计算笛卡尔坐标
         T azimuth_angle = m_spherical[N - 2];  // 方位角
-        result[0]       = m_radius * cos(azimuth_angle) * sin_products[0];
-        result[1]       = m_radius * sin(azimuth_angle) * sin_products[0];
+        result[0] = m_radius * cos(azimuth_angle) * sin_products[0];
+        result[1] = m_radius * sin(azimuth_angle) * sin_products[0];
 
         for (int i = 2; i < N; ++i) {
             if (i == N - 1) {
@@ -180,10 +180,10 @@ private:
 };
 
 /// Cosine of the polar angle for a 3D direction (z component).
-template<typename T>
+template <typename T>
 inline constexpr auto cos_theta(const Vector<T, 3>& v) {
     return v.z();
-} 
+}
 
 /// Cosine squared of the polar angle.
 template <typename T>
@@ -192,13 +192,13 @@ inline constexpr auto cos2_theta(const Vector<T, 3>& v) {
 }
 
 /// Sine squared of the polar angle.
-template<typename T>
+template <typename T>
 inline constexpr auto sin2_theta(const Vector<T, 3>& v) {
     return std::max(T(0), T(1) - cos2_theta(v));
 }
 
 /// Sine of the polar angle.
-template<typename T>
+template <typename T>
 inline constexpr auto sin_theta(const Vector<T, 3>& v) {
     return std::sqrt(sin2_theta(v));
 }
@@ -216,35 +216,34 @@ inline constexpr auto tan2_theta(const Vector<T, 3>& v) {
 }
 
 /// Azimuth angle of a 3D direction in [0, 2*pi).
-template<typename T>
+template <typename T>
 inline constexpr auto phi(const Vector<T, 3>& v) {
     auto p = std::atan2(v.y(), v.x());
     return wrap_angle_2pi(p);
 }
 
 /// Sine of the azimuth angle.
-template<typename T>
+template <typename T>
 inline constexpr auto sin_phi(const Vector<T, 3>& v) {
     auto s_th = sin_theta(v);
     return is_zero(s_th) ? T(0) : std::clamp(v.y() / s_th, T(-1), T(1));
 }
 
 /// Cosine of the azimuth angle.
-template<typename T>
+template <typename T>
 inline constexpr auto cos_phi(const Vector<T, 3>& v) {
     auto s_th = sin_theta(v);
     return is_zero(s_th) ? T(1) : std::clamp(v.x() / s_th, T(-1), T(1));
 }
 
 /// Cosine of the azimuth difference between two directions.
-template<typename T>
+template <typename T>
 inline constexpr auto cos_delta_phi(const Vector<T, 3>& a, const Vector<T, 3>& b) {
     auto axy = a.x() * a.x() + a.y() * a.y();
     auto bxy = b.x() * b.x() + b.y() * b.y();
-    return (is_zero(axy) || is_zero(bxy)) ? T(1) : std::clamp(
-        (a.x() * b.x() + a.y() * b.y()) / std::sqrt(axy * bxy), 
-        T(-1), T(1)
-    );
+    return (is_zero(axy) || is_zero(bxy))
+               ? T(1)
+               : std::clamp((a.x() * b.x() + a.y() * b.y()) / std::sqrt(axy * bxy), T(-1), T(1));
 }
 
 /**
@@ -253,7 +252,7 @@ inline constexpr auto cos_delta_phi(const Vector<T, 3>& a, const Vector<T, 3>& b
  * Points outside [0,1]^2 are mirrored back into the square so that the
  * mapping preserves area when combined with @c equal_area_square_to_sphere.
  */
-template<typename T>
+template <typename T>
 inline constexpr auto warp_equal_area_square(math::Point<T, 2> uv) {
     if (uv.x() < 0) {
         uv.x() = -uv.x();     // mirror across u = 0
@@ -279,7 +278,7 @@ inline constexpr auto warp_equal_area_square(math::Point<T, 2> uv) {
  * same area on the unit sphere, which is useful for stratified sampling
  * of directions.
  */
-template<typename T>
+template <typename T>
 inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p) {
     T u = 2 * p.x() - 1, v = 2 * p.y() - 1;
     T up = std::abs(u), vp = std::abs(v);
@@ -293,11 +292,7 @@ inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p)
     T cos_phi = std::copysign(std::cos(phi), u);
     T sin_phi = std::copysign(std::sin(phi), v);
 
-    return Vector<T, 3>(
-        cos_phi * r * std::sqrt(2 - r * r), 
-        sin_phi * r * std::sqrt(2 - r * r), 
-        z
-    );
+    return Vector<T, 3>(cos_phi * r * std::sqrt(2 - r * r), sin_phi * r * std::sqrt(2 - r * r), z);
 }
 
 /**
@@ -305,16 +300,9 @@ inline constexpr Vector<T, 3> equal_area_square_to_sphere(const Vector<T, 2>& p)
  *
  * Uses a robust formula based on the vertices' dot and cross products.
  */
-template<typename T>
-inline constexpr T spherical_triangle_area(
-    const Vector<T, 3>& a,
-    const Vector<T, 3>& b,
-    const Vector<T, 3>& c
-) {
-    return std::abs(T(2) * std::atan2(
-        a.dot(cross(b, c)),
-        T(1) + a.dot(b) + b.dot(c) + c.dot(a)
-    ));
+template <typename T>
+inline constexpr T spherical_triangle_area(const Vector<T, 3>& a, const Vector<T, 3>& b, const Vector<T, 3>& c) {
+    return std::abs(T(2) * std::atan2(a.dot(cross(b, c)), T(1) + a.dot(b) + b.dot(c) + c.dot(a)));
 }
 
 /**
@@ -323,10 +311,8 @@ inline constexpr T spherical_triangle_area(
  * The polygon is assumed to be defined by vertices on the unit sphere
  * in counter-clockwise order. It is triangulated fan-wise from vertex 0.
  */
-template<typename T>
-constexpr T spherical_polygon_area(
-    const std::vector<Vector<T, 3>>& vertices
-) {
+template <typename T>
+constexpr T spherical_polygon_area(const std::vector<Vector<T, 3>>& vertices) {
     assert_if([&vertices]() { return vertices.size() < 3; }, "At least 3 vertices are required for a polygon");
     const auto& a = vertices[0];
     T area = T(0);

@@ -14,18 +14,18 @@
 #include <fstream>
 
 #if defined(_WIN32)
-#   ifndef NOMINMAX
-#       define NOMINMAX
-#   endif
-#   include <windows.h>
-#   include <intrin.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <intrin.h>
 #else
-#   include <sys/utsname.h>
-#   if defined(__APPLE__)
-#       include <sys/sysctl.h>
-#   elif defined(__linux__)
-#       include <sys/sysinfo.h>
-#   endif
+#include <sys/utsname.h>
+#if defined(__APPLE__)
+#include <sys/sysctl.h>
+#elif defined(__linux__)
+#include <sys/sysinfo.h>
+#endif
 #endif
 
 namespace pbpt::utils {
@@ -60,13 +60,11 @@ inline DateTime current_datetime() {
     return dt;
 }
 
-inline std::string to_string(const DateTime &dt) {
-    return std::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}",
-        dt.year, dt.month, dt.day,
-        dt.hour, dt.minute, dt.second);
+inline std::string to_string(const DateTime& dt) {
+    return std::format("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}", dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
 }
 
-inline void trim_in_place(std::string &value) {
+inline void trim_in_place(std::string& value) {
     const auto start = value.find_first_not_of(" \t\r\n");
     if (start == std::string::npos) {
         value.clear();
@@ -76,7 +74,7 @@ inline void trim_in_place(std::string &value) {
     value = value.substr(start, end - start + 1);
 }
 
-inline std::string read_value_from_file(const char *path, std::string_view prefix) {
+inline std::string read_value_from_file(const char* path, std::string_view prefix) {
     std::ifstream file(path);
     if (!file.is_open()) {
         return {};
@@ -95,7 +93,7 @@ inline std::string read_value_from_file(const char *path, std::string_view prefi
     return {};
 }
 
-inline std::string read_first_line(const char *path) {
+inline std::string read_first_line(const char* path) {
     std::ifstream file(path);
     if (!file.is_open()) {
         return {};
@@ -109,7 +107,7 @@ inline std::string read_first_line(const char *path) {
 }
 
 inline std::string format_bytes(std::uint64_t bytes) {
-    constexpr std::array<const char *, 6> suffixes{{"B", "KB", "MB", "GB", "TB", "PB"}};
+    constexpr std::array<const char*, 6> suffixes{{"B", "KB", "MB", "GB", "TB", "PB"}};
     double value = static_cast<double>(bytes);
     std::size_t idx = 0;
     while (value >= 1024.0 && idx + 1 < suffixes.size()) {
@@ -125,16 +123,11 @@ inline std::string os_string() {
 #if defined(_WIN32)
     OSVERSIONINFOEXA info{};
     info.dwOSVersionInfoSize = sizeof(info);
-    if (GetVersionExA(reinterpret_cast<OSVERSIONINFOA *>(&info))) {
+    if (GetVersionExA(reinterpret_cast<OSVERSIONINFOA*>(&info))) {
         char buffer[64];
-        std::snprintf(
-            buffer,
-            sizeof(buffer),
-            "Windows %lu.%lu (build %lu)",
-            static_cast<unsigned long>(info.dwMajorVersion),
-            static_cast<unsigned long>(info.dwMinorVersion),
-            static_cast<unsigned long>(info.dwBuildNumber)
-        );
+        std::snprintf(buffer, sizeof(buffer), "Windows %lu.%lu (build %lu)",
+                      static_cast<unsigned long>(info.dwMajorVersion), static_cast<unsigned long>(info.dwMinorVersion),
+                      static_cast<unsigned long>(info.dwBuildNumber));
         return std::string(buffer);
     }
     return "Windows";
@@ -148,13 +141,13 @@ inline std::string os_string() {
         }
         return os;
     }
-#   if defined(__APPLE__)
+#if defined(__APPLE__)
     return "macOS";
-#   elif defined(__linux__)
+#elif defined(__linux__)
     return "Linux";
-#   else
+#else
     return "Unknown OS";
-#   endif
+#endif
 #endif
 }
 
@@ -229,7 +222,7 @@ inline std::uint64_t total_memory_bytes() {
     }
     return 0;
 #elif defined(__linux__)
-    struct sysinfo info {};
+    struct sysinfo info{};
     if (sysinfo(&info) == 0) {
         return static_cast<std::uint64_t>(info.totalram) * static_cast<std::uint64_t>(info.mem_unit);
     }
@@ -289,7 +282,7 @@ inline SystemInfo system_info() {
     return info;
 }
 
-inline std::string to_string(const SystemInfo &info) {
+inline std::string to_string(const SystemInfo& info) {
     std::string result;
     result.reserve(128);
     result.append("OS: ").append(info.os);
@@ -301,4 +294,4 @@ inline std::string to_string(const SystemInfo &info) {
     return result;
 }
 
-}
+}  // namespace pbpt::utils

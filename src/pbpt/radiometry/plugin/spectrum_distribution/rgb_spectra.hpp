@@ -11,8 +11,8 @@ namespace pbpt::radiometry {
  * RGBSigmoidPolynomialNormalized) and exposes it as a generic
  * SpectrumDistribution.
  */
-template <typename T, template<typename> class RSPType>
-class RGBAlbedoSpectrumDistribution : public SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T>{
+template <typename T, template <typename> class RSPType>
+class RGBAlbedoSpectrumDistribution : public SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T> {
     friend class SpectrumDistribution<RGBAlbedoSpectrumDistribution<T, RSPType>, T>;
 
 private:
@@ -28,9 +28,7 @@ public:
     RSPType<T>& rsp() { return m_rsp; }
 
 private:
-    T at_impl(T lambda) const {
-        return m_rsp.at(lambda);
-    }
+    T at_impl(T lambda) const { return m_rsp.at(lambda); }
 };
 
 /**
@@ -39,8 +37,8 @@ private:
  * Similar to RGBAlbedoSpectrumDistribution, but allows scaling the
  * underlying spectrum by an arbitrary factor.
  */
-template<typename T, template<typename> class RSPType>
-class RGBUnboundedSpectrumDistribution : public SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T>{
+template <typename T, template <typename> class RSPType>
+class RGBUnboundedSpectrumDistribution : public SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T> {
     friend class SpectrumDistribution<RGBUnboundedSpectrumDistribution<T, RSPType>, T>;
 
 private:
@@ -57,9 +55,7 @@ public:
     RGBUnboundedSpectrumDistribution(const RSPType<T>& rsp, T m_scale) : m_rsp(rsp), m_scale(m_scale) {}
 
 private:
-    T at_impl(T lambda) const {
-        return m_scale * m_rsp.at(lambda);
-    }
+    T at_impl(T lambda) const { return m_scale * m_rsp.at(lambda); }
 };
 
 /**
@@ -68,8 +64,9 @@ private:
  * The spectrum is the product of a parametric RGB spectrum and a
  * reference illuminant spectrum, optionally scaled by m_scale.
  */
-template<typename T, template<typename> class RSPType, typename IlluminantSpectrumType>
-class RGBIlluminantSpectrumDistribution : public SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, IlluminantSpectrumType>, T>{
+template <typename T, template <typename> class RSPType, typename IlluminantSpectrumType>
+class RGBIlluminantSpectrumDistribution
+    : public SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, IlluminantSpectrumType>, T> {
     friend class SpectrumDistribution<RGBIlluminantSpectrumDistribution<T, RSPType, IlluminantSpectrumType>, T>;
 
 private:
@@ -85,13 +82,12 @@ public:
      * @param reference_luminant  Reference illuminant spectrum to modulate.
      * @param m_scale             Optional global scale factor.
      */
-    RGBIlluminantSpectrumDistribution(const RSPType<T>& rsp, const IlluminantSpectrumType& reference_luminant, T m_scale = T{1.0}) 
-        : m_rsp(rsp), m_reference_luminant(reference_luminant) , m_scale(m_scale) {}
+    RGBIlluminantSpectrumDistribution(const RSPType<T>& rsp, const IlluminantSpectrumType& reference_luminant,
+                                      T m_scale = T{1.0})
+        : m_rsp(rsp), m_reference_luminant(reference_luminant), m_scale(m_scale) {}
 
 private:
-    T at_impl(T lambda) const {
-        return m_scale * m_rsp.at(lambda) * m_reference_luminant.at(lambda);
-    }
+    T at_impl(T lambda) const { return m_scale * m_rsp.at(lambda) * m_reference_luminant.at(lambda); }
 };
 
 }  // namespace pbpt::radiometry

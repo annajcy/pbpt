@@ -10,32 +10,21 @@
 
 namespace pbpt::material {
 
-template<typename T, int N>
+template <typename T, int N>
 class NullBxDF : public BxDF<NullBxDF<T, N>, T, N> {
     friend class BxDF<NullBxDF<T, N>, T, N>;
 
 private:
-    BxDFFlags type_impl() const {
-        return BxDFFlags::SpecularTransmission;
-    }
+    BxDFFlags type_impl() const { return BxDFFlags::SpecularTransmission; }
 
-    radiometry::SampledSpectrum<T, N> f_impl(
-        const radiometry::SampledWavelength<T, N>&,
-        const math::Vector<T, 3>&,
-        const math::Vector<T, 3>&,
-        TransportMode
-    ) const {
+    radiometry::SampledSpectrum<T, N> f_impl(const radiometry::SampledWavelength<T, N>&, const math::Vector<T, 3>&,
+                                             const math::Vector<T, 3>&, TransportMode) const {
         return radiometry::SampledSpectrum<T, N>::filled(0);
     }
 
     std::optional<BxDFSampleRecord<T, N>> sample_f_impl(
-        const radiometry::SampledWavelength<T, N>&,
-        const math::Vector<T, 3>& wo,
-        const T,
-        const math::Point<T, 2>&,
-        TransportMode,
-        const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All
-    ) const {
+        const radiometry::SampledWavelength<T, N>&, const math::Vector<T, 3>& wo, const T, const math::Point<T, 2>&,
+        TransportMode, const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
         if (!is_match_refl_trans(type_impl(), sample_flags)) {
             return std::nullopt;
         }
@@ -47,23 +36,17 @@ private:
             return std::nullopt;
         }
 
-        return BxDFSampleRecord<T, N>{
-            .f = radiometry::SampledSpectrum<T, N>::filled(T(1) / abs_cos_theta),
-            .wi = wi,
-            .pdf = T(1),
-            .eta = T(1),
-            .sampled_flags = BxDFFlags::SpecularTransmission
-        };
+        return BxDFSampleRecord<T, N>{.f = radiometry::SampledSpectrum<T, N>::filled(T(1) / abs_cos_theta),
+                                      .wi = wi,
+                                      .pdf = T(1),
+                                      .eta = T(1),
+                                      .sampled_flags = BxDFFlags::SpecularTransmission};
     }
 
-    T pdf_impl(
-        const math::Vector<T, 3>&,
-        const math::Vector<T, 3>&,
-        TransportMode,
-        const BxDFReflTransFlags = BxDFReflTransFlags::All
-    ) const {
+    T pdf_impl(const math::Vector<T, 3>&, const math::Vector<T, 3>&, TransportMode,
+               const BxDFReflTransFlags = BxDFReflTransFlags::All) const {
         return T(0);
     }
 };
 
-} // namespace pbpt::material
+}  // namespace pbpt::material

@@ -19,7 +19,7 @@ namespace pbpt::sampler {
  * @param b Upper bound of the interval.
  * @return T Sampled value in [a, b].
  */
-template<typename T>
+template <typename T>
 inline T sample_uniform(T u, T a = T(0), T b = T(1)) {
     return a + (b - a) * u;
 }
@@ -33,7 +33,7 @@ inline T sample_uniform(T u, T a = T(0), T b = T(1)) {
  * @param b Upper bound of the interval.
  * @return T Probability density function value.
  */
-template<typename T>
+template <typename T>
 inline T sample_uniform_pdf(T x, T a = T(0), T b = T(1)) {
     if (x < a || x > b) {
         return T(0);
@@ -63,7 +63,7 @@ inline T sample_tent(T u, T r = 1.0) {
     if (u < 0.5) {
         return -r + r * std::sqrt(2.0 * u);
     } else {
-        return  r - r * std::sqrt(2.0 * (1.0 - u));
+        return r - r * std::sqrt(2.0 * (1.0 - u));
     }
 }
 
@@ -131,7 +131,7 @@ inline T erf_inv(T x) {
  * @param stddev Standard deviation of the distribution.
  * @return T Sampled value.
  */
-template<typename T>
+template <typename T>
 inline T sample_gaussian(T u, T mean = T(0), T stddev = T(1)) {
     // Map u from [0, 1] to [-1, 1] for erf_inv
     T x = 2 * u - 1;
@@ -151,14 +151,15 @@ inline T sample_gaussian(T u, T mean = T(0), T stddev = T(1)) {
  * @param stddev Standard deviation of the distribution.
  * @return T Probability density function value.
  */
-template<typename T>
+template <typename T>
 inline T sample_gaussian_pdf(T x, T mean = T(0), T stddev = T(1)) {
-    constexpr T inv_sqrt_2pi = 0.39894228040143267794; // 1 / sqrt(2 * pi)
-    
-    if (stddev <= T(0)) return T(0); // Avoid division by zero
+    constexpr T inv_sqrt_2pi = 0.39894228040143267794;  // 1 / sqrt(2 * pi)
+
+    if (stddev <= T(0))
+        return T(0);  // Avoid division by zero
 
     T t = (x - mean) / stddev;
     return (inv_sqrt_2pi / stddev) * std::exp(-0.5 * t * t);
 }
 
-}
+}  // namespace pbpt::sampler

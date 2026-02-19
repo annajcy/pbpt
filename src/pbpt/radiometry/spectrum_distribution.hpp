@@ -21,7 +21,7 @@ namespace pbpt::radiometry {
  * @tparam Derived Concrete spectrum type.
  * @tparam T       Scalar type.
  */
-template<typename Derived, typename T>
+template <typename Derived, typename T>
 class SpectrumDistribution {
 public:
     /**
@@ -29,11 +29,9 @@ public:
      *
      * This forwards to the derived class's @c at_impl() implementation.
      */
-    constexpr T at(T lambda) const {
-        return as_derived().at_impl(lambda);
-    }
+    constexpr T at(T lambda) const { return as_derived().at_impl(lambda); }
 
-    template<int N>
+    template <int N>
     /**
      * @brief Sample the spectrum at a set of discrete wavelengths.
      *
@@ -49,14 +47,10 @@ public:
     }
 
     /// Access the derived spectrum (mutable).
-    constexpr Derived& as_derived() noexcept {
-        return static_cast<Derived&>(*this);
-    }
+    constexpr Derived& as_derived() noexcept { return static_cast<Derived&>(*this); }
 
     /// Access the derived spectrum (const).
-    constexpr const Derived& as_derived() const noexcept {
-        return static_cast<const Derived&>(*this);
-    }
+    constexpr const Derived& as_derived() const noexcept { return static_cast<const Derived&>(*this); }
 };
 
 /**
@@ -65,7 +59,7 @@ public:
  * Computes the sum over discrete integer wavelengths of d1(lambda) *
  * d2(lambda) using the common type of their scalar values.
  */
-template<typename D1, typename T1, typename D2, typename T2>
+template <typename D1, typename T1, typename D2, typename T2>
 inline auto inner_product(const SpectrumDistribution<D1, T1>& d1, const SpectrumDistribution<D2, T2>& d2) {
     using R = std::common_type_t<T1, T2>;
     R result{};

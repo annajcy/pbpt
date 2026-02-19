@@ -78,16 +78,16 @@ public:
     }
 
     /// Constructs a tuple from N scalar arguments.
-    template<typename ...Args>
+    template <typename... Args>
         requires(sizeof...(Args) == N)
-    constexpr Tuple(Args&&... args) : m_data{ static_cast<T>(args)... } {}
+    constexpr Tuple(Args&&... args) : m_data{static_cast<T>(args)...} {}
 
     /**
      * @brief Converting copy-constructor from another Tuple-like type.
      *
      * Copies each component from @p other, converting to type @p T when needed.
      */
-    template<template <typename, int> typename OtherDerived, typename U>
+    template <template <typename, int> typename OtherDerived, typename U>
     constexpr Tuple(const Tuple<OtherDerived, U, N>& other) {
         for (int i = 0; i < N; ++i) {
             m_data[i] = static_cast<T>(other[i]);
@@ -99,7 +99,7 @@ public:
      *
      * Copies min(N, M) components and zero-fills the rest.
      */
-    template<template <typename, int> typename OtherDerived, typename U, int M>
+    template <template <typename, int> typename OtherDerived, typename U, int M>
         requires(M > 0)
     constexpr Tuple(const Tuple<OtherDerived, U, M>& other) {
         const int count = (N < M) ? N : M;
@@ -148,22 +148,54 @@ public:
     }
 
     /// Shortcut accessor for the first component (mutable).
-    constexpr T& x() requires (N > 0) { return m_data[0]; }
+    constexpr T& x()
+        requires(N > 0)
+    {
+        return m_data[0];
+    }
     /// Shortcut accessor for the second component (mutable).
-    constexpr T& y() requires (N > 1) { return m_data[1]; }
+    constexpr T& y()
+        requires(N > 1)
+    {
+        return m_data[1];
+    }
     /// Shortcut accessor for the third component (mutable).
-    constexpr T& z() requires (N > 2) { return m_data[2]; }
+    constexpr T& z()
+        requires(N > 2)
+    {
+        return m_data[2];
+    }
     /// Shortcut accessor for the fourth component (mutable).
-    constexpr T& w() requires (N > 3) { return m_data[3]; }
+    constexpr T& w()
+        requires(N > 3)
+    {
+        return m_data[3];
+    }
 
     /// Shortcut accessor for the first component (const).
-    constexpr const T& x() const requires (N > 0) { return m_data[0]; }
+    constexpr const T& x() const
+        requires(N > 0)
+    {
+        return m_data[0];
+    }
     /// Shortcut accessor for the second component (const).
-    constexpr const T& y() const requires (N > 1) { return m_data[1]; }
+    constexpr const T& y() const
+        requires(N > 1)
+    {
+        return m_data[1];
+    }
     /// Shortcut accessor for the third component (const).
-    constexpr const T& z() const requires (N > 2) { return m_data[2]; }
+    constexpr const T& z() const
+        requires(N > 2)
+    {
+        return m_data[2];
+    }
     /// Shortcut accessor for the fourth component (const).
-    constexpr const T& w() const requires (N > 3) { return m_data[3]; }
+    constexpr const T& w() const
+        requires(N > 3)
+    {
+        return m_data[3];
+    }
 
     /**
      * @brief Component-wise equality comparison with another Tuple.
@@ -189,7 +221,7 @@ public:
             result[i] = -(*this)[i];
         return result;
     }
-   
+
     // -- Type Conversion --
     /**
      * @brief Casts the tuple to a different scalar type and dimension.
@@ -278,7 +310,7 @@ public:
         requires(sizeof...(Args) == N)
     constexpr Derived<T, N> permuted(Args... args) const {
         Derived<T, N> result;
-        int          i = 0;
+        int i = 0;
         ((result[i++] = (*this)[args]), ...);
         return result;
     }
@@ -332,10 +364,8 @@ public:
      *
      * Defaults to the range [0,1] in every dimension.
      */
-    constexpr Derived<T, N> clamp(
-        const Derived<T, N>& low = Derived<T, N>::zeros(), 
-        const Derived<T, N>& high = Derived<T, N>::ones()
-    ) const {
+    constexpr Derived<T, N> clamp(const Derived<T, N>& low = Derived<T, N>::zeros(),
+                                  const Derived<T, N>& high = Derived<T, N>::ones()) const {
         Derived<T, N> out;
         for (int i = 0; i < N; ++i) {
             auto v = this->m_data[i];
@@ -347,14 +377,10 @@ public:
     }
 
     /// Returns this object as the derived type (const).
-    constexpr const Derived<T, N>& as_derived() const {
-        return *static_cast<const Derived<T, N>&>(*this);
-    }
+    constexpr const Derived<T, N>& as_derived() const { return *static_cast<const Derived<T, N>&>(*this); }
 
     /// Returns this object as the derived type (mutable).
-    constexpr Derived<T, N>& as_derived() {
-        return *static_cast<Derived<T, N>&>(*this);
-    }
+    constexpr Derived<T, N>& as_derived() { return *static_cast<Derived<T, N>&>(*this); }
 };
 
 }  // namespace pbpt::math
