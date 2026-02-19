@@ -38,6 +38,7 @@
 #include "pbpt/radiometry/constant/xyz_spectrum.hpp"
 #include "pbpt/radiometry/color_spectrum_lut.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
+#include "pbpt/texture/plugin/texture/bitmap_texture.hpp"
 #include "pbpt/texture/plugin/texture/rsp_spectrum_texture.hpp"
 #include "pbpt/texture/plugin/texture/texture_type.hpp"
 
@@ -260,7 +261,12 @@ void parse_texture_node(const pugi::xml_node& node, LoaderContext<T>& ctx) {
         auto wrap_u = parse_wrap_mode(wrap_u_str);
         auto wrap_v = parse_wrap_mode(wrap_v_str);
 
-        auto tex = texture::RSPSpectrumTexture<T>(ctx.resolve_path(*filename), wrap_u, wrap_v);
+        // use RSPSpectrumTexture for bitmap textures to allow arbitrary RGB to spectrum conversion via the lookup table
+        // auto tex = texture::RSPSpectrumTexture<T>(ctx.resolve_path(*filename), wrap_u, wrap_v);
+        // ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
+
+        // use regular RGB texture and convert to spectrum at evaluation time, which is more flexible and allows for procedural RGB textures in the future
+        auto tex = texture::BitmapTexture<T>(ctx.resolve_path(*filename), wrap_u, wrap_v);
         ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
     } else if (type == "checkerboard") {
         auto color0 = find_child_value(node, "rgb", "color0").value_or("0");

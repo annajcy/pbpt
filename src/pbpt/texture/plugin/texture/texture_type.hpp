@@ -6,7 +6,6 @@
 #include "pbpt/texture/plugin/texture/checkerboard_texture.hpp"
 #include "pbpt/texture/plugin/texture/constant_texture.hpp"
 #include "pbpt/texture/plugin/texture/rsp_spectrum_texture.hpp"
-#include "pbpt/texture/texture.hpp"
 #include "pbpt/utils/library.hpp"
 
 namespace pbpt::texture {

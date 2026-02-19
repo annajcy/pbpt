@@ -1,16 +1,10 @@
 #pragma once
 
-#include <unordered_map>
-#include <utility>
-#include <variant>
-#include <vector>
 #include <optional>
 
-#include "pbpt/geometry/frame.hpp"
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/material/bsdf.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
-#include "pbpt/radiometry/spectrum_distribution.hpp"
 
 namespace pbpt::material {
 
@@ -29,7 +23,6 @@ public:
     }
 
     Derived& as_derived() { return static_cast<Derived&>(*this); }
-
     const Derived& as_derived() const { return static_cast<const Derived&>(*this); }
 };
 

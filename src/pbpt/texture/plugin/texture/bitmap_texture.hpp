@@ -26,7 +26,7 @@ public:
                   WrapMode wrap_v = WrapMode::Repeat)
         : m_mipmap(utils::read_image<T>(filename), wrap_u, wrap_v) {}
 
-    radiometry::RGB<T> eval(const TextureEvalContext<T>& ctx) const {
+    radiometry::RGB<T> eval_impl(const TextureEvalContext<T>& ctx) const {
         const auto texel = m_mipmap.sample(ctx, FilterMode::Trilinear);
         return radiometry::RGB<T>(texel.x(), texel.y(), texel.z());
     }

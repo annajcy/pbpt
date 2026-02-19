@@ -12,10 +12,9 @@ private:
 
 public:
     ConstantTexture() = default;
-
     explicit ConstantTexture(const ValueType& value) : m_value(value) {}
 
-    ValueType eval(const TextureEvalContext<T>&) const { return m_value; }
+    ValueType eval_impl(const TextureEvalContext<T>&) const { return m_value; }
 };
 
 }  // namespace pbpt::texture

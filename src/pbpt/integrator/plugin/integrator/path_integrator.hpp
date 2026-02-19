@@ -72,11 +72,10 @@ private:
     }
 
     template <typename SceneContextT>
-    radiometry::SampledSpectrum<T, N> hit_shader(const SceneContextT& context, const geometry::Ray<T, 3>& ray,
+    radiometry::SampledSpectrum<T, N> hit_shader(const SceneContextT& context, const geometry::Ray<T, 3>& /*ray*/,
                                                  const shape::PrimitiveIntersectionRecord<T>& prim_intersection_rec,
                                                  const radiometry::SampledWavelength<T, N>& wavelength_sample,
                                                  int depth, Sampler& sampler) {
-        (void)ray;
         auto material = context.resources.any_material_library.get(prim_intersection_rec.material_id);
         material::BSDF<T, N> bsdf = std::visit(
             [&](const auto& mat) {

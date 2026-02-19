@@ -53,7 +53,7 @@ public:
                        WrapMode wrap_v = WrapMode::Repeat)
         : RSPSpectrumTexture(utils::read_image<T>(filename), wrap_u, wrap_v) {}
 
-    radiometry::RGBSigmoidPolynomialNormalized<T> eval(const TextureEvalContext<T>& ctx) const {
+    radiometry::RGBSigmoidPolynomialNormalized<T> eval_impl(const TextureEvalContext<T>& ctx) const {
         const auto coeffs = m_mipmap.sample(ctx, FilterMode::Trilinear);
         return radiometry::RGBSigmoidPolynomialNormalized<T>(coeffs.x(), coeffs.y(), coeffs.z());
     }

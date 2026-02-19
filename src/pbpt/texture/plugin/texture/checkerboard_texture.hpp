@@ -28,7 +28,7 @@ public:
           m_uoffset(uoffset),
           m_voffset(voffset) {}
 
-    radiometry::RGB<T> eval(const TextureEvalContext<T>& ctx) const {
+    radiometry::RGB<T> eval_impl(const TextureEvalContext<T>& ctx) const {
         // Use logic from original implementation
         // Need to replicate logic, checking if there are dependencies
         // It uses floor and bitwise ops.

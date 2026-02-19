@@ -27,10 +27,8 @@ template <typename Derived, typename T, typename ValueType>
 class Texture {
 public:
     Derived& derived() { return static_cast<Derived&>(*this); }
-
     const Derived& derived() const { return static_cast<const Derived&>(*this); }
-
-    ValueType eval(const TextureEvalContext<T>& ctx) const { return derived().eval(ctx); }
+    ValueType eval(const TextureEvalContext<T>& ctx) const { return derived().eval_impl(ctx); }
 };
 
 }  // namespace pbpt::texture
