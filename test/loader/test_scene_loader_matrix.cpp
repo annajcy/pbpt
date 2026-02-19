@@ -12,8 +12,7 @@ namespace {
 struct TempDir {
     std::filesystem::path path{};
 
-    explicit TempDir(const std::string& name)
-        : path(std::filesystem::temp_directory_path() / name) {
+    explicit TempDir(const std::string& name) : path(std::filesystem::temp_directory_path() / name) {
         std::filesystem::remove_all(path);
         std::filesystem::create_directories(path);
     }
@@ -39,16 +38,15 @@ std::filesystem::path write_basic_obj(const TempDir& dir) {
     return path;
 }
 
-} // namespace
+}  // namespace
 
 TEST(SceneLoaderMatrixTest, LoadsShapeMatrixTransform) {
     TempDir temp_dir("pbpt_scene_loader_matrix_shape");
     (void)write_basic_obj(temp_dir);
 
     const auto xml_path = temp_dir.path / "scene_shape_matrix.xml";
-    write_text_file(
-        xml_path,
-        R"XML(<?xml version="1.0" encoding="utf-8"?>
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
   <integrator type="path">
     <integer name="maxDepth" value="-1"/>
@@ -69,8 +67,7 @@ TEST(SceneLoaderMatrixTest, LoadsShapeMatrixTransform) {
     </transform>
     <ref id="mat_white"/>
   </shape>
-</scene>)XML"
-    );
+</scene>)XML");
 
     auto scene = pbpt::loader::load_scene<double>(xml_path.string());
 
@@ -88,9 +85,8 @@ TEST(SceneLoaderMatrixTest, LoadsSensorToWorldMatrix) {
     (void)write_basic_obj(temp_dir);
 
     const auto xml_path = temp_dir.path / "scene_sensor_matrix.xml";
-    write_text_file(
-        xml_path,
-        R"XML(<?xml version="1.0" encoding="utf-8"?>
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
   <integrator type="path">
     <integer name="maxDepth" value="-1"/>
@@ -108,8 +104,7 @@ TEST(SceneLoaderMatrixTest, LoadsSensorToWorldMatrix) {
     <string name="filename" value="tri.obj"/>
     <ref id="mat_white"/>
   </shape>
-</scene>)XML"
-    );
+</scene>)XML");
 
     auto scene = pbpt::loader::load_scene<double>(xml_path.string());
     const auto camera_to_world = scene.render_transform.camera_to_world().matrix();
@@ -123,9 +118,8 @@ TEST(SceneLoaderMatrixTest, ThrowsOnInvalidMatrixValue) {
     (void)write_basic_obj(temp_dir);
 
     const auto xml_path = temp_dir.path / "scene_invalid_matrix.xml";
-    write_text_file(
-        xml_path,
-        R"XML(<?xml version="1.0" encoding="utf-8"?>
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -140,11 +134,7 @@ TEST(SceneLoaderMatrixTest, ThrowsOnInvalidMatrixValue) {
     <string name="filename" value="tri.obj"/>
     <ref id="mat_white"/>
   </shape>
-</scene>)XML"
-    );
+</scene>)XML");
 
-    EXPECT_THROW(
-        (void)pbpt::loader::load_scene<double>(xml_path.string()),
-        std::runtime_error
-    );
+    EXPECT_THROW((void)pbpt::loader::load_scene<double>(xml_path.string()), std::runtime_error);
 }

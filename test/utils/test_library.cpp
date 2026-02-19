@@ -8,7 +8,7 @@ using namespace pbpt::utils;
 // --- 测试普通类型 ---
 TEST(LibraryTest, NonVariantType) {
     Library<double, std::string> lib;
-    
+
     // Add items
     int id1 = lib.add_item("Hello");
     int id2 = lib.add_item("World");
@@ -24,10 +24,10 @@ TEST(LibraryTest, NonVariantType) {
     // Remove item
     lib.remove(id1);
     ASSERT_EQ(lib.size(), 1);
-    
+
     // Check stability of other IDs
     EXPECT_EQ(lib.get(id2), "World");
-    
+
     // Check removed access throws
     EXPECT_THROW(lib.get(id1), std::out_of_range);
 }
@@ -57,7 +57,7 @@ TEST(LibraryTest, VariantType) {
     lib.remove(id_dbl);
     ASSERT_EQ(lib.size(), 2);
     EXPECT_THROW(lib.get(id_dbl), std::out_of_range);
-    
+
     // Others remain valid
     EXPECT_EQ(std::get<int>(lib.get(id_int)), 42);
     EXPECT_EQ(std::get<std::string>(lib.get(id_str)), "Variant");
@@ -81,7 +81,7 @@ TEST(NamedLibraryTest, BasicUsage) {
     named_lib.remove("A");
     EXPECT_THROW(named_lib.get("A"), std::out_of_range);
     EXPECT_THROW(named_lib.get(id_a), std::out_of_range);
-    
+
     EXPECT_EQ(named_lib.get("B"), 200);
 
     // Remove by ID
@@ -92,7 +92,7 @@ TEST(NamedLibraryTest, BasicUsage) {
 // --- 测试 NamedLibrary 索引一致性 (删除中间元素) ---
 TEST(NamedLibraryTest, IndexStability) {
     NamedLibrary<double, std::string> lib;
-    
+
     int id1 = lib.add_item("First", "1");
     int id2 = lib.add_item("Second", "2");
     int id3 = lib.add_item("Third", "3");
@@ -102,8 +102,8 @@ TEST(NamedLibraryTest, IndexStability) {
 
     // "Third" should still be accessible by its original ID and Name
     EXPECT_EQ(lib.get("Third"), "3");
-    EXPECT_EQ(lib.get(id3), "3"); 
-    
+    EXPECT_EQ(lib.get(id3), "3");
+
     // "First" should still be accessible
     EXPECT_EQ(lib.get("First"), "1");
     EXPECT_EQ(lib.get(id1), "1");

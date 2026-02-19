@@ -15,8 +15,7 @@ namespace {
 struct TempDir {
     std::filesystem::path path{};
 
-    explicit TempDir(const std::string& name)
-        : path(std::filesystem::temp_directory_path() / name) {
+    explicit TempDir(const std::string& name) : path(std::filesystem::temp_directory_path() / name) {
         std::filesystem::remove_all(path);
         std::filesystem::create_directories(path);
     }
@@ -42,16 +41,15 @@ std::filesystem::path write_basic_obj(const TempDir& dir) {
     return path;
 }
 
-} // namespace
+}  // namespace
 
 TEST(SceneLoaderReflectanceRgbTest, LoadsDiffuseRgbReflectanceAsLambertian) {
     TempDir temp_dir("pbpt_scene_loader_reflectance_rgb");
     (void)write_basic_obj(temp_dir);
 
     const auto xml_path = temp_dir.path / "scene_rgb_reflectance.xml";
-    write_text_file(
-        xml_path,
-        R"XML(<?xml version="1.0" encoding="utf-8"?>
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -63,8 +61,7 @@ TEST(SceneLoaderReflectanceRgbTest, LoadsDiffuseRgbReflectanceAsLambertian) {
     <string name="filename" value="tri.obj"/>
     <ref id="mat_rgb"/>
   </shape>
-</scene>)XML"
-    );
+</scene>)XML");
 
     const auto scene = pbpt::loader::load_scene<double>(xml_path.string());
 
@@ -90,9 +87,8 @@ TEST(SceneLoaderReflectanceRgbTest, DiffuseMissingReflectanceUsesConstant07Spect
     (void)write_basic_obj(temp_dir);
 
     const auto xml_path = temp_dir.path / "scene_default_reflectance.xml";
-    write_text_file(
-        xml_path,
-        R"XML(<?xml version="1.0" encoding="utf-8"?>
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -102,8 +98,7 @@ TEST(SceneLoaderReflectanceRgbTest, DiffuseMissingReflectanceUsesConstant07Spect
     <string name="filename" value="tri.obj"/>
     <ref id="mat_default"/>
   </shape>
-</scene>)XML"
-    );
+</scene>)XML");
 
     const auto scene = pbpt::loader::load_scene<double>(xml_path.string());
     const auto& reflectance = scene.resources.reflectance_spectrum_library.get("mat_default_reflectance");

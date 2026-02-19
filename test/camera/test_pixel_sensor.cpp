@@ -9,26 +9,18 @@
 #include "pbpt/radiometry/constant/xyz_spectrum.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/functional.hpp"
 
-
 namespace pbpt::camera::testing {
 
 TEST(PixelSensorTest, SensorRgbConversionsRespectIdentityMatrix) {
     using T = float;
     using Illuminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
-    using SensorType =
-        PixelSensor<T, Illuminant, Illuminant, radiometry::constant::XYZSpectrumType<T>>;
+    using SensorType = PixelSensor<T, Illuminant, Illuminant, radiometry::constant::XYZSpectrumType<T>>;
 
     SensorType sensor(
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::sRGB<T>,
+        radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::sRGB<T>,
         radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-            radiometry::constant::CIE_X<T>,
-            radiometry::constant::CIE_Y<T>,
-            radiometry::constant::CIE_Z<T>
-        ),
-        T(1)
-    );
+            radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+        T(1));
 
     auto matrix = sensor.sensor_rgb_to_xyz_matrix();
 
@@ -50,8 +42,7 @@ TEST(PixelSensorTest, SensorRgbConversionsRespectIdentityMatrix) {
     EXPECT_NEAR(xyz.z(), sensor_rgb.b(), 1e-5f);
 
     auto color_rgb = sensor.sensor_rgb_to_color_space_rgb(sensor_rgb);
-    auto expected_rgb =
-        radiometry::constant::sRGB<T>.to_rgb(radiometry::XYZ<T>(sensor_rgb));
+    auto expected_rgb = radiometry::constant::sRGB<T>.to_rgb(radiometry::XYZ<T>(sensor_rgb));
 
     EXPECT_NEAR(color_rgb.r(), expected_rgb.r(), 1e-5f);
     EXPECT_NEAR(color_rgb.g(), expected_rgb.g(), 1e-5f);
@@ -61,51 +52,35 @@ TEST(PixelSensorTest, SensorRgbConversionsRespectIdentityMatrix) {
 TEST(PixelSensorTest, RadianceToSensorRgbAppliesResponseSpectrumAndImageRatio) {
     using T = float;
     using Illuminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
-    using SensorType =
-        PixelSensor<T, Illuminant, Illuminant, radiometry::constant::XYZSpectrumType<T>>;
+    using SensorType = PixelSensor<T, Illuminant, Illuminant, radiometry::constant::XYZSpectrumType<T>>;
 
     T image_ratio = T(1.7f);
     SensorType sensor(
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::sRGB<T>,
+        radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::sRGB<T>,
         radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-            radiometry::constant::CIE_X<T>,
-            radiometry::constant::CIE_Y<T>,
-            radiometry::constant::CIE_Z<T>
-        ),
-        image_ratio
-    );
+            radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+        image_ratio);
 
     const T sigma = T(15.0f);
-    radiometry::FunctionalSpectrumDistribution<T> radiance(
-        [=](T lambda) -> T {
-            auto gaussian = [&](T mean, T amplitude) -> double {
-                const double diff = static_cast<double>(lambda - mean);
-                const double sigma_val = static_cast<double>(sigma);
-                const double exponent = -diff * diff / (2.0 * sigma_val * sigma_val);
-                return static_cast<double>(amplitude) * std::exp(exponent);
-            };
+    radiometry::FunctionalSpectrumDistribution<T> radiance([=](T lambda) -> T {
+        auto gaussian = [&](T mean, T amplitude) -> double {
+            const double diff = static_cast<double>(lambda - mean);
+            const double sigma_val = static_cast<double>(sigma);
+            const double exponent = -diff * diff / (2.0 * sigma_val * sigma_val);
+            return static_cast<double>(amplitude) * std::exp(exponent);
+        };
 
-            const double value =
-                gaussian(T(410.0f), T(1.0f)) +
-                gaussian(T(510.0f), T(0.6f)) +
-                gaussian(T(610.0f), T(0.35f)) +
-                gaussian(T(710.0f), T(0.2f));
-            return static_cast<T>(value);
-        }
-    );
+        const double value = gaussian(T(410.0f), T(1.0f)) + gaussian(T(510.0f), T(0.6f)) +
+                             gaussian(T(610.0f), T(0.35f)) + gaussian(T(710.0f), T(0.2f));
+        return static_cast<T>(value);
+    });
 
     radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>> response(
-        radiometry::constant::CIE_X<T>,
-        radiometry::constant::CIE_Y<T>,
-        radiometry::constant::CIE_Z<T>
-    );
+        radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>);
 
-    auto projected_rgb =
-        radiometry::project_emission<T, radiometry::RGB, decltype(radiance), Illuminant,
-                                     radiometry::constant::XYZSpectrumType<T>>(
-            radiance, radiometry::constant::CIE_D65_ilum<T>, response);
+    auto projected_rgb = radiometry::project_emission<T, radiometry::RGB, decltype(radiance), Illuminant,
+                                                      radiometry::constant::XYZSpectrumType<T>>(
+        radiance, radiometry::constant::CIE_D65_ilum<T>, response);
     auto expected_sensor_rgb = radiometry::RGB<T>(projected_rgb * image_ratio);
 
     auto sensor_rgb = sensor.radiance_to_sensor_rgb(radiance);
@@ -120,8 +95,7 @@ TEST(PixelSensorTest, RadianceToSensorRgbAppliesResponseSpectrumAndImageRatio) {
     EXPECT_NEAR(xyz.z(), expected_sensor_rgb.b(), 1e-4f);
 
     auto color_space_rgb = sensor.sensor_rgb_to_color_space_rgb(sensor_rgb);
-    auto expected_color_space_rgb =
-        radiometry::constant::sRGB<T>.to_rgb(radiometry::XYZ<T>(expected_sensor_rgb));
+    auto expected_color_space_rgb = radiometry::constant::sRGB<T>.to_rgb(radiometry::XYZ<T>(expected_sensor_rgb));
 
     EXPECT_NEAR(color_space_rgb.r(), expected_color_space_rgb.r(), 1e-4f);
     EXPECT_NEAR(color_space_rgb.g(), expected_color_space_rgb.g(), 1e-4f);
@@ -132,20 +106,13 @@ TEST(PixelSensorTest, WhiteBalanceMatrixMatchesExpectedMatrix) {
     using T = float;
     using SceneIlluminant = decltype(radiometry::constant::CIE_D50_ilum<T>);
     using StandardIlluminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
-    using SensorType =
-        PixelSensor<T, SceneIlluminant, StandardIlluminant, radiometry::constant::XYZSpectrumType<T>>;
+    using SensorType = PixelSensor<T, SceneIlluminant, StandardIlluminant, radiometry::constant::XYZSpectrumType<T>>;
 
     SensorType sensor(
-        radiometry::constant::CIE_D50_ilum<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::sRGB<T>,
+        radiometry::constant::CIE_D50_ilum<T>, radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::sRGB<T>,
         radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-            radiometry::constant::CIE_X<T>,
-            radiometry::constant::CIE_Y<T>,
-            radiometry::constant::CIE_Z<T>
-        ),
-        T(1)
-    );
+            radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+        T(1));
 
     auto src_xy = radiometry::XYZ<T>::from_illuminant(radiometry::constant::CIE_D50_ilum<T>).to_xy();
     auto dst_xy = radiometry::XYZ<T>::from_illuminant(radiometry::constant::CIE_D65_ilum<T>).to_xy();
@@ -155,23 +122,22 @@ TEST(PixelSensorTest, WhiteBalanceMatrixMatchesExpectedMatrix) {
     // Test that the two matrices produce similar color transformation results
     // rather than comparing matrix elements directly
     std::array<radiometry::RGB<T>, 6> test_colors = {
-        radiometry::RGB<T>(1, 0, 0),    // Red
-        radiometry::RGB<T>(0, 1, 0),    // Green
-        radiometry::RGB<T>(0, 0, 1),    // Blue
-        radiometry::RGB<T>(1, 1, 1),    // White
-        radiometry::RGB<T>(0.5, 0.5, 0.5), // Gray
-        radiometry::RGB<T>(1, 1, 0)     // Yellow
+        radiometry::RGB<T>(1, 0, 0),        // Red
+        radiometry::RGB<T>(0, 1, 0),        // Green
+        radiometry::RGB<T>(0, 0, 1),        // Blue
+        radiometry::RGB<T>(1, 1, 1),        // White
+        radiometry::RGB<T>(0.5, 0.5, 0.5),  // Gray
+        radiometry::RGB<T>(1, 1, 0)         // Yellow
     };
 
     for (const auto& test_rgb : test_colors) {
         auto result_expected = expected_matrix * test_rgb;
         auto result_sensor = sensor_matrix * test_rgb;
-        
+
         for (int i = 0; i < 3; ++i) {
-            EXPECT_NEAR(result_sensor[i], result_expected[i], 0.09f) 
-                << "Color transformation differs for test color RGB("
-                << test_rgb.r() << ", " << test_rgb.g() << ", " << test_rgb.b() 
-                << ") at component " << i;
+            EXPECT_NEAR(result_sensor[i], result_expected[i], 0.09f)
+                << "Color transformation differs for test color RGB(" << test_rgb.r() << ", " << test_rgb.g() << ", "
+                << test_rgb.b() << ") at component " << i;
         }
     }
 }
@@ -180,20 +146,13 @@ TEST(PixelSensorTest, ZeroRadianceProducesZeroSensorRgb) {
     using T = float;
     constexpr int N = 6;
     using Illuminant = decltype(radiometry::constant::CIE_D65_ilum<T>);
-    using SensorType =
-        PixelSensor<T, Illuminant, Illuminant, radiometry::constant::XYZSpectrumType<T>>;
+    using SensorType = PixelSensor<T, Illuminant, Illuminant, radiometry::constant::XYZSpectrumType<T>>;
 
     SensorType sensor(
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::sRGB<T>,
+        radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::sRGB<T>,
         radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-            radiometry::constant::CIE_X<T>,
-            radiometry::constant::CIE_Y<T>,
-            radiometry::constant::CIE_Z<T>
-        ),
-        T(2)
-    );
+            radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+        T(2));
 
     auto zero_vec = math::Vector<T, N>::zeros();
     radiometry::SampledSpectrum<T, N> radiance(zero_vec);
@@ -206,6 +165,5 @@ TEST(PixelSensorTest, ZeroRadianceProducesZeroSensorRgb) {
     EXPECT_NEAR(sensor_rgb.g(), T(0), 1e-6f);
     EXPECT_NEAR(sensor_rgb.b(), T(0), 1e-6f);
 }
-
 
 }  // namespace pbpt::camera::testing

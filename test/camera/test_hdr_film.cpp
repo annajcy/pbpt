@@ -25,16 +25,10 @@ using FilmType = HDRFilm<T, PixelSensorType>;
 
 PixelSensorType make_pixel_sensor(T ratio = T(1)) {
     return PixelSensorType(
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        radiometry::constant::sRGB<T>,
+        radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::sRGB<T>,
         radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-            radiometry::constant::CIE_X<T>,
-            radiometry::constant::CIE_Y<T>,
-            radiometry::constant::CIE_Z<T>
-        ),
-        ratio
-    );
+            radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+        ratio);
 }
 
 FilmType make_film(T ratio = T(1)) {
@@ -51,9 +45,9 @@ FilmType make_film(int width, int height, T ratio = T(1)) {
 
 struct MockCamera {
     math::Vector<int, 2> m_res;
-    
+
     MockCamera(math::Vector<int, 2> r) : m_res(r) {}
-    
+
     const math::Vector<int, 2>& film_resolution() const { return m_res; }
 };
 
@@ -61,9 +55,9 @@ TEST(HDRFilmTest, ConstructFromCamera) {
     math::Vector<int, 2> resolution(800, 600);
     MockCamera camera(resolution);
     auto sensor = make_pixel_sensor();
-    
+
     FilmType film(camera, sensor);
-    
+
     EXPECT_EQ(film.resolution().x(), 800);
     EXPECT_EQ(film.resolution().y(), 600);
 }
@@ -134,10 +128,10 @@ TEST(HDRFilmTest, AddSampleAccumulatesWithWeights) {
     T weight1 = 2.0f;
     T weight2 = 1.0f;
 
-    auto expected_display_rgb1 = sensor.sensor_rgb_to_color_space_rgb(
-        sensor.template radiance_to_sensor_rgb<3>(radiance1, wavelengths1, pdf1));
-    auto expected_display_rgb2 = sensor.sensor_rgb_to_color_space_rgb(
-        sensor.template radiance_to_sensor_rgb<3>(radiance2, wavelengths2, pdf2));
+    auto expected_display_rgb1 =
+        sensor.sensor_rgb_to_color_space_rgb(sensor.template radiance_to_sensor_rgb<3>(radiance1, wavelengths1, pdf1));
+    auto expected_display_rgb2 =
+        sensor.sensor_rgb_to_color_space_rgb(sensor.template radiance_to_sensor_rgb<3>(radiance2, wavelengths2, pdf2));
 
     film.add_sample<3>(p, radiance1, wavelengths1, pdf1, weight1);
     film.add_sample<3>(p, radiance2, wavelengths2, pdf2, weight2);
@@ -216,14 +210,9 @@ TEST(HDRFilmTest, ZeroWeightSampleDoesNotAffectPixel) {
 TEST(HDRFilmTest, OutOfBoundsAccessThrows) {
     auto film = make_film();
 
-    EXPECT_THROW(
-        film.add_color_sample(math::Point<int, 2>(-1, 0), radiometry::RGB<T>(0.1f, 0.2f, 0.3f), 1.0f),
-        std::runtime_error
-    );
-    EXPECT_THROW(
-        (void)film.get_pixel_rgb(math::Point<int, 2>(2, 0)),
-        std::runtime_error
-    );
+    EXPECT_THROW(film.add_color_sample(math::Point<int, 2>(-1, 0), radiometry::RGB<T>(0.1f, 0.2f, 0.3f), 1.0f),
+                 std::runtime_error);
+    EXPECT_THROW((void)film.get_pixel_rgb(math::Point<int, 2>(2, 0)), std::runtime_error);
 }
 
 TEST(HDRFilmTest, HalfBlackHalfWhiteRadianceProducesMidGray) {
@@ -263,24 +252,19 @@ TEST(HDRFilmTest, PrimaryReflectanceSamplesAverageToDarkGray) {
     constexpr double eps_ = 0.001;
     constexpr double delta_x = 1e-4;
 
-    // auto red_reflectance = radiometry::constant::swatch_reflectances<T>[static_cast<int>(radiometry::constant::SwatchReflectance::Red)];
-    // auto green_reflectance = radiometry::constant::swatch_reflectances<T>[static_cast<int>(radiometry::constant::SwatchReflectance::Green)];
-    // auto blue_reflectance = radiometry::constant::swatch_reflectances<T>[static_cast<int>(radiometry::constant::SwatchReflectance::Blue)];
-    
+    // auto red_reflectance =
+    // radiometry::constant::swatch_reflectances<T>[static_cast<int>(radiometry::constant::SwatchReflectance::Red)];
+    // auto green_reflectance =
+    // radiometry::constant::swatch_reflectances<T>[static_cast<int>(radiometry::constant::SwatchReflectance::Green)];
+    // auto blue_reflectance =
+    // radiometry::constant::swatch_reflectances<T>[static_cast<int>(radiometry::constant::SwatchReflectance::Blue)];
+
     auto red_rsp = radiometry::optimize_albedo_rgb_sigmoid_polynomial(
-        radiometry::RGB<T>{1.0, eps_, eps_}, 
-        radiometry::constant::sRGB<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        max_attempts,
-        lr,
-        delta_x
-    );
+        radiometry::RGB<T>{1.0, eps_, eps_}, radiometry::constant::sRGB<T>, radiometry::constant::CIE_D65_ilum<T>,
+        max_attempts, lr, delta_x);
 
     auto red_reflectance = radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(
-        radiometry::RGBSigmoidPolynomialNormalized<T>(
-            red_rsp.normalized_coeffs
-        )
-    );
+        radiometry::RGBSigmoidPolynomialNormalized<T>(red_rsp.normalized_coeffs));
 
     auto red_xyz = radiometry::XYZ<T>::from_reflectance(red_reflectance, illuminant);
     std::cout << "Red Reflectance XYZ: " << red_xyz << std::endl;
@@ -289,19 +273,11 @@ TEST(HDRFilmTest, PrimaryReflectanceSamplesAverageToDarkGray) {
     std::cout << std::endl;
 
     auto green_rsp = radiometry::optimize_albedo_rgb_sigmoid_polynomial(
-        radiometry::RGB<T>{eps_, 1.0, eps_}, 
-        radiometry::constant::sRGB<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        max_attempts,
-        lr,
-        delta_x
-    );
+        radiometry::RGB<T>{eps_, 1.0, eps_}, radiometry::constant::sRGB<T>, radiometry::constant::CIE_D65_ilum<T>,
+        max_attempts, lr, delta_x);
 
     auto green_reflectance = radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(
-        radiometry::RGBSigmoidPolynomialNormalized<T>(
-            green_rsp.normalized_coeffs
-        )
-    );
+        radiometry::RGBSigmoidPolynomialNormalized<T>(green_rsp.normalized_coeffs));
 
     auto green_xyz = radiometry::XYZ<T>::from_reflectance(green_reflectance, illuminant);
     std::cout << "Green Reflectance XYZ: " << green_xyz << std::endl;
@@ -310,19 +286,11 @@ TEST(HDRFilmTest, PrimaryReflectanceSamplesAverageToDarkGray) {
     std::cout << std::endl;
 
     auto blue_rsp = radiometry::optimize_albedo_rgb_sigmoid_polynomial(
-        radiometry::RGB<T>{eps_, eps_, 1.0}, 
-        radiometry::constant::sRGB<T>,
-        radiometry::constant::CIE_D65_ilum<T>,
-        max_attempts,
-        lr,
-        delta_x
-    );
+        radiometry::RGB<T>{eps_, eps_, 1.0}, radiometry::constant::sRGB<T>, radiometry::constant::CIE_D65_ilum<T>,
+        max_attempts, lr, delta_x);
 
     auto blue_reflectance = radiometry::RGBAlbedoSpectrumDistribution<T, radiometry::RGBSigmoidPolynomialNormalized>(
-        radiometry::RGBSigmoidPolynomialNormalized<T>(
-            blue_rsp.normalized_coeffs
-        )
-    );
+        radiometry::RGBSigmoidPolynomialNormalized<T>(blue_rsp.normalized_coeffs));
 
     auto blue_xyz = radiometry::XYZ<T>::from_reflectance(blue_reflectance, illuminant);
     std::cout << "Blue Reflectance XYZ: " << blue_xyz << std::endl;

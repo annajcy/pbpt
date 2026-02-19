@@ -81,14 +81,10 @@ TEST(FrameTest, LocalToRenderAndRenderToLocal) {
 TEST(FrameTest, BasisVectorsNormalized) {
     // Test with various normal vectors
     std::vector<Vec3d> normals = {
-        Vec3d(0.0, 0.0, 1.0),
-        Vec3d(1.0, 0.0, 0.0), 
-        Vec3d(0.0, 1.0, 0.0),
-        Vec3d(1.0, 1.0, 1.0),
-        Vec3d(-0.5, 0.8, 0.3),
-        Vec3d(0.267261, 0.534522, 0.801784)  // Random normalized vector
+        Vec3d(0.0, 0.0, 1.0), Vec3d(1.0, 0.0, 0.0),  Vec3d(0.0, 1.0, 0.0),
+        Vec3d(1.0, 1.0, 1.0), Vec3d(-0.5, 0.8, 0.3), Vec3d(0.267261, 0.534522, 0.801784)  // Random normalized vector
     };
-    
+
     for (const auto& normal : normals) {
         Frame<double> f(normal);
         // All basis vectors should be unit length
@@ -100,7 +96,7 @@ TEST(FrameTest, BasisVectorsNormalized) {
 
 TEST(FrameTest, RightHandedConsistency) {
     Vec3d normal(0.0, 0.0, 1.0);
-    
+
     // Right-handed frame
     Frame<double> f_right(normal);
     Vec3d cross_right = cross(f_right.t(), f_right.b());
@@ -110,11 +106,11 @@ TEST(FrameTest, RightHandedConsistency) {
 TEST(FrameTest, TransformInverseProperty) {
     Vec3d normal(0.2, 0.6, 0.8);
     Frame<double> f(normal);
-    
+
     // Test that local_to_render and render_to_local are inverses
     auto comp1 = f.local_to_render_transform() * f.render_to_local_transform();
     auto comp2 = f.render_to_local_transform() * f.local_to_render_transform();
-    
+
     EXPECT_TRUE(comp1.is_identity());
     EXPECT_TRUE(comp2.is_identity());
 }
@@ -123,7 +119,7 @@ TEST(FrameTest, EdgeCaseNormalAlmostX) {
     // Test when normal is very close to the x-axis.
     Vec3d normal(0.999, 0.0, 0.0);
     Frame<double> f(normal);
-    
+
     // Should still be orthonormal
     EXPECT_NEAR(f.t().dot(f.n()), 0.0, kEps);
     EXPECT_NEAR(f.b().dot(f.n()), 0.0, kEps);
@@ -137,7 +133,7 @@ TEST(FrameTest, TangentNormalConstructor) {
     Vec3d tangent(1.0, 0.0, 0.0);
     Vec3d normal(0.0, 1.0, 0.0);
     Frame<double> f(tangent, normal);
-    
+
     // Expected bitangent should be cross(normal, tangent)
     Vec3d expected_b = cross(normal, tangent);
     EXPECT_NEAR(f.b().x(), expected_b.x(), kEps);
@@ -148,19 +144,19 @@ TEST(FrameTest, TangentNormalConstructor) {
 TEST(FrameTest, MultipleVectorTransformation) {
     Vec3d normal(0.0, 0.0, 1.0);
     Frame<double> f(normal);
-    
+
     std::vector<Vec3d> local_vectors = {
-        Vec3d(1.0, 0.0, 0.0),  // Pure tangent
-        Vec3d(0.0, 1.0, 0.0),  // Pure bitangent
-        Vec3d(0.0, 0.0, 1.0),  // Pure normal
-        Vec3d(1.0, 1.0, 1.0),  // Mixed
-        Vec3d(-0.5, 2.0, -1.5) // Arbitrary
+        Vec3d(1.0, 0.0, 0.0),   // Pure tangent
+        Vec3d(0.0, 1.0, 0.0),   // Pure bitangent
+        Vec3d(0.0, 0.0, 1.0),   // Pure normal
+        Vec3d(1.0, 1.0, 1.0),   // Mixed
+        Vec3d(-0.5, 2.0, -1.5)  // Arbitrary
     };
-    
+
     for (const auto& local_vec : local_vectors) {
         Vec3d render_vec = f.to_render(local_vec);
         Vec3d back_to_local = f.to_local(render_vec);
-        
+
         EXPECT_NEAR(back_to_local.x(), local_vec.x(), kEps);
         EXPECT_NEAR(back_to_local.y(), local_vec.y(), kEps);
         EXPECT_NEAR(back_to_local.z(), local_vec.z(), kEps);
@@ -172,7 +168,7 @@ TEST(FrameTest, FloatTypeCompatibility) {
     using Vec3f = Vector<float, 3>;
     Vec3f normal_f(0.0f, 0.0f, 1.0f);
     Frame<float> f_float(normal_f);
-    
+
     // Should still maintain orthonormality
     const float kEpsf = 1e-5f;
     EXPECT_NEAR(f_float.t().dot(f_float.n()), 0.0f, kEpsf);
@@ -183,4 +179,4 @@ TEST(FrameTest, FloatTypeCompatibility) {
     EXPECT_NEAR(f_float.n().length(), 1.0f, kEpsf);
 }
 
-} // namespace pbpt::geometry::testing
+}  // namespace pbpt::geometry::testing

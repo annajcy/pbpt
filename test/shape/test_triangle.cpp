@@ -23,16 +23,8 @@ using TriangleShapeInterface = Shape<TriangleD, T>;
 namespace {
 TriangleMeshD make_unit_mesh() {
     std::vector<int> indices{0, 1, 2};
-    std::vector<Point<T, 3>> positions{
-        Point<T, 3>(0, 0, 0),
-        Point<T, 3>(1, 0, 0),
-        Point<T, 3>(0, 1, 0)
-    };
-    std::vector<Point<T, 2>> uvs{
-        Point<T, 2>(0, 0),
-        Point<T, 2>(1, 0),
-        Point<T, 2>(0, 1)
-    };
+    std::vector<Point<T, 3>> positions{Point<T, 3>(0, 0, 0), Point<T, 3>(1, 0, 0), Point<T, 3>(0, 1, 0)};
+    std::vector<Point<T, 2>> uvs{Point<T, 2>(0, 0), Point<T, 2>(1, 0), Point<T, 2>(0, 1)};
     return TriangleMeshD(Transform<T>::identity(), indices, positions, {}, uvs, false);
 }
 }  // namespace
@@ -87,10 +79,8 @@ TEST(TriangleTest, RayDifferentialComputesSurfaceDifferentials) {
     TriangleD tri(mesh, 0);
 
     Ray<T, 3> main_ray(Point<T, 3>(0.25, 0.25, 1.0), Vector<T, 3>(0, 0, -1));
-    std::array<Ray<T, 3>, 2> diff_rays{
-        Ray<T, 3>(Point<T, 3>(0.26, 0.25, 1.0), Vector<T, 3>(0, 0, -1)),
-        Ray<T, 3>(Point<T, 3>(0.25, 0.26, 1.0), Vector<T, 3>(0, 0, -1))
-    };
+    std::array<Ray<T, 3>, 2> diff_rays{Ray<T, 3>(Point<T, 3>(0.26, 0.25, 1.0), Vector<T, 3>(0, 0, -1)),
+                                       Ray<T, 3>(Point<T, 3>(0.25, 0.26, 1.0), Vector<T, 3>(0, 0, -1))};
     RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
 
     auto hit = tri.intersect_ray_differential(ray_diff);
@@ -129,10 +119,8 @@ TEST(TriangleTest, RayDifferentialWithoutDifferentialsLeavesOptionalEmpty) {
     TriangleD tri(mesh, 0);
 
     Ray<T, 3> main_ray(Point<T, 3>(0.25, 0.25, 1.0), Vector<T, 3>(0, 0, -1));
-    std::array<Ray<T, 3>, 2> diff_rays{
-        Ray<T, 3>(main_ray.origin(), Vector<T, 3>(1.0, 0.0, 0.0)),
-        Ray<T, 3>(main_ray.origin(), Vector<T, 3>(0.0, 1.0, 0.0))
-    };
+    std::array<Ray<T, 3>, 2> diff_rays{Ray<T, 3>(main_ray.origin(), Vector<T, 3>(1.0, 0.0, 0.0)),
+                                       Ray<T, 3>(main_ray.origin(), Vector<T, 3>(0.0, 1.0, 0.0))};
     RayDifferential<T, 3> ray_diff(main_ray, diff_rays);
     auto hit = tri.intersect_ray_differential(ray_diff);
 

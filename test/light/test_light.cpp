@@ -14,15 +14,9 @@ namespace {
 
 template <typename T>
 geometry::SurfaceInteraction<T> make_ref_interaction(const math::Point<T, 3>& p) {
-    return geometry::SurfaceInteraction<T>(
-        p,
-        math::Vector<T, 3>(0, 0, 1),
-        math::Normal<T, 3>(0, 0, 1),
-        math::Point<T, 2>(0, 0),
-        math::Vector<T, 3>(0, 0, 0),
-        math::Vector<T, 3>(0, 0, 0),
-        math::Vector<T, 3>(0, 0, 0)
-    );
+    return geometry::SurfaceInteraction<T>(p, math::Vector<T, 3>(0, 0, 1), math::Normal<T, 3>(0, 0, 1),
+                                           math::Point<T, 2>(0, 0), math::Vector<T, 3>(0, 0, 0),
+                                           math::Vector<T, 3>(0, 0, 0), math::Vector<T, 3>(0, 0, 0));
 }
 
 template <typename T, int N>
@@ -59,17 +53,10 @@ TEST(AreaLightTest, SampleLightReturnsNulloptWhenBackfacing) {
     using T = float;
     constexpr int N = 4;
 
-    shape::Sphere<T> sphere(
-        geometry::Transform<T>::identity(),
-        false,
-        T(1)
-    );
+    shape::Sphere<T> sphere(geometry::Transform<T>::identity(), false, T(1));
 
     radiometry::ConstantSpectrumDistribution<T> power(T(3));
-    AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
-        sphere,
-        power
-    );
+    AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(sphere, power);
 
     auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, N>(T(0.25));
     auto ref = make_ref_interaction<T>(math::Point<T, 3>(0, 0, 3));
@@ -83,17 +70,10 @@ TEST(AreaLightTest, SampleLightAndPdfMatchExpectedForNorthPoleSample) {
     using T = float;
     constexpr int N = 4;
 
-    shape::Sphere<T> sphere(
-        geometry::Transform<T>::identity(),
-        false,
-        T(1)
-    );
+    shape::Sphere<T> sphere(geometry::Transform<T>::identity(), false, T(1));
 
     radiometry::ConstantSpectrumDistribution<T> power(T(5));
-    AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
-        sphere,
-        power
-    );
+    AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(sphere, power);
 
     auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, N>(T(0.25));
     auto ref = make_ref_interaction<T>(math::Point<T, 3>(0, 0, 3));
@@ -121,12 +101,8 @@ TEST(AreaLightTest, SampleLightAndPdfMatchExpectedForNorthPoleSample) {
     T pdf_eval = light.sample_light_pdf(ref, sample.wi);
     EXPECT_NEAR(pdf_eval, expected_pdf, T(1e-5));
 
-    auto emission = light.emission_spectrum<N>(
-        wavelengths,
-        sample.visibility_tester.dst_point(),
-        math::Vector<T, 3>(0, 0, 1),
-        -sample.wi
-    );
+    auto emission = light.emission_spectrum<N>(wavelengths, sample.visibility_tester.dst_point(),
+                                               math::Vector<T, 3>(0, 0, 1), -sample.wi);
     expect_constant_spectrum(emission, T(5));
     EXPECT_FALSE(light.is_delta_light());
 }
@@ -135,18 +111,11 @@ TEST(AreaLightTest, SolidAngleSamplingUsesSolidAnglePdf) {
     using T = float;
     constexpr int N = 4;
 
-    shape::Sphere<T> sphere(
-        geometry::Transform<T>::identity(),
-        false,
-        T(1)
-    );
+    shape::Sphere<T> sphere(geometry::Transform<T>::identity(), false, T(1));
 
     radiometry::ConstantSpectrumDistribution<T> power(T(2));
     AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
-        sphere,
-        power,
-        AreaLightSamplingDomain::SolidAngle
-    );
+        sphere, power, AreaLightSamplingDomain::SolidAngle);
 
     auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, N>(T(0.25));
     auto ref = make_ref_interaction<T>(math::Point<T, 3>(0, 0, 3));
@@ -169,17 +138,10 @@ TEST(AreaLightTest, VisibilityTesterReferencesSampledPointAndRespectsOcclusion) 
     using T = float;
     constexpr int N = 4;
 
-    shape::Sphere<T> sphere(
-        geometry::Transform<T>::identity(),
-        false,
-        T(1)
-    );
+    shape::Sphere<T> sphere(geometry::Transform<T>::identity(), false, T(1));
 
     radiometry::ConstantSpectrumDistribution<T> power(T(1));
-    AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(
-        sphere,
-        power
-    );
+    AreaLight<T, shape::Sphere<T>, radiometry::ConstantSpectrumDistribution<T>> light(sphere, power);
 
     auto wavelengths = radiometry::sample_uniform_wavelengths_stratified<T, N>(T(0.25));
     auto ref = make_ref_interaction<T>(math::Point<T, 3>(0, 0, 3));

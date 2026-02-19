@@ -14,8 +14,7 @@ namespace {
 struct TempDir {
     std::filesystem::path path{};
 
-    explicit TempDir(const std::string& name)
-        : path(std::filesystem::temp_directory_path() / name) {
+    explicit TempDir(const std::string& name) : path(std::filesystem::temp_directory_path() / name) {
         std::filesystem::remove_all(path);
         std::filesystem::create_directories(path);
     }
@@ -39,16 +38,15 @@ void write_basic_obj(const std::filesystem::path& path) {
     write_text_file(path, "v 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nvt 1 0\nvt 0 1\nf 1/1 2/2 3/3\n");
 }
 
-} // namespace
+}  // namespace
 
 TEST(SceneLoaderTextureReflectanceTest, LoadsDiffuseReflectanceTextureReference) {
     TempDir temp_dir("pbpt_scene_loader_texture_reflectance");
     write_basic_obj(temp_dir.path / "tri.obj");
 
     const auto xml_path = temp_dir.path / "scene_texture_reflectance.xml";
-    write_text_file(
-        xml_path,
-        R"XML(<?xml version="1.0" encoding="utf-8"?>
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -66,8 +64,7 @@ TEST(SceneLoaderTextureReflectanceTest, LoadsDiffuseReflectanceTextureReference)
     <string name="filename" value="tri.obj"/>
     <ref id="mat_tex"/>
   </shape>
-</scene>)XML"
-    );
+</scene>)XML");
 
     const auto scene = pbpt::loader::load_scene<double>(xml_path.string());
     ASSERT_TRUE(scene.resources.reflectance_texture_library.name_to_id().contains("tex_checker"));
@@ -81,9 +78,8 @@ TEST(SceneLoaderTextureReflectanceTest, ThrowsOnMissingReflectanceTextureReferen
     write_basic_obj(temp_dir.path / "tri.obj");
 
     const auto xml_path = temp_dir.path / "scene_texture_reflectance_missing.xml";
-    write_text_file(
-        xml_path,
-        R"XML(<?xml version="1.0" encoding="utf-8"?>
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -95,11 +91,7 @@ TEST(SceneLoaderTextureReflectanceTest, ThrowsOnMissingReflectanceTextureReferen
     <string name="filename" value="tri.obj"/>
     <ref id="mat_tex"/>
   </shape>
-</scene>)XML"
-    );
+</scene>)XML");
 
-    EXPECT_THROW(
-        (void)pbpt::loader::load_scene<double>(xml_path.string()),
-        std::runtime_error
-    );
+    EXPECT_THROW((void)pbpt::loader::load_scene<double>(xml_path.string()), std::runtime_error);
 }

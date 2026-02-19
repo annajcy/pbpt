@@ -1,7 +1,7 @@
 /**
  * @file test_point.cpp
  * @brief Comprehensive unit tests for the Point template class
- * 
+ *
  * This file contains thorough tests for the Point class template,
  * covering all methods, operators, and edge cases.
  */
@@ -59,8 +59,8 @@ TEST(PointTest, ConstructionAndAccessors) {
 
 // 测试核心的代数运算规则
 TEST(PointTest, AlgebraicOperations) {
-    Pt3  p1(1.0, 2.0, 3.0);
-    Pt3  p2(5.0, 7.0, 9.0);
+    Pt3 p1(1.0, 2.0, 3.0);
+    Pt3 p2(5.0, 7.0, 9.0);
     Vec3 v(4.0, 5.0, 6.0);
 
     // 规则 1: Point - Point = Vector
@@ -89,7 +89,7 @@ TEST(PointTest, AlgebraicOperations) {
 
 // 测试复合赋值运算符
 TEST(PointTest, CompoundAssignment) {
-    Pt3        p(1.0, 2.0, 3.0);
+    Pt3 p(1.0, 2.0, 3.0);
     const Vec3 v(4.0, 5.0, 6.0);
 
     // 测试 +=
@@ -135,8 +135,8 @@ TEST(PointTest, ExplicitConversion) {
 // 下面的代码块通过注释的形式展示了哪些操作会因为我们的设计而编译失败。
 // 这是对代数正确性设计的一种“文档化测试”。
 TEST(PointTest, CompileTimeAlgebraicChecks) {
-    Pt3  p1(1, 2, 3);
-    Pt3  p2(4, 5, 6);
+    Pt3 p1(1, 2, 3);
+    Pt3 p2(4, 5, 6);
     Vec3 v(1, 1, 1);
 
     // 以下操作是代数上非法的，并且应该会导致编译错误。
@@ -166,17 +166,17 @@ TEST(PointTest, DistanceCalculation) {
     Pt3 p1(0.0, 0.0, 0.0);
     Pt3 p2(3.0, 4.0, 0.0);  // 3-4-5 triangle
     Pt3 p3(1.0, 1.0, 1.0);
-    
+
     // 测试 distance_squared
     EXPECT_FLOAT_EQ(p1.distance_squared(p2), 25.0);
     EXPECT_FLOAT_EQ(p2.distance_squared(p1), 25.0);  // 对称性
     EXPECT_FLOAT_EQ(p1.distance_squared(p1), 0.0);   // 自距离为0
-    
+
     // 测试 distance
     EXPECT_FLOAT_EQ(p1.distance(p2), 5.0);
     EXPECT_FLOAT_EQ(p2.distance(p1), 5.0);  // 对称性
     EXPECT_FLOAT_EQ(p1.distance(p1), 0.0);  // 自距离为0
-    
+
     // 测试 3D 距离
     EXPECT_FLOAT_EQ(p1.distance_squared(p3), 3.0);
     EXPECT_FLOAT_EQ(p1.distance(p3), std::sqrt(3.0));
@@ -186,30 +186,26 @@ TEST(PointTest, DistanceCalculation) {
 TEST(PointTest, MidpointCalculation) {
     Pt3 p1(1.0, 2.0, 3.0);
     Pt3 p2(5.0, 6.0, 7.0);
-    
+
     // 测试两点中点
     auto mid = p1.mid(p2);
     EXPECT_FLOAT_EQ(mid.x(), 3.0);
     EXPECT_FLOAT_EQ(mid.y(), 4.0);
     EXPECT_FLOAT_EQ(mid.z(), 5.0);
-    
+
     // 测试中点的对称性
     auto mid_reversed = p2.mid(p1);
     EXPECT_FLOAT_EQ(mid.x(), mid_reversed.x());
     EXPECT_FLOAT_EQ(mid.y(), mid_reversed.y());
     EXPECT_FLOAT_EQ(mid.z(), mid_reversed.z());
-    
+
     // 测试多点中点（静态方法）
-    std::vector<Pt3> points = {
-        Pt3(0.0, 0.0, 0.0),
-        Pt3(3.0, 3.0, 3.0),
-        Pt3(6.0, 6.0, 6.0)
-    };
+    std::vector<Pt3> points = {Pt3(0.0, 0.0, 0.0), Pt3(3.0, 3.0, 3.0), Pt3(6.0, 6.0, 6.0)};
     auto center = Pt3::mid(points);
     EXPECT_FLOAT_EQ(center.x(), 3.0);
     EXPECT_FLOAT_EQ(center.y(), 3.0);
     EXPECT_FLOAT_EQ(center.z(), 3.0);
-    
+
     // 测试单点的中点
     std::vector<Pt3> single_point = {Pt3(1.0, 2.0, 3.0)};
     auto single_mid = Pt3::mid(single_point);
@@ -223,12 +219,12 @@ TEST(PointTest, ClampFunction) {
     Pt3 p(1.5, -2.5, 10.5);
     Pt3 low(0.0, 0.0, 0.0);
     Pt3 high(2.0, 2.0, 8.0);
-    
+
     auto clamped = p.clamp(low, high);
     EXPECT_FLOAT_EQ(clamped.x(), 1.5);  // 在范围内，不变
     EXPECT_FLOAT_EQ(clamped.y(), 0.0);  // 低于下限，夹到下限
     EXPECT_FLOAT_EQ(clamped.z(), 8.0);  // 高于上限，夹到上限
-    
+
     // 测试边界情况
     Pt3 p_on_boundary(0.0, 2.0, 4.0);
     auto clamped_boundary = p_on_boundary.clamp(low, high);
@@ -242,17 +238,17 @@ TEST(PointTest, TypeConversion) {
     // 测试不同类型之间的转换
     Point<int, 3> p_int(1, 2, 3);
     Point<float, 3> p_float = p_int.type_cast<float>();
-    
+
     EXPECT_FLOAT_EQ(p_float.x(), 1.0f);
     EXPECT_FLOAT_EQ(p_float.y(), 2.0f);
     EXPECT_FLOAT_EQ(p_float.z(), 3.0f);
-    
+
     // 测试维度转换
     auto p_2d = p_int.dim_cast<2>();
     EXPECT_EQ(p_2d.dims(), 2);
     EXPECT_EQ(p_2d.x(), 1);
     EXPECT_EQ(p_2d.y(), 2);
-    
+
     auto p_4d = p_int.dim_cast<4>();
     EXPECT_EQ(p_4d.dims(), 4);
     EXPECT_EQ(p_4d.x(), 1);
@@ -266,14 +262,14 @@ TEST(PointTest, MixedTypeOperations) {
     Point<float, 3> p_float(1.0f, 2.0f, 3.0f);
     Point<double, 3> p_double(4.0, 5.0, 6.0);
     Vector<int, 3> v_int(1, 1, 1);
-    
+
     // 不同类型的点之间运算
     auto diff = p_double - p_float;
     static_assert(std::is_same_v<decltype(diff), Vector<double, 3>>);
     EXPECT_DOUBLE_EQ(diff.x(), 3.0);
     EXPECT_DOUBLE_EQ(diff.y(), 3.0);
     EXPECT_DOUBLE_EQ(diff.z(), 3.0);
-    
+
     // 点与不同类型向量运算
     auto p_result = p_float + v_int;
     static_assert(std::is_same_v<decltype(p_result), Point<float, 3>>);
@@ -286,10 +282,10 @@ TEST(PointTest, MixedTypeOperations) {
 TEST(PointTest, CommutativeProperty) {
     Pt3 p(1.0, 2.0, 3.0);
     Vec3 v(4.0, 5.0, 6.0);
-    
+
     auto result1 = p + v;
     auto result2 = v + p;
-    
+
     EXPECT_FLOAT_EQ(result1.x(), result2.x());
     EXPECT_FLOAT_EQ(result1.y(), result2.y());
     EXPECT_FLOAT_EQ(result1.z(), result2.z());
@@ -301,13 +297,13 @@ TEST(PointTest, DifferentDimensions) {
     Point<float, 1> p1d(5.0f);
     EXPECT_FLOAT_EQ(p1d.x(), 5.0f);
     EXPECT_EQ(p1d.dims(), 1);
-    
+
     // 2D Point
     Pt2 p2d(1.0, 2.0);
     EXPECT_FLOAT_EQ(p2d.x(), 1.0);
     EXPECT_FLOAT_EQ(p2d.y(), 2.0);
     EXPECT_EQ(p2d.dims(), 2);
-    
+
     // 4D Point
     Pt4 p4d(1.0, 2.0, 3.0, 4.0);
     EXPECT_FLOAT_EQ(p4d.x(), 1.0);
@@ -321,13 +317,13 @@ TEST(PointTest, DifferentDimensions) {
 TEST(PointTest, IntegerPoints) {
     Pt3i p1(1, 2, 3);
     Pt3i p2(4, 5, 6);
-    
+
     // 整数点之间的运算
     auto diff = p2 - p1;
     EXPECT_EQ(diff.x(), 3);
     EXPECT_EQ(diff.y(), 3);
     EXPECT_EQ(diff.z(), 3);
-    
+
     // 距离计算（应该返回浮点数类型）
     auto dist = p1.distance(p2);
     static_assert(std::is_floating_point_v<decltype(dist)>);
@@ -341,13 +337,13 @@ TEST(PointTest, StaticFactoryMethods) {
     EXPECT_FLOAT_EQ(p_zeros.x(), 0.0);
     EXPECT_FLOAT_EQ(p_zeros.y(), 0.0);
     EXPECT_FLOAT_EQ(p_zeros.z(), 0.0);
-    
+
     // 测试 ones
     auto p_ones = Pt3::ones();
     EXPECT_FLOAT_EQ(p_ones.x(), 1.0);
     EXPECT_FLOAT_EQ(p_ones.y(), 1.0);
     EXPECT_FLOAT_EQ(p_ones.z(), 1.0);
-    
+
     // 测试 from_array
     std::array<Float, 3> arr = {1.5, 2.5, 3.5};
     auto p_from_arr = Pt3::from_array(arr);
@@ -361,7 +357,7 @@ TEST(PointTest, EqualityComparison) {
     Pt3 p1(1.0, 2.0, 3.0);
     Pt3 p2(1.0, 2.0, 3.0);
     Pt3 p3(1.0, 2.0, 3.1);
-    
+
     EXPECT_TRUE(p1 == p2);
     EXPECT_FALSE(p1 == p3);
     EXPECT_FALSE(p1 != p2);
@@ -373,13 +369,13 @@ TEST(PointTest, EdgeCases) {
     // 测试零点
     Pt3 origin = Pt3::zeros();
     Vec3 zero_vec = Vec3::zeros();
-    
+
     auto result = origin + zero_vec;
     EXPECT_TRUE(result == origin);
-    
+
     auto result2 = origin - zero_vec;
     EXPECT_TRUE(result2 == origin);
-    
+
     // 测试自减
     auto self_diff = origin - origin;
     EXPECT_TRUE(self_diff == zero_vec);
@@ -389,22 +385,22 @@ TEST(PointTest, EdgeCases) {
 TEST(PointTest, ErrorCases) {
     // 测试空数组会触发断言（在调试模式下）
     // 在发布模式下可能不会触发断言，所以我们只测试非空情况
-    
+
     // 测试单元素数组的中点
     std::vector<Pt3> single = {Pt3(1.0, 2.0, 3.0)};
     auto mid_single = Pt3::mid(single);
     EXPECT_FLOAT_EQ(mid_single.x(), 1.0);
     EXPECT_FLOAT_EQ(mid_single.y(), 2.0);
     EXPECT_FLOAT_EQ(mid_single.z(), 3.0);
-    
+
     // 测试大量点的中点
     std::vector<Pt3> many_points;
     for (int i = 0; i < 100; ++i) {
-        many_points.push_back(Pt3(static_cast<Float>(i), static_cast<Float>(i*2), static_cast<Float>(i*3)));
+        many_points.push_back(Pt3(static_cast<Float>(i), static_cast<Float>(i * 2), static_cast<Float>(i * 3)));
     }
     auto mid_many = Pt3::mid(many_points);
-    EXPECT_FLOAT_EQ(mid_many.x(), 49.5);  // (0+99)/2
-    EXPECT_FLOAT_EQ(mid_many.y(), 99.0);  // (0+198)/2
-    EXPECT_FLOAT_EQ(mid_many.z(), 148.5); // (0+297)/2
+    EXPECT_FLOAT_EQ(mid_many.x(), 49.5);   // (0+99)/2
+    EXPECT_FLOAT_EQ(mid_many.y(), 99.0);   // (0+198)/2
+    EXPECT_FLOAT_EQ(mid_many.z(), 148.5);  // (0+297)/2
 }
 }  // namespace pbpt::math::testing

@@ -21,9 +21,7 @@ struct TempDir {
     std::filesystem::path path{};
 
     explicit TempDir(const std::string& prefix) {
-        const auto stamp = std::to_string(
-            std::chrono::steady_clock::now().time_since_epoch().count()
-        );
+        const auto stamp = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
         path = std::filesystem::temp_directory_path() / (prefix + "_" + stamp);
         std::filesystem::create_directories(path);
     }
@@ -45,8 +43,7 @@ std::string write_tiny_cbox_scene_xml(const std::filesystem::path& xml_path) {
         throw std::runtime_error("Failed to open temp scene xml: " + xml_path.string());
     }
 
-    out
-        << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+    out << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
         << "<scene version=\"0.4.0\">\n"
         << "  <integrator type=\"path\">\n"
         << "    <integer name=\"maxDepth\" value=\"2\"/>\n"
@@ -92,34 +89,29 @@ std::string write_tiny_cbox_scene_xml(const std::filesystem::path& xml_path) {
     return xml_path.string();
 }
 
-} // namespace
+}  // namespace
 
-TEST(Radiometric, UniformHemisphereIntegral_Cosine)
-{
+TEST(Radiometric, UniformHemisphereIntegral_Cosine) {
     math::RandomGenerator<double, 2> rng2d(123);
     UniformHemisphereDomain<double> hemisphere;
     math::Normal3 n(0.0, 0.0, 1.0);
     int sample_count = 1000000;
-    auto res = integrate<double>(hemisphere, [&n](const math::Vector<double, 3>& wi) {
-        return n.to_vector().dot(wi);
-    }, sample_count, rng2d);
+    auto res = integrate<double>(
+        hemisphere, [&n](const math::Vector<double, 3>& wi) { return n.to_vector().dot(wi); }, sample_count, rng2d);
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
-TEST(Radiometric, CosineWeightedHemisphereIntegral_Cosine)
-{
+TEST(Radiometric, CosineWeightedHemisphereIntegral_Cosine) {
     math::RandomGenerator<double, 2> rng2d(789);
     CosineWeightedHemisphereDomain<double> proj_hemi;
     math::Normal3 n(0.0, 0.0, 1.0);
     int sample_count = 100000;
-    auto res = integrate<double>(proj_hemi, [&n](const math::Vector<double, 3>& wi) {
-        return n.to_vector().dot(wi);
-    }, sample_count, rng2d);
+    auto res = integrate<double>(
+        proj_hemi, [&n](const math::Vector<double, 3>& wi) { return n.to_vector().dot(wi); }, sample_count, rng2d);
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
-TEST(Radiometric, HemisphereCosineVarianceComparison)
-{
+TEST(Radiometric, HemisphereCosineVarianceComparison) {
     math::Normal3 n(0.0, 0.0, 1.0);
     const auto n_vec = n.to_vector();
     constexpr int trials = 64;
@@ -131,9 +123,8 @@ TEST(Radiometric, HemisphereCosineVarianceComparison)
         for (int i = 0; i < trials; ++i) {
             math::RandomGenerator<double, 2> rng2d(1000 + i);
             auto domain = domain_factory();
-            double estimate = integrate<double>(domain, [&n_vec](const math::Vector<double, 3>& wi) {
-                return n_vec.dot(wi);
-            }, sample_count, rng2d);
+            double estimate = integrate<double>(
+                domain, [&n_vec](const math::Vector<double, 3>& wi) { return n_vec.dot(wi); }, sample_count, rng2d);
             estimates.push_back(estimate);
         }
 
@@ -146,53 +137,49 @@ TEST(Radiometric, HemisphereCosineVarianceComparison)
     };
 
     auto var_uniform = variance_of_estimator([]() { return UniformHemisphereDomain<double>{}; });
-    auto var_cosine  = variance_of_estimator([]() { return CosineWeightedHemisphereDomain<double>{}; });
+    auto var_cosine = variance_of_estimator([]() { return CosineWeightedHemisphereDomain<double>{}; });
 
     std::cout << "Variance Uniform Hemisphere: " << var_uniform << std::endl;
     std::cout << "Variance Cosine-Weighted Hemisphere: " << var_cosine << std::endl;
 
     EXPECT_LT(var_cosine, var_uniform);
-    EXPECT_LT(var_cosine, var_uniform * 0.7); // cosine-weighted should reduce variance noticeably
+    EXPECT_LT(var_cosine, var_uniform * 0.7);  // cosine-weighted should reduce variance noticeably
 }
 
-TEST(Radiometric, UniformDiskIntegral_Constant)
-{
+TEST(Radiometric, UniformDiskIntegral_Constant) {
     math::RandomGenerator<double, 2> rng2d(456);
     UniformDiskDomain<double> disk;
     int sample_count = 100000;
-    auto res = integrate<double>(disk, [](const math::Point<double, 2>& p) {
-        return 1.0;
-    }, sample_count, rng2d);
+    auto res = integrate<double>(disk, [](const math::Point<double, 2>& p) { return 1.0; }, sample_count, rng2d);
     EXPECT_NEAR(res, math::pi_v<double>, 0.01);
 }
 
-TEST(Radiometric, ParallelogramAreaIntegral)
-{
+TEST(Radiometric, ParallelogramAreaIntegral) {
     math::RandomGenerator<double, 2> rng2d(321);
-    UniformParallelogramAreaDomain<double> para{
-        math::Point<double, 3>(-1.0, 4.0, -1.0),
-        math::Vector<double, 3>(2.0, 0.0, 0.0),
-        math::Vector<double, 3>(0.0, 0.0, 2.0)
-    };
+    UniformParallelogramAreaDomain<double> para{math::Point<double, 3>(-1.0, 4.0, -1.0),
+                                                math::Vector<double, 3>(2.0, 0.0, 0.0),
+                                                math::Vector<double, 3>(0.0, 0.0, 2.0)};
     auto shading_p = math::Point<double, 3>(0.0, 0.0, 0.0);
     auto shading_p_normal = math::Normal3(0.0, 1.0, 0.0);
     int sample_count = 100000;
-    auto res = integrate<double>(para, [&shading_p, &shading_p_normal](const SurfaceInfo<double>& surface) {
-        auto [p, normal] = surface;
-        auto n = normal.to_vector();
-        auto pn = shading_p_normal.to_vector();
-        auto wi = (p - shading_p).normalized();
-        auto cos_p = pn.dot(wi);
-        auto cos_x = n.dot(-wi);
-        auto r2 = (p - shading_p).length_squared();
-        auto L = 1.0;
-        return L * cos_p * cos_x / r2;
-    }, sample_count, rng2d);
+    auto res = integrate<double>(
+        para,
+        [&shading_p, &shading_p_normal](const SurfaceInfo<double>& surface) {
+            auto [p, normal] = surface;
+            auto n = normal.to_vector();
+            auto pn = shading_p_normal.to_vector();
+            auto wi = (p - shading_p).normalized();
+            auto cos_p = pn.dot(wi);
+            auto cos_x = n.dot(-wi);
+            auto r2 = (p - shading_p).length_squared();
+            auto L = 1.0;
+            return L * cos_p * cos_x / r2;
+        },
+        sample_count, rng2d);
     EXPECT_NEAR(res, 0.2308367977, 0.01);
 }
 
-TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic)
-{
+TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic) {
     TempDir temp_dir("pbpt_integrator_observer");
     const auto scene_xml_path = temp_dir.path / "tiny_scene.xml";
     const auto output_exr_path = temp_dir.path / "tiny_scene.exr";
@@ -203,12 +190,8 @@ TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic)
 
     std::vector<float> progress_values;
     pbpt::integrator::RenderObserver observer{};
-    observer.on_progress = [&](float progress) {
-        progress_values.push_back(progress);
-    };
-    observer.is_cancel_requested = []() {
-        return false;
-    };
+    observer.on_progress = [&](float progress) { progress_values.push_back(progress); };
+    observer.is_cancel_requested = []() { return false; };
 
     integrator.render(scene, 1, output_exr_path.string(), false, observer);
 
@@ -225,8 +208,7 @@ TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic)
     EXPECT_GT(std::filesystem::file_size(output_exr_path), 0);
 }
 
-TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite)
-{
+TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
     TempDir temp_dir("pbpt_integrator_cancel");
     const auto scene_xml_path = temp_dir.path / "tiny_scene.xml";
     const auto output_exr_path = temp_dir.path / "tiny_scene_canceled.exr";
@@ -244,17 +226,12 @@ TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite)
         ++progress_call_count;
         cancel_requested.store(true);
     };
-    observer.is_cancel_requested = [&]() {
-        return cancel_requested.load();
-    };
+    observer.is_cancel_requested = [&]() { return cancel_requested.load(); };
 
-    EXPECT_THROW(
-        integrator.render(scene, 1, output_exr_path.string(), false, observer),
-        pbpt::integrator::RenderCanceled
-    );
+    EXPECT_THROW(integrator.render(scene, 1, output_exr_path.string(), false, observer),
+                 pbpt::integrator::RenderCanceled);
     EXPECT_GT(progress_call_count, 0);
     EXPECT_FALSE(std::filesystem::exists(output_exr_path));
 }
 
-
-}
+}  // namespace pbpt::integrator::testing

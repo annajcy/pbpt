@@ -11,10 +11,7 @@ namespace {
 
 template <typename T>
 math::Point<T, 2> pixel_center(const math::Point<int, 2>& pixel) {
-    return math::Point<T, 2>(
-        static_cast<T>(pixel.x()) + T(0.5),
-        static_cast<T>(pixel.y()) + T(0.5)
-    );
+    return math::Point<T, 2>(static_cast<T>(pixel.x()) + T(0.5), static_cast<T>(pixel.y()) + T(0.5));
 }
 
 }  // namespace
@@ -44,17 +41,11 @@ TEST(BoxFilterTest, SampleFilmPositionMatchesUniformOffset) {
 
     auto filtered = filter.sample_film_position(pixel, uv);
 
-    auto expected_offset = sampler::sample_uniform_2d(
-        uv,
-        math::Vector<T, 2>(-radius, radius),
-        math::Vector<T, 2>(-radius, radius)
-    );
+    auto expected_offset =
+        sampler::sample_uniform_2d(uv, math::Vector<T, 2>(-radius, radius), math::Vector<T, 2>(-radius, radius));
     auto expected_position = pixel_center<T>(pixel) + expected_offset.to_vector();
-    auto expected_pdf = sampler::sample_uniform_2d_pdf(
-        expected_offset,
-        math::Vector<T, 2>(-radius, radius),
-        math::Vector<T, 2>(-radius, radius)
-    );
+    auto expected_pdf = sampler::sample_uniform_2d_pdf(expected_offset, math::Vector<T, 2>(-radius, radius),
+                                                       math::Vector<T, 2>(-radius, radius));
     auto expected_weight = (expected_pdf > T(0)) ? (T(1) / expected_pdf) : T(0);
 
     EXPECT_FLOAT_EQ(filtered.film_position.x(), expected_position.x());
@@ -98,17 +89,12 @@ TEST(BoxFilterTest, CameraSamplesUseAllUvStrata) {
     auto pixel_ctr = pixel_center<T>(pixel);
     auto expected_pdf = sampler::sample_uniform_2d_pdf(
         math::Point<T, 2>(0, 0),  // position does not affect uniform pdf when inside range
-        math::Vector<T, 2>(-radius, radius),
-        math::Vector<T, 2>(-radius, radius)
-    );
+        math::Vector<T, 2>(-radius, radius), math::Vector<T, 2>(-radius, radius));
     auto expected_weight = (expected_pdf > T(0)) ? (T(1) / expected_pdf) : T(0);
 
     for (std::size_t i = 0; i < samples.size(); ++i) {
-        auto expected_offset = sampler::sample_uniform_2d(
-            uvs[i],
-            math::Vector<T, 2>(-radius, radius),
-            math::Vector<T, 2>(-radius, radius)
-        );
+        auto expected_offset = sampler::sample_uniform_2d(uvs[i], math::Vector<T, 2>(-radius, radius),
+                                                          math::Vector<T, 2>(-radius, radius));
         auto expected_position = pixel_ctr + expected_offset.to_vector();
 
         EXPECT_NEAR(samples[i].film_position.x(), expected_position.x(), 1e-6f);

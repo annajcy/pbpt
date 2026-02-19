@@ -105,12 +105,12 @@ TEST_F(ComplexTest, CompoundAssignment) {
     c /= c2;
     EXPECT_DOUBLE_EQ(c.real(), 11.0 / 25.0);
     EXPECT_DOUBLE_EQ(c.imag(), 2.0 / 25.0);
-    
+
     c = c1;
     c *= 2.0;
     EXPECT_EQ(c.real(), 2.0);
     EXPECT_EQ(c.imag(), 4.0);
-    
+
     c = c1;
     c /= 2.0;
     EXPECT_EQ(c.real(), 0.5);
@@ -140,10 +140,10 @@ TEST_F(ComplexTest, FromToVector) {
 }
 
 TEST_F(ComplexTest, FromPolar) {
-    Complex<double> c = Complex<double>::from_polar(5.0, 0.0); // 5 angle 0
+    Complex<double> c = Complex<double>::from_polar(5.0, 0.0);  // 5 angle 0
     EXPECT_DOUBLE_EQ(c.real(), 5.0);
-    EXPECT_NEAR(c.imag(), 0.0, 1e-10); // slightly fuzzy for sin(0) maybe?
-    
+    EXPECT_NEAR(c.imag(), 0.0, 1e-10);  // slightly fuzzy for sin(0) maybe?
+
     // 5 at 90 degrees (pi/2) -> 5i
     Complex<double> c_pi_2 = Complex<double>::from_polar(5.0, M_PI / 2.0);
     EXPECT_NEAR(c_pi_2.real(), 0.0, 1e-10);
@@ -183,9 +183,9 @@ TEST_F(ComplexTest, ConstexprCheck) {
     constexpr Complex<double> res = c1 + c2;
     static_assert(res.real() == 4.0, "Constexpr addition failed");
     static_assert(res.imag() == 6.0, "Constexpr addition failed");
-    
+
     constexpr double magSq = c2.real() * c2.real() + c2.imag() * c2.imag();
     static_assert(magSq == 25.0, "Constexpr check failed");
 }
 
-} // namespace pbpt::math::testing
+}  // namespace pbpt::math::testing

@@ -91,7 +91,7 @@ TEST_F(ImageIOTest, WriteAndReadGradient) {
             float u = static_cast<float>(x) / (width - 1);
             float v = static_cast<float>(y) / (height - 1);
             math::Vector<float, 3> expected(u, v, 1.0f - u);
-            
+
             auto pixel = loaded_img.get_pixel(x, y);
             EXPECT_NEAR(pixel.x(), expected.x(), 1e-4);
             EXPECT_NEAR(pixel.y(), expected.y(), 1e-4);
@@ -104,43 +104,46 @@ TEST_F(ImageIOTest, WriteAndReadPNG) {
     int width = 16;
     int height = 16;
     texture::Image<math::Vector<float, 3>> original_img(width, height);
-    
+
     // Fill with simple patterns (Red, Green, Blue corners)
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            if (x < width/2 && y < height/2) original_img.get_pixel(x, y) = math::Vector<float, 3>(1, 0, 0); // Red
-            else if (x >= width/2 && y < height/2) original_img.get_pixel(x, y) = math::Vector<float, 3>(0, 1, 0); // Green
-            else original_img.get_pixel(x, y) = math::Vector<float, 3>(0, 0, 1); // Blue
+            if (x < width / 2 && y < height / 2)
+                original_img.get_pixel(x, y) = math::Vector<float, 3>(1, 0, 0);  // Red
+            else if (x >= width / 2 && y < height / 2)
+                original_img.get_pixel(x, y) = math::Vector<float, 3>(0, 1, 0);  // Green
+            else
+                original_img.get_pixel(x, y) = math::Vector<float, 3>(0, 0, 1);  // Blue
         }
     }
 
     std::filesystem::path png_path = std::filesystem::temp_directory_path() / "test_image.png";
-    
+
     // Use generic read/write or specific
     utils::write_ldr_image(png_path, original_img);
-    
+
     ASSERT_TRUE(std::filesystem::exists(png_path));
-    
+
     // Read back using generic read_image
     auto loaded_img = utils::read_image<float>(png_path);
-    
+
     ASSERT_EQ(loaded_img.width(), width);
     ASSERT_EQ(loaded_img.height(), height);
-    
+
     // Check approximate values (8-bit quantization introduces error)
     // 1.0 -> 255 -> 1.0. Error should be small (1/255 approx 0.004)
     float tolerance = 0.01f;
-    
-    auto p1 = loaded_img.get_pixel(0, 0); // Red
+
+    auto p1 = loaded_img.get_pixel(0, 0);  // Red
     EXPECT_NEAR(p1.x(), 1.0f, tolerance);
     EXPECT_NEAR(p1.y(), 0.0f, tolerance);
     EXPECT_NEAR(p1.z(), 0.0f, tolerance);
 
-    auto p2 = loaded_img.get_pixel(width-1, 0); // Green
+    auto p2 = loaded_img.get_pixel(width - 1, 0);  // Green
     EXPECT_NEAR(p2.x(), 0.0f, tolerance);
     EXPECT_NEAR(p2.y(), 1.0f, tolerance);
     EXPECT_NEAR(p2.z(), 0.0f, tolerance);
-    
+
     std::filesystem::remove(png_path);
 }
 
@@ -148,7 +151,7 @@ TEST_F(ImageIOTest, DispatchWriteRead) {
     int width = 8;
     int height = 8;
     texture::Image<math::Vector<float, 3>> original_img(width, height);
-    
+
     // Fill with solid color
     math::Vector<float, 3> color(0.2f, 0.4f, 0.6f);
     for (int y = 0; y < height; ++y) {
@@ -162,31 +165,28 @@ TEST_F(ImageIOTest, DispatchWriteRead) {
         auto exr_path = std::filesystem::temp_directory_path() / "dispatch_test.exr";
         utils::write_image(exr_path, original_img);
         ASSERT_TRUE(std::filesystem::exists(exr_path));
-        
+
         auto loaded = utils::read_image<float>(exr_path);
-        EXPECT_NEAR(loaded.get_pixel(0,0).x(), color.x(), 1e-4);
+        EXPECT_NEAR(loaded.get_pixel(0, 0).x(), color.x(), 1e-4);
         std::filesystem::remove(exr_path);
     }
-    
+
     // 2. Test .png dispatch
     {
         auto png_path = std::filesystem::temp_directory_path() / "dispatch_test.png";
         utils::write_image(png_path, original_img);
         ASSERT_TRUE(std::filesystem::exists(png_path));
-        
+
         auto loaded = utils::read_image<float>(png_path);
         // PNG is 8-bit quantized, so error margin is larger
-        EXPECT_NEAR(loaded.get_pixel(0,0).x(), color.x(), 0.01f);
+        EXPECT_NEAR(loaded.get_pixel(0, 0).x(), color.x(), 0.01f);
         std::filesystem::remove(png_path);
     }
 
     // 3. Test Unsupported
     {
         auto bad_path = std::filesystem::temp_directory_path() / "test.unsupported";
-        EXPECT_THROW(
-            utils::write_image(bad_path, original_img),
-            std::runtime_error
-        );
+        EXPECT_THROW(utils::write_image(bad_path, original_img), std::runtime_error);
     }
 }
 
@@ -198,7 +198,7 @@ TEST_F(ImageIOTest, ConvertImage) {
     int width = 16;
     int height = 16;
     texture::Image<math::Vector<float, 3>> original_img(width, height);
-    
+
     // Fill with pattern
     math::Vector<float, 3> color(0.8f, 0.4f, 0.2f);
     for (int y = 0; y < height; ++y) {
@@ -213,9 +213,12 @@ TEST_F(ImageIOTest, ConvertImage) {
     std::filesystem::path dst_exr = std::filesystem::temp_directory_path() / "convert_dst.exr";
 
     // Cleanup before test (in case of previous failure)
-    if (std::filesystem::exists(src_exr)) std::filesystem::remove(src_exr);
-    if (std::filesystem::exists(dst_png)) std::filesystem::remove(dst_png);
-    if (std::filesystem::exists(dst_exr)) std::filesystem::remove(dst_exr);
+    if (std::filesystem::exists(src_exr))
+        std::filesystem::remove(src_exr);
+    if (std::filesystem::exists(dst_png))
+        std::filesystem::remove(dst_png);
+    if (std::filesystem::exists(dst_exr))
+        std::filesystem::remove(dst_exr);
 
     // 1. Create source EXR
     utils::write_image(src_exr, original_img);
@@ -231,9 +234,9 @@ TEST_F(ImageIOTest, ConvertImage) {
     EXPECT_EQ(loaded_png.width(), width);
     EXPECT_EQ(loaded_png.height(), height);
     // PNG is 8-bit, so we expect some quantization error (approx 1/255 ~= 0.004)
-    EXPECT_NEAR(loaded_png.get_pixel(0,0).x(), color.x(), 0.01f);
-    EXPECT_NEAR(loaded_png.get_pixel(0,0).y(), color.y(), 0.01f);
-    EXPECT_NEAR(loaded_png.get_pixel(0,0).z(), color.z(), 0.01f);
+    EXPECT_NEAR(loaded_png.get_pixel(0, 0).x(), color.x(), 0.01f);
+    EXPECT_NEAR(loaded_png.get_pixel(0, 0).y(), color.y(), 0.01f);
+    EXPECT_NEAR(loaded_png.get_pixel(0, 0).z(), color.z(), 0.01f);
 
     // 3. Convert PNG -> EXR
     utils::convert_image<float>(dst_png, dst_exr);
@@ -243,11 +246,11 @@ TEST_F(ImageIOTest, ConvertImage) {
     auto loaded_exr = utils::read_image<float>(dst_exr);
     EXPECT_EQ(loaded_exr.width(), width);
     EXPECT_EQ(loaded_exr.height(), height);
-    // The source was the PNG, so it already had quantization error. 
+    // The source was the PNG, so it already had quantization error.
     // Converting back to EXR preserves that value (floating point), but doesn't recover original precision.
-    EXPECT_NEAR(loaded_exr.get_pixel(0,0).x(), color.x(), 0.01f);
-    EXPECT_NEAR(loaded_exr.get_pixel(0,0).y(), color.y(), 0.01f);
-    EXPECT_NEAR(loaded_exr.get_pixel(0,0).z(), color.z(), 0.01f);
+    EXPECT_NEAR(loaded_exr.get_pixel(0, 0).x(), color.x(), 0.01f);
+    EXPECT_NEAR(loaded_exr.get_pixel(0, 0).y(), color.y(), 0.01f);
+    EXPECT_NEAR(loaded_exr.get_pixel(0, 0).z(), color.z(), 0.01f);
 
     // Cleanup
     std::filesystem::remove(src_exr);

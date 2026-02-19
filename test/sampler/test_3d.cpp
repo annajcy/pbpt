@@ -5,13 +5,13 @@
 namespace pbpt::sampler::testing {
 
 using pbpt::math::Float;
-using pbpt::math::Point;
 using pbpt::math::pi_v;
+using pbpt::math::Point;
 
 TEST(SamplingTest, UniformHemisphere) {
     Float radius = 1.0f;
-    auto  equator = sample_uniform_hemisphere(Point<Float, 2>{0.0f, 0.0f}, radius);
-    auto  pole = sample_uniform_hemisphere(Point<Float, 2>{1.0f, 0.25f}, radius);
+    auto equator = sample_uniform_hemisphere(Point<Float, 2>{0.0f, 0.0f}, radius);
+    auto pole = sample_uniform_hemisphere(Point<Float, 2>{1.0f, 0.25f}, radius);
 
     EXPECT_GE(equator.z(), 0.0f);
     EXPECT_NEAR(equator.to_vector().length(), radius, 1e-5f);

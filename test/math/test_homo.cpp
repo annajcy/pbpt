@@ -30,7 +30,7 @@ TEST(HomoTest, DefaultConstructorIsOriginPoint) {
 }
 
 TEST(HomoTest, ConstructFromPoint) {
-    const Pt3   p(1.5, -2.5, 3.0);
+    const Pt3 p(1.5, -2.5, 3.0);
     const Homo4 h = Homo4::from_point(p);
 
     EXPECT_TRUE(h.is_point());
@@ -50,7 +50,7 @@ TEST(HomoTest, ConstructFromPoint) {
 }
 
 TEST(HomoTest, ConstructFromVector) {
-    const Vec3  v(4.0, 5.0, -6.5);
+    const Vec3 v(4.0, 5.0, -6.5);
     const Homo4 h = Homo4::from_vector(v);
 
     EXPECT_FALSE(h.is_point());
@@ -109,7 +109,7 @@ TEST(HomoTest, ConversionSafetyCompileTime) {
     // 这证明了编译期错误检查正在工作。
     //
     // constexpr Pt3 p = const_h_vector.to_point(); // COMPILE ERROR!
-    //constexpr Vec3 v = const_h_point.to_vector();   // COMPILE ERROR!
+    // constexpr Vec3 v = const_h_point.to_vector();   // COMPILE ERROR!
 
     // 因为我们不能提交一个无法编译的测试，所以上面的代码是注释掉的。
     // 这个测试的存在和成功编译，以及 static_assert 的通过，证明了其设计。
@@ -118,7 +118,7 @@ TEST(HomoTest, ConversionSafetyCompileTime) {
 
 TEST(HomoTest, RawAccessor) {
     const Pt3 p_orig(1, 2, 3);
-    Homo4     h = Homo4::from_point(p_orig);
+    Homo4 h = Homo4::from_point(p_orig);
 
     // 测试 const 版本的 to_vector_raw()
     const auto& const_to_vector_raw_data = h.to_vector_raw();
@@ -135,27 +135,25 @@ TEST(HomoTest, RawAccessor) {
     EXPECT_DOUBLE_EQ(p_modified.x(), 99.0);
 }
 
-
-
 TEST(HomogeneousNewFeaturesTest, FactoryMethods) {
     // Test zeros factory
     auto h_zero = Homo4::zeros();
     EXPECT_TRUE(h_zero.is_all_zero());
     EXPECT_TRUE(h_zero.is_vector());
-    
+
     // Test filled factory
     auto h_filled = Homo4::filled(2.5);
     for (int i = 0; i < 4; ++i) {
         EXPECT_DOUBLE_EQ(h_filled.to_vector_raw()[i], 2.5);
     }
-    
+
     // Test from_point factory
     Point<Float, 3> p(1.0, 2.0, 3.0);
     auto h_point = Homo4::from_point(p);
     EXPECT_TRUE(h_point.is_point());
     EXPECT_DOUBLE_EQ(h_point.to_vector_raw()[3], 1.0);  // w should be 1
-    
-    // Test from_vector factory  
+
+    // Test from_vector factory
     Vector<Float, 3> v(1.0, 2.0, 3.0);
     auto h_vector = Homo4::from_vector(v);
     EXPECT_TRUE(h_vector.is_vector());
@@ -165,21 +163,21 @@ TEST(HomogeneousNewFeaturesTest, FactoryMethods) {
 TEST(HomogeneousNewFeaturesTest, EnhancedOperators) {
     Homo4 h1(1.0, 2.0, 3.0, 1.0);
     Homo4 h2(2.0, 3.0, 4.0, 1.0);
-    
+
     // Test arithmetic operators
     auto h_sum = h1 + h2;
     EXPECT_DOUBLE_EQ(h_sum.to_vector_raw()[0], 3.0);
     EXPECT_DOUBLE_EQ(h_sum.to_vector_raw()[1], 5.0);
     EXPECT_DOUBLE_EQ(h_sum.to_vector_raw()[2], 7.0);
     EXPECT_DOUBLE_EQ(h_sum.to_vector_raw()[3], 2.0);
-    
+
     // Test scalar multiplication
     auto h_scaled = h1 * 2.0;
     EXPECT_DOUBLE_EQ(h_scaled.to_vector_raw()[0], 2.0);
     EXPECT_DOUBLE_EQ(h_scaled.to_vector_raw()[1], 4.0);
     EXPECT_DOUBLE_EQ(h_scaled.to_vector_raw()[2], 6.0);
     EXPECT_DOUBLE_EQ(h_scaled.to_vector_raw()[3], 2.0);
-    
+
     // Test comparison
     Homo4 h1_copy(1.0, 2.0, 3.0, 1.0);
     EXPECT_TRUE(h1 == h1_copy);
@@ -188,10 +186,10 @@ TEST(HomogeneousNewFeaturesTest, EnhancedOperators) {
 
 TEST(HomogeneousNewFeaturesTest, ApplyFunction) {
     Homo4 h(1.0, 2.0, 3.0, 1.0);
-    
+
     // Apply function to modify elements (signature: f(T&, int))
     h.visit([](Float& x, int i) { x = x * 2.0; });
-    
+
     EXPECT_DOUBLE_EQ(h.to_vector_raw()[0], 2.0);
     EXPECT_DOUBLE_EQ(h.to_vector_raw()[1], 4.0);
     EXPECT_DOUBLE_EQ(h.to_vector_raw()[2], 6.0);
@@ -200,18 +198,18 @@ TEST(HomogeneousNewFeaturesTest, ApplyFunction) {
 
 TEST(HomogeneousNewFeaturesTest, NormalizationAndChecks) {
     Homo4 h(2.0, 4.0, 6.0, 2.0);  // Point with w = 2
-    
+
     // Test normalization
     auto h_norm = h.standardized();
     EXPECT_DOUBLE_EQ(h_norm.to_vector_raw()[0], 1.0);
     EXPECT_DOUBLE_EQ(h_norm.to_vector_raw()[1], 2.0);
     EXPECT_DOUBLE_EQ(h_norm.to_vector_raw()[2], 3.0);
     EXPECT_DOUBLE_EQ(h_norm.to_vector_raw()[3], 1.0);
-    
+
     // Original should remain unchanged
     EXPECT_DOUBLE_EQ(h.to_vector_raw()[0], 2.0);
     EXPECT_DOUBLE_EQ(h.to_vector_raw()[3], 2.0);
-    
+
     // Test normalization check
     EXPECT_TRUE(h_norm.is_standardized());
     EXPECT_FALSE(h.is_standardized());
@@ -221,7 +219,7 @@ TEST(HomogeneousNewFeaturesTest, ConstexprCapabilities) {
     // Test constexpr construction and type checking
     constexpr Homo4 h_point(1.0, 2.0, 3.0, 1.0);
     constexpr Homo4 h_vector(1.0, 2.0, 3.0, 0.0);
-    
+
     // These should work at compile time
     static_assert(h_point.is_point(), "Point should be detected at compile time");
     static_assert(h_vector.is_vector(), "Vector should be detected at compile time");
@@ -230,9 +228,9 @@ TEST(HomogeneousNewFeaturesTest, ConstexprCapabilities) {
 }
 
 TEST(HomogeneousNewFeaturesTest, ErrorHandling) {
-    Homo4 h_point(1.0, 2.0, 3.0, 1.0);  // Point
+    Homo4 h_point(1.0, 2.0, 3.0, 1.0);   // Point
     Homo4 h_vector(1.0, 2.0, 3.0, 0.0);  // Vector
-    
+
     // Test invalid conversions throw proper exceptions
     EXPECT_THROW(h_point.to_vector(), std::domain_error);
     EXPECT_THROW(h_vector.to_point(), std::domain_error);

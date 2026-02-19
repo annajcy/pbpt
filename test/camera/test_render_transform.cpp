@@ -22,7 +22,8 @@ void check_transform_approx(const Transform<T>& t1, const Transform<T>& t2) {
 }
 
 TEST(RenderTransform, CameraSpace) {
-    auto camera_to_world = Transform<Float>::translate(math::Vector<Float, 3>{1.0, 2.0, 3.0}) * Transform<Float>::rotate_x(math::deg2rad(45.0));
+    auto camera_to_world = Transform<Float>::translate(math::Vector<Float, 3>{1.0, 2.0, 3.0}) *
+                           Transform<Float>::rotate_x(math::deg2rad(45.0));
     RenderTransform<Float> render_transform(camera_to_world, RenderSpace::Camera);
 
     EXPECT_EQ(render_transform.render_space(), RenderSpace::Camera);
@@ -33,7 +34,8 @@ TEST(RenderTransform, CameraSpace) {
 }
 
 TEST(RenderTransform, WorldSpace) {
-    auto camera_to_world = Transform<Float>::translate(math::Vector<Float, 3>{1.0, 2.0, 3.0}) * Transform<Float>::rotate_x(math::deg2rad(45.0));
+    auto camera_to_world = Transform<Float>::translate(math::Vector<Float, 3>{1.0, 2.0, 3.0}) *
+                           Transform<Float>::rotate_x(math::deg2rad(45.0));
     RenderTransform<Float> render_transform(camera_to_world, RenderSpace::World);
 
     EXPECT_EQ(render_transform.render_space(), RenderSpace::World);
@@ -60,7 +62,8 @@ TEST(RenderTransform, CameraWorldSpace) {
 }
 
 TEST(RenderTransform, ChangeSpace) {
-    auto camera_to_world = Transform<Float>::translate(math::Vector<Float, 3>{1.0, 2.0, 3.0}) * Transform<Float>::rotate_x(math::deg2rad(45.0));
+    auto camera_to_world = Transform<Float>::translate(math::Vector<Float, 3>{1.0, 2.0, 3.0}) *
+                           Transform<Float>::rotate_x(math::deg2rad(45.0));
     RenderTransform<Float> render_transform(camera_to_world, RenderSpace::Camera);
 
     // Test to_render_space
@@ -76,5 +79,4 @@ TEST(RenderTransform, ChangeSpace) {
     check_transform_approx(render_transform.render_to_world(), Transform<Float>::identity());
 }
 
-}
-
+}  // namespace pbpt::camera::testing

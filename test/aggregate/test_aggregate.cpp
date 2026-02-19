@@ -10,12 +10,12 @@
 
 namespace pbpt::aggregate::testing {
 
+using pbpt::aggregate::EmbreeAggregate;
 using pbpt::geometry::Ray;
 using pbpt::geometry::RayDifferential;
 using pbpt::geometry::Transform;
 using pbpt::math::Point;
 using pbpt::math::Vector;
-using pbpt::aggregate::EmbreeAggregate;
 using pbpt::shape::Primitive;
 using pbpt::shape::Sphere;
 
@@ -116,10 +116,8 @@ TEST(EmbreeAggregateTest, RayDifferentialPopulatesSurfaceDifferentials) {
     EmbreeAggregate<T> agg(std::vector<Primitive<T>>{prim});
 
     Ray<T, 3> main_ray(Point<T, 3>(0, 0, -3), Vector<T, 3>(0, 0, 1));
-    std::array<Ray<T, 3>, 2> differential_rays = {
-        Ray<T, 3>(Point<T, 3>(0.01f, 0.0f, -3.0f), Vector<T, 3>(0, 0, 1)),
-        Ray<T, 3>(Point<T, 3>(0.0f, 0.01f, -3.0f), Vector<T, 3>(0, 0, 1))
-    };
+    std::array<Ray<T, 3>, 2> differential_rays = {Ray<T, 3>(Point<T, 3>(0.01f, 0.0f, -3.0f), Vector<T, 3>(0, 0, 1)),
+                                                  Ray<T, 3>(Point<T, 3>(0.0f, 0.01f, -3.0f), Vector<T, 3>(0, 0, 1))};
     RayDifferential<T, 3> ray_diff(main_ray, differential_rays);
 
     auto hit = agg.intersect_ray_differential(ray_diff);

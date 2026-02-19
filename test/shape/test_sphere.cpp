@@ -10,10 +10,10 @@ using namespace pbpt::math;
 
 namespace pbpt::shape::testing {
 
+using pbpt::geometry::offset_ray_origin;
 using pbpt::geometry::Ray;
 using pbpt::geometry::RayDifferential;
 using pbpt::geometry::Transform;
-using pbpt::geometry::offset_ray_origin;
 using pbpt::math::Point;
 using pbpt::math::Vector;
 using pbpt::shape::Shape;
@@ -71,8 +71,7 @@ TEST_F(SphereTest, AreaRespectsPhiAndZClamps) {
     auto partial = make_partial_sphere(1.5, -0.25, 1.0, static_cast<double>(pi_v<double> / 2.0));
 
     const SphereShapeInterface& shape_iface = partial;
-    auto expected_area =
-        partial.phi_max() * partial.radius() * (partial.z_max() - partial.z_min());
+    auto expected_area = partial.phi_max() * partial.radius() * (partial.z_max() - partial.z_min());
 
     EXPECT_NEAR(shape_iface.area(), expected_area, 1e-12);
 }
@@ -229,8 +228,7 @@ TEST_F(SphereTest, RayDifferentialComputesSurfaceDifferentials) {
     Ray<double, 3> main_ray(Point<double, 3>(2.0, 0.0, 0.0), Vector<double, 3>(-1.0, 0.0, 0.0));
     std::array<Ray<double, 3>, 2> diff_rays{
         Ray<double, 3>(Point<double, 3>(2.0, 1.0, 0.0), Vector<double, 3>(-1.0, 0.0, 0.0)),
-        Ray<double, 3>(Point<double, 3>(2.0, 0.0, 1.0), Vector<double, 3>(-1.0, 0.0, 0.0))
-    };
+        Ray<double, 3>(Point<double, 3>(2.0, 0.0, 1.0), Vector<double, 3>(-1.0, 0.0, 0.0))};
     RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
 
     const SphereShapeInterface& shape_iface = sphere;
@@ -270,10 +268,8 @@ TEST_F(SphereTest, RayDifferentialDegenerateWhenDiffEqualsMain) {
 TEST_F(SphereTest, RayDifferentialWithoutDifferentialsLeavesOptionalEmpty) {
     auto sphere = make_sphere(1.0);
     Ray<double, 3> main_ray(Point<double, 3>(2.0, 0.0, 0.0), Vector<double, 3>(-1.0, 0.0, 0.0));
-    std::array<Ray<double, 3>, 2> diff_rays{
-        Ray<double, 3>(main_ray.origin(), Vector<double, 3>(0.0, 1.0, 0.0)),
-        Ray<double, 3>(main_ray.origin(), Vector<double, 3>(0.0, 0.0, 1.0))
-    };
+    std::array<Ray<double, 3>, 2> diff_rays{Ray<double, 3>(main_ray.origin(), Vector<double, 3>(0.0, 1.0, 0.0)),
+                                            Ray<double, 3>(main_ray.origin(), Vector<double, 3>(0.0, 0.0, 1.0))};
     RayDifferential<double, 3> ray_diff(main_ray, diff_rays);
 
     const SphereShapeInterface& shape_iface = sphere;
@@ -503,12 +499,8 @@ TEST_F(SphereTransformTest, ExampleScenariosMatchManualExperiment) {
 
     const auto origin_on_surface = ray_surface.origin();
     Vector<double, 3> tiny_offset(1e-6, 1e-6, 1e-6);
-    auto adjusted_origin = offset_ray_origin(
-        origin_on_surface - tiny_offset,
-        origin_on_surface + tiny_offset,
-        ray_surface.direction(),
-        Normal<double, 3>(0.0, -1.0, 0.0)
-    );
+    auto adjusted_origin = offset_ray_origin(origin_on_surface - tiny_offset, origin_on_surface + tiny_offset,
+                                             ray_surface.direction(), Normal<double, 3>(0.0, -1.0, 0.0));
     ray_surface.origin() = adjusted_origin;
     EXPECT_FALSE(transformed.intersect_ray(ray_surface).has_value());
 }

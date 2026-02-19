@@ -25,7 +25,8 @@ TEST(MipMapTest, RepeatWrapMatchesWrappedCoordinate) {
     image.get_pixel(0, 1) = 2.0f;
     image.get_pixel(1, 1) = 3.0f;
 
-    pbpt::texture::MipMap<float, float> mip(std::move(image), pbpt::texture::WrapMode::Repeat, pbpt::texture::WrapMode::Repeat);
+    pbpt::texture::MipMap<float, float> mip(std::move(image), pbpt::texture::WrapMode::Repeat,
+                                            pbpt::texture::WrapMode::Repeat);
 
     pbpt::texture::TextureEvalContext<float> c0{};
     c0.uv = pbpt::math::Point<float, 2>(0.25f, 0.25f);

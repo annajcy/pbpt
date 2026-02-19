@@ -20,20 +20,14 @@ protected:
         dpdv = Vec3(0, 1, 0);
     }
 
-    Pt3 midpoint() const {
-        return p_lower.mid(p_upper);
-    }
+    Pt3 midpoint() const { return p_lower.mid(p_upper); }
 
     SurfaceInteraction<Float> make_surface_interaction() const {
-        return SurfaceInteraction<Float>(
-            p_lower, p_upper, wo, n, uv, dpdu, dpdv
-        );
+        return SurfaceInteraction<Float>(p_lower, p_upper, wo, n, uv, dpdu, dpdv);
     }
 
     SurfaceInteraction<Float> make_surface_interaction_with_normal(const Normal3& n_in) const {
-        return SurfaceInteraction<Float>(
-            p_lower, p_upper, wo, n_in, uv, dpdu, dpdv
-        );
+        return SurfaceInteraction<Float>(p_lower, p_upper, wo, n_in, uv, dpdu, dpdv);
     }
 
     Pt3 p_lower;
@@ -117,14 +111,8 @@ TEST_F(InteractionTest, SpawnRayToPoint) {
 }
 
 TEST_F(InteractionTest, DifferentNormalDirections) {
-    std::vector<Normal3> normals = {
-        Normal3(1, 0, 0),
-        Normal3(-1, 0, 0),
-        Normal3(0, 1, 0),
-        Normal3(0, -1, 0),
-        Normal3(0, 0, 1),
-        Normal3(0, 0, -1)
-    };
+    std::vector<Normal3> normals = {Normal3(1, 0, 0),  Normal3(-1, 0, 0), Normal3(0, 1, 0),
+                                    Normal3(0, -1, 0), Normal3(0, 0, 1),  Normal3(0, 0, -1)};
 
     Vec3 wi(0, 0, 1);
 
@@ -142,20 +130,10 @@ TEST_F(InteractionTest, DifferentNormalDirections) {
 }
 
 TEST_F(InteractionTest, NumericalStability) {
-    Pt3 small_lower(
-        Float(1.0) - Float(1e-4),
-        Float(2.0) - Float(1e-4),
-        Float(3.0) - Float(1e-4)
-    );
-    Pt3 small_upper(
-        Float(1.0) + Float(1e-4),
-        Float(2.0) + Float(1e-4),
-        Float(3.0) + Float(1e-4)
-    );
+    Pt3 small_lower(Float(1.0) - Float(1e-4), Float(2.0) - Float(1e-4), Float(3.0) - Float(1e-4));
+    Pt3 small_upper(Float(1.0) + Float(1e-4), Float(2.0) + Float(1e-4), Float(3.0) + Float(1e-4));
 
-    SurfaceInteraction<Float> si(
-        small_lower, small_upper, wo, n, uv, dpdu, dpdv
-    );
+    SurfaceInteraction<Float> si(small_lower, small_upper, wo, n, uv, dpdu, dpdv);
 
     Vec3 wi(0, 0, 1);
     Ray<Float, 3> ray = si.spawn_ray(wi);
@@ -234,21 +212,12 @@ TEST_F(InteractionTest, SpawnRayToDistantPoint) {
 }
 
 TEST_F(InteractionTest, ComputeDifferentialsFromRayDifferential) {
-    SurfaceInteraction<Float> si(
-        Pt3(Float(0), Float(0), Float(0)),
-        Vec3(0, 0, 1),
-        Normal3(0, 0, 1),
-        Pt2(Float(0), Float(0)),
-        Vec3(1, 0, 0),
-        Vec3(0, 1, 0),
-        Vec3(0, 0, 0)
-    );
+    SurfaceInteraction<Float> si(Pt3(Float(0), Float(0), Float(0)), Vec3(0, 0, 1), Normal3(0, 0, 1),
+                                 Pt2(Float(0), Float(0)), Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 0));
 
     Ray<Float, 3> main_ray(Pt3(0, 0, 1), Vec3(0, 0, -1));
-    std::array<Ray<Float, 3>, 2> diff_rays{
-        Ray<Float, 3>(Pt3(1, 0, 1), Vec3(0, 0, -1)),
-        Ray<Float, 3>(Pt3(0, 1, 1), Vec3(0, 0, -1))
-    };
+    std::array<Ray<Float, 3>, 2> diff_rays{Ray<Float, 3>(Pt3(1, 0, 1), Vec3(0, 0, -1)),
+                                           Ray<Float, 3>(Pt3(0, 1, 1), Vec3(0, 0, -1))};
 
     RayDifferential<Float, 3> ray_diff(main_ray, diff_rays);
     auto diffs = si.compute_differentials(ray_diff);
@@ -265,15 +234,8 @@ TEST_F(InteractionTest, ComputeDifferentialsFromRayDifferential) {
 }
 
 TEST_F(InteractionTest, ComputeDifferentialsDegenerateParallelRay) {
-    SurfaceInteraction<Float> si(
-        Pt3(Float(0), Float(0), Float(0)),
-        Vec3(0, 0, 1),
-        Normal3(0, 0, 1),
-        Pt2(Float(0), Float(0)),
-        Vec3(1, 0, 0),
-        Vec3(0, 1, 0),
-        Vec3(0, 0, 0)
-    );
+    SurfaceInteraction<Float> si(Pt3(Float(0), Float(0), Float(0)), Vec3(0, 0, 1), Normal3(0, 0, 1),
+                                 Pt2(Float(0), Float(0)), Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 0));
 
     Ray<Float, 3> main_ray(Pt3(0, 0, 1), Vec3(1, 0, 0));
     std::array<Ray<Float, 3>, 2> diff_rays{main_ray, main_ray};
