@@ -9,4 +9,5 @@ dependencies = [
     "matplotlib>=3.10.6",
     "mkdocs>=1.6.1",
     "numpy>=2.3.3",
+    "xatlas>=0.0.11",
 ]

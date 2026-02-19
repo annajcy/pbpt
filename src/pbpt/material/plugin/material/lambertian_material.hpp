@@ -57,9 +57,9 @@ public:
                     return tex.eval(tex_ctx);
                 }, source);
                 rgb = radiometry::RGB<T>(
-                    std::clamp(rgb.r(), T(0), T(1)),
-                    std::clamp(rgb.g(), T(0), T(1)),
-                    std::clamp(rgb.b(), T(0), T(1))
+                    std::clamp(rgb.r(), T(0.05), T(0.95)),
+                    std::clamp(rgb.g(), T(0.05), T(0.95)),
+                    std::clamp(rgb.b(), T(0.05), T(0.95))
                 );
                 auto albedo_spectrum = radiometry::create_srgb_albedo_spectrum(rgb);
                 return albedo_spectrum.template sample<N>(wavelengths);

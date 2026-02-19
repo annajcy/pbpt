@@ -32,6 +32,11 @@
 		<float name="uscale" value="8"/>
 		<float name="vscale" value="8"/>
 	</texture>
+	<texture type="bitmap" id="smallbox_bitmap_tex">
+		<string name="filename" value="textures/checkerboard.bmp"/>
+		<string name="wrapModeU" value="repeat"/>
+		<string name="wrapModeV" value="repeat"/>
+	</texture>
 
 	<bsdf type="diffuse" id="box">
 		<rgb name="reflectance" value="0.73 0.73 0.73"/>
@@ -43,6 +48,9 @@
 
 	<bsdf type="diffuse" id="checker_object">
 		<ref name="reflectance" id="checker_uv"/>
+	</bsdf>
+	<bsdf type="diffuse" id="smallbox_bitmap">
+		<ref name="reflectance" id="smallbox_bitmap_tex"/>
 	</bsdf>
 
 	<bsdf type="diffuse" id="red">
@@ -89,19 +97,23 @@
 		<ref id="red"/>
 	</shape>
 	<shape type="obj">
-		<string name="filename" value="meshes/cbox_smallbox.obj"/>
-		<ref id="box"/>
+		<string name="filename" value="meshes/bunny_uv.obj"/>
+		<transform name="toWorld">
+			<translate x="204.5" y="-36.6" z="170.1"/>
+			<scale x="1100" y="1100" z="1100"/>
+		</transform>
+		<ref id="smallbox_bitmap"/>
 	</shape>
 	<!-- <shape type="obj">
 		<string name="filename" value="meshes/cbox_largebox.obj"/>
 		<ref id="box"/>
 	</shape> -->
-	<shape type="obj">
+	<!-- <shape type="obj">
 		<string name="filename" value="meshes/uv_sphere.obj"/>
 		<transform name="toWorld">
 			<translate x="368.5" y="120" z="351.5"/>
 			<scale x="120" y="120" z="120"/>
 		</transform>
 		<ref id="checker_object"/>
-	</shape>
+	</shape> -->
 </scene>

@@ -722,6 +722,21 @@ TEST_F(SpectrumTest, RGBToSpectrumLookupMatchesRGB) {
     check_match(RGB<double>(0.5, 0.5, 0.5));
 }
 
+TEST_F(SpectrumTest, RGBToSpectrumLookupExtremeValuesAreFinite) {
+    auto check_finite_bounded = [&](const RGB<double>& rgb) {
+        auto spectrum = create_srgb_albedo_spectrum(rgb);
+        for (double lambda : {360.0, 450.0, 550.0, 700.0, 830.0}) {
+            const double value = spectrum.at(lambda);
+            EXPECT_TRUE(std::isfinite(value));
+            EXPECT_GE(value, 0.0);
+            EXPECT_LE(value, 1.0);
+        }
+    };
+
+    check_finite_bounded(RGB<double>(0.0, 0.0, 0.0));
+    check_finite_bounded(RGB<double>(1.0, 1.0, 1.0));
+}
+
 TEST_F(SpectrumTest, UnboundedRGBSpectrumWorkflow) {
     // Test unbounded RGB spectrum workflow from function_test.cpp
     auto D65 = CIE_D65_ilum<double>;

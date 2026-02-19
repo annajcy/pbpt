@@ -128,7 +128,11 @@ constexpr T fast_exp(T x) {
  */
 template<typename T>
 constexpr T sigmoid(T x) {
-    return 0.5 + 0.5 * x / std::sqrt(1 + x * x);
+    if (!std::isfinite(x)) {
+        return x > T(0) ? T(1) : T(0);
+    }
+    const T denom = std::hypot(T(1), x);
+    return T(0.5) + T(0.5) * x / denom;
 }
 
 /**

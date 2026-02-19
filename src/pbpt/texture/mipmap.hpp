@@ -68,15 +68,14 @@ private:
         return std::clamp(i, 0, size - 1);
     }
 
-    const Texel& fetch_texel(std::size_t level_index, int x, int y) const {
-        const auto& img = m_levels.at(level_index);
+    const Texel& fetch_texel(const Image<Texel>& img, int x, int y) const {
         const int ix = wrap_index(x, img.width(), m_wrap_u);
         const int iy = wrap_index(y, img.height(), m_wrap_v);
         return img.get_pixel(ix, iy);
     }
 
     Texel sample_bilinear(std::size_t level_index, const math::Point<T, 2>& uv) const {
-        const auto& img = m_levels.at(level_index);
+        const auto& img = m_levels[level_index];
         if (img.width() <= 0 || img.height() <= 0) {
             throw std::runtime_error("MipMap level has invalid resolution.");
         }
@@ -94,10 +93,10 @@ private:
         const T tx = s - static_cast<T>(x0);
         const T ty = t - static_cast<T>(y0);
 
-        const auto c00 = fetch_texel(level_index, x0, y0);
-        const auto c10 = fetch_texel(level_index, x1, y0);
-        const auto c01 = fetch_texel(level_index, x0, y1);
-        const auto c11 = fetch_texel(level_index, x1, y1);
+        const auto& c00 = fetch_texel(img, x0, y0);
+        const auto& c10 = fetch_texel(img, x1, y0);
+        const auto& c01 = fetch_texel(img, x0, y1);
+        const auto& c11 = fetch_texel(img, x1, y1);
 
         const auto c0 = lerp_texel(c00, c10, tx);
         const auto c1 = lerp_texel(c01, c11, tx);
@@ -118,7 +117,7 @@ private:
 
         const T len_x = std::sqrt(dudx * dudx + dvdx * dvdx);
         const T len_y = std::sqrt(dudy * dudy + dvdy * dvdy);
-        const T rho = std::max({len_x, len_y, T(1e-8)});
+        const T rho = std::max(std::max(len_x, len_y), T(1e-8));
 
         const T max_level = static_cast<T>(m_levels.size() - 1);
         return std::clamp(std::log2(rho), T(0), max_level);

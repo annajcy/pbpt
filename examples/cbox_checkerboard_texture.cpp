@@ -4,6 +4,7 @@
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
 #include "pbpt/loader/scene_loader.hpp"
 #include "pbpt/scene/scene.hpp"
+#include "pbpt/utils/image_io.hpp"
 
 int main() {
     pbpt::scene::Scene<double> scene =
@@ -11,7 +12,10 @@ int main() {
             "asset/scene/cbox/cbox_checkerboard_texture.xml"
         );
 
-    std::vector<int> spps = {128};
+    auto image = pbpt::utils::read_image<double>(std::filesystem::path("/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/textures/checkerboard.bmp"));
+    pbpt::utils::write_image("out_checker.png", image);
+
+    std::vector<int> spps = {1, 4, 16, 64};
     for (int spp : spps) {
         pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
         integrator.render(scene, spp, std::format("output/cbox_checkerboard_texture_{}.exr", spp));
