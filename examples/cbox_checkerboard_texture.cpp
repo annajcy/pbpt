@@ -15,7 +15,7 @@ int main() {
     auto image = pbpt::utils::read_image<double>(std::filesystem::path("/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/textures/checkerboard.bmp"));
     pbpt::utils::write_image("out_checker.png", image);
 
-    std::vector<int> spps = {1, 4, 16, 64};
+    std::vector<int> spps = {1, 4, 16, 64, 256, 1024, 4096};
     for (int spp : spps) {
         pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
         integrator.render(scene, spp, std::format("output/cbox_checkerboard_texture_{}.exr", spp));
