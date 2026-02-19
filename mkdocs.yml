@@ -1,11 +1,40 @@
 site_name: PBPT
 site_description: Physically Based Path Tracer API and guides
 repo_url: https://github.com/annajcy/pbpt
+edit_uri: edit/main/docs/
 
 docs_dir: docs
 
 theme:
-  name: readthedocs
+  name: material
+  icon:
+    logo: material/cube-outline
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+repo_name: annajcy/pbpt
+
+plugins:
+  - i18n:
+      reconfigure_material: true
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
 
 nav:
   - Home: index.md
