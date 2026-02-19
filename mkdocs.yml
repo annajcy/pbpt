@@ -32,12 +32,10 @@ plugins:
           name: English
           default: true
           build: true
-          link: !ENV [PBPT_DOCS_EN_LINK, "/"]
         - locale: zh
           name: 中文
           build: true
-          link: !ENV [PBPT_DOCS_ZH_LINK, "/zh/"]
-
+          
 nav:
   - Home: index.md
   - Overview: overview.md
