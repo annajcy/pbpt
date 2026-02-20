@@ -1,72 +1,87 @@
 #pragma once
 
-#include <string_view>
-#include <string>
 #include <concepts>
+#include <string_view>
+
 #include <pugixml.hpp>
-#include "pbpt/serde/context.hpp"
+
 #include "pbpt/scene/scene.hpp"
+#include "pbpt/serde/context.hpp"
 
 namespace pbpt::serde {
 
-template <typename T, typename SerdeT>
-concept TextureSerdeConcept = requires(const pugi::xml_node& node, LoadContext<T>& lctx,
-                                       const typename SerdeT::value_type& val, const std::string& id,
-                                       pugi::xml_node& wnode, WriteContext<T>& wctx) {
+template <typename SerdeT>
+consteval bool serde_domain_equals(std::string_view expected) {
+    return SerdeT::domain == expected;
+}
+
+template <typename SerdeT>
+concept DomainSerdeConcept = requires {
     { SerdeT::domain } -> std::same_as<const std::string_view&>;
     { SerdeT::xml_type } -> std::same_as<const std::string_view&>;
-    typename SerdeT::value_type;
-    { SerdeT::load(node, lctx) } -> std::same_as<typename SerdeT::value_type>;
-    { SerdeT::write(val, id, wnode, wctx) } -> std::same_as<void>;
-} && SerdeT::domain == "texture";
+};
+
+template <typename ValueT>
+struct IdValueWriteTarget {
+    std::string_view id;
+    const ValueT& value;
+};
+
+template <typename T>
+struct ShapeWriteTarget {
+    const scene::ShapeInstanceRecord<T>& record;
+};
+
+template <typename T>
+struct SceneWriteTarget {
+    const scene::Scene<T>& scene;
+};
 
 template <typename T, typename SerdeT>
-concept MaterialSerdeConcept = requires(const pugi::xml_node& node, LoadContext<T>& lctx,
-                                        const typename SerdeT::value_type& val, const std::string& id,
-                                        pugi::xml_node& wnode, WriteContext<T>& wctx) {
-    { SerdeT::domain } -> std::same_as<const std::string_view&>;
-    { SerdeT::xml_type } -> std::same_as<const std::string_view&>;
-    typename SerdeT::value_type;
-    { SerdeT::load(node, lctx) } -> std::same_as<typename SerdeT::value_type>;
-    { SerdeT::write(val, id, wnode, wctx) } -> std::same_as<void>;
-} && SerdeT::domain == "material";
+concept SerdeConcept =
+    DomainSerdeConcept<SerdeT> &&
+    requires(const pugi::xml_node& node, LoadContext<T>& lctx, const typename SerdeT::write_target& write_target,
+             pugi::xml_node& wnode, WriteContext<T>& wctx) {
+        typename SerdeT::load_result;
+        typename SerdeT::write_target;
+        { SerdeT::load(node, lctx) } -> std::same_as<typename SerdeT::load_result>;
+        { SerdeT::write(write_target, wnode, wctx) } -> std::same_as<void>;
+    };
 
 template <typename T, typename SerdeT>
-concept ShapeSerdeConcept = requires(const pugi::xml_node& node, LoadContext<T>& lctx,
-                                     const scene::ShapeInstanceRecord<T>& record, pugi::xml_node& wnode,
-                                     WriteContext<T>& wctx) {
-    { SerdeT::domain } -> std::same_as<const std::string_view&>;
-    { SerdeT::xml_type } -> std::same_as<const std::string_view&>;
-    { SerdeT::load(node, lctx) } -> std::same_as<void>;  // shape loads into context's resources
-    { SerdeT::write(record, wnode, wctx) } -> std::same_as<void>;
-} && SerdeT::domain == "shape";
+concept ValueSerdeConcept =
+    SerdeConcept<T, SerdeT> && (!std::same_as<typename SerdeT::load_result, void>) &&
+    std::same_as<typename SerdeT::write_target, IdValueWriteTarget<typename SerdeT::load_result>>;
 
 template <typename T, typename SerdeT>
-concept CameraSerdeConcept = requires(const pugi::xml_node& node, scene::Scene<T>& scene, LoadContext<T>& lctx,
-                                      const scene::Scene<T>& const_scene, pugi::xml_node& wnode,
-                                      WriteContext<T>& wctx) {
-    { SerdeT::domain } -> std::same_as<const std::string_view&>;
-    { SerdeT::xml_type } -> std::same_as<const std::string_view&>;
-    { SerdeT::load(node, scene, lctx) } -> std::same_as<void>;
-    { SerdeT::write(const_scene, wnode, wctx) } -> std::same_as<void>;
-} && SerdeT::domain == "camera";
+concept ShapeSerdeConcept =
+    SerdeConcept<T, SerdeT> && std::same_as<typename SerdeT::load_result, void> &&
+    std::same_as<typename SerdeT::write_target, ShapeWriteTarget<T>>;
 
 template <typename T, typename SerdeT>
-concept IntegratorSerdeConcept = requires(const pugi::xml_node& node, scene::Scene<T>& scene,
-                                          const scene::Scene<T>& const_scene, pugi::xml_node& wnode) {
-    { SerdeT::domain } -> std::same_as<const std::string_view&>;
-    { SerdeT::xml_type } -> std::same_as<const std::string_view&>;
-    { SerdeT::load(node, scene) } -> std::same_as<void>;
-    { SerdeT::write(const_scene, wnode) } -> std::same_as<void>;
-} && SerdeT::domain == "integrator";
+concept SceneSerdeConcept =
+    SerdeConcept<T, SerdeT> && std::same_as<typename SerdeT::load_result, void> &&
+    std::same_as<typename SerdeT::write_target, SceneWriteTarget<T>>;
 
 template <typename T, typename SerdeT>
-concept SamplerSerdeConcept = requires(const pugi::xml_node& node, scene::Scene<T>& scene,
-                                       const scene::Scene<T>& const_scene, pugi::xml_node& wnode) {
-    { SerdeT::domain } -> std::same_as<const std::string_view&>;
-    { SerdeT::xml_type } -> std::same_as<const std::string_view&>;
-    { SerdeT::load(node, scene) } -> std::same_as<void>;
-    { SerdeT::write(const_scene, wnode) } -> std::same_as<void>;
-} && SerdeT::domain == "sampler";
+concept TextureSerdeConcept = ValueSerdeConcept<T, SerdeT> && serde_domain_equals<SerdeT>("texture");
+
+template <typename T, typename SerdeT>
+concept MaterialSerdeConcept = ValueSerdeConcept<T, SerdeT> && serde_domain_equals<SerdeT>("material");
+
+template <typename T, typename SerdeT>
+concept CameraSerdeConcept =
+    SceneSerdeConcept<T, SerdeT> && std::same_as<typename SerdeT::write_target, SceneWriteTarget<T>> &&
+    serde_domain_equals<SerdeT>("camera");
+
+template <typename T, typename SerdeT>
+concept IntegratorSerdeConcept =
+    SceneSerdeConcept<T, SerdeT> && std::same_as<typename SerdeT::write_target, SceneWriteTarget<T>> &&
+    serde_domain_equals<SerdeT>("integrator");
+
+template <typename T, typename SerdeT>
+concept SamplerSerdeConcept =
+    SceneSerdeConcept<T, SerdeT> && std::same_as<typename SerdeT::write_target, SceneWriteTarget<T>> &&
+    serde_domain_equals<SerdeT>("sampler");
 
 }  // namespace pbpt::serde

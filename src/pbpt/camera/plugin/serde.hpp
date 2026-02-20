@@ -12,7 +12,6 @@
 #include "pbpt/camera/plugin/film/hdr_film.hpp"
 #include "pbpt/camera/plugin/pixel_filter/gaussian_filter.hpp"
 #include "pbpt/camera/pixel_sensor.hpp"
-#include "pbpt/scene/scene.hpp"
 
 namespace pbpt::serde {
 
@@ -20,9 +19,12 @@ template <typename T>
 struct PerspectiveCameraSerde {
     static constexpr std::string_view domain = "camera";
     static constexpr std::string_view xml_type = "perspective";
+    using load_result = void;
+    using write_target = SceneWriteTarget<T>;
 
-    static void load(const pugi::xml_node& node, scene::Scene<T>& scene, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+    static load_result load(const pugi::xml_node& node, LoadContext<T>& ctx) {
+        auto& scene = ctx.scene;
+        const ValueCodecReadEnv<T> read_env{scene.resources, ctx.base_path};
 
         scene.serialization_meta.camera_type = std::string(xml_type);
         const float fov = parse_child_value<T, float>(node, "float", "fov", read_env).value_or(0.f);
@@ -58,8 +60,9 @@ struct PerspectiveCameraSerde {
         scene.pixel_filter = camera::GaussianFilter<T>(T(1.5), T(0.5));
     }
 
-    static void write(const scene::Scene<T>& scene, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const ValueCodecWriteEnv<T> write_env{ctx.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& scene = target.scene;
+        const ValueCodecWriteEnv<T> write_env{scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("type") = xml_type.data();
 

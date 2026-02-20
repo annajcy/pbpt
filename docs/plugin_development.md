@@ -17,9 +17,11 @@ struct MyTextureSerde {
     static constexpr std::string_view domain = "texture";
     static constexpr std::string_view xml_type = "my_texture";
     using value_type = texture::MyTexture<T>;
+    using load_result = value_type;
+    using write_target = pbpt::serde::IdValueWriteTarget<value_type>;
 
-    static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx);
-    static void write(const value_type& value, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx);
+    static load_result load(const pugi::xml_node& node, pbpt::serde::LoadContext<T>& ctx);
+    static void write(const write_target& target, pugi::xml_node& node, pbpt::serde::WriteContext<T>& ctx);
 };
 
 static_assert(pbpt::serde::TextureSerdeConcept<float, MyTextureSerde<float>>);
@@ -38,6 +40,12 @@ using TextureSerdeList = std::tuple<
 
 `typelist.hpp` enforces domain `xml_type` uniqueness via `has_unique_xml_types<...>()` + `static_assert`.
 
+Domain write targets are fixed by domain:
+
+- `texture/material` -> `IdValueWriteTarget<value_type>`
+- `shape` -> `ShapeWriteTarget<T>`
+- `camera/integrator/sampler` -> `SceneWriteTarget<T>`
+
 ## Use Value Codec Traits
 
 Value codecs are type-based and live under `pbpt::serde`.
@@ -46,7 +54,7 @@ Value codecs are type-based and live under `pbpt::serde`.
 #include "pbpt/serde/value/value_codec_traits.hpp"
 
 // Example call-site
-const pbpt::serde::ValueCodecReadEnv<float> read_env{resources, base_dir};
+const pbpt::serde::ValueCodecReadEnv<float> read_env{scene.resources, base_dir};
 auto rgb = pbpt::serde::ValueCodec<float, pbpt::radiometry::RGB<float>>::parse_text("0.8 0.7 0.6", read_env);
 ```
 

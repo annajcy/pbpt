@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <string_view>
 #include <filesystem>
 #include <stdexcept>
@@ -20,9 +21,11 @@ struct BitmapTextureSerde {
     static constexpr std::string_view domain = "texture";
     static constexpr std::string_view xml_type = "bitmap";
     using value_type = texture::BitmapTexture<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto filename = find_child_value(node, "string", "filename");
         if (!filename) {
@@ -37,8 +40,10 @@ struct BitmapTextureSerde {
         return texture::BitmapTexture<T>(ctx.resolve_path(*filename), wrap_u, wrap_v);
     }
 
-    static void write(const value_type& tex, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const ValueCodecWriteEnv<T> write_env{ctx.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& tex = target.value;
+        const std::string id(target.id);
+        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -71,9 +76,11 @@ struct CheckerboardTextureSerde {
     static constexpr std::string_view domain = "texture";
     static constexpr std::string_view xml_type = "checkerboard";
     using value_type = texture::CheckerboardTexture<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         const auto color0_text = find_child_value(node, "rgb", "color0").value_or("0");
         const auto color1_text = find_child_value(node, "rgb", "color1").value_or("1");
@@ -88,8 +95,10 @@ struct CheckerboardTextureSerde {
             voffset);
     }
 
-    static void write(const value_type& tex, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const ValueCodecWriteEnv<T> write_env{ctx.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& tex = target.value;
+        const std::string id(target.id);
+        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();

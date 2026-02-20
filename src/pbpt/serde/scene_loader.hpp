@@ -3,9 +3,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <format>
-#include <iostream>
 #include <stdexcept>
-#include <variant>
 #include <vector>
 
 #include <pugixml.hpp>
@@ -15,6 +13,7 @@
 #include "pbpt/aggregate/plugin/aggregate/embree_aggregate.hpp"
 #include "pbpt/serde/dispatch.hpp"
 #include "pbpt/serde/domain/typelist.hpp"
+#include "pbpt/camera/codec/render_transform_value_codec.hpp"
 
 namespace pbpt::serde {
 
@@ -26,7 +25,7 @@ void parse_texture_node(const pugi::xml_node& node, LoadContext<T>& ctx) {
         return;
 
     auto tex = dispatch_load_texture<T, TextureSerdeList<T>>(type, node, ctx);
-    ctx.resources.reflectance_texture_library.add_item(id, std::move(tex));
+    ctx.scene.resources.reflectance_texture_library.add_item(id, std::move(tex));
 }
 
 template <typename T>
@@ -35,7 +34,7 @@ void parse_bsdf(const pugi::xml_node& node, LoadContext<T>& ctx) {
     const std::string id = node.attribute("id").value();
 
     auto mat = dispatch_load_material<T, MaterialSerdeList<T>>(type, node, ctx);
-    ctx.resources.any_material_library.add_item(id, std::move(mat));
+    ctx.scene.resources.any_material_library.add_item(id, std::move(mat));
 }
 
 template <typename T>
@@ -88,32 +87,31 @@ scene::Scene<T> load_scene(const std::string& filename) {
 
     scene::Scene<T> scene;
     pugi::xml_node root = doc.child("scene");
+    LoadContext<T> ctx(scene, std::filesystem::path(filename).parent_path());
 
     // parse XML -> load integrator -> load sensor/camera + sampler -> load textures -> load bsdfs -> load shapes
     auto integrator_node = root.child("integrator");
     if (integrator_node) {
         std::string type = integrator_node.attribute("type").value();
-        dispatch_load_integrator<T, IntegratorSerdeList<T>>(type, integrator_node, scene);
+        dispatch_load_integrator<T, IntegratorSerdeList<T>>(type, integrator_node, ctx);
     }
 
     auto sensor_node = root.child("sensor");
-    const ValueCodecReadEnv<T> root_read_env{scene.resources, std::filesystem::path(filename).parent_path()};
+    const ValueCodecReadEnv<T> root_read_env{ctx.scene.resources, ctx.base_path};
     if (sensor_node) {
         if (auto tf = sensor_node.child("transform")) {
             scene.render_transform = ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env);
         }
     }
 
-    LoadContext<T> ctx(scene.resources, scene.render_transform, std::filesystem::path(filename).parent_path());
-
     if (sensor_node) {
         std::string sensor_type = sensor_node.attribute("type").value();
-        dispatch_load_camera<T, CameraSerdeList<T>>(sensor_type, sensor_node, scene, ctx);
+        dispatch_load_camera<T, CameraSerdeList<T>>(sensor_type, sensor_node, ctx);
 
         auto sampler_node = sensor_node.child("sampler");
         if (sampler_node) {
             std::string sampler_type = sampler_node.attribute("type").value();
-            dispatch_load_sampler<T, SamplerSerdeList<T>>(sampler_type, sampler_node, scene);
+            dispatch_load_sampler<T, SamplerSerdeList<T>>(sampler_type, sampler_node, ctx);
         }
     }
 

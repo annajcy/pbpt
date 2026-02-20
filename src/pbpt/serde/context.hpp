@@ -10,20 +10,17 @@ namespace pbpt::serde {
 
 template <typename T>
 struct LoadContext {
-    scene::RenderResources<T>& resources;
-    const camera::RenderTransform<T>& render_transform;
+    scene::Scene<T>& scene;
     std::filesystem::path base_path;
 
-    LoadContext(scene::RenderResources<T>& res, const camera::RenderTransform<T>& rt,
-                const std::filesystem::path& path)
-        : resources(res), render_transform(rt), base_path(path) {}
+    LoadContext(scene::Scene<T>& scene_ref, const std::filesystem::path& path) : scene(scene_ref), base_path(path) {}
 
     std::string resolve_path(const std::string& rel_path) const { return (base_path / rel_path).string(); }
 };
 
 template <typename T>
 struct WriteContext {
-    const scene::RenderResources<T>& resources;
+    const scene::Scene<T>& scene;
     std::filesystem::path scene_dir;
     std::filesystem::path mesh_dir;
     std::filesystem::path texture_dir;

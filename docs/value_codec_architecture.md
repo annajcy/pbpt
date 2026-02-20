@@ -70,7 +70,7 @@ auto value = parse_piecewise_spectrum_value<T>(text, ctx);
 To new style:
 
 ```cpp
-const pbpt::serde::ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+const pbpt::serde::ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 auto value = pbpt::serde::ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::parse_text(text, read_env);
 ```
 
@@ -85,3 +85,5 @@ auto alpha = pbpt::serde::parse_child_value<T, T>(node, "float", "alpha", read_e
 1. New value codecs must be implemented in the owning module and specialized under `pbpt::serde`.
 2. Domain serdes should only orchestrate XML nodes and references.
 3. `load_scene<T>()` / `write_scene()` remain public entry points and must stay stable.
+4. Domain serde write targets are domain-specific: `IdValueWriteTarget` (texture/material), `ShapeWriteTarget` (shape),
+   and `SceneWriteTarget` (camera/integrator/sampler).

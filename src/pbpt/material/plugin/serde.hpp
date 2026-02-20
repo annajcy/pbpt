@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <string_view>
 #include <stdexcept>
 #include <pugixml.hpp>
@@ -25,19 +26,21 @@ struct DiffuseMaterialSerde {
     static constexpr std::string_view domain = "material";
     static constexpr std::string_view xml_type = "diffuse";
     using value_type = material::LambertianMaterial<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto spectrum_value = find_child_value(node, "spectrum", "reflectance");
         auto rgb_value = find_child_value(node, "rgb", "reflectance");
         auto reflectance_ref = parse_named_ref(node, "reflectance");
 
         if (reflectance_ref) {
-            if (ctx.resources.reflectance_texture_library.name_to_id().contains(*reflectance_ref)) {
-                int tex_id = ctx.resources.reflectance_texture_library.name_to_id().at(*reflectance_ref);
+            if (ctx.scene.resources.reflectance_texture_library.name_to_id().contains(*reflectance_ref)) {
+                int tex_id = ctx.scene.resources.reflectance_texture_library.name_to_id().at(*reflectance_ref);
                 return material::LambertianMaterial<T>(tex_id,
-                                                       ctx.resources.reflectance_texture_library.get(*reflectance_ref));
+                                                       ctx.scene.resources.reflectance_texture_library.get(*reflectance_ref));
             }
             throw std::runtime_error("Unknown reflectance texture reference: " + *reflectance_ref);
         }
@@ -52,13 +55,15 @@ struct DiffuseMaterialSerde {
             const auto rgb = ValueCodec<T, radiometry::RGB<T>>::parse_text(*rgb_value, read_env);
             spectrum = srgb_rgb_to_piecewise<T>(rgb);
         }
-        ctx.resources.reflectance_spectrum_library.add_item(spec_name, std::move(spectrum));
+        ctx.scene.resources.reflectance_spectrum_library.add_item(spec_name, std::move(spectrum));
 
-        return material::LambertianMaterial<T>(ctx.resources.reflectance_spectrum_library.get(spec_name));
+        return material::LambertianMaterial<T>(ctx.scene.resources.reflectance_spectrum_library.get(spec_name));
     }
 
-    static void write(const value_type& mat, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const ValueCodecWriteEnv<T> write_env{ctx.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& mat = target.value;
+        const std::string id(target.id);
+        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -75,10 +80,10 @@ struct DiffuseMaterialSerde {
                     reflectance_node.append_attribute("value") = text.c_str();
                 } else {
                     int tex_id = mat.texture_id();
-                    if (!ctx.resources.reflectance_texture_library.id_to_name().contains(tex_id)) {
+                    if (!ctx.scene.resources.reflectance_texture_library.id_to_name().contains(tex_id)) {
                         throw std::runtime_error("Lambertian texture id not found in library: " + id);
                     }
-                    const auto& tex_name = ctx.resources.reflectance_texture_library.id_to_name().at(tex_id);
+                    const auto& tex_name = ctx.scene.resources.reflectance_texture_library.id_to_name().at(tex_id);
                     auto reflectance_ref = node.append_child("ref");
                     reflectance_ref.append_attribute("name") = "reflectance";
                     reflectance_ref.append_attribute("id") = tex_name.c_str();
@@ -93,9 +98,11 @@ struct DielectricMaterialSerde {
     static constexpr std::string_view domain = "material";
     static constexpr std::string_view xml_type = "dielectric";
     using value_type = material::DielectricMaterial<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
         if (!eta_opt)
@@ -105,7 +112,9 @@ struct DielectricMaterialSerde {
         return material::DielectricMaterial<T>(eta, microfacet_model);
     }
 
-    static void write(const value_type& mat, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& mat = target.value;
+        const std::string id(target.id);
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
         auto eta_node = node.append_child("float");
@@ -125,9 +134,11 @@ struct DielectricSpecularMaterialSerde {
     static constexpr std::string_view domain = "material";
     static constexpr std::string_view xml_type = "dielectric_specular";
     using value_type = material::DielectricSpecularMaterial<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
         if (!eta_opt)
@@ -136,7 +147,9 @@ struct DielectricSpecularMaterialSerde {
         return material::DielectricSpecularMaterial<T>(eta);
     }
 
-    static void write(const value_type& mat, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& mat = target.value;
+        const std::string id(target.id);
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
         auto eta_node = node.append_child("float");
@@ -150,9 +163,11 @@ struct DielectricRoughMaterialSerde {
     static constexpr std::string_view domain = "material";
     static constexpr std::string_view xml_type = "dielectric_rough";
     using value_type = material::DielectricRoughMaterial<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
         if (!eta_opt)
@@ -162,7 +177,9 @@ struct DielectricRoughMaterialSerde {
         return material::DielectricRoughMaterial<T>(eta, microfacet_model);
     }
 
-    static void write(const value_type& mat, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& mat = target.value;
+        const std::string id(target.id);
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
         auto eta_node = node.append_child("float");
@@ -182,9 +199,11 @@ struct ConductorMaterialSerde {
     static constexpr std::string_view domain = "material";
     static constexpr std::string_view xml_type = "conductor";
     using value_type = material::ConductorMaterial<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto eta_value = find_child_value(node, "spectrum", "eta");
         if (!eta_value)
@@ -212,8 +231,10 @@ struct ConductorMaterialSerde {
         return material::ConductorMaterial<T>(std::move(eta_dist), std::move(k_dist), microfacet_model);
     }
 
-    static void write(const value_type& mat, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const ValueCodecWriteEnv<T> write_env{ctx.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& mat = target.value;
+        const std::string id(target.id);
+        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -241,9 +262,11 @@ struct ConductorSpecularMaterialSerde {
     static constexpr std::string_view domain = "material";
     static constexpr std::string_view xml_type = "conductor_specular";
     using value_type = material::ConductorSpecularMaterial<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto eta_value = find_child_value(node, "spectrum", "eta");
         if (!eta_value)
@@ -270,8 +293,10 @@ struct ConductorSpecularMaterialSerde {
         return material::ConductorSpecularMaterial<T>(std::move(eta_dist), std::move(k_dist));
     }
 
-    static void write(const value_type& mat, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const ValueCodecWriteEnv<T> write_env{ctx.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& mat = target.value;
+        const std::string id(target.id);
+        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -293,9 +318,11 @@ struct ConductorRoughMaterialSerde {
     static constexpr std::string_view domain = "material";
     static constexpr std::string_view xml_type = "conductor_rough";
     using value_type = material::ConductorRoughMaterial<T>;
+    using load_result = value_type;
+    using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
 
         auto eta_value = find_child_value(node, "spectrum", "eta");
         if (!eta_value)
@@ -323,8 +350,10 @@ struct ConductorRoughMaterialSerde {
         return material::ConductorRoughMaterial<T>(std::move(eta_dist), std::move(k_dist), microfacet_model);
     }
 
-    static void write(const value_type& mat, const std::string& id, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const ValueCodecWriteEnv<T> write_env{ctx.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        const auto& mat = target.value;
+        const std::string id(target.id);
+        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();

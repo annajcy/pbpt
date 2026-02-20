@@ -14,8 +14,11 @@ template <typename T>
 struct LdsSamplerSerde {
     static constexpr std::string_view domain = "sampler";
     static constexpr std::string_view xml_type = "ldsampler";
+    using load_result = void;
+    using write_target = SceneWriteTarget<T>;
 
-    static void load(const pugi::xml_node& node, scene::Scene<T>& scene) {
+    static load_result load(const pugi::xml_node& node, LoadContext<T>& ctx) {
+        auto& scene = ctx.scene;
         scene.serialization_meta.sampler_type = std::string(xml_type);
         for (auto child : node.children("integer")) {
             if (std::string(child.attribute("name").value()) == "sampleCount") {
@@ -24,7 +27,9 @@ struct LdsSamplerSerde {
         }
     }
 
-    static void write(const scene::Scene<T>& scene, pugi::xml_node& node) {
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        (void)ctx;
+        const auto& scene = target.scene;
         auto sampler = node.append_child("sampler");
         sampler.append_attribute("type") = xml_type.data();
 

@@ -6,14 +6,21 @@
 #include <pugixml.hpp>
 
 #include "pbpt/camera/codec/render_transform_value_codec.hpp"
+#include "pbpt/camera/plugin/serde.hpp"
 #include "pbpt/geometry/codec/transform_value_codec.hpp"
-#include "pbpt/serde/domain/typelist.hpp"
+#include "pbpt/integrator/plugin/serde.hpp"
+#include "pbpt/lds/plugin/serde.hpp"
 #include "pbpt/material/codec/microfacet_model_value_codec.hpp"
+#include "pbpt/material/plugin/serde.hpp"
 #include "pbpt/radiometry/codec/piecewise_spectrum_value_codec.hpp"
 #include "pbpt/radiometry/codec/rgb_value_codec.hpp"
 #include "pbpt/scene/scene.hpp"
+#include "pbpt/serde/domain/trait_contracts.hpp"
+#include "pbpt/serde/domain/typelist.hpp"
 #include "pbpt/serde/value/value_codec_dispatch.hpp"
 #include "pbpt/texture/codec/wrap_mode_value_codec.hpp"
+#include "pbpt/texture/plugin/serde.hpp"
+#include "pbpt/shape/plugin/serde.hpp"
 
 namespace {
 
@@ -199,6 +206,20 @@ static_assert(pbpt::serde::ValueCodecConcept<double, pbpt::radiometry::RGB<doubl
 static_assert(pbpt::serde::ValueCodecConcept<double, pbpt::texture::WrapMode>);
 static_assert(pbpt::serde::ValueCodecConcept<double, pbpt::material::MicrofacetModel<double>>);
 static_assert(!pbpt::serde::ValueCodecConcept<double, MissingCodecType>);
+
+static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::BitmapTextureSerde<float>>);
+static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::DiffuseMaterialSerde<float>>);
+static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::ObjShapeSerde<float>>);
+static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::PerspectiveCameraSerde<float>>);
+static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::PathIntegratorSerde<float>>);
+static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::LdsSamplerSerde<float>>);
+
+static_assert(pbpt::serde::ValueSerdeConcept<float, pbpt::serde::BitmapTextureSerde<float>>);
+static_assert(pbpt::serde::ValueSerdeConcept<float, pbpt::serde::DiffuseMaterialSerde<float>>);
+static_assert(pbpt::serde::ShapeSerdeConcept<float, pbpt::serde::ObjShapeSerde<float>>);
+static_assert(pbpt::serde::SceneSerdeConcept<float, pbpt::serde::PerspectiveCameraSerde<float>>);
+static_assert(pbpt::serde::SceneSerdeConcept<float, pbpt::serde::PathIntegratorSerde<float>>);
+static_assert(pbpt::serde::SceneSerdeConcept<float, pbpt::serde::LdsSamplerSerde<float>>);
 
 }  // namespace
 

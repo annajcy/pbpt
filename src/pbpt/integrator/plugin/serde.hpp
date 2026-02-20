@@ -11,12 +11,17 @@ template <typename T>
 struct PathIntegratorSerde {
     static constexpr std::string_view domain = "integrator";
     static constexpr std::string_view xml_type = "path";
+    using load_result = void;
+    using write_target = SceneWriteTarget<T>;
 
-    static void load(const pugi::xml_node& node, scene::Scene<T>& scene) {
+    static load_result load(const pugi::xml_node& node, LoadContext<T>& ctx) {
+        auto& scene = ctx.scene;
         scene.serialization_meta.integrator_type = "path";
     }
 
-    static void write(const scene::Scene<T>& scene, pugi::xml_node& node) {
+    static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
+        (void)ctx;
+        (void)target;
         node.append_attribute("type") = xml_type.data();
     }
 };

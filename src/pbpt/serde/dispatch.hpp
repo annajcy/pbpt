@@ -3,10 +3,13 @@
 #include <string>
 #include <string_view>
 #include <stdexcept>
+#include <tuple>
+#include <variant>
 #include <pugixml.hpp>
 
 
 #include "pbpt/serde/context.hpp"
+#include "pbpt/serde/domain/trait_contracts.hpp"
 #include "pbpt/texture/plugin/texture/texture_type.hpp"
 #include "pbpt/material/plugin/material/material_type.hpp"
 
@@ -33,7 +36,7 @@ void dispatch_write_texture(const texture::AnyTexture<T>& any_tex, const std::st
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (const auto* val = std::get_if<typename SerdeT::value_type>(&any_tex)) {
-            SerdeT::write(*val, id, node, ctx);
+            SerdeT::write(IdValueWriteTarget<typename SerdeT::value_type>{id, *val}, node, ctx);
             return;
         }
         dispatch_write_texture<T, Tuple, Index + 1>(any_tex, id, node, ctx);
@@ -63,7 +66,7 @@ void dispatch_write_material(const material::AnyMaterial<T>& any_mat, const std:
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (const auto* val = std::get_if<typename SerdeT::value_type>(&any_mat)) {
-            SerdeT::write(*val, id, node, ctx);
+            SerdeT::write(IdValueWriteTarget<typename SerdeT::value_type>{id, *val}, node, ctx);
             return;
         }
         dispatch_write_material<T, Tuple, Index + 1>(any_mat, id, node, ctx);
@@ -92,7 +95,7 @@ void dispatch_write_shape(const scene::ShapeInstanceRecord<T>& record, pugi::xml
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (record.shape_type == SerdeT::xml_type) {
-            SerdeT::write(record, node, ctx);
+            SerdeT::write(ShapeWriteTarget<T>{record}, node, ctx);
             return;
         }
         dispatch_write_shape<T, Tuple, Index + 1>(record, node, ctx);
@@ -102,15 +105,14 @@ void dispatch_write_shape(const scene::ShapeInstanceRecord<T>& record, pugi::xml
 }
 
 template <typename T, typename Tuple, std::size_t Index = 0>
-void dispatch_load_camera(const std::string& type, const pugi::xml_node& node, scene::Scene<T>& scene,
-                          LoadContext<T>& ctx) {
+void dispatch_load_camera(const std::string& type, const pugi::xml_node& node, LoadContext<T>& ctx) {
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (type == SerdeT::xml_type) {
-            SerdeT::load(node, scene, ctx);
+            SerdeT::load(node, ctx);
             return;
         }
-        dispatch_load_camera<T, Tuple, Index + 1>(type, node, scene, ctx);
+        dispatch_load_camera<T, Tuple, Index + 1>(type, node, ctx);
     } else {
         throw std::runtime_error("Unsupported camera type: " + type);
     }
@@ -122,7 +124,7 @@ void dispatch_write_camera(const std::string& type, const scene::Scene<T>& scene
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (type == SerdeT::xml_type) {
-            SerdeT::write(scene, node, ctx);
+            SerdeT::write(SceneWriteTarget<T>{scene}, node, ctx);
             return;
         }
         dispatch_write_camera<T, Tuple, Index + 1>(type, scene, node, ctx);
@@ -132,56 +134,58 @@ void dispatch_write_camera(const std::string& type, const scene::Scene<T>& scene
 }
 
 template <typename T, typename Tuple, std::size_t Index = 0>
-void dispatch_load_integrator(const std::string& type, const pugi::xml_node& node, scene::Scene<T>& scene) {
+void dispatch_load_integrator(const std::string& type, const pugi::xml_node& node, LoadContext<T>& ctx) {
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (type == SerdeT::xml_type) {
-            SerdeT::load(node, scene);
+            SerdeT::load(node, ctx);
             return;
         }
-        dispatch_load_integrator<T, Tuple, Index + 1>(type, node, scene);
+        dispatch_load_integrator<T, Tuple, Index + 1>(type, node, ctx);
     } else {
         throw std::runtime_error("Unsupported integrator type: " + type);
     }
 }
 
 template <typename T, typename Tuple, std::size_t Index = 0>
-void dispatch_write_integrator(const std::string& type, const scene::Scene<T>& scene, pugi::xml_node& node) {
+void dispatch_write_integrator(const std::string& type, const scene::Scene<T>& scene, pugi::xml_node& node,
+                               WriteContext<T>& ctx) {
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (type == SerdeT::xml_type) {
-            SerdeT::write(scene, node);
+            SerdeT::write(SceneWriteTarget<T>{scene}, node, ctx);
             return;
         }
-        dispatch_write_integrator<T, Tuple, Index + 1>(type, scene, node);
+        dispatch_write_integrator<T, Tuple, Index + 1>(type, scene, node, ctx);
     } else {
         throw std::runtime_error("Unsupported integrator xml type: " + type);
     }
 }
 
 template <typename T, typename Tuple, std::size_t Index = 0>
-void dispatch_load_sampler(const std::string& type, const pugi::xml_node& node, scene::Scene<T>& scene) {
+void dispatch_load_sampler(const std::string& type, const pugi::xml_node& node, LoadContext<T>& ctx) {
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (type == SerdeT::xml_type) {
-            SerdeT::load(node, scene);
+            SerdeT::load(node, ctx);
             return;
         }
-        dispatch_load_sampler<T, Tuple, Index + 1>(type, node, scene);
+        dispatch_load_sampler<T, Tuple, Index + 1>(type, node, ctx);
     } else {
         throw std::runtime_error("Unsupported sampler type: " + type);
     }
 }
 
 template <typename T, typename Tuple, std::size_t Index = 0>
-void dispatch_write_sampler(const std::string& type, const scene::Scene<T>& scene, pugi::xml_node& node) {
+void dispatch_write_sampler(const std::string& type, const scene::Scene<T>& scene, pugi::xml_node& node,
+                            WriteContext<T>& ctx) {
     if constexpr (Index < std::tuple_size_v<Tuple>) {
         using SerdeT = std::tuple_element_t<Index, Tuple>;
         if (type == SerdeT::xml_type) {
-            SerdeT::write(scene, node);
+            SerdeT::write(SceneWriteTarget<T>{scene}, node, ctx);
             return;
         }
-        dispatch_write_sampler<T, Tuple, Index + 1>(type, scene, node);
+        dispatch_write_sampler<T, Tuple, Index + 1>(type, scene, node, ctx);
     } else {
         throw std::runtime_error("Unsupported sampler xml type: " + type);
     }
