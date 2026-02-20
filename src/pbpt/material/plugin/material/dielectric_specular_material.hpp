@@ -17,6 +17,8 @@ private:
 public:
     explicit DielectricSpecularMaterial(T eta) : m_eta(eta) {}
 
+    T eta() const { return m_eta; }
+
     template <int N>
     BSDF<T, N> compute_bsdf_impl(const geometry::SurfaceInteraction<T>& si, const geometry::ShadingInfo<T>& shading,
                                  const radiometry::SampledWavelength<T, N>& wavelengths,

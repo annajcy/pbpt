@@ -19,6 +19,9 @@ public:
     DielectricRoughMaterial(T eta, const MicrofacetModel<T>& microfacet_model)
         : m_eta(eta), m_microfacet_model(microfacet_model) {}
 
+    T eta() const { return m_eta; }
+    const MicrofacetModel<T>& microfacet_model() const { return m_microfacet_model; }
+
     template <int N>
     BSDF<T, N> compute_bsdf_impl(const geometry::SurfaceInteraction<T>& si, const geometry::ShadingInfo<T>& shading,
                                  const radiometry::SampledWavelength<T, N>& wavelengths,

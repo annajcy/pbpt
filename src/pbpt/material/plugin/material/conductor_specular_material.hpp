@@ -21,6 +21,9 @@ public:
                               radiometry::PiecewiseLinearSpectrumDistribution<T> k_dist)
         : m_eta_dist(std::move(eta_dist)), m_k_dist(std::move(k_dist)) {}
 
+    const radiometry::PiecewiseLinearSpectrumDistribution<T>& eta_dist() const { return m_eta_dist; }
+    const radiometry::PiecewiseLinearSpectrumDistribution<T>& k_dist() const { return m_k_dist; }
+
     template <int N>
     BSDF<T, N> compute_bsdf_impl(const geometry::SurfaceInteraction<T>& si, const geometry::ShadingInfo<T>& shading,
                                  const radiometry::SampledWavelength<T, N>& wavelengths,

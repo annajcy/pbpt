@@ -139,6 +139,12 @@ public:
     /// Get a mutable reference to the pixel sensor.
     PixelSensorType& pixel_sensor() { return m_pixel_sensor; }
 
+    /// Get image width in pixels.
+    int width() const { return this->resolution().x(); }
+
+    /// Get image height in pixels.
+    int height() const { return this->resolution().y(); }
+
     /// Get a const reference to the internal pixel buffer.
     const std::vector<Pixel<T>>& pixels() const { return m_pixels; }
 

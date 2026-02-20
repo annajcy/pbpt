@@ -47,14 +47,20 @@ public:
 
     void render(pbpt::scene::Scene<T>& scene, int spp, std::string output_path, bool is_trace_ray_differential,
                 const RenderObserver& observer) {
+        // Film is now embedded inside the camera variant.
+        // Use two-level visit: first visit on camera (to get both camera and its film),
+        // then visit on pixel_filter and aggregate.
         std::visit(
-            [&](const auto& camera, auto& film, const auto& pixel_filter, const auto& aggregate) {
-                scene::SceneContext context{camera,         film, pixel_filter, aggregate, scene.render_transform,
-                                            scene.resources};
-
-                this->render_loop(context, spp, output_path, is_trace_ray_differential, observer);
+            [&](auto& camera_obj) {
+                std::visit(
+                    [&](auto& film_obj, const auto& pixel_filter, const auto& aggregate) {
+                        scene::SceneContext context{
+                            camera_obj, film_obj, pixel_filter, aggregate, scene.render_transform, scene.resources};
+                        this->render_loop(context, spp, output_path, is_trace_ray_differential, observer);
+                    },
+                    camera_obj.film(), scene.pixel_filter, scene.aggregate);
             },
-            scene.camera, scene.film, scene.pixel_filter, scene.aggregate);
+            scene.camera);
     }
 
 protected:

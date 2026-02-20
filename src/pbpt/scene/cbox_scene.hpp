@@ -19,8 +19,23 @@ inline Scene<T> create_cbox_scene(
     Scene<T> scene;
 
     // 1. Setup Camera System
-    scene.camera =
-        camera::ThinLensPerspectiveCamera<T>(math::Vector<int, 2>(512, 512), 39.307, "smaller", -10, -2800, T(1000.0));
+    // Build pixel sensor
+    auto pixel_sensor =
+        camera::PixelSensor<T, radiometry::constant::CIED65SpectrumType<T>, radiometry::constant::CIED65SpectrumType<T>,
+                            radiometry::constant::XYZSpectrumType<T>>(
+            radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::sRGB<T>,
+            radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
+                radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
+            T{1.0});
+
+    auto hdr_film = camera::HDRFilm<T, decltype(pixel_sensor)>(math::Vector<int, 2>(512, 512), pixel_sensor);
+
+    scene.camera = camera::ThinLensPerspectiveCamera<T>(camera::AnyFilm<T>(std::move(hdr_film)),
+                                                        T(39.307),  // fov_degrees
+                                                        camera::FovAxis::Smaller,
+                                                        T(-10),      // near
+                                                        T(-2800),    // far
+                                                        T(1000.0));  // focal_distance
 
     scene.render_transform =
         camera::RenderTransform<T>::look_at(math::Point<T, 3>(278, 273, -800), math::Point<T, 3>(278, 273, -799),
@@ -28,69 +43,30 @@ inline Scene<T> create_cbox_scene(
 
     scene.pixel_filter = camera::GaussianFilter<T>(T(1.5), T(0.5));
 
-    scene.film = std::visit(
-        [&](auto& cam) {
-            auto pixel_sensor = camera::PixelSensor<T, radiometry::constant::CIED65SpectrumType<T>,
-                                                    radiometry::constant::CIED65SpectrumType<T>,
-                                                    radiometry::constant::XYZSpectrumType<T>>(
-                radiometry::constant::CIE_D65_ilum<T>, radiometry::constant::CIE_D65_ilum<T>,
-                radiometry::constant::sRGB<T>,
-                radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>>(
-                    radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>),
-                T{1.0});
-            return camera::HDRFilm<T, decltype(pixel_sensor)>(cam, pixel_sensor);
-        },
-        scene.camera);
-
-    // 2. Load Meshes & Spectra
     scene.resources.mesh_library.add_item(
-        "cbox_floor", shape::TriangleMesh<T>(
-                          scene.render_transform,
-                          scene_path + "/meshes/cbox_floor.obj",
-                          false,
-                          geometry::Transform<T>::identity()));
+        "cbox_floor", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_floor.obj", false,
+                                             geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_ceiling", shape::TriangleMesh<T>(
-                            scene.render_transform,
-                            scene_path + "/meshes/cbox_ceiling.obj",
-                            false,
-                            geometry::Transform<T>::identity()));
+        "cbox_ceiling", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_ceiling.obj", false,
+                                               geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_back", shape::TriangleMesh<T>(
-                         scene.render_transform,
-                         scene_path + "/meshes/cbox_back.obj",
-                         false,
-                         geometry::Transform<T>::identity()));
+        "cbox_back", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_back.obj", false,
+                                            geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_greenwall", shape::TriangleMesh<T>(
-                              scene.render_transform,
-                              scene_path + "/meshes/cbox_greenwall.obj",
-                              false,
-                              geometry::Transform<T>::identity()));
+        "cbox_greenwall", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_greenwall.obj",
+                                                 false, geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_redwall", shape::TriangleMesh<T>(
-                            scene.render_transform,
-                            scene_path + "/meshes/cbox_redwall.obj",
-                            false,
-                            geometry::Transform<T>::identity()));
+        "cbox_redwall", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_redwall.obj", false,
+                                               geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_smallbox", shape::TriangleMesh<T>(
-                             scene.render_transform,
-                             scene_path + "/meshes/cbox_smallbox.obj",
-                             false,
-                             geometry::Transform<T>::identity()));
+        "cbox_smallbox", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_smallbox.obj", false,
+                                                geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_largebox", shape::TriangleMesh<T>(
-                             scene.render_transform,
-                             scene_path + "/meshes/cbox_largebox.obj",
-                             false,
-                             geometry::Transform<T>::identity()));
+        "cbox_largebox", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_largebox.obj", false,
+                                                geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_luminaire", shape::TriangleMesh<T>(
-                              scene.render_transform,
-                              scene_path + "/meshes/cbox_luminaire.obj",
-                              false,
-                              geometry::Transform<T>::translate(Vector<T, 3>(0, -0.5, 0))));
+        "cbox_luminaire", shape::TriangleMesh<T>(scene.render_transform, scene_path + "/meshes/cbox_luminaire.obj",
+                                                 false, geometry::Transform<T>::translate(Vector<T, 3>(0, -0.5, 0))));
 
     // 3. Setup Spectra
     scene.resources.reflectance_spectrum_library.add_item(

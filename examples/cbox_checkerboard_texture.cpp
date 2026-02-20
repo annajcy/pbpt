@@ -8,12 +8,10 @@
 
 int main() {
     pbpt::scene::Scene<double> scene =
-        pbpt::loader::load_scene<double>(
-            "asset/scene/cbox/cbox_checkerboard_texture.xml"
-        );
+        pbpt::loader::load_scene<double>("asset/scene/cbox/cbox_checkerboard_texture.xml");
 
-    auto image = pbpt::utils::read_image<double>(std::filesystem::path("/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/textures/checkerboard.bmp"));
-    pbpt::utils::write_image("out_checker.png", image);
+    pbpt::loader::write_scene(scene, "output/cbox_checkerboard_texture.xml");
+    scene = pbpt::loader::load_scene<double>("output/cbox_checkerboard_texture.xml");
 
     std::vector<int> spps = {1, 4, 16, 64, 256, 1024, 4096};
     for (int spp : spps) {

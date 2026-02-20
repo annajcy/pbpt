@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "pbpt/camera/camera.hpp"
+#include "pbpt/geometry/spherical.hpp"
 
 namespace pbpt::camera {
 

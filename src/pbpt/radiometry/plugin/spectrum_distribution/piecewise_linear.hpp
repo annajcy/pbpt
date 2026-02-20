@@ -56,6 +56,8 @@ public:
         sort_points();
     }
 
+    const std::vector<std::pair<T, T>>& points() const { return m_points; }
+
 private:
     constexpr T at_impl(T lambda) const {
         if (m_points.empty()) {

@@ -5,7 +5,6 @@
 #include <unordered_map>
 
 #include "pbpt/aggregate/plugin/aggregate/aggregate_type.hpp"
-#include "pbpt/camera/plugin/film/film_type.hpp"
 #include "pbpt/camera/plugin/pixel_filter/pixel_filter_type.hpp"
 #include "pbpt/material/plugin/material/material_type.hpp"
 #include "pbpt/camera/render_transform.hpp"
@@ -78,8 +77,8 @@ struct Scene {
     camera::RenderTransform<T> render_transform;
 
     // 场景组件
+    // Note: film is now stored inside camera as AnyFilm<T>
     camera::AnyCamera<T> camera;
-    camera::AnyFilm<T> film;
     camera::AnyPixelFilter<T> pixel_filter;
 
     // 几何加速结构

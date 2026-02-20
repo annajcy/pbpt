@@ -13,3 +13,7 @@ gtest_discover_tests(test_scene_loader_texture_reflectance)
 add_executable(test_scene_loader_fail_fast test_scene_loader_fail_fast.cpp)
 target_link_libraries(test_scene_loader_fail_fast PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_scene_loader_fail_fast)
+
+add_executable(test_scene_roundtrip test_scene_roundtrip.cpp)
+target_link_libraries(test_scene_roundtrip PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_scene_roundtrip)

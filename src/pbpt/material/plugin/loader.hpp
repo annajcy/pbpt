@@ -23,8 +23,9 @@ void register_material_loaders(MaterialLoaderRegistry<T>& registry) {
 
             if (reflectance_ref) {
                 if (ctx.resources.reflectance_texture_library.name_to_id().contains(*reflectance_ref)) {
+                    int tex_id = ctx.resources.reflectance_texture_library.name_to_id().at(*reflectance_ref);
                     return material::LambertianMaterial<T>(
-                        ctx.resources.reflectance_texture_library.get(*reflectance_ref));
+                        tex_id, ctx.resources.reflectance_texture_library.get(*reflectance_ref));
                 }
                 throw std::runtime_error("Unknown reflectance texture reference: " + *reflectance_ref);
             }

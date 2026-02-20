@@ -28,6 +28,13 @@ public:
           m_uoffset(uoffset),
           m_voffset(voffset) {}
 
+        const radiometry::RGB<T>& color0() const { return m_color0; }
+        const radiometry::RGB<T>& color1() const { return m_color1; }
+        T uscale() const { return m_uscale; }
+        T vscale() const { return m_vscale; }
+        T uoffset() const { return m_uoffset; }
+        T voffset() const { return m_voffset; }
+
     radiometry::RGB<T> eval_impl(const TextureEvalContext<T>& ctx) const {
         // Use logic from original implementation
         // Need to replicate logic, checking if there are dependencies

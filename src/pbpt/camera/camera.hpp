@@ -4,15 +4,11 @@
  */
 #pragma once
 
-#include <algorithm>
 #include <cmath>
 #include <string>
 
 #include "pbpt/geometry/ray.hpp"
-
-#include "pbpt/geometry/ray.hpp"
 #include "pbpt/geometry/transform.hpp"
-#include "pbpt/geometry/spherical.hpp"
 
 #include "pbpt/math/point.hpp"
 #include "pbpt/math/vector.hpp"
@@ -360,9 +356,14 @@ public:
 /**
  * @brief Base class for projective cameras (orthographic, perspective).
  *
- * This class combines the generic `Camera` interface with a
- * `CameraProjection` object that defines how camera space maps to
- * clip space and viewport space.
+ * This CRTP base class defines the projective camera interface.
+ * Derived classes must implement `get_projection_impl()` (returning
+ * a `CameraProjection<T>` by value from stored parameters) and
+ * `film_resolution_impl()` (returning the film resolution from the
+ * stored film object).
+ *
+ * The base class no longer stores `m_projection` — each derived
+ * class owns its own camera parameters and film.
  *
  * @tparam Derived Concrete camera type.
  * @tparam T       Scalar type (e.g. float or double).
@@ -371,43 +372,17 @@ template <typename Derived, typename T>
 class ProjectiveCamera : public Camera<Derived, T> {
     friend class Camera<Derived, T>;
 
-protected:
-    /// Projection used by this camera.
-    CameraProjection<T> m_projection{};
-
 public:
     ProjectiveCamera() = default;
 
-    /**
-     * @brief Construct a projective camera with the given projection.
-     *
-     * @param projection CameraProjection defining the projection.
-     */
-    ProjectiveCamera(const CameraProjection<T>& projection) : m_projection(projection) {}
-
-    /// Get the camera projection.
-    const CameraProjection<T>& projection() const { return m_projection; }
-
 protected:
     /**
-     * @brief Implementation of film resolution query.
+     * @brief CRTP dispatch: build the projection from derived-class parameters.
      *
-     * The resolution is derived from the viewport transform, assuming
-     * that the viewport matrix scales the clip space cube to pixel
-     * coordinates. The width and height are inferred from the diagonal
-     * elements of the viewport transform.
-     *
-     * @return 2D vector (width, height) in pixels.
+     * Returns by value because derived classes construct it on demand
+     * from their stored parameters (fov, near, far, film size, …).
      */
-    math::Vector<int, 2> film_resolution_impl() const {
-        const auto viewport = m_projection.clip_to_viewport();
-        const auto& mat = viewport.matrix();
-        auto width_value = mat.at(0, 0) * T(2);
-        auto height_value = mat.at(1, 1) * T(2);
-        const int width = std::max(1, static_cast<int>(std::lround(static_cast<double>(width_value))));
-        const int height = std::max(1, static_cast<int>(std::lround(static_cast<double>(height_value))));
-        return math::Vector<int, 2>(width, height);
-    }
+    CameraProjection<T> get_projection() const { return static_cast<const Derived*>(this)->get_projection_impl(); }
 };
 
 }  // namespace pbpt::camera

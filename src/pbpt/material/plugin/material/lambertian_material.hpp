@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <optional>
 #include <type_traits>
 #include <variant>
 
@@ -20,9 +19,9 @@ namespace pbpt::material {
 template <typename T>
 class LambertianMaterial : public Material<LambertianMaterial<T>, T> {
 private:
-    using ReflectanceSource =
-        std::variant<radiometry::PiecewiseLinearSpectrumDistribution<T>, texture::AnyTexture<T>>;
+    using ReflectanceSource = std::variant<radiometry::PiecewiseLinearSpectrumDistribution<T>, texture::AnyTexture<T>>;
     ReflectanceSource m_reflectance_source;
+    int m_texture_id{-1};
 
 public:
     explicit LambertianMaterial(const radiometry::PiecewiseLinearSpectrumDistribution<T>& albedo_distribution)
@@ -31,7 +30,11 @@ public:
     explicit LambertianMaterial(const texture::AnyTexture<T>& reflectance_texture)
         : m_reflectance_source(reflectance_texture) {}
 
+    LambertianMaterial(int texture_id, const texture::AnyTexture<T>& tex)
+        : m_reflectance_source(tex), m_texture_id(texture_id) {}
+
     const ReflectanceSource& reflectance_source() const { return m_reflectance_source; }
+    int texture_id() const { return m_texture_id; }
 
     template <int N>
     BSDF<T, N> compute_bsdf_impl(const geometry::SurfaceInteraction<T>& si, const geometry::ShadingInfo<T>& shading,

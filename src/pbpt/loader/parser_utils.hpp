@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
-#include <filesystem>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -15,12 +14,9 @@
 #include "pbpt/loader/basic_parser.hpp"
 #include "pbpt/loader/loader_context.hpp"
 #include "pbpt/material/model.hpp"
-#include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
 #include "pbpt/radiometry/constant/lambda.hpp"
-#include "pbpt/radiometry/constant/xyz_spectrum.hpp"
 #include "pbpt/radiometry/color_spectrum_lut.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/piecewise_linear.hpp"
-#include "pbpt/texture/plugin/texture/texture_type.hpp"
 
 namespace pbpt::loader {
 

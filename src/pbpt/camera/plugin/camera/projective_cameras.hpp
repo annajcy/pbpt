@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
-
 #include "pbpt/camera/camera.hpp"
+#include "pbpt/camera/fov_axis.hpp"
+#include "pbpt/camera/plugin/film/film_type.hpp"
 
 namespace pbpt::camera {
 
@@ -19,44 +19,52 @@ class OrthographicCamera : public ProjectiveCamera<OrthographicCamera<T>, T> {
     friend class Camera<OrthographicCamera<T>, T>;
     friend class ProjectiveCamera<OrthographicCamera<T>, T>;
 
+private:
+    T m_left{-1};
+    T m_right{1};
+    T m_bottom{-1};
+    T m_top{1};
+    T m_near{T(-0.1)};
+    T m_far{T(-10000)};
+    AnyFilm<T> m_film{};
+
+    CameraProjection<T> get_projection_impl() const {
+        return CameraProjection<T>::orthographic(m_left, m_right, m_bottom, m_top, m_near, m_far, T(width()),
+                                                 T(height()));
+    }
+
+    math::Vector<int, 2> film_resolution_impl() const { return math::Vector<int, 2>(width(), height()); }
+
 public:
     OrthographicCamera() = default;
-    OrthographicCamera(const CameraProjection<T>& projection)
-        : ProjectiveCamera<OrthographicCamera<T>, T>(projection) {}
 
     /**
-     * @brief Construct an orthographic camera from explicit bounds and resolution.
-     *
-     * @param left         Left plane in camera x.
-     * @param right        Right plane in camera x.
-     * @param bottom       Bottom plane in camera y.
-     * @param top          Top plane in camera y.
-     * @param near         Near plane in camera z.
-     * @param far          Far plane in camera z.
-     * @param resolution_x Film resolution in x (pixels).
-     * @param resolution_y Film resolution in y (pixels).
+     * @brief Construct an orthographic camera from explicit bounds and film.
      */
-    OrthographicCamera(T left, T right, T bottom, T top, T near, T far, T resolution_x, T resolution_y)
-        : ProjectiveCamera<OrthographicCamera<T>, T>(
-              CameraProjection<T>::orthographic(left, right, bottom, top, near, far, resolution_x, resolution_y)) {}
+    OrthographicCamera(AnyFilm<T> film, T left, T right, T bottom, T top, T near, T far)
+        : m_left(left),
+          m_right(right),
+          m_bottom(bottom),
+          m_top(top),
+          m_near(near),
+          m_far(far),
+          m_film(std::move(film)) {}
 
-    /**
-     * @brief Construct an orthographic camera from film parameters.
-     *
-     * @param film_resolution   Film resolution (width, height) in pixels.
-     * @param film_physical_size Physical film size in x and y.
-     * @param near              Near plane in camera z.
-     * @param far               Far plane in camera z.
-     */
-    OrthographicCamera(const math::Vector<int, 2>& film_resolution, const math::Vector<T, 2>& film_physical_size,
-                       T near, T far)
-        : ProjectiveCamera<OrthographicCamera<T>, T>(
-              CameraProjection<T>::create_orthographic_projection(film_resolution, film_physical_size, near, far)) {}
+    int width() const {
+        return std::visit([](const auto& f) { return f.resolution().x(); }, m_film);
+    }
+    int height() const {
+        return std::visit([](const auto& f) { return f.resolution().y(); }, m_film);
+    }
+
+    AnyFilm<T>& film() { return m_film; }
+    const AnyFilm<T>& film() const { return m_film; }
 
 private:
     /// Generate a primary ray for an orthographic camera.
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
-        auto origin = this->m_projection.apply_viewport_to_camera(sample.p_film);
+        auto proj = this->get_projection();
+        auto origin = proj.apply_viewport_to_camera(sample.p_film);
         auto direction = math::Vector<T, 3>(0, 0, -1);
         return geometry::Ray<T, 3>(origin, direction);
     }
@@ -92,45 +100,45 @@ class PerspectiveCamera : public ProjectiveCamera<PerspectiveCamera<T>, T> {
     friend class Camera<PerspectiveCamera<T>, T>;
     friend class ProjectiveCamera<PerspectiveCamera<T>, T>;
 
+private:
+    T m_fov_degrees{45};
+    FovAxis m_fov_axis{FovAxis::Smaller};
+    T m_near{T(-0.1)};
+    T m_far{T(-10000)};
+    AnyFilm<T> m_film{};
+
+    CameraProjection<T> get_projection_impl() const {
+        return CameraProjection<T>::create_perspective_projection_by_fov(
+            math::Vector<int, 2>(width(), height()), m_fov_degrees, fov_axis_to_string(m_fov_axis), m_near, m_far);
+    }
+
+    math::Vector<int, 2> film_resolution_impl() const { return math::Vector<int, 2>(width(), height()); }
+
 public:
     PerspectiveCamera() = default;
-    /**
-     * @brief Construct a perspective camera from explicit frustum and resolution.
-     *
-     * @param fov_y_rad    Vertical field of view in radians.
-     * @param aspect_xy    Aspect ratio (width / height).
-     * @param near         Near plane in camera z.
-     * @param far          Far plane in camera z.
-     * @param resolution_x Film resolution in x (pixels).
-     * @param resolution_y Film resolution in y (pixels).
-     */
-    PerspectiveCamera(const T fov_y_rad, const T aspect_xy, const T near, const T far, const T resolution_x,
-                      const T resolution_y)
-        : ProjectiveCamera<PerspectiveCamera<T>, T>(
-              CameraProjection<T>::perspective(fov_y_rad, aspect_xy, near, far, resolution_x, resolution_y)) {}
 
     /**
-     * @brief Construct a perspective camera from film parameters.
-     *
-     * The field of view is derived from the film height and near plane
-     * distance so that the film edges align with the frustum at the
-     * near plane.
-     *
-     * @param film_resolution   Film resolution (width, height) in pixels.
-     * @param film_physical_size Physical film size in x and y.
-     * @param near              Near plane in camera z.
-     * @param far               Far plane in camera z.
+     * @brief Construct a perspective camera from film and projection params.
      */
-    PerspectiveCamera(const math::Vector<int, 2>& film_resolution, const math::Vector<T, 2>& film_physical_size, T near,
-                      T far)
-        : ProjectiveCamera<PerspectiveCamera<T>, T>(
-              CameraProjection<T>::create_perspective_projection(film_resolution, film_physical_size, near, far)) {}
+    PerspectiveCamera(AnyFilm<T> film, T fov_degrees, FovAxis fov_axis, T near, T far)
+        : m_fov_degrees(fov_degrees), m_fov_axis(fov_axis), m_near(near), m_far(far), m_film(std::move(film)) {}
+
+    int width() const {
+        return std::visit([](const auto& f) { return f.resolution().x(); }, m_film);
+    }
+    int height() const {
+        return std::visit([](const auto& f) { return f.resolution().y(); }, m_film);
+    }
+
+    AnyFilm<T>& film() { return m_film; }
+    const AnyFilm<T>& film() const { return m_film; }
 
 private:
     /// Generate a primary ray for a perspective camera.
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
+        auto proj = this->get_projection();
         auto origin = math::Point<T, 3>(0, 0, 0);
-        auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
+        auto p_camera = proj.apply_viewport_to_camera(sample.p_film);
         return geometry::Ray<T, 3>(origin, p_camera);
     }
 
@@ -169,47 +177,48 @@ class ThinLensOrthographicCamera : public ProjectiveCamera<ThinLensOrthographicC
     friend class ProjectiveCamera<ThinLensOrthographicCamera<T>, T>;
 
 private:
+    T m_left{-1};
+    T m_right{1};
+    T m_bottom{-1};
+    T m_top{1};
+    T m_near{T(-0.1)};
+    T m_far{T(-10000)};
     /// Distance from the lens to the focal plane along +z.
     T m_focal_distance{1};
+    AnyFilm<T> m_film{};
+
+    CameraProjection<T> get_projection_impl() const {
+        return CameraProjection<T>::orthographic(m_left, m_right, m_bottom, m_top, m_near, m_far, T(width()),
+                                                 T(height()));
+    }
+
+    math::Vector<int, 2> film_resolution_impl() const { return math::Vector<int, 2>(width(), height()); }
 
 public:
     ThinLensOrthographicCamera() = default;
 
     /**
-     * @brief Construct a thin-lens orthographic camera from explicit bounds.
-     *
-     * @param left          Left plane in camera x.
-     * @param right         Right plane in camera x.
-     * @param bottom        Bottom plane in camera y.
-     * @param top           Top plane in camera y.
-     * @param near          Near plane in camera z.
-     * @param far           Far plane in camera z.
-     * @param resolution_x  Film resolution in x (pixels).
-     * @param resolution_y  Film resolution in y (pixels).
-     * @param lens_radius   Radius of the circular lens aperture.
-     * @param focal_distance Distance from lens to focal plane along +z.
+     * @brief Construct a thin-lens orthographic camera.
      */
-    ThinLensOrthographicCamera(T left, T right, T bottom, T top, T near, T far, T resolution_x, T resolution_y,
-                               T focal_distance)
-        : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
-              CameraProjection<T>::orthographic(left, right, bottom, top, near, far, resolution_x, resolution_y)),
-          m_focal_distance(focal_distance) {}
+    ThinLensOrthographicCamera(AnyFilm<T> film, T left, T right, T bottom, T top, T near, T far, T focal_distance)
+        : m_left(left),
+          m_right(right),
+          m_bottom(bottom),
+          m_top(top),
+          m_near(near),
+          m_far(far),
+          m_focal_distance(focal_distance),
+          m_film(std::move(film)) {}
 
-    /**
-     * @brief Construct a thin-lens orthographic camera from film parameters.
-     *
-     * @param film_resolution    Film resolution (width, height) in pixels.
-     * @param film_physical_size Physical film size in x and y.
-     * @param near               Near plane in camera z.
-     * @param far                Far plane in camera z.
-     * @param lens_radius        Radius of the circular lens aperture.
-     * @param focal_distance     Distance from lens to focal plane along +z.
-     */
-    ThinLensOrthographicCamera(const math::Vector<int, 2>& film_resolution,
-                               const math::Vector<T, 2>& film_physical_size, T near, T far, T focal_distance)
-        : ProjectiveCamera<ThinLensOrthographicCamera<T>, T>(
-              CameraProjection<T>::create_orthographic_projection(film_resolution, film_physical_size, near, far)),
-          m_focal_distance(focal_distance) {}
+    int width() const {
+        return std::visit([](const auto& f) { return f.resolution().x(); }, m_film);
+    }
+    int height() const {
+        return std::visit([](const auto& f) { return f.resolution().y(); }, m_film);
+    }
+
+    AnyFilm<T>& film() { return m_film; }
+    const AnyFilm<T>& film() const { return m_film; }
 
 private:
     /**
@@ -223,8 +232,9 @@ private:
      *    point to the focus point.
      */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
+        auto proj = this->get_projection();
         // 1. 获取视口映射点 (位于近平面，但这不重要，我们只需要它的 x 和 y)
-        auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
+        auto p_camera = proj.apply_viewport_to_camera(sample.p_film);
 
         // 2. [优化] 直接构造焦点
         // 正交投影特性：焦点产生的 X,Y 与胶片点一致。
@@ -273,68 +283,56 @@ class ThinLensPerspectiveCamera : public ProjectiveCamera<ThinLensPerspectiveCam
     friend class ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>;
 
 private:
+    T m_fov_degrees{45};
+    FovAxis m_fov_axis{FovAxis::Smaller};
+    T m_near{T(-0.1)};
+    T m_far{T(-10000)};
     /// Distance from the lens to the focal plane along +z.
     T m_focal_distance{1};
+    AnyFilm<T> m_film{};
+
+    CameraProjection<T> get_projection_impl() const {
+        return CameraProjection<T>::create_perspective_projection_by_fov(
+            math::Vector<int, 2>(width(), height()), m_fov_degrees, fov_axis_to_string(m_fov_axis), m_near, m_far);
+    }
+
+    math::Vector<int, 2> film_resolution_impl() const { return math::Vector<int, 2>(width(), height()); }
 
 public:
     ThinLensPerspectiveCamera() = default;
 
     /***
-     * @brief Construct a thin-lens perspective camera from film parameters.
+     * @brief Construct a thin-lens perspective camera.
      *
-     * The perspective projection is derived from the film size and near
-     * plane; depth of field is controlled by lens_radius and focal_distance.
-     *
-     * @param film_resolution    Film resolution (width, height) in pixels.
-     * @param fov_degrees        Field of view in degrees.
-     * @param fov_axis           Axis to which FOV applies: "x", "y", "smaller", "larger".
-     * @param near               Near plane in camera z.
-     * @param far                Far plane in camera z.
-     * @param lens_radius        Radius of the circular lens aperture.
-     * @param focal_distance     Distance from lens to focal plane along +z.
-     ***/
-    ThinLensPerspectiveCamera(const math::Vector<T, 2>& film_resolution, T fov_degrees, const std::string& fov_axis,
-                              T near, T far, T focal_distance)
-        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(CameraProjection<T>::create_perspective_projection_by_fov(
-              film_resolution, fov_degrees, fov_axis, near, far)),
-          m_focal_distance(focal_distance) {}
-
-    /**
-     * @brief Construct a thin-lens perspective camera from explicit frustum.
-     *
-     * @param fov_y_rad     Vertical field of view in radians.
-     * @param aspect_xy     Aspect ratio (width / height).
-     * @param near          Near plane in camera z.
-     * @param far           Far plane in camera z.
-     * @param resolution_x  Film resolution in x (pixels).
-     * @param resolution_y  Film resolution in y (pixels).
-     * @param lens_radius   Radius of the circular lens aperture.
+     * @param film           AnyFilm<T> (owns width/height).
+     * @param fov_degrees    Field of view in degrees.
+     * @param fov_axis       Axis to which FOV applies.
+     * @param near           Near plane in camera z.
+     * @param far            Far plane in camera z.
      * @param focal_distance Distance from lens to focal plane along +z.
-     */
-    ThinLensPerspectiveCamera(const T fov_y_rad, const T aspect_xy, const T near, const T far, const T resolution_x,
-                              const T resolution_y, T focal_distance)
-        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
-              CameraProjection<T>::perspective(fov_y_rad, aspect_xy, near, far, resolution_x, resolution_y)),
-          m_focal_distance(focal_distance) {}
+     ***/
+    ThinLensPerspectiveCamera(AnyFilm<T> film, T fov_degrees, FovAxis fov_axis, T near, T far, T focal_distance)
+        : m_fov_degrees(fov_degrees),
+          m_fov_axis(fov_axis),
+          m_near(near),
+          m_far(far),
+          m_focal_distance(focal_distance),
+          m_film(std::move(film)) {}
 
-    /**
-     * @brief Construct a thin-lens perspective camera from film parameters.
-     *
-     * The perspective projection is derived from the film size and near
-     * plane; depth of field is controlled by lens_radius and focal_distance.
-     *
-     * @param film_resolution    Film resolution (width, height) in pixels.
-     * @param film_physical_size Physical film size in x and y.
-     * @param near               Near plane in camera z.
-     * @param far                Far plane in camera z.
-     * @param lens_radius        Radius of the circular lens aperture.
-     * @param focal_distance     Distance from lens to focal plane along +z.
-     */
-    ThinLensPerspectiveCamera(const math::Vector<int, 2>& film_resolution, const math::Vector<T, 2>& film_physical_size,
-                              T near, T far, T focal_distance)
-        : ProjectiveCamera<ThinLensPerspectiveCamera<T>, T>(
-              CameraProjection<T>::create_perspective_projection(film_resolution, film_physical_size, near, far)),
-          m_focal_distance(focal_distance) {}
+    int width() const {
+        return std::visit([](const auto& f) { return f.resolution().x(); }, m_film);
+    }
+    int height() const {
+        return std::visit([](const auto& f) { return f.resolution().y(); }, m_film);
+    }
+
+    T fov_degrees() const { return m_fov_degrees; }
+    FovAxis fov_axis() const { return m_fov_axis; }
+    T near_clip() const { return m_near; }
+    T far_clip() const { return m_far; }
+    T focal_distance() const { return m_focal_distance; }
+    AnyFilm<T>& film() { return m_film; }
+    const AnyFilm<T>& film() const { return m_film; }
 
 private:
     /**
@@ -349,7 +347,8 @@ private:
      *    plane (z = 0) and shoot a ray from that point to the focus point.
      */
     geometry::Ray<T, 3> generate_ray_impl(const CameraSample<T>& sample) const {
-        auto p_camera = this->m_projection.apply_viewport_to_camera(sample.p_film);
+        auto proj = this->get_projection();
+        auto p_camera = proj.apply_viewport_to_camera(sample.p_film);
         // auto p_lens = sampler::sample_uniform_disk_concentric(sample.p_lens, m_lens_radius);
         auto origin = math::Point<T, 3>(sample.p_lens.x(), sample.p_lens.y(), 0);
         auto pinhole_ray = geometry::Ray<T, 3>(math::Point<T, 3>(0, 0, 0), p_camera);
