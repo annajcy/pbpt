@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <fstream>
 #include <format>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -179,6 +181,250 @@ scene::Scene<T> load_scene(const std::string& filename) {
     scene.aggregate = aggregate::EmbreeAggregate<T>(std::move(primitives));
 
     return scene;
+}
+
+namespace detail {
+
+template <typename T>
+std::string serialize_transform_row_major(const geometry::Transform<T>& transform) {
+    std::ostringstream oss;
+    oss << std::setprecision(9);
+    const auto& matrix = transform.matrix();
+    for (int row = 0; row < 4; ++row) {
+        for (int col = 0; col < 4; ++col) {
+            if (row != 0 || col != 0) {
+                oss << ", ";
+            }
+            oss << matrix.at(row, col);
+        }
+    }
+    return oss.str();
+}
+
+template <typename T>
+std::string serialize_rgb_reflectance(const material::LambertianMaterial<T>& material) {
+    const auto& source = material.reflectance_source();
+    return std::visit(
+        [](const auto& reflectance) -> std::string {
+            using SourceT = std::decay_t<decltype(reflectance)>;
+            if constexpr (std::is_same_v<SourceT, radiometry::PiecewiseLinearSpectrumDistribution<T>>) {
+                const T r = std::clamp(reflectance.at(T(610.0)), T(0.0), T(1.0));
+                const T g = std::clamp(reflectance.at(T(550.0)), T(0.0), T(1.0));
+                const T b = std::clamp(reflectance.at(T(460.0)), T(0.0), T(1.0));
+                std::ostringstream oss;
+                oss << std::setprecision(6) << r << ' ' << g << ' ' << b;
+                return oss.str();
+            }
+            throw std::runtime_error("write_scene currently does not support texture-backed Lambertian materials.");
+        },
+        source
+    );
+}
+
+template <typename T>
+std::string serialize_spectrum_400_700(const light::AnyLight<T>& any_light) {
+    return std::visit(
+        [](const auto& light_variant) {
+            const auto& power = light_variant.power_spectrum();
+            std::ostringstream oss;
+            oss << std::setprecision(6)
+                << "400:" << std::max(T(0), power.at(T(400))) << ", "
+                << "500:" << std::max(T(0), power.at(T(500))) << ", "
+                << "600:" << std::max(T(0), power.at(T(600))) << ", "
+                << "700:" << std::max(T(0), power.at(T(700)));
+            return oss.str();
+        },
+        any_light
+    );
+}
+
+template <typename T>
+void write_mesh_obj(const shape::TriangleMesh<T>& mesh, const std::filesystem::path& mesh_path) {
+    std::filesystem::create_directories(mesh_path.parent_path());
+
+    std::ofstream out(mesh_path);
+    if (!out) {
+        throw std::runtime_error("Failed to open OBJ output path: " + mesh_path.string());
+    }
+    out << std::setprecision(9);
+
+    const auto render_to_object = mesh.render_to_object_transform();
+    for (const auto& position : mesh.positions()) {
+        const auto obj_p = render_to_object.transform_point(position);
+        out << "v " << obj_p.x() << ' ' << obj_p.y() << ' ' << obj_p.z() << '\n';
+    }
+
+    if (mesh.has_uvs()) {
+        for (const auto& uv : mesh.uvs()) {
+            out << "vt " << uv.x() << ' ' << uv.y() << '\n';
+        }
+    }
+
+    if (mesh.has_normals()) {
+        for (const auto& normal : mesh.normals()) {
+            const auto obj_n = render_to_object.transform_normal(normal).normalized();
+            out << "vn " << obj_n.x() << ' ' << obj_n.y() << ' ' << obj_n.z() << '\n';
+        }
+    }
+
+    const bool write_uv = mesh.has_uvs();
+    const bool write_normal = mesh.has_normals();
+    for (int i = 0; i < mesh.triangle_count(); ++i) {
+        const auto triangle = mesh.triangle_indices(i);
+        out << "f ";
+        for (int corner = 0; corner < 3; ++corner) {
+            const int idx = triangle[corner] + 1;
+            out << idx;
+            if (write_uv || write_normal) {
+                out << '/';
+                if (write_uv) {
+                    out << idx;
+                }
+                if (write_normal) {
+                    out << '/' << idx;
+                }
+            }
+            if (corner < 2) {
+                out << ' ';
+            }
+        }
+        out << '\n';
+    }
+}
+
+}  // namespace detail
+
+template <typename T>
+void write_scene(const scene::Scene<T>& scene, const std::string& filename) {
+    if (filename.empty()) {
+        throw std::invalid_argument("write_scene filename must not be empty.");
+    }
+
+    const auto xml_path = std::filesystem::path(filename);
+    const auto scene_dir = xml_path.parent_path();
+    const auto mesh_dir = scene_dir / "meshes";
+    std::filesystem::create_directories(mesh_dir);
+
+    pugi::xml_document doc;
+    auto root = doc.append_child("scene");
+    root.append_attribute("version") = "0.5.0";
+
+    auto integrator = root.append_child("integrator");
+    integrator.append_attribute("type") = "path";
+
+    auto sensor = root.append_child("sensor");
+    sensor.append_attribute("type") = "perspective";
+    sensor.append_child("float").append_attribute("name") = "fov";
+    sensor.child("float").append_attribute("value") = "45";
+    sensor.append_child("string").append_attribute("name") = "fovAxis";
+    sensor.child("string").append_attribute("value") = "smaller";
+    auto near_clip = sensor.append_child("float");
+    near_clip.append_attribute("name") = "nearClip";
+    near_clip.append_attribute("value") = "0.1";
+
+    auto sensor_transform = sensor.append_child("transform");
+    sensor_transform.append_attribute("name") = "toWorld";
+    auto sensor_matrix = sensor_transform.append_child("matrix");
+    const auto camera_to_world = scene.render_transform.camera_to_world();
+    const auto camera_to_world_text = detail::serialize_transform_row_major(camera_to_world);
+    sensor_matrix.append_attribute("value") = camera_to_world_text.c_str();
+
+    const auto camera_resolution = std::visit(
+        [](const auto& camera) {
+            return camera.film_resolution();
+        },
+        scene.camera
+    );
+
+    auto sampler = sensor.append_child("sampler");
+    sampler.append_attribute("type") = "independent";
+    sampler.append_child("integer").append_attribute("name") = "sampleCount";
+    sampler.child("integer").append_attribute("value") = "4";
+
+    auto film = sensor.append_child("film");
+    film.append_attribute("type") = "hdrfilm";
+    film.append_child("integer").append_attribute("name") = "width";
+    film.child("integer").append_attribute("value") = camera_resolution.x();
+    auto film_height = film.append_child("integer");
+    film_height.append_attribute("name") = "height";
+    film_height.append_attribute("value") = camera_resolution.y();
+
+    std::unordered_map<int, std::string> bsdf_name_by_id{};
+    for (const auto& [material_name, material_id] : scene.resources.any_material_library.name_to_id()) {
+        const auto& any_material = scene.resources.any_material_library.get(material_id);
+        if (!std::holds_alternative<material::LambertianMaterial<T>>(any_material)) {
+            throw std::runtime_error("write_scene only supports Lambertian material export.");
+        }
+
+        const auto& lambertian = std::get<material::LambertianMaterial<T>>(any_material);
+        auto bsdf = root.append_child("bsdf");
+        bsdf.append_attribute("type") = "diffuse";
+        bsdf.append_attribute("id") = material_name.c_str();
+        auto reflectance = bsdf.append_child("rgb");
+        reflectance.append_attribute("name") = "reflectance";
+        const auto rgb_value = detail::serialize_rgb_reflectance(lambertian);
+        reflectance.append_attribute("value") = rgb_value.c_str();
+        bsdf_name_by_id[material_id] = material_name;
+    }
+
+    for (const auto& [mesh_name, mesh_id] : scene.resources.mesh_library.name_to_id()) {
+        const auto& mesh = scene.resources.mesh_library.get(mesh_id);
+        const auto obj_filename = mesh_name + ".obj";
+        const auto obj_path = mesh_dir / obj_filename;
+        detail::write_mesh_obj(mesh, obj_path);
+
+        auto shape = root.append_child("shape");
+        shape.append_attribute("type") = "obj";
+        shape.append_attribute("id") = mesh_name.c_str();
+
+        auto filename_node = shape.append_child("string");
+        filename_node.append_attribute("name") = "filename";
+        filename_node.append_attribute("value") = (std::string("meshes/") + obj_filename).c_str();
+
+        auto shape_transform = shape.append_child("transform");
+        shape_transform.append_attribute("name") = "toWorld";
+        auto shape_matrix = shape_transform.append_child("matrix");
+        const auto object_to_world_text = detail::serialize_transform_row_major(mesh.object_to_world_transform());
+        shape_matrix.append_attribute("value") = object_to_world_text.c_str();
+
+        if (!scene.resources.mesh_material_map.contains(mesh_name)) {
+            throw std::runtime_error("Mesh has no material assignment: " + mesh_name);
+        }
+        const int material_id = scene.resources.mesh_material_map.at(mesh_name);
+        if (!bsdf_name_by_id.contains(material_id)) {
+            throw std::runtime_error("Mesh references unknown material id.");
+        }
+
+        auto ref = shape.append_child("ref");
+        ref.append_attribute("id") = bsdf_name_by_id.at(material_id).c_str();
+
+        int first_light_id = -1;
+        for (const auto& [light_key, light_id] : scene.resources.mesh_light_map) {
+            if (light_key.mesh_name == mesh_name) {
+                first_light_id = light_id;
+                break;
+            }
+        }
+        if (first_light_id >= 0) {
+            if (!scene.resources.any_light_library.id_to_name().contains(first_light_id)) {
+                throw std::runtime_error("Mesh light id is invalid.");
+            }
+
+            auto emitter = shape.append_child("emitter");
+            emitter.append_attribute("type") = "area";
+            auto radiance = emitter.append_child("spectrum");
+            radiance.append_attribute("name") = "radiance";
+            const auto spectrum_text = detail::serialize_spectrum_400_700(
+                scene.resources.any_light_library.get(first_light_id)
+            );
+            radiance.append_attribute("value") = spectrum_text.c_str();
+        }
+    }
+
+    std::filesystem::create_directories(scene_dir);
+    if (!doc.save_file(xml_path.string().c_str(), "  ")) {
+        throw std::runtime_error("Failed to save scene XML to: " + xml_path.string());
+    }
 }
 
 }  // namespace pbpt::loader

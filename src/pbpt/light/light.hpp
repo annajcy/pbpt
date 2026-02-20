@@ -66,11 +66,11 @@ public:
     }
 
     template <int N>
-    radiometry::SampledSpectrum<T, N> emission_spectrum(const radiometry::SampledWavelength<T, N>& sampled_wavelengths,
+    radiometry::SampledSpectrum<T, N> Le(const radiometry::SampledWavelength<T, N>& sampled_wavelengths,
                                                         const math::Point<T, 3>& point,
                                                         const math::Normal<T, 3>& normal,
                                                         const math::Vector<T, 3>& wo) const {
-        return as_derived().emission_spectrum_impl(sampled_wavelengths, point, normal, wo);
+        return as_derived().Le_impl(sampled_wavelengths, point, normal, wo);
     }
 
     bool is_delta_light() const { return as_derived().is_delta_light_impl(); }

@@ -34,7 +34,7 @@ public:
         : m_shape(shape), m_power_spectrum(power_spectrum), m_sampling_domain(sampling_domain) {}
 
     const ShapeType& shape() const { return m_shape; }
-
+    const PowerSpectrumType& power_spectrum() const { return m_power_spectrum; }
     AreaLightSamplingDomain sampling_domain() const { return m_sampling_domain; }
 
     template <int N, typename NormalInteractionType>
@@ -127,7 +127,6 @@ public:
 
 private:
     geometry::Transform<T> render_to_light_transform_impl() const { return m_shape.render_to_object_transform(); }
-
     geometry::Transform<T> light_to_render_transform_impl() const { return m_shape.object_to_render_transform(); }
 
     template <int N, typename NormalInteractionType>
@@ -149,7 +148,7 @@ private:
     }
 
     template <int N>
-    radiometry::SampledSpectrum<T, N> emission_spectrum_impl(
+    radiometry::SampledSpectrum<T, N> Le_impl(
         const radiometry::SampledWavelength<T, N>& sampled_wavelengths, const math::Point<T, 3>& point,
         const math::Normal<T, 3>& normal, const math::Vector<T, 3>& wo) const {
         (void)point;

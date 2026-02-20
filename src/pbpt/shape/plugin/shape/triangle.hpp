@@ -14,6 +14,7 @@
 #include "pbpt/geometry/directional_cone.hpp"
 #include "pbpt/geometry/ray.hpp"
 #include "pbpt/geometry/transform.hpp"
+#include "pbpt/camera/render_transform.hpp"
 #include "pbpt/math/function.hpp"
 #include "pbpt/math/normal.hpp"
 #include "pbpt/math/point.hpp"
@@ -83,6 +84,9 @@ private:
     int m_triangle_count;
     int m_vertices_count;
 
+    camera::RenderTransform<T> m_render_transform;
+    geometry::Transform<T> m_object_to_world;
+
     // Data stored in Rendering Space
     std::vector<int> m_indices;
     std::vector<math::Point<T, 3>> m_positions;
@@ -93,20 +97,28 @@ private:
     bool m_is_swap_handedness;
     bool m_should_flip_normal;  // Pre-calculated XOR result
 
-    TriangleMesh(const geometry::Transform<T>& object_to_render, const utils::ObjMeshData<T>& mesh_data,
-                 bool is_reverse_orientation)
-        : TriangleMesh(object_to_render, mesh_data.indices, mesh_data.positions, mesh_data.normals, mesh_data.uvs,
-                       is_reverse_orientation) {}
+    TriangleMesh(const camera::RenderTransform<T>& render_transform, const utils::ObjMeshData<T>& mesh_data,
+                 bool is_reverse_orientation, const geometry::Transform<T>& object_to_world)
+        : TriangleMesh(render_transform, mesh_data.indices, mesh_data.positions, mesh_data.normals, mesh_data.uvs,
+                       is_reverse_orientation, object_to_world) {}
 
 public:
-    TriangleMesh(const geometry::Transform<T>& object_to_render, const std::string& obj_path,
-                 bool is_reverse_orientation = false)
-        : TriangleMesh(object_to_render, utils::load_obj_mesh<T>(obj_path), is_reverse_orientation) {}
+    TriangleMesh(const camera::RenderTransform<T>& render_transform, const std::string& obj_path,
+                 bool is_reverse_orientation = false,
+                 const geometry::Transform<T>& object_to_world = geometry::Transform<T>::identity())
+        : TriangleMesh(render_transform, utils::load_obj_mesh<T>(obj_path), is_reverse_orientation,
+                       object_to_world) {}
 
-    TriangleMesh(const geometry::Transform<T>& object_to_render, const std::vector<int>& indices,
+    TriangleMesh(const camera::RenderTransform<T>& render_transform, const std::vector<int>& indices,
                  const std::vector<math::Point<T, 3>>& positions, const std::vector<math::Normal<T, 3>>& normals = {},
-                 const std::vector<math::Point<T, 2>>& uvs = {}, bool is_reverse_orientation = false)
-        : m_indices(indices), m_uvs(uvs), m_is_reverse_orientation(is_reverse_orientation) {
+                                 const std::vector<math::Point<T, 2>>& uvs = {}, bool is_reverse_orientation = false,
+                                 const geometry::Transform<T>& object_to_world = geometry::Transform<T>::identity())
+                : m_render_transform(render_transform),
+                    m_object_to_world(object_to_world),
+                    m_indices(indices),
+                    m_uvs(uvs),
+                    m_is_reverse_orientation(is_reverse_orientation) {
+        const auto object_to_render = m_render_transform.object_to_render_from_object_to_world(m_object_to_world);
         m_triangle_count = static_cast<int>(m_indices.size() / 3);
         m_vertices_count = static_cast<int>(positions.size());
         m_is_swap_handedness = object_to_render.is_swaps_handedness();
@@ -134,6 +146,13 @@ public:
     bool should_flip_normal() const { return m_should_flip_normal; }
     bool has_normals() const { return !m_normals.empty(); }
     bool has_uvs() const { return !m_uvs.empty(); }
+    geometry::Transform<T> object_to_render_transform() const {
+        return m_render_transform.object_to_render_from_object_to_world(m_object_to_world);
+    }
+    geometry::Transform<T> render_to_object_transform() const {
+        return object_to_render_transform().inversed();
+    }
+    const geometry::Transform<T>& object_to_world_transform() const { return m_object_to_world; }
 
     // Accessors
     const std::vector<int>& indices() const { return m_indices; }
@@ -169,15 +188,11 @@ public:
     // --- Shape Interface Implementation ---
 
     geometry::Transform<T> object_to_render_transform_impl() const {
-        // Triangle itself does not hold transform; delegate to mesh
-        // Note: This assumes mesh has consistent transform for all triangles
-        return geometry::Transform<T>::identity();
+        return m_mesh.object_to_render_transform();
     }
 
     geometry::Transform<T> render_to_object_transform_impl() const {
-        // Triangle itself does not hold transform; delegate to mesh
-        // Note: This assumes mesh has consistent transform for all triangles
-        return geometry::Transform<T>::identity();
+        return m_mesh.render_to_object_transform();
     }
 
     T area_impl() const {

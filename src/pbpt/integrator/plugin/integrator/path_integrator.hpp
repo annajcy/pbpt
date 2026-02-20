@@ -83,12 +83,11 @@ private:
                 std::visit(
                     [&](const auto& light) {
                         radiance += throughput *
-                                   light.emission_spectrum(wavelength_sample,
-                                                           hit.intersection.interaction.point(),
-                                                           hit.intersection.interaction.n(),
-                                                           hit.intersection.interaction.wo());
-                    },
-                    any_light);
+                                   light.Le(wavelength_sample,
+                                            hit.intersection.interaction.point(),
+                                            hit.intersection.interaction.n(),
+                                            hit.intersection.interaction.wo());
+                    }, any_light);
             }
 
             // Sample the BSDF to get the next ray direction and update the throughput
@@ -153,10 +152,10 @@ private:
                 std::visit(
                     [&](const auto& light) {
                         radiance += throughput *
-                                   light.emission_spectrum(wavelength_sample,
-                                                           prim_intersection_rec.intersection.interaction.point(),
-                                                           prim_intersection_rec.intersection.interaction.n(),
-                                                           prim_intersection_rec.intersection.interaction.wo());
+                                   light.Le(wavelength_sample,
+                                            prim_intersection_rec.intersection.interaction.point(),
+                                            prim_intersection_rec.intersection.interaction.n(),
+                                            prim_intersection_rec.intersection.interaction.wo());
                     },
                     any_light);
             }

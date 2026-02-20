@@ -30,13 +30,11 @@ void register_shape_loaders(ShapeLoaderRegistry<T>& registry) {
             obj_to_world = load_transform<T>(transform_node);
         }
 
-        auto to_render = ctx.render_transform.object_to_render_from_object_to_world(obj_to_world);
-
         // Generate name from filename (e.g. "meshes/cbox_floor.obj" -> "cbox_floor")
         std::filesystem::path mesh_path(filename);
         std::string name = mesh_path.stem().string();
 
-        ctx.resources.mesh_library.add_item(name, shape::TriangleMesh<T>(to_render, abs_path, false));
+        ctx.resources.mesh_library.add_item(name, shape::TriangleMesh<T>(ctx.render_transform, abs_path, false, obj_to_world));
 
         // Ref material
         auto ref_node = node.child("ref");

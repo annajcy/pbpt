@@ -44,37 +44,53 @@ inline Scene<T> create_cbox_scene(
 
     // 2. Load Meshes & Spectra
     scene.resources.mesh_library.add_item(
-        "cbox_floor", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                 geometry::Transform<double>::identity()),
-                                             scene_path + "/meshes/cbox_floor.obj", false));
+        "cbox_floor", shape::TriangleMesh<T>(
+                          scene.render_transform,
+                          scene_path + "/meshes/cbox_floor.obj",
+                          false,
+                          geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_ceiling", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                   geometry::Transform<double>::identity()),
-                                               scene_path + "/meshes/cbox_ceiling.obj", false));
+        "cbox_ceiling", shape::TriangleMesh<T>(
+                            scene.render_transform,
+                            scene_path + "/meshes/cbox_ceiling.obj",
+                            false,
+                            geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_back", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                geometry::Transform<double>::identity()),
-                                            scene_path + "/meshes/cbox_back.obj", false));
+        "cbox_back", shape::TriangleMesh<T>(
+                         scene.render_transform,
+                         scene_path + "/meshes/cbox_back.obj",
+                         false,
+                         geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_greenwall", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                     geometry::Transform<double>::identity()),
-                                                 scene_path + "/meshes/cbox_greenwall.obj", false));
+        "cbox_greenwall", shape::TriangleMesh<T>(
+                              scene.render_transform,
+                              scene_path + "/meshes/cbox_greenwall.obj",
+                              false,
+                              geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_redwall", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                   geometry::Transform<double>::identity()),
-                                               scene_path + "/meshes/cbox_redwall.obj", false));
+        "cbox_redwall", shape::TriangleMesh<T>(
+                            scene.render_transform,
+                            scene_path + "/meshes/cbox_redwall.obj",
+                            false,
+                            geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_smallbox", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                    geometry::Transform<double>::identity()),
-                                                scene_path + "/meshes/cbox_smallbox.obj", false));
+        "cbox_smallbox", shape::TriangleMesh<T>(
+                             scene.render_transform,
+                             scene_path + "/meshes/cbox_smallbox.obj",
+                             false,
+                             geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_largebox", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                    geometry::Transform<double>::identity()),
-                                                scene_path + "/meshes/cbox_largebox.obj", false));
+        "cbox_largebox", shape::TriangleMesh<T>(
+                             scene.render_transform,
+                             scene_path + "/meshes/cbox_largebox.obj",
+                             false,
+                             geometry::Transform<T>::identity()));
     scene.resources.mesh_library.add_item(
-        "cbox_luminaire", shape::TriangleMesh<T>(scene.render_transform.object_to_render_from_object_to_world(
-                                                     geometry::Transform<double>::translate(Vector<T, 3>(0, -0.5, 0))),
-                                                 scene_path + "/meshes/cbox_luminaire.obj", false));
+        "cbox_luminaire", shape::TriangleMesh<T>(
+                              scene.render_transform,
+                              scene_path + "/meshes/cbox_luminaire.obj",
+                              false,
+                              geometry::Transform<T>::translate(Vector<T, 3>(0, -0.5, 0))));
 
     // 3. Setup Spectra
     scene.resources.reflectance_spectrum_library.add_item(

@@ -31,6 +31,8 @@ public:
     explicit LambertianMaterial(const texture::AnyTexture<T>& reflectance_texture)
         : m_reflectance_source(reflectance_texture) {}
 
+    const ReflectanceSource& reflectance_source() const { return m_reflectance_source; }
+
     template <int N>
     BSDF<T, N> compute_bsdf_impl(const geometry::SurfaceInteraction<T>& si, const geometry::ShadingInfo<T>& shading,
                                  const radiometry::SampledWavelength<T, N>& wavelengths,
