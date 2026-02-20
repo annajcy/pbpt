@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <cstdint>
 
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 #include "pbpt/camera/camera.hpp"
@@ -17,6 +18,7 @@
 #include "pbpt/utils/image_io.hpp"
 #include "pbpt/utils/progress_bar.hpp"
 #include "pbpt/scene/scene.hpp"
+#include "pbpt/lds/plugin/sampler_type.hpp"
 
 namespace pbpt::integrator {
 
@@ -30,23 +32,39 @@ public:
     using std::runtime_error::runtime_error;
 };
 
-template <typename Derived, typename T, int N, typename Sampler>
-    requires IntegratorSamplerConcept<Sampler, T>
+template <typename Derived, typename T, int N>
 class Integrator {
 public:
     Integrator() = default;
 
     Derived& as_derived() { return static_cast<Derived&>(*this); }
-
     const Derived& as_derived() const { return static_cast<const Derived&>(*this); }
 
-    void render(pbpt::scene::Scene<T>& scene, int spp = 4, std::string output_path = "output.exr",
+    /// @brief Get the sampler (variant).
+    const lds::AnySampler<T>& sampler() const { return m_sampler; }
+
+    /// @brief Set the sampler (variant).
+    void set_sampler(lds::AnySampler<T> sampler) { m_sampler = std::move(sampler); }
+
+    void render(pbpt::scene::Scene<T>& scene, std::string output_path = "output.exr",
                 bool is_trace_ray_differential = false) {
-        render(scene, spp, std::move(output_path), is_trace_ray_differential, RenderObserver{});
+        render(scene, std::move(output_path), is_trace_ray_differential, RenderObserver{}, 4);
     }
 
-    void render(pbpt::scene::Scene<T>& scene, int spp, std::string output_path, bool is_trace_ray_differential,
+    void render(pbpt::scene::Scene<T>& scene, std::string output_path, bool is_trace_ray_differential, int spp) {
+        render(scene, std::move(output_path), is_trace_ray_differential, RenderObserver{}, spp);
+    }
+
+    void render(pbpt::scene::Scene<T>& scene, std::string output_path, bool is_trace_ray_differential,
                 const RenderObserver& observer) {
+        render(scene, std::move(output_path), is_trace_ray_differential, observer, 4);
+    }
+
+    void render(pbpt::scene::Scene<T>& scene, std::string output_path, bool is_trace_ray_differential,
+                const RenderObserver& observer, int spp) {
+        if (spp <= 0) {
+            throw std::invalid_argument("render: spp must be > 0");
+        }
         // Film is now embedded inside the camera variant.
         // Use two-level visit: first visit on camera (to get both camera and its film),
         // then visit on pixel_filter and aggregate.
@@ -56,7 +74,14 @@ public:
                     [&](auto& film_obj, const auto& pixel_filter, const auto& aggregate) {
                         scene::SceneContext context{
                             camera_obj, film_obj, pixel_filter, aggregate, scene.render_transform, scene.resources};
-                        this->render_loop(context, spp, output_path, is_trace_ray_differential, observer);
+                        // std::visit on m_sampler once here (outer level),
+                        // then enter render_loop_typed which is fully typed on SamplerT.
+                        std::visit(
+                            [&](auto& sampler_proto) {
+                                this->render_loop_typed(context, sampler_proto, output_path, is_trace_ray_differential,
+                                                        observer, spp);
+                            },
+                            m_sampler);
                     },
                     camera_obj.film(), scene.pixel_filter, scene.aggregate);
             },
@@ -64,10 +89,12 @@ public:
     }
 
 protected:
-    template <typename SceneContextT>
+    lds::AnySampler<T> m_sampler{};
+
+    template <typename SamplerT, typename SceneContextT>
         requires RenderLoopContextConcept<SceneContextT, T, N>
-    void render_loop(const SceneContextT& context, int spp, const std::string& output_path,
-                     bool is_trace_ray_differential, const RenderObserver& observer) {
+    void render_loop_typed(const SceneContextT& context, const SamplerT& sampler_proto, const std::string& output_path,
+                           bool is_trace_ray_differential, const RenderObserver& observer, int spp) {
         auto resolution = context.film.resolution();
         std::cout << "Starting render: " << resolution.x() << "x" << resolution.y() << " pixels, SPP=" << spp
                   << std::endl;
@@ -82,7 +109,11 @@ protected:
             }
 
             for (int x = 0; x < resolution.x(); ++x) {
-                Sampler sampler;
+                const std::uint64_t pixel_stream_id =
+                    static_cast<std::uint64_t>(y) * static_cast<std::uint64_t>(resolution.x()) +
+                    static_cast<std::uint64_t>(x);
+                SamplerT sampler = sampler_proto.clone(pixel_stream_id);
+
                 for (int s = 0; s < spp; ++s) {
                     // Generate camera ray
                     const math::Point<int, 2> pixel(x, y);
@@ -126,21 +157,21 @@ protected:
     }
 
 private:
-    template <typename SceneContextT>
+    template <typename SamplerT, typename SceneContextT>
         requires RenderLoopContextConcept<SceneContextT, T, N>
     radiometry::SampledSpectrum<T, N> Li_ray(const SceneContextT& context, const geometry::Ray<T, 3>& ray,
                                              const radiometry::SampledWavelength<T, N>& wavelength_sample,
-                                             Sampler& sampler) {
-        return as_derived().Li_ray_impl(context, ray, wavelength_sample, sampler);
+                                             SamplerT& sampler) {
+        return as_derived().template Li_ray_impl<SamplerT>(context, ray, wavelength_sample, sampler);
     }
 
-    template <typename SceneContextT>
+    template <typename SamplerT, typename SceneContextT>
         requires RenderLoopContextConcept<SceneContextT, T, N>
     radiometry::SampledSpectrum<T, N> Li_ray_differential(const SceneContextT& context,
                                                           const geometry::RayDifferential<T, 3>& ray_diff,
                                                           const radiometry::SampledWavelength<T, N>& wavelength_sample,
-                                                          Sampler& sampler) {
-        return as_derived().Li_ray_differential_impl(context, ray_diff, wavelength_sample, sampler);
+                                                          SamplerT& sampler) {
+        return as_derived().template Li_ray_differential_impl<SamplerT>(context, ray_diff, wavelength_sample, sampler);
     }
 };
 

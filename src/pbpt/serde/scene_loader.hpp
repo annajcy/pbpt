@@ -9,6 +9,7 @@
 #include <pugixml.hpp>
 
 #include "pbpt/scene/scene.hpp"
+#include "pbpt/serde/xml_result.hpp"
 #include "pbpt/serde/context.hpp"
 #include "pbpt/aggregate/plugin/aggregate/embree_aggregate.hpp"
 #include "pbpt/serde/dispatch.hpp"
@@ -21,11 +22,12 @@ template <typename T>
 void parse_texture_node(const pugi::xml_node& node, LoadContext<T>& ctx) {
     const std::string type = node.attribute("type").value();
     const std::string id = node.attribute("id").value();
-    if (id.empty())
-        return;
+    if (id.empty()) {
+        throw std::runtime_error("texture node missing required id (type=" + type + ")");
+    }
 
     auto tex = dispatch_load_texture<T, TextureSerdeList<T>>(type, node, ctx);
-    ctx.scene.resources.reflectance_texture_library.add_item(id, std::move(tex));
+    ctx.result.scene.resources.reflectance_texture_library.add_item(id, std::move(tex));
 }
 
 template <typename T>
@@ -34,7 +36,7 @@ void parse_bsdf(const pugi::xml_node& node, LoadContext<T>& ctx) {
     const std::string id = node.attribute("id").value();
 
     auto mat = dispatch_load_material<T, MaterialSerdeList<T>>(type, node, ctx);
-    ctx.scene.resources.any_material_library.add_item(id, std::move(mat));
+    ctx.result.scene.resources.any_material_library.add_item(id, std::move(mat));
 }
 
 template <typename T>
@@ -79,15 +81,15 @@ std::vector<shape::Primitive<T>> build_primitives_from_resources(const scene::Re
 }
 
 template <typename T>
-scene::Scene<T> load_scene(const std::string& filename) {
+PbptXmlResult<T> load_scene(const std::string& filename) {
     pugi::xml_document doc;
     if (pugi::xml_parse_result r = doc.load_file(filename.c_str()); !r) {
         throw std::runtime_error(std::string("load_scene XML error: ") + r.description());
     }
 
-    scene::Scene<T> scene;
+    PbptXmlResult<T> result;
     pugi::xml_node root = doc.child("scene");
-    LoadContext<T> ctx(scene, std::filesystem::path(filename).parent_path());
+    LoadContext<T> ctx(result, std::filesystem::path(filename).parent_path());
 
     // parse XML -> load integrator -> load sensor/camera + sampler -> load textures -> load bsdfs -> load shapes
     auto integrator_node = root.child("integrator");
@@ -97,10 +99,10 @@ scene::Scene<T> load_scene(const std::string& filename) {
     }
 
     auto sensor_node = root.child("sensor");
-    const ValueCodecReadEnv<T> root_read_env{ctx.scene.resources, ctx.base_path};
+    const ValueCodecReadEnv<T> root_read_env{ctx.result.scene.resources, ctx.base_path};
     if (sensor_node) {
         if (auto tf = sensor_node.child("transform")) {
-            scene.render_transform = ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env);
+            result.scene.render_transform = ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env);
         }
     }
 
@@ -125,10 +127,10 @@ scene::Scene<T> load_scene(const std::string& filename) {
         parse_shape(node, ctx);
     }
 
-    auto primitives = build_primitives_from_resources<T>(scene.resources);
-    scene.aggregate = aggregate::EmbreeAggregate<T>(std::move(primitives));
+    auto primitives = build_primitives_from_resources<T>(result.scene.resources);
+    result.scene.aggregate = aggregate::EmbreeAggregate<T>(std::move(primitives));
 
-    return scene;
+    return result;
 }
 
 }  // namespace pbpt::serde

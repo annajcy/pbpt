@@ -25,8 +25,7 @@
 namespace {
 
 template <typename T>
-void expect_matrix_equal(const pbpt::math::Matrix<T, 4, 4>& a, const pbpt::math::Matrix<T, 4, 4>& b,
-                        T eps = T(1e-9)) {
+void expect_matrix_equal(const pbpt::math::Matrix<T, 4, 4>& a, const pbpt::math::Matrix<T, 4, 4>& b, T eps = T(1e-9)) {
     for (int row = 0; row < 4; ++row) {
         for (int col = 0; col < 4; ++col) {
             EXPECT_NEAR(a.at(row, col), b.at(row, col), eps);
@@ -35,7 +34,7 @@ void expect_matrix_equal(const pbpt::math::Matrix<T, 4, 4>& a, const pbpt::math:
 }
 
 pbpt::serde::ValueCodecReadEnv<double> make_read_env(const std::filesystem::path& base_path,
-                                                        const pbpt::scene::RenderResources<double>& resources) {
+                                                     const pbpt::scene::RenderResources<double>& resources) {
     return pbpt::serde::ValueCodecReadEnv<double>{resources, base_path};
 }
 
@@ -55,7 +54,8 @@ TEST(SceneSerdeComponents, TransformSerdeRoundTripMatrixText) {
     const auto read_env = make_read_env(std::filesystem::current_path(), resources);
     const auto write_env = make_write_env(resources);
 
-    const auto parsed = pbpt::serde::ValueCodec<double, pbpt::geometry::Transform<double>>::parse_node(transform, read_env);
+    const auto parsed =
+        pbpt::serde::ValueCodec<double, pbpt::geometry::Transform<double>>::parse_node(transform, read_env);
     const auto text = pbpt::serde::ValueCodec<double, pbpt::geometry::Transform<double>>::write_text(parsed, write_env);
 
     pugi::xml_document doc2;
@@ -104,10 +104,12 @@ TEST(SceneSerdeComponents, SpectrumSerdeRoundTripInlineValue) {
     const auto read_env = make_read_env(std::filesystem::current_path(), resources);
     const auto write_env = make_write_env(resources);
 
-    const auto parsed = pbpt::serde::ValueCodec<double, pbpt::radiometry::PiecewiseLinearSpectrumDistribution<double>>
-                            ::parse_text("400:0.2, 500:0.3, 600:0.4", read_env);
-    const auto text = pbpt::serde::ValueCodec<double, pbpt::radiometry::PiecewiseLinearSpectrumDistribution<double>>
-                          ::write_text(parsed, write_env);
+    const auto parsed =
+        pbpt::serde::ValueCodec<double, pbpt::radiometry::PiecewiseLinearSpectrumDistribution<double>>::parse_text(
+            "400:0.2, 500:0.3, 600:0.4", read_env);
+    const auto text =
+        pbpt::serde::ValueCodec<double, pbpt::radiometry::PiecewiseLinearSpectrumDistribution<double>>::write_text(
+            parsed, write_env);
     const auto reparsed = pbpt::radiometry::PiecewiseLinearSpectrumDistribution<double>::from_string(text);
 
     const auto& p0 = parsed.points();
@@ -124,8 +126,9 @@ TEST(SceneSerdeComponents, SpectrumSerdeThrowsOnMissingCsv) {
     const auto read_env = make_read_env(std::filesystem::current_path(), resources);
 
     auto parse_missing_spectrum_csv = [&] {
-        (void)pbpt::serde::ValueCodec<double, pbpt::radiometry::PiecewiseLinearSpectrumDistribution<double>>::parse_text(
-            "file:this_file_should_not_exist.csv", read_env);
+        (void)
+            pbpt::serde::ValueCodec<double, pbpt::radiometry::PiecewiseLinearSpectrumDistribution<double>>::parse_text(
+                "file:this_file_should_not_exist.csv", read_env);
     };
     EXPECT_THROW(parse_missing_spectrum_csv(), std::runtime_error);
 }
@@ -175,7 +178,8 @@ TEST(SceneSerdeComponents, MicrofacetSerdeDefaultsToAlphaPointOne) {
     pbpt::scene::RenderResources<double> resources{};
     const auto read_env = make_read_env(std::filesystem::current_path(), resources);
 
-    const auto model = pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::parse_node(bsdf, read_env);
+    const auto model =
+        pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::parse_node(bsdf, read_env);
     EXPECT_NEAR(model.alpha_x(), 0.1, 1e-9);
     EXPECT_NEAR(model.alpha_y(), 0.1, 1e-9);
 }
@@ -217,9 +221,9 @@ static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::LdsSamplerSerde<floa
 static_assert(pbpt::serde::ValueSerdeConcept<float, pbpt::serde::BitmapTextureSerde<float>>);
 static_assert(pbpt::serde::ValueSerdeConcept<float, pbpt::serde::DiffuseMaterialSerde<float>>);
 static_assert(pbpt::serde::ShapeSerdeConcept<float, pbpt::serde::ObjShapeSerde<float>>);
-static_assert(pbpt::serde::SceneSerdeConcept<float, pbpt::serde::PerspectiveCameraSerde<float>>);
-static_assert(pbpt::serde::SceneSerdeConcept<float, pbpt::serde::PathIntegratorSerde<float>>);
-static_assert(pbpt::serde::SceneSerdeConcept<float, pbpt::serde::LdsSamplerSerde<float>>);
+static_assert(pbpt::serde::CameraSerdeConcept<float, pbpt::serde::PerspectiveCameraSerde<float>>);
+static_assert(pbpt::serde::IntegratorSerdeConcept<float, pbpt::serde::PathIntegratorSerde<float>>);
+static_assert(pbpt::serde::SamplerSerdeConcept<float, pbpt::serde::LdsSamplerSerde<float>>);
 
 }  // namespace
 

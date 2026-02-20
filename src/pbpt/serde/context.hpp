@@ -4,23 +4,20 @@
 #include <string>
 #include <unordered_map>
 
-#include "pbpt/scene/scene.hpp"
+#include "pbpt/serde/xml_result.hpp"
 
 namespace pbpt::serde {
 
 template <typename T>
 struct LoadContext {
-    scene::Scene<T>& scene;
+    PbptXmlResult<T>& result;
     std::filesystem::path base_path;
-
-    LoadContext(scene::Scene<T>& scene_ref, const std::filesystem::path& path) : scene(scene_ref), base_path(path) {}
-
     std::string resolve_path(const std::string& rel_path) const { return (base_path / rel_path).string(); }
 };
 
 template <typename T>
 struct WriteContext {
-    const scene::Scene<T>& scene;
+    const PbptXmlResult<T>& result;
     std::filesystem::path scene_dir;
     std::filesystem::path mesh_dir;
     std::filesystem::path texture_dir;

@@ -30,17 +30,17 @@ struct DiffuseMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto spectrum_value = find_child_value(node, "spectrum", "reflectance");
         auto rgb_value = find_child_value(node, "rgb", "reflectance");
         auto reflectance_ref = parse_named_ref(node, "reflectance");
 
         if (reflectance_ref) {
-            if (ctx.scene.resources.reflectance_texture_library.name_to_id().contains(*reflectance_ref)) {
-                int tex_id = ctx.scene.resources.reflectance_texture_library.name_to_id().at(*reflectance_ref);
+            if (ctx.result.scene.resources.reflectance_texture_library.name_to_id().contains(*reflectance_ref)) {
+                int tex_id = ctx.result.scene.resources.reflectance_texture_library.name_to_id().at(*reflectance_ref);
                 return material::LambertianMaterial<T>(tex_id,
-                                                       ctx.scene.resources.reflectance_texture_library.get(*reflectance_ref));
+                                                       ctx.result.scene.resources.reflectance_texture_library.get(*reflectance_ref));
             }
             throw std::runtime_error("Unknown reflectance texture reference: " + *reflectance_ref);
         }
@@ -55,15 +55,15 @@ struct DiffuseMaterialSerde {
             const auto rgb = ValueCodec<T, radiometry::RGB<T>>::parse_text(*rgb_value, read_env);
             spectrum = srgb_rgb_to_piecewise<T>(rgb);
         }
-        ctx.scene.resources.reflectance_spectrum_library.add_item(spec_name, std::move(spectrum));
+        ctx.result.scene.resources.reflectance_spectrum_library.add_item(spec_name, std::move(spectrum));
 
-        return material::LambertianMaterial<T>(ctx.scene.resources.reflectance_spectrum_library.get(spec_name));
+        return material::LambertianMaterial<T>(ctx.result.scene.resources.reflectance_spectrum_library.get(spec_name));
     }
 
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -80,10 +80,10 @@ struct DiffuseMaterialSerde {
                     reflectance_node.append_attribute("value") = text.c_str();
                 } else {
                     int tex_id = mat.texture_id();
-                    if (!ctx.scene.resources.reflectance_texture_library.id_to_name().contains(tex_id)) {
+                    if (!ctx.result.scene.resources.reflectance_texture_library.id_to_name().contains(tex_id)) {
                         throw std::runtime_error("Lambertian texture id not found in library: " + id);
                     }
-                    const auto& tex_name = ctx.scene.resources.reflectance_texture_library.id_to_name().at(tex_id);
+                    const auto& tex_name = ctx.result.scene.resources.reflectance_texture_library.id_to_name().at(tex_id);
                     auto reflectance_ref = node.append_child("ref");
                     reflectance_ref.append_attribute("name") = "reflectance";
                     reflectance_ref.append_attribute("id") = tex_name.c_str();
@@ -102,7 +102,7 @@ struct DielectricMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
         if (!eta_opt)
@@ -138,7 +138,7 @@ struct DielectricSpecularMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
         if (!eta_opt)
@@ -167,7 +167,7 @@ struct DielectricRoughMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
         if (!eta_opt)
@@ -203,7 +203,7 @@ struct ConductorMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto eta_value = find_child_value(node, "spectrum", "eta");
         if (!eta_value)
@@ -234,7 +234,7 @@ struct ConductorMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -266,7 +266,7 @@ struct ConductorSpecularMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto eta_value = find_child_value(node, "spectrum", "eta");
         if (!eta_value)
@@ -296,7 +296,7 @@ struct ConductorSpecularMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -322,7 +322,7 @@ struct ConductorRoughMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto eta_value = find_child_value(node, "spectrum", "eta");
         if (!eta_value)
@@ -353,7 +353,7 @@ struct ConductorRoughMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();

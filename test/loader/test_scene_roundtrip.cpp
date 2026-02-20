@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <string>
 #include <type_traits>
+#include <variant>
 
 #include <gtest/gtest.h>
 
@@ -41,6 +42,19 @@ struct TempDir {
     }
 };
 
+struct ScopedCurrentPath {
+    std::filesystem::path old_path{};
+
+    explicit ScopedCurrentPath(const std::filesystem::path& new_path) : old_path(std::filesystem::current_path()) {
+        std::filesystem::current_path(new_path);
+    }
+
+    ~ScopedCurrentPath() {
+        std::error_code ec;
+        std::filesystem::current_path(old_path, ec);
+    }
+};
+
 template <typename T>
 const pbpt::camera::ThinLensPerspectiveCamera<T>& get_thin_lens_camera(const pbpt::scene::Scene<T>& scene) {
     const auto* camera = std::get_if<pbpt::camera::ThinLensPerspectiveCamera<T>>(&scene.camera);
@@ -65,11 +79,10 @@ void expect_camera_equal(const pbpt::scene::Scene<T>& lhs, const pbpt::scene::Sc
 }
 
 template <typename T>
-void expect_serialization_meta_equal(const pbpt::scene::Scene<T>& lhs, const pbpt::scene::Scene<T>& rhs) {
-    EXPECT_EQ(lhs.serialization_meta.integrator_type, rhs.serialization_meta.integrator_type);
-    EXPECT_EQ(lhs.serialization_meta.camera_type, rhs.serialization_meta.camera_type);
-    EXPECT_EQ(lhs.serialization_meta.sampler_type, rhs.serialization_meta.sampler_type);
-    EXPECT_EQ(lhs.serialization_meta.sample_count, rhs.serialization_meta.sample_count);
+void expect_integrator_params_equal(const pbpt::serde::PbptXmlResult<T>& lhs,
+                                    const pbpt::serde::PbptXmlResult<T>& rhs) {
+    ASSERT_EQ(lhs.integrator.index(), rhs.integrator.index());
+    EXPECT_EQ(lhs.spp, rhs.spp);
 }
 
 template <typename T>
@@ -128,8 +141,8 @@ void expect_material_equal(const pbpt::material::AnyMaterial<T>& m0, const pbpt:
 }
 
 template <typename T>
-pbpt::scene::Scene<T> roundtrip_scene(const std::filesystem::path& input_scene, const TempDir& temp_dir,
-                                      const std::string& output_name) {
+pbpt::serde::PbptXmlResult<T> roundtrip_result(const std::filesystem::path& input_scene, const TempDir& temp_dir,
+                                               const std::string& output_name) {
     const auto loaded = pbpt::serde::load_scene<T>(input_scene.string());
     const auto out_path = temp_dir.path / output_name;
     pbpt::serde::write_scene(loaded, out_path.string());
@@ -144,16 +157,17 @@ TEST(SceneRoundTrip, DiffuseScene) {
 
     TempDir temp_dir("diffuse");
     const auto original = pbpt::serde::load_scene<double>(scene_path.string());
-    const auto reloaded = roundtrip_scene<double>(scene_path, temp_dir, "cbox_roundtrip.xml");
+    const auto reloaded = roundtrip_result<double>(scene_path, temp_dir, "cbox_roundtrip.xml");
 
-    EXPECT_EQ(original.resources.mesh_library.size(), reloaded.resources.mesh_library.size());
-    EXPECT_EQ(original.resources.any_material_library.size(), reloaded.resources.any_material_library.size());
-    expect_camera_equal(original, reloaded);
-    expect_serialization_meta_equal(original, reloaded);
+    EXPECT_EQ(original.scene.resources.mesh_library.size(), reloaded.scene.resources.mesh_library.size());
+    EXPECT_EQ(original.scene.resources.any_material_library.size(),
+              reloaded.scene.resources.any_material_library.size());
+    expect_camera_equal(original.scene, reloaded.scene);
+    expect_integrator_params_equal(original, reloaded);
 
-    ASSERT_TRUE(original.resources.reflectance_spectrum_library.name_to_id().contains("cbox_luminaire_emission"));
-    ASSERT_TRUE(reloaded.resources.reflectance_spectrum_library.name_to_id().contains("cbox_luminaire_emission"));
-    expect_emission_spectrum_equal(original, reloaded, "cbox_luminaire_emission");
+    ASSERT_TRUE(original.scene.resources.reflectance_spectrum_library.name_to_id().contains("cbox_luminaire_emission"));
+    ASSERT_TRUE(reloaded.scene.resources.reflectance_spectrum_library.name_to_id().contains("cbox_luminaire_emission"));
+    expect_emission_spectrum_equal(original.scene, reloaded.scene, "cbox_luminaire_emission");
 }
 
 TEST(SceneRoundTrip, TextureScene) {
@@ -162,20 +176,21 @@ TEST(SceneRoundTrip, TextureScene) {
 
     TempDir temp_dir("texture");
     const auto original = pbpt::serde::load_scene<double>(scene_path.string());
-    const auto reloaded = roundtrip_scene<double>(scene_path, temp_dir, "cbox_checkerboard_roundtrip.xml");
+    const auto reloaded = roundtrip_result<double>(scene_path, temp_dir, "cbox_checkerboard_roundtrip.xml");
 
-    EXPECT_EQ(original.resources.reflectance_texture_library.size(), reloaded.resources.reflectance_texture_library.size());
+    EXPECT_EQ(original.scene.resources.reflectance_texture_library.size(),
+              reloaded.scene.resources.reflectance_texture_library.size());
 
-    for (const auto& [name, id0] : original.resources.reflectance_texture_library.name_to_id()) {
-        ASSERT_TRUE(reloaded.resources.reflectance_texture_library.name_to_id().contains(name));
-        const int id1 = reloaded.resources.reflectance_texture_library.name_to_id().at(name);
-        const auto& t0 = original.resources.reflectance_texture_library.get(id0);
-        const auto& t1 = reloaded.resources.reflectance_texture_library.get(id1);
+    for (const auto& [name, id0] : original.scene.resources.reflectance_texture_library.name_to_id()) {
+        ASSERT_TRUE(reloaded.scene.resources.reflectance_texture_library.name_to_id().contains(name));
+        const int id1 = reloaded.scene.resources.reflectance_texture_library.name_to_id().at(name);
+        const auto& t0 = original.scene.resources.reflectance_texture_library.get(id0);
+        const auto& t1 = reloaded.scene.resources.reflectance_texture_library.get(id1);
         EXPECT_EQ(t0.index(), t1.index());
     }
 
-    expect_camera_equal(original, reloaded);
-    expect_serialization_meta_equal(original, reloaded);
+    expect_camera_equal(original.scene, reloaded.scene);
+    expect_integrator_params_equal(original, reloaded);
 }
 
 TEST(SceneRoundTrip, MicrofacetScene) {
@@ -184,18 +199,48 @@ TEST(SceneRoundTrip, MicrofacetScene) {
 
     TempDir temp_dir("microfacet");
     const auto original = pbpt::serde::load_scene<double>(scene_path.string());
-    const auto reloaded = roundtrip_scene<double>(scene_path, temp_dir, "cbox_microfacet_roundtrip.xml");
+    const auto reloaded = roundtrip_result<double>(scene_path, temp_dir, "cbox_microfacet_roundtrip.xml");
 
-    EXPECT_EQ(original.resources.any_material_library.size(), reloaded.resources.any_material_library.size());
+    EXPECT_EQ(original.scene.resources.any_material_library.size(),
+              reloaded.scene.resources.any_material_library.size());
 
-    for (const auto& [name, id0] : original.resources.any_material_library.name_to_id()) {
-        ASSERT_TRUE(reloaded.resources.any_material_library.name_to_id().contains(name));
-        const int id1 = reloaded.resources.any_material_library.name_to_id().at(name);
-        const auto& m0 = original.resources.any_material_library.get(id0);
-        const auto& m1 = reloaded.resources.any_material_library.get(id1);
+    for (const auto& [name, id0] : original.scene.resources.any_material_library.name_to_id()) {
+        ASSERT_TRUE(reloaded.scene.resources.any_material_library.name_to_id().contains(name));
+        const int id1 = reloaded.scene.resources.any_material_library.name_to_id().at(name);
+        const auto& m0 = original.scene.resources.any_material_library.get(id0);
+        const auto& m1 = reloaded.scene.resources.any_material_library.get(id1);
         expect_material_equal(m0, m1);
     }
 
-    expect_camera_equal(original, reloaded);
-    expect_serialization_meta_equal(original, reloaded);
+    expect_camera_equal(original.scene, reloaded.scene);
+    expect_integrator_params_equal(original, reloaded);
+}
+
+TEST(SceneRoundTrip, WriteSceneWithFilenameOnly) {
+    const auto repo = find_repo_root();
+    const auto scene_path = repo / "asset/scene/cbox/cbox.xml";
+    const auto loaded = pbpt::serde::load_scene<double>(scene_path.string());
+
+    TempDir temp_dir("filename_only_writer");
+    {
+        ScopedCurrentPath cwd_guard(temp_dir.path);
+        EXPECT_NO_THROW(pbpt::serde::write_scene(loaded, "out.xml"));
+    }
+
+    EXPECT_TRUE(std::filesystem::exists(temp_dir.path / "out.xml"));
+}
+
+TEST(SceneRoundTrip, SppRoundTrip) {
+    const auto repo = find_repo_root();
+    const auto scene_path = repo / "asset/scene/cbox/cbox.xml";
+
+    auto loaded = pbpt::serde::load_scene<double>(scene_path.string());
+    loaded.spp = 16;
+
+    TempDir temp_dir("spp_roundtrip");
+    const auto out_path = temp_dir.path / "cbox_spp_roundtrip.xml";
+    pbpt::serde::write_scene(loaded, out_path.string());
+
+    const auto reloaded = pbpt::serde::load_scene<double>(out_path.string());
+    EXPECT_EQ(reloaded.spp, 16);
 }

@@ -40,14 +40,6 @@ inline MeshTriangleKey make_mesh_triangle_key(const std::string& mesh_name, int 
 }
 
 template <typename T>
-struct SceneSerializationMeta {
-    std::string integrator_type{"path"};
-    std::string camera_type{"perspective"};
-    std::string sampler_type{"ldsampler"};
-    int sample_count{4};
-};
-
-template <typename T>
 struct ShapeInstanceRecord {
     std::string shape_id;
     std::string shape_type;
@@ -109,8 +101,6 @@ struct Scene {
 
     // 场景几何与材质
     RenderResources<T> resources;
-
-    SceneSerializationMeta<T> serialization_meta;
 };
 
 }  // namespace pbpt::scene

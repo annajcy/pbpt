@@ -25,7 +25,7 @@ struct BitmapTextureSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         auto filename = find_child_value(node, "string", "filename");
         if (!filename) {
@@ -43,7 +43,7 @@ struct BitmapTextureSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& tex = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -80,7 +80,7 @@ struct CheckerboardTextureSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         const auto color0_text = find_child_value(node, "rgb", "color0").value_or("0");
         const auto color1_text = find_child_value(node, "rgb", "color1").value_or("1");
@@ -98,7 +98,7 @@ struct CheckerboardTextureSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& tex = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();

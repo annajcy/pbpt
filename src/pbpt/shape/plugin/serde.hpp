@@ -79,7 +79,7 @@ struct ObjShapeSerde {
     using write_target = ShapeWriteTarget<T>;
 
     static load_result load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
         const std::string filename = find_child_value(node, "string", "filename").value_or("");
         if (filename.empty())
@@ -99,8 +99,8 @@ struct ObjShapeSerde {
         if (shape_id.empty())
             shape_id = name;
 
-        ctx.scene.resources.mesh_library.add_item(
-            name, shape::TriangleMesh<T>(ctx.scene.render_transform, abs_path, false, obj_to_world));
+        ctx.result.scene.resources.mesh_library.add_item(
+            name, shape::TriangleMesh<T>(ctx.result.scene.render_transform, abs_path, false, obj_to_world));
 
         scene::ShapeInstanceRecord<T> record;
         record.shape_id = shape_id;
@@ -111,14 +111,14 @@ struct ObjShapeSerde {
         auto ref_node = node.child("ref");
         if (ref_node) {
             std::string mat_id = find_first_reference_id(node).value_or("");
-            auto& lib = ctx.scene.resources.any_material_library;
+            auto& lib = ctx.result.scene.resources.any_material_library;
             if (mat_id.empty()) {
                 throw std::runtime_error("shape mesh reference has empty material id: " + shape_id);
             }
             if (!lib.name_to_id().contains(mat_id)) {
                 throw std::runtime_error("Unknown material reference: " + mat_id + " for shape " + shape_id);
             }
-            ctx.scene.resources.mesh_material_map[name] = lib.name_to_id().at(mat_id);
+            ctx.result.scene.resources.mesh_material_map[name] = lib.name_to_id().at(mat_id);
             record.material_ref_name = mat_id;
         }
 
@@ -127,36 +127,36 @@ struct ObjShapeSerde {
             const auto radiance_str = find_child_value(emitter_node, "spectrum", "radiance").value_or("");
 
             std::string spec_name = name + "_emission";
-            ctx.scene.resources.reflectance_spectrum_library.add_item(
+            ctx.result.scene.resources.reflectance_spectrum_library.add_item(
                 spec_name, ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::parse_text(
                                radiance_str, read_env));
             record.emission_spectrum_name = spec_name;
 
-            const auto& emission_spec = ctx.scene.resources.reflectance_spectrum_library.get(spec_name);
+            const auto& emission_spec = ctx.result.scene.resources.reflectance_spectrum_library.get(spec_name);
             auto light_spectrum_dist =
                 radiometry::StandardEmissionSpectrum<T>(emission_spec, radiometry::constant::CIE_D65_ilum<T>);
 
-            const auto& mesh = ctx.scene.resources.mesh_library.get(name);
+            const auto& mesh = ctx.result.scene.resources.mesh_library.get(name);
             for (int i = 0; i < mesh.triangle_count(); ++i) {
                 std::string light_name = std::format("{}_{}", name, i);
                 auto al = light::AreaLight<T, shape::Triangle<T>, decltype(light_spectrum_dist)>(
                     shape::Triangle<T>(mesh, i), light_spectrum_dist, light::AreaLightSamplingDomain::Shape);
-                int lid = ctx.scene.resources.any_light_library.add_item(light_name, std::move(al));
-                ctx.scene.resources.mesh_light_map[scene::make_mesh_triangle_key(name, i)] = lid;
+                int lid = ctx.result.scene.resources.any_light_library.add_item(light_name, std::move(al));
+                ctx.result.scene.resources.mesh_light_map[scene::make_mesh_triangle_key(name, i)] = lid;
             }
         }
 
-        ctx.scene.resources.shape_instances.push_back(std::move(record));
+        ctx.result.scene.resources.shape_instances.push_back(std::move(record));
     }
 
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& record = target.record;
-        const ValueCodecWriteEnv<T> write_env{ctx.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("type") = xml_type.data();
         node.append_attribute("id") = record.shape_id.c_str();
 
-        const auto& mesh = ctx.scene.resources.mesh_library.get(record.mesh_name);
+        const auto& mesh = ctx.result.scene.resources.mesh_library.get(record.mesh_name);
         const auto obj_path = ctx.mesh_dir / (record.mesh_name + ".obj");
         write_mesh_obj(mesh, obj_path);
 
@@ -180,7 +180,7 @@ struct ObjShapeSerde {
             auto radiance = emitter.append_child("spectrum");
             radiance.append_attribute("name") = "radiance";
             const auto spectrum_text = ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::write_text(
-                ctx.scene.resources.reflectance_spectrum_library.get(record.emission_spectrum_name.value()), write_env);
+                ctx.result.scene.resources.reflectance_spectrum_library.get(record.emission_spectrum_name.value()), write_env);
             radiance.append_attribute("value") = spectrum_text.c_str();
         }
     }

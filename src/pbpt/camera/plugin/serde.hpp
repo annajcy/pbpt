@@ -19,23 +19,20 @@ template <typename T>
 struct PerspectiveCameraSerde {
     static constexpr std::string_view domain = "camera";
     static constexpr std::string_view xml_type = "perspective";
+    using value_type = camera::ThinLensPerspectiveCamera<T>;
     using load_result = void;
-    using write_target = SceneWriteTarget<T>;
+    using write_target = ValueWriteTarget<value_type>;
 
     static load_result load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        auto& scene = ctx.scene;
+        auto& scene = ctx.result.scene;
         const ValueCodecReadEnv<T> read_env{scene.resources, ctx.base_path};
 
-        scene.serialization_meta.camera_type = std::string(xml_type);
         const float fov = parse_child_value<T, float>(node, "float", "fov", read_env).value_or(0.f);
-        const auto axis_str = parse_child_value<T, std::string>(node, "string", "fovAxis", read_env)
-                                  .value_or("smaller");
-        const float focus_d = parse_child_value<T, float>(node, "float", "focusDistance", read_env)
-                                  .value_or(0.f);
-        const float near_clip =
-            -parse_child_value<T, float>(node, "float", "nearClip", read_env).value_or(0.1f);
-        const float far_clip =
-            -parse_child_value<T, float>(node, "float", "farClip", read_env).value_or(10000.0f);
+        const auto axis_str =
+            parse_child_value<T, std::string>(node, "string", "fovAxis", read_env).value_or("smaller");
+        const float focus_d = parse_child_value<T, float>(node, "float", "focusDistance", read_env).value_or(0.f);
+        const float near_clip = -parse_child_value<T, float>(node, "float", "nearClip", read_env).value_or(0.1f);
+        const float far_clip = -parse_child_value<T, float>(node, "float", "farClip", read_env).value_or(10000.0f);
 
         int width = 512, height = 512;
         if (auto film_node = node.child("film")) {
@@ -61,44 +58,39 @@ struct PerspectiveCameraSerde {
     }
 
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
-        const auto& scene = target.scene;
-        const ValueCodecWriteEnv<T> write_env{scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir};
+        const auto& cam = target.value;
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.mesh_dir, ctx.texture_dir};
 
         node.append_attribute("type") = xml_type.data();
 
-        const auto* cam = std::get_if<camera::ThinLensPerspectiveCamera<T>>(&scene.camera);
-        if (!cam) {
-            throw std::runtime_error("write_scene currently only supports ThinLensPerspectiveCamera.");
-        }
-
         auto fov_node = node.append_child("float");
         fov_node.append_attribute("name") = "fov";
-        fov_node.append_attribute("value") = cam->fov_degrees();
+        fov_node.append_attribute("value") = cam.fov_degrees();
 
-        const auto fov_axis_str = camera::fov_axis_to_string(cam->fov_axis());
+        const auto fov_axis_str = camera::fov_axis_to_string(cam.fov_axis());
         auto fov_axis_node = node.append_child("string");
         fov_axis_node.append_attribute("name") = "fovAxis";
         fov_axis_node.append_attribute("value") = fov_axis_str.c_str();
 
         auto near_node = node.append_child("float");
         near_node.append_attribute("name") = "nearClip";
-        near_node.append_attribute("value") = -cam->near_clip();
+        near_node.append_attribute("value") = -cam.near_clip();
 
         auto far_node = node.append_child("float");
         far_node.append_attribute("name") = "farClip";
-        far_node.append_attribute("value") = -cam->far_clip();
+        far_node.append_attribute("value") = -cam.far_clip();
 
         auto fd_node = node.append_child("float");
         fd_node.append_attribute("name") = "focusDistance";
-        fd_node.append_attribute("value") = cam->focal_distance();
+        fd_node.append_attribute("value") = cam.focal_distance();
 
         auto transform = node.append_child("transform");
         transform.append_attribute("name") = "toWorld";
-        const auto mat_text = ValueCodec<T, geometry::Transform<T>>::write_text(
-            scene.render_transform.camera_to_world(), write_env);
+        const auto mat_text =
+            ValueCodec<T, geometry::Transform<T>>::write_text(ctx.result.scene.render_transform.camera_to_world(), write_env);
         transform.append_child("matrix").append_attribute("value") = mat_text.c_str();
 
-        const auto res = cam->film_resolution();
+        const auto res = cam.film_resolution();
         auto film = node.append_child("film");
         film.append_attribute("type") = "hdrfilm";
         auto w = film.append_child("integer");

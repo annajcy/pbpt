@@ -63,13 +63,13 @@ TEST(SceneLoaderReflectanceRgbTest, LoadsDiffuseRgbReflectanceAsLambertian) {
   </shape>
 </scene>)XML");
 
-    const auto scene = pbpt::serde::load_scene<double>(xml_path.string());
+    const auto result = pbpt::serde::load_scene<double>(xml_path.string());
 
-    ASSERT_TRUE(scene.resources.any_material_library.name_to_id().contains("mat_rgb"));
-    const auto& material = scene.resources.any_material_library.get("mat_rgb");
+    ASSERT_TRUE(result.scene.resources.any_material_library.name_to_id().contains("mat_rgb"));
+    const auto& material = result.scene.resources.any_material_library.get("mat_rgb");
     EXPECT_TRUE((std::holds_alternative<pbpt::material::LambertianMaterial<double>>(material)));
 
-    const auto& reflectance = scene.resources.reflectance_spectrum_library.get("mat_rgb_reflectance");
+    const auto& reflectance = result.scene.resources.reflectance_spectrum_library.get("mat_rgb_reflectance");
     const double s360 = reflectance.at(360.0);
     const double s600 = reflectance.at(600.0);
     const double s830 = reflectance.at(830.0);
@@ -100,8 +100,8 @@ TEST(SceneLoaderReflectanceRgbTest, DiffuseMissingReflectanceUsesConstant07Spect
   </shape>
 </scene>)XML");
 
-    const auto scene = pbpt::serde::load_scene<double>(xml_path.string());
-    const auto& reflectance = scene.resources.reflectance_spectrum_library.get("mat_default_reflectance");
+    const auto result = pbpt::serde::load_scene<double>(xml_path.string());
+    const auto& reflectance = result.scene.resources.reflectance_spectrum_library.get("mat_default_reflectance");
     EXPECT_NEAR(reflectance.at(400.0), 0.7, 1e-9);
     EXPECT_NEAR(reflectance.at(700.0), 0.7, 1e-9);
 }

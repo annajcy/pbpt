@@ -133,6 +133,81 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnsupportedType) {
     }
 }
 
+TEST(SceneLoaderFailFastTest, ThrowsOnTextureMissingId) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_texture_missing_id");
+
+    const auto xml_path = temp_dir.path / "scene_texture_missing_id.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="0.4.0">
+  <sensor type="perspective">
+    <float name="fov" value="45"/>
+  </sensor>
+  <texture type="bitmap">
+    <string name="filename" value="missing.exr"/>
+  </texture>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("id"), std::string::npos);
+        EXPECT_NE(message.find("bitmap"), std::string::npos);
+    }
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountZero) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_sampler_zero");
+
+    const auto xml_path = temp_dir.path / "scene_sampler_zero.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="0.4.0">
+  <integrator type="path"/>
+  <sensor type="perspective">
+    <float name="fov" value="45"/>
+    <sampler type="ldsampler">
+      <integer name="sampleCount" value="0"/>
+    </sampler>
+  </sensor>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("sampleCount"), std::string::npos);
+    }
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountNegative) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_sampler_negative");
+
+    const auto xml_path = temp_dir.path / "scene_sampler_negative.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="0.4.0">
+  <integrator type="path"/>
+  <sensor type="perspective">
+    <float name="fov" value="45"/>
+    <sampler type="ldsampler">
+      <integer name="sampleCount" value="-1"/>
+    </sampler>
+  </sensor>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("sampleCount"), std::string::npos);
+    }
+}
+
 TEST(SceneLoaderFailFastTest, ThrowsWhenShapeInstanceReferencesMissingMesh) {
     pbpt::scene::RenderResources<double> resources{};
     pbpt::scene::ShapeInstanceRecord<double> bad_record{};

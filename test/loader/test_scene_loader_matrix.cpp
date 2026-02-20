@@ -69,10 +69,10 @@ TEST(SceneLoaderMatrixTest, LoadsShapeMatrixTransform) {
   </shape>
 </scene>)XML");
 
-    auto scene = pbpt::serde::load_scene<double>(xml_path.string());
+    auto result = pbpt::serde::load_scene<double>(xml_path.string());
 
-    ASSERT_EQ(scene.resources.mesh_library.size(), 1u);
-    const auto& mesh = scene.resources.mesh_library.get("tri");
+    ASSERT_EQ(result.scene.resources.mesh_library.size(), 1u);
+    const auto& mesh = result.scene.resources.mesh_library.get("tri");
     const auto& positions = mesh.positions();
     ASSERT_FALSE(positions.empty());
     EXPECT_NEAR(positions[0].x(), 1.0, 1e-9);
@@ -106,8 +106,8 @@ TEST(SceneLoaderMatrixTest, LoadsSensorToWorldMatrix) {
   </shape>
 </scene>)XML");
 
-    auto scene = pbpt::serde::load_scene<double>(xml_path.string());
-    const auto camera_to_world = scene.render_transform.camera_to_world().matrix();
+    auto result = pbpt::serde::load_scene<double>(xml_path.string());
+    const auto camera_to_world = result.scene.render_transform.camera_to_world().matrix();
     EXPECT_NEAR(camera_to_world.at(0, 3), 5.0, 1e-9);
     EXPECT_NEAR(camera_to_world.at(1, 3), 6.0, 1e-9);
     EXPECT_NEAR(camera_to_world.at(2, 3), 7.0, 1e-9);

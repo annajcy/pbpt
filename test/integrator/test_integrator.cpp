@@ -6,6 +6,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "pbpt/integrator/concepts.hpp"
@@ -27,8 +28,10 @@ struct ConceptTestCamera {
         return geometry::Ray<double, 3>(math::Point<double, 3>(0.0, 0.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0));
     }
 
-    geometry::RayDifferential<double, 3> generate_differential_ray(const camera::CameraSample<double>& /*sample*/) const {
-        geometry::Ray<double, 3> main_ray(math::Point<double, 3>(0.0, 0.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0));
+    geometry::RayDifferential<double, 3> generate_differential_ray(
+        const camera::CameraSample<double>& /*sample*/) const {
+        geometry::Ray<double, 3> main_ray(math::Point<double, 3>(0.0, 0.0, 0.0),
+                                          math::Vector<double, 3>(0.0, 0.0, 1.0));
         std::array<geometry::Ray<double, 3>, 2> diffs{
             geometry::Ray<double, 3>(math::Point<double, 3>(1.0, 0.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0)),
             geometry::Ray<double, 3>(math::Point<double, 3>(0.0, 1.0, 0.0), math::Vector<double, 3>(0.0, 0.0, 1.0))};
@@ -43,7 +46,9 @@ struct ConceptTestPixelFilter {
     };
 
     FilteredSample sample_film_position(const math::Point<int, 2>& pixel, const math::Point<double, 2>& uv) const {
-        return {math::Point<double, 2>(static_cast<double>(pixel.x()) + uv.x(), static_cast<double>(pixel.y()) + uv.y()), 1.0};
+        return {
+            math::Point<double, 2>(static_cast<double>(pixel.x()) + uv.x(), static_cast<double>(pixel.y()) + uv.y()),
+            1.0};
     }
 };
 
@@ -276,15 +281,16 @@ TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic) {
     const auto output_exr_path = temp_dir.path / "tiny_scene.exr";
     (void)write_tiny_cbox_scene_xml(scene_xml_path);
 
-    auto scene = pbpt::serde::load_scene<double>(scene_xml_path.string());
-    pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
+    auto result = pbpt::serde::load_scene<double>(scene_xml_path.string());
 
     std::vector<float> progress_values;
     pbpt::integrator::RenderObserver observer{};
     observer.on_progress = [&](float progress) { progress_values.push_back(progress); };
     observer.is_cancel_requested = []() { return false; };
 
-    integrator.render(scene, 1, output_exr_path.string(), false, observer);
+    std::visit(
+        [&](auto& integrator) { integrator.render(result.scene, output_exr_path.string(), false, observer, result.spp); },
+               result.integrator);
 
     ASSERT_FALSE(progress_values.empty());
     for (std::size_t i = 0; i < progress_values.size(); ++i) {
@@ -305,8 +311,7 @@ TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
     const auto output_exr_path = temp_dir.path / "tiny_scene_canceled.exr";
     (void)write_tiny_cbox_scene_xml(scene_xml_path);
 
-    auto scene = pbpt::serde::load_scene<double>(scene_xml_path.string());
-    pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
+    auto result = pbpt::serde::load_scene<double>(scene_xml_path.string());
 
     std::atomic<bool> cancel_requested{false};
     std::size_t progress_call_count = 0;
@@ -319,8 +324,13 @@ TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
     };
     observer.is_cancel_requested = [&]() { return cancel_requested.load(); };
 
-    EXPECT_THROW(integrator.render(scene, 1, output_exr_path.string(), false, observer),
-                 pbpt::integrator::RenderCanceled);
+    EXPECT_THROW(
+        std::visit(
+            [&](auto& integrator) {
+                integrator.render(result.scene, output_exr_path.string(), false, observer, result.spp);
+            },
+            result.integrator),
+        pbpt::integrator::RenderCanceled);
     EXPECT_GT(progress_call_count, 0);
     EXPECT_FALSE(std::filesystem::exists(output_exr_path));
 }

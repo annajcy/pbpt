@@ -66,10 +66,10 @@ TEST(SceneLoaderTextureReflectanceTest, LoadsDiffuseReflectanceTextureReference)
   </shape>
 </scene>)XML");
 
-    const auto scene = pbpt::serde::load_scene<double>(xml_path.string());
-    ASSERT_TRUE(scene.resources.reflectance_texture_library.name_to_id().contains("tex_checker"));
-    ASSERT_TRUE(scene.resources.any_material_library.name_to_id().contains("mat_tex"));
-    const auto& material = scene.resources.any_material_library.get("mat_tex");
+    const auto result = pbpt::serde::load_scene<double>(xml_path.string());
+    ASSERT_TRUE(result.scene.resources.reflectance_texture_library.name_to_id().contains("tex_checker"));
+    ASSERT_TRUE(result.scene.resources.any_material_library.name_to_id().contains("mat_tex"));
+    const auto& material = result.scene.resources.any_material_library.get("mat_tex");
     EXPECT_TRUE((std::holds_alternative<pbpt::material::LambertianMaterial<double>>(material)));
 }
 
