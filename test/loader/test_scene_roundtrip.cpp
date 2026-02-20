@@ -5,7 +5,8 @@
 #include <gtest/gtest.h>
 
 #include "pbpt/camera/plugin/camera/projective_cameras.hpp"
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
+#include "pbpt/serde/scene_writer.hpp"
 #include "pbpt/material/plugin/material/material_type.hpp"
 
 namespace {
@@ -61,6 +62,14 @@ void expect_camera_equal(const pbpt::scene::Scene<T>& lhs, const pbpt::scene::Sc
     EXPECT_NEAR(a.focal_distance(), b.focal_distance(), 1e-6);
     EXPECT_EQ(a.film_resolution().x(), b.film_resolution().x());
     EXPECT_EQ(a.film_resolution().y(), b.film_resolution().y());
+}
+
+template <typename T>
+void expect_serialization_meta_equal(const pbpt::scene::Scene<T>& lhs, const pbpt::scene::Scene<T>& rhs) {
+    EXPECT_EQ(lhs.serialization_meta.integrator_type, rhs.serialization_meta.integrator_type);
+    EXPECT_EQ(lhs.serialization_meta.camera_type, rhs.serialization_meta.camera_type);
+    EXPECT_EQ(lhs.serialization_meta.sampler_type, rhs.serialization_meta.sampler_type);
+    EXPECT_EQ(lhs.serialization_meta.sample_count, rhs.serialization_meta.sample_count);
 }
 
 template <typename T>
@@ -121,10 +130,10 @@ void expect_material_equal(const pbpt::material::AnyMaterial<T>& m0, const pbpt:
 template <typename T>
 pbpt::scene::Scene<T> roundtrip_scene(const std::filesystem::path& input_scene, const TempDir& temp_dir,
                                       const std::string& output_name) {
-    const auto loaded = pbpt::loader::load_scene<T>(input_scene.string());
+    const auto loaded = pbpt::serde::load_scene<T>(input_scene.string());
     const auto out_path = temp_dir.path / output_name;
-    pbpt::loader::write_scene(loaded, out_path.string());
-    return pbpt::loader::load_scene<T>(out_path.string());
+    pbpt::serde::write_scene(loaded, out_path.string());
+    return pbpt::serde::load_scene<T>(out_path.string());
 }
 
 }  // namespace
@@ -134,12 +143,13 @@ TEST(SceneRoundTrip, DiffuseScene) {
     const auto scene_path = repo / "asset/scene/cbox/cbox.xml";
 
     TempDir temp_dir("diffuse");
-    const auto original = pbpt::loader::load_scene<double>(scene_path.string());
+    const auto original = pbpt::serde::load_scene<double>(scene_path.string());
     const auto reloaded = roundtrip_scene<double>(scene_path, temp_dir, "cbox_roundtrip.xml");
 
     EXPECT_EQ(original.resources.mesh_library.size(), reloaded.resources.mesh_library.size());
     EXPECT_EQ(original.resources.any_material_library.size(), reloaded.resources.any_material_library.size());
     expect_camera_equal(original, reloaded);
+    expect_serialization_meta_equal(original, reloaded);
 
     ASSERT_TRUE(original.resources.reflectance_spectrum_library.name_to_id().contains("cbox_luminaire_emission"));
     ASSERT_TRUE(reloaded.resources.reflectance_spectrum_library.name_to_id().contains("cbox_luminaire_emission"));
@@ -151,7 +161,7 @@ TEST(SceneRoundTrip, TextureScene) {
     const auto scene_path = repo / "asset/scene/cbox/cbox_checkerboard_texture.xml";
 
     TempDir temp_dir("texture");
-    const auto original = pbpt::loader::load_scene<double>(scene_path.string());
+    const auto original = pbpt::serde::load_scene<double>(scene_path.string());
     const auto reloaded = roundtrip_scene<double>(scene_path, temp_dir, "cbox_checkerboard_roundtrip.xml");
 
     EXPECT_EQ(original.resources.reflectance_texture_library.size(), reloaded.resources.reflectance_texture_library.size());
@@ -165,6 +175,7 @@ TEST(SceneRoundTrip, TextureScene) {
     }
 
     expect_camera_equal(original, reloaded);
+    expect_serialization_meta_equal(original, reloaded);
 }
 
 TEST(SceneRoundTrip, MicrofacetScene) {
@@ -172,7 +183,7 @@ TEST(SceneRoundTrip, MicrofacetScene) {
     const auto scene_path = repo / "asset/scene/cbox/cbox_microfacet.xml";
 
     TempDir temp_dir("microfacet");
-    const auto original = pbpt::loader::load_scene<double>(scene_path.string());
+    const auto original = pbpt::serde::load_scene<double>(scene_path.string());
     const auto reloaded = roundtrip_scene<double>(scene_path, temp_dir, "cbox_microfacet_roundtrip.xml");
 
     EXPECT_EQ(original.resources.any_material_library.size(), reloaded.resources.any_material_library.size());
@@ -186,4 +197,5 @@ TEST(SceneRoundTrip, MicrofacetScene) {
     }
 
     expect_camera_equal(original, reloaded);
+    expect_serialization_meta_equal(original, reloaded);
 }

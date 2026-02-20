@@ -2,12 +2,12 @@
 #include <vector>
 
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 #include "pbpt/scene/scene.hpp"
 
 int main() {
     pbpt::scene::Scene<double> scene =
-        pbpt::loader::load_scene<double>(
+        pbpt::serde::load_scene<double>(
             "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox_microfacet_.xml"
         );
 

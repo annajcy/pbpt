@@ -2,10 +2,10 @@
 #include <vector>
 
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 
 int main() {
-    auto scene = pbpt::loader::load_scene<double>(
+    auto scene = pbpt::serde::load_scene<double>(
         "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/white_furnace/white_furnace_dielectric_compare.xml"
     );
 

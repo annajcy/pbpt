@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 #include "pbpt/material/plugin/material/lambertian_material.hpp"
 
 namespace {
@@ -63,7 +63,7 @@ TEST(SceneLoaderReflectanceRgbTest, LoadsDiffuseRgbReflectanceAsLambertian) {
   </shape>
 </scene>)XML");
 
-    const auto scene = pbpt::loader::load_scene<double>(xml_path.string());
+    const auto scene = pbpt::serde::load_scene<double>(xml_path.string());
 
     ASSERT_TRUE(scene.resources.any_material_library.name_to_id().contains("mat_rgb"));
     const auto& material = scene.resources.any_material_library.get("mat_rgb");
@@ -100,7 +100,7 @@ TEST(SceneLoaderReflectanceRgbTest, DiffuseMissingReflectanceUsesConstant07Spect
   </shape>
 </scene>)XML");
 
-    const auto scene = pbpt::loader::load_scene<double>(xml_path.string());
+    const auto scene = pbpt::serde::load_scene<double>(xml_path.string());
     const auto& reflectance = scene.resources.reflectance_spectrum_library.get("mat_default_reflectance");
     EXPECT_NEAR(reflectance.at(400.0), 0.7, 1e-9);
     EXPECT_NEAR(reflectance.at(700.0), 0.7, 1e-9);

@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 
 namespace {
 
@@ -69,7 +69,7 @@ TEST(SceneLoaderMatrixTest, LoadsShapeMatrixTransform) {
   </shape>
 </scene>)XML");
 
-    auto scene = pbpt::loader::load_scene<double>(xml_path.string());
+    auto scene = pbpt::serde::load_scene<double>(xml_path.string());
 
     ASSERT_EQ(scene.resources.mesh_library.size(), 1u);
     const auto& mesh = scene.resources.mesh_library.get("tri");
@@ -106,7 +106,7 @@ TEST(SceneLoaderMatrixTest, LoadsSensorToWorldMatrix) {
   </shape>
 </scene>)XML");
 
-    auto scene = pbpt::loader::load_scene<double>(xml_path.string());
+    auto scene = pbpt::serde::load_scene<double>(xml_path.string());
     const auto camera_to_world = scene.render_transform.camera_to_world().matrix();
     EXPECT_NEAR(camera_to_world.at(0, 3), 5.0, 1e-9);
     EXPECT_NEAR(camera_to_world.at(1, 3), 6.0, 1e-9);
@@ -136,5 +136,5 @@ TEST(SceneLoaderMatrixTest, ThrowsOnInvalidMatrixValue) {
   </shape>
 </scene>)XML");
 
-    EXPECT_THROW((void)pbpt::loader::load_scene<double>(xml_path.string()), std::runtime_error);
+    EXPECT_THROW((void)pbpt::serde::load_scene<double>(xml_path.string()), std::runtime_error);
 }

@@ -4,7 +4,7 @@
 #include <string>
 
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 #include "pbpt/scene/scene.hpp"
 
 int main(int argc, char** argv) {
@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     }
 
     try {
-        auto scene = pbpt::loader::load_scene<double>(scene_path);
+        auto scene = pbpt::serde::load_scene<double>(scene_path);
         pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
         integrator.render(scene, spp, output_path);
         std::cout << std::format("Rendered '{}' with spp={} -> {}\n", scene_path, spp, output_path);

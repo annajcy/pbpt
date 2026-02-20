@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 
 namespace {
 
@@ -62,7 +62,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnDuplicateBsdfId) {
   </shape>
 </scene>)XML");
 
-    EXPECT_THROW((void)pbpt::loader::load_scene<double>(xml_path.string()), std::runtime_error);
+    EXPECT_THROW((void)pbpt::serde::load_scene<double>(xml_path.string()), std::runtime_error);
 }
 
 TEST(SceneLoaderFailFastTest, ThrowsOnUnknownShapeMaterialReference) {
@@ -85,7 +85,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnknownShapeMaterialReference) {
   </shape>
 </scene>)XML");
 
-    EXPECT_THROW((void)pbpt::loader::load_scene<double>(xml_path.string()), std::runtime_error);
+    EXPECT_THROW((void)pbpt::serde::load_scene<double>(xml_path.string()), std::runtime_error);
 }
 
 TEST(SceneLoaderFailFastTest, ThrowsWhenMeshHasNoMaterialAssignment) {
@@ -107,5 +107,40 @@ TEST(SceneLoaderFailFastTest, ThrowsWhenMeshHasNoMaterialAssignment) {
   </shape>
 </scene>)XML");
 
-    EXPECT_THROW((void)pbpt::loader::load_scene<double>(xml_path.string()), std::runtime_error);
+    EXPECT_THROW((void)pbpt::serde::load_scene<double>(xml_path.string()), std::runtime_error);
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsOnUnsupportedType) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_unsupported_type");
+
+    const auto xml_path = temp_dir.path / "scene_unsupported_type.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="0.4.0">
+  <sensor type="perspective">
+    <float name="fov" value="45"/>
+  </sensor>
+  <texture type="noise" id="tex_noise">
+  </texture>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        EXPECT_NE(std::string(err.what()).find("noise"), std::string::npos);
+        EXPECT_NE(std::string(err.what()).find("tex_noise"), std::string::npos);
+    }
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsWhenShapeInstanceReferencesMissingMesh) {
+    pbpt::scene::RenderResources<double> resources{};
+    pbpt::scene::ShapeInstanceRecord<double> bad_record{};
+    bad_record.shape_id = "shape_missing_mesh";
+    bad_record.shape_type = "obj";
+    bad_record.mesh_name = "mesh_missing";
+    bad_record.material_ref_name = "mat_dummy";
+    resources.shape_instances.push_back(std::move(bad_record));
+
+    EXPECT_THROW((void)pbpt::serde::build_primitives_from_resources<double>(resources), std::runtime_error);
 }

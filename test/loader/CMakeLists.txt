@@ -17,3 +17,7 @@ gtest_discover_tests(test_scene_loader_fail_fast)
 add_executable(test_scene_roundtrip test_scene_roundtrip.cpp)
 target_link_libraries(test_scene_roundtrip PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_scene_roundtrip)
+
+add_executable(test_scene_serde_components test_scene_serde_components.cpp)
+target_link_libraries(test_scene_serde_components PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_scene_serde_components)

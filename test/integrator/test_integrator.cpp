@@ -8,11 +8,10 @@
 #include <string>
 #include <vector>
 
-#include "pbpt/pbpt.h"
 #include "pbpt/integrator/concepts.hpp"
 #include "pbpt/integrator/domain.hpp"
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 
 namespace pbpt::integrator::testing {
 
@@ -277,7 +276,7 @@ TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic) {
     const auto output_exr_path = temp_dir.path / "tiny_scene.exr";
     (void)write_tiny_cbox_scene_xml(scene_xml_path);
 
-    auto scene = pbpt::loader::load_scene<double>(scene_xml_path.string());
+    auto scene = pbpt::serde::load_scene<double>(scene_xml_path.string());
     pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
 
     std::vector<float> progress_values;
@@ -306,7 +305,7 @@ TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
     const auto output_exr_path = temp_dir.path / "tiny_scene_canceled.exr";
     (void)write_tiny_cbox_scene_xml(scene_xml_path);
 
-    auto scene = pbpt::loader::load_scene<double>(scene_xml_path.string());
+    auto scene = pbpt::serde::load_scene<double>(scene_xml_path.string());
     pbpt::integrator::PathIntegrator<double, 4> integrator(-1, 0.9);
 
     std::atomic<bool> cancel_requested{false};

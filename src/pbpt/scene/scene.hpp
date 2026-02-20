@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <string>
 #include <unordered_map>
+#include <optional>
+#include <vector>
 
 #include "pbpt/aggregate/plugin/aggregate/aggregate_type.hpp"
 #include "pbpt/camera/plugin/pixel_filter/pixel_filter_type.hpp"
@@ -14,6 +16,7 @@
 #include "pbpt/light/plugin/light/light_type.hpp"
 #include "pbpt/camera/plugin/camera/camera_type.hpp"
 #include "pbpt/shape/plugin/shape/shape_type.hpp"
+#include "pbpt/geometry/transform.hpp"
 
 namespace pbpt::scene {
 
@@ -37,6 +40,24 @@ inline MeshTriangleKey make_mesh_triangle_key(const std::string& mesh_name, int 
 }
 
 template <typename T>
+struct SceneSerializationMeta {
+    std::string integrator_type{"path"};
+    std::string camera_type{"perspective"};
+    std::string sampler_type{"ldsampler"};
+    int sample_count{4};
+};
+
+template <typename T>
+struct ShapeInstanceRecord {
+    std::string shape_id;
+    std::string shape_type;
+    std::string mesh_name;
+    std::string material_ref_name;
+    geometry::Transform<T> object_to_world{geometry::Transform<T>::identity()};
+    std::optional<std::string> emission_spectrum_name;
+};
+
+template <typename T>
 struct RenderResources {
     // 资源库
     // light material
@@ -52,6 +73,8 @@ struct RenderResources {
     std::unordered_map<std::string, int> mesh_material_map;
     // mesh triangle to light id map
     std::unordered_map<MeshTriangleKey, int, MeshTriangleKeyHash> mesh_light_map;
+
+    std::vector<ShapeInstanceRecord<T>> shape_instances;
 };
 
 template <typename T, typename CameraT, typename FilmT, typename PixelFilterT, typename AggregateT>
@@ -86,6 +109,8 @@ struct Scene {
 
     // 场景几何与材质
     RenderResources<T> resources;
+
+    SceneSerializationMeta<T> serialization_meta;
 };
 
 }  // namespace pbpt::scene

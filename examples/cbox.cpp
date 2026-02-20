@@ -1,7 +1,7 @@
 #include <format>
 #include <iostream>
 #include <vector>
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 #include "pbpt/scene/cbox_scene.hpp"
 #include "pbpt/scene/scene.hpp"
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
@@ -10,7 +10,7 @@
 int main() {
     // // Debug: compare both scenes - load scene2 FIRST to avoid static id issue
     // {
-    //     auto scene2 = pbpt::loader::load_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox.xml");
+    //     auto scene2 = pbpt::serde::load_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox.xml");
     //     auto scene1 = pbpt::scene::create_cbox_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox");
         
     //     std::cout << "=== Scene Comparison ===" << std::endl;
@@ -53,7 +53,7 @@ int main() {
     //     std::cout << "========================" << std::endl;
     // }
 
-    pbpt::scene::Scene<double> scene = pbpt::loader::load_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox.xml");
+    pbpt::scene::Scene<double> scene = pbpt::serde::load_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox.xml");
     //pbpt::scene::Scene<double> scene = pbpt::scene::create_cbox_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox");
         
     std::vector<int> spps = {16};

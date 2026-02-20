@@ -2,13 +2,13 @@
 #include <vector>
 
 #include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
-#include "pbpt/loader/scene_loader.hpp"
+#include "pbpt/serde/scene_loader.hpp"
 
 int main() {
-    auto scene_aniso = pbpt::loader::load_scene<double>(
+    auto scene_aniso = pbpt::serde::load_scene<double>(
         "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox_microfacet_aniso_sphere.xml"
     );
-    auto scene_iso = pbpt::loader::load_scene<double>(
+    auto scene_iso = pbpt::serde::load_scene<double>(
         "/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox_microfacet_iso_sphere.xml"
     );
 
