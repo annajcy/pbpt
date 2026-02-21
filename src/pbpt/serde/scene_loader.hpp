@@ -93,20 +93,24 @@ PbptXmlResult<T> load_scene(const std::string& filename) {
 
     // parse XML -> load integrator -> load sensor/camera + sampler -> load textures -> load bsdfs -> load shapes
     auto integrator_node = root.child("integrator");
-    if (integrator_node) {
+    if (!integrator_node) {
+        throw std::runtime_error("load_scene XML error: missing required <integrator> node.");
+    }
+    {
         std::string type = integrator_node.attribute("type").value();
         dispatch_load_integrator<T, IntegratorSerdeList<T>>(type, integrator_node, ctx);
     }
 
     auto sensor_node = root.child("sensor");
+    if (!sensor_node) {
+        throw std::runtime_error("load_scene XML error: missing required <sensor> node.");
+    }
     const ValueCodecReadEnv<T> root_read_env{ctx.result.scene.resources, ctx.base_path};
-    if (sensor_node) {
-        if (auto tf = sensor_node.child("transform")) {
-            result.scene.render_transform = ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env);
-        }
+    if (auto tf = sensor_node.child("transform")) {
+        result.scene.render_transform = ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env);
     }
 
-    if (sensor_node) {
+    {
         std::string sensor_type = sensor_node.attribute("type").value();
         dispatch_load_camera<T, CameraSerdeList<T>>(sensor_type, sensor_node, ctx);
 
