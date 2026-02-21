@@ -40,8 +40,12 @@ void write_mesh_obj(const shape::TriangleMesh<T>& mesh, const std::filesystem::p
     }
 
     if (mesh.has_normals()) {
+        const bool flip = mesh.should_flip_normal();
         for (const auto& normal : mesh.normals()) {
-            const auto obj_n = render_to_object.transform_normal(normal).normalized();
+            auto obj_n = render_to_object.transform_normal(normal).normalized();
+            if (flip) {
+                obj_n = -obj_n;
+            }
             out << "vn " << obj_n.x() << ' ' << obj_n.y() << ' ' << obj_n.z() << '\n';
         }
     }
@@ -128,8 +132,8 @@ struct ObjShapeSerde {
 
             std::string spec_name = name + "_emission";
             ctx.result.scene.resources.reflectance_spectrum_library.add_item(
-                spec_name, ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::parse_text(
-                               radiance_str, read_env));
+                spec_name,
+                ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::parse_text(radiance_str, read_env));
             record.emission_spectrum_name = spec_name;
 
             const auto& emission_spec = ctx.result.scene.resources.reflectance_spectrum_library.get(spec_name);
@@ -167,8 +171,8 @@ struct ObjShapeSerde {
         auto shape_transform = node.append_child("transform");
         shape_transform.append_attribute("name") = "toWorld";
         auto shape_matrix = shape_transform.append_child("matrix");
-        const auto object_to_world_text = ValueCodec<T, geometry::Transform<T>>::write_text(
-            record.object_to_world, write_env);
+        const auto object_to_world_text =
+            ValueCodec<T, geometry::Transform<T>>::write_text(record.object_to_world, write_env);
         shape_matrix.append_attribute("value") = object_to_world_text.c_str();
 
         auto ref = node.append_child("ref");
@@ -180,7 +184,8 @@ struct ObjShapeSerde {
             auto radiance = emitter.append_child("spectrum");
             radiance.append_attribute("name") = "radiance";
             const auto spectrum_text = ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::write_text(
-                ctx.result.scene.resources.reflectance_spectrum_library.get(record.emission_spectrum_name.value()), write_env);
+                ctx.result.scene.resources.reflectance_spectrum_library.get(record.emission_spectrum_name.value()),
+                write_env);
             radiance.append_attribute("value") = spectrum_text.c_str();
         }
     }

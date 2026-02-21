@@ -9,7 +9,7 @@
 
 int main() {
     auto result =
-        pbpt::serde::load_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/pbpt/asset/scene/cbox/cbox.xml");
+        pbpt::serde::load_scene<double>("/Users/jinceyang/Desktop/codebase/graphics/rtr2/assets/pbpt_scene/cbox/output/cbox_output.xml");
 
     std::visit([&](auto& integrator) { integrator.render(result.scene, "output/cbox_loader.exr", false, result.spp); },
                result.integrator);
