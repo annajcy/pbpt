@@ -47,6 +47,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnDuplicateBsdfId) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
+  <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -73,6 +74,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnknownShapeMaterialReference) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
+  <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -96,6 +98,7 @@ TEST(SceneLoaderFailFastTest, ThrowsWhenMeshHasNoMaterialAssignment) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
+  <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -117,6 +120,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnsupportedType) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
+  <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -140,6 +144,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnTextureMissingId) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
+  <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
