@@ -5,12 +5,12 @@
 #include <string_view>
 #include <utility>
 
-#include "pbpt/texture/plugin/serde.hpp"
-#include "pbpt/material/plugin/serde.hpp"
-#include "pbpt/shape/plugin/serde.hpp"
-#include "pbpt/camera/plugin/serde.hpp"
-#include "pbpt/integrator/plugin/serde.hpp"
-#include "pbpt/lds/plugin/serde.hpp"
+#include "pbpt/serde/domain/impl/texture.hpp"
+#include "pbpt/serde/domain/impl/material.hpp"
+#include "pbpt/serde/domain/impl/shape.hpp"
+#include "pbpt/serde/domain/impl/camera.hpp"
+#include "pbpt/serde/domain/impl/integrator.hpp"
+#include "pbpt/serde/domain/impl/sampler.hpp"
 
 namespace pbpt::serde {
 

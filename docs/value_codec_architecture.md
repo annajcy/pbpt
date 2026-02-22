@@ -43,12 +43,12 @@ Common helpers:
 
 Implemented codec files:
 
-- `src/pbpt/geometry/codec/transform_value_codec.hpp`
-- `src/pbpt/camera/codec/render_transform_value_codec.hpp`
-- `src/pbpt/radiometry/codec/piecewise_spectrum_value_codec.hpp`
-- `src/pbpt/radiometry/codec/rgb_value_codec.hpp`
-- `src/pbpt/texture/codec/wrap_mode_value_codec.hpp`
-- `src/pbpt/material/codec/microfacet_model_value_codec.hpp`
+- `src/pbpt/serde/value/impl/transform.hpp`
+- `src/pbpt/serde/value/impl/render_transform.hpp`
+- `src/pbpt/serde/value/impl/piecewise_spectrum.hpp`
+- `src/pbpt/serde/value/impl/rgb.hpp`
+- `src/pbpt/serde/value/impl/wrap_mode.hpp`
+- `src/pbpt/serde/value/impl/microfacet_model.hpp`
 
 ## Removed Legacy APIs
 
@@ -82,7 +82,7 @@ auto alpha = pbpt::serde::parse_child_value<T, T>(node, "float", "alpha", read_e
 
 ## Design Constraints
 
-1. New value codecs must be implemented in the owning module and specialized under `pbpt::serde`.
+1. New value codecs must be implemented under `src/pbpt/serde/value/impl` and specialized under `pbpt::serde`.
 2. Domain serdes should only orchestrate XML nodes and references.
 3. `load_scene<T>()` / `write_scene()` remain public entry points and must stay stable.
 4. Domain serde write targets are domain-specific: `IdValueWriteTarget` (texture/material), `ShapeWriteTarget` (shape),

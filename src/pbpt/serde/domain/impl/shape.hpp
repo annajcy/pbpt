@@ -9,8 +9,8 @@
 
 #include "pbpt/serde/domain/trait_contracts.hpp"
 #include "pbpt/serde/value/value_codec_dispatch.hpp"
-#include "pbpt/geometry/codec/transform_value_codec.hpp"
-#include "pbpt/radiometry/codec/piecewise_spectrum_value_codec.hpp"
+#include "pbpt/serde/value/impl/transform.hpp"
+#include "pbpt/serde/value/impl/piecewise_spectrum.hpp"
 #include "pbpt/shape/plugin/shape/triangle.hpp"
 #include "pbpt/light/plugin/light/area_light.hpp"
 #include "pbpt/scene/scene.hpp"

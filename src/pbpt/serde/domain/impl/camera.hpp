@@ -6,8 +6,8 @@
 
 #include "pbpt/serde/domain/trait_contracts.hpp"
 #include "pbpt/serde/value/value_codec_dispatch.hpp"
-#include "pbpt/geometry/codec/transform_value_codec.hpp"
-#include "pbpt/camera/codec/render_transform_value_codec.hpp"
+#include "pbpt/serde/value/impl/transform.hpp"
+#include "pbpt/serde/value/impl/render_transform.hpp"
 #include "pbpt/camera/plugin/camera/projective_cameras.hpp"
 #include "pbpt/camera/plugin/film/hdr_film.hpp"
 #include "pbpt/camera/plugin/pixel_filter/gaussian_filter.hpp"

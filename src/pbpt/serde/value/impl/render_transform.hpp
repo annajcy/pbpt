@@ -4,7 +4,7 @@
 #include <string>
 
 #include "pbpt/camera/render_transform.hpp"
-#include "pbpt/geometry/codec/transform_value_codec.hpp"
+#include "pbpt/serde/value/impl/transform.hpp"
 #include "pbpt/serde/value/value_codec_traits.hpp"
 
 namespace pbpt::serde {

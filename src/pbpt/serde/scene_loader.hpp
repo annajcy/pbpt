@@ -14,7 +14,7 @@
 #include "pbpt/aggregate/plugin/aggregate/embree_aggregate.hpp"
 #include "pbpt/serde/dispatch.hpp"
 #include "pbpt/serde/domain/typelist.hpp"
-#include "pbpt/camera/codec/render_transform_value_codec.hpp"
+#include "pbpt/serde/value/impl/render_transform.hpp"
 
 namespace pbpt::serde {
 

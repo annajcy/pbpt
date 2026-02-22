@@ -8,8 +8,8 @@
 
 #include "pbpt/serde/domain/trait_contracts.hpp"
 #include "pbpt/serde/value/value_codec_dispatch.hpp"
-#include "pbpt/radiometry/codec/rgb_value_codec.hpp"
-#include "pbpt/texture/codec/wrap_mode_value_codec.hpp"
+#include "pbpt/serde/value/impl/rgb.hpp"
+#include "pbpt/serde/value/impl/wrap_mode.hpp"
 #include "pbpt/texture/plugin/texture/bitmap_texture.hpp"
 #include "pbpt/texture/plugin/texture/checkerboard_texture.hpp"
 #include "pbpt/utils/image_io.hpp"

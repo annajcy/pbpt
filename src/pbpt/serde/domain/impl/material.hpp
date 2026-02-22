@@ -7,9 +7,9 @@
 
 #include "pbpt/serde/domain/trait_contracts.hpp"
 #include "pbpt/serde/value/value_codec_dispatch.hpp"
-#include "pbpt/radiometry/codec/piecewise_spectrum_value_codec.hpp"
-#include "pbpt/radiometry/codec/rgb_value_codec.hpp"
-#include "pbpt/material/codec/microfacet_model_value_codec.hpp"
+#include "pbpt/serde/value/impl/piecewise_spectrum.hpp"
+#include "pbpt/serde/value/impl/rgb.hpp"
+#include "pbpt/serde/value/impl/microfacet_model.hpp"
 
 #include "pbpt/material/plugin/material/lambertian_material.hpp"
 #include "pbpt/material/plugin/material/dielectric_material.hpp"

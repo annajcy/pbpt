@@ -5,22 +5,22 @@
 #include <gtest/gtest.h>
 #include <pugixml.hpp>
 
-#include "pbpt/camera/codec/render_transform_value_codec.hpp"
-#include "pbpt/camera/plugin/serde.hpp"
-#include "pbpt/geometry/codec/transform_value_codec.hpp"
-#include "pbpt/integrator/plugin/serde.hpp"
-#include "pbpt/lds/plugin/serde.hpp"
-#include "pbpt/material/codec/microfacet_model_value_codec.hpp"
-#include "pbpt/material/plugin/serde.hpp"
-#include "pbpt/radiometry/codec/piecewise_spectrum_value_codec.hpp"
-#include "pbpt/radiometry/codec/rgb_value_codec.hpp"
+#include "pbpt/serde/value/impl/render_transform.hpp"
+#include "pbpt/serde/domain/impl/camera.hpp"
+#include "pbpt/serde/value/impl/transform.hpp"
+#include "pbpt/serde/domain/impl/integrator.hpp"
+#include "pbpt/serde/domain/impl/sampler.hpp"
+#include "pbpt/serde/value/impl/microfacet_model.hpp"
+#include "pbpt/serde/domain/impl/material.hpp"
+#include "pbpt/serde/value/impl/piecewise_spectrum.hpp"
+#include "pbpt/serde/value/impl/rgb.hpp"
 #include "pbpt/scene/scene.hpp"
 #include "pbpt/serde/domain/trait_contracts.hpp"
 #include "pbpt/serde/domain/typelist.hpp"
 #include "pbpt/serde/value/value_codec_dispatch.hpp"
-#include "pbpt/texture/codec/wrap_mode_value_codec.hpp"
-#include "pbpt/texture/plugin/serde.hpp"
-#include "pbpt/shape/plugin/serde.hpp"
+#include "pbpt/serde/value/impl/wrap_mode.hpp"
+#include "pbpt/serde/domain/impl/texture.hpp"
+#include "pbpt/serde/domain/impl/shape.hpp"
 
 namespace {
 
