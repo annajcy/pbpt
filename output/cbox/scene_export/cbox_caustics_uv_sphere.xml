@@ -10,7 +10,7 @@
     <float name="far_clip" value="2800" />
     <float name="focus_distance" value="1000" />
     <transform name="to_world">
-      <matrix value="-1, -0, 0, 278, 0, 1, -0, 273, 0, -0, -1, -800, 0, 0, 0, 1" />
+      <matrix value="1, 0, 0, 278, 0, 1, 0, 273, 0, 0, 1, -800, 0, 0, 0, 1" />
     </transform>
     <film type="hdrfilm">
       <integer name="width" value="512" />

@@ -86,8 +86,8 @@
     <shape type="obj">
         <string name="filename" value="meshes/bunny_uv.obj" />
         <transform name="to_world">
-            <translate x="204.5" y="-36.6" z="170.1" />
             <scale x="1100" y="1100" z="1100" />
+            <translate x="204.5" y="-36.6" z="170.1" />
         </transform>
         <ref id="checkerboard_bitmap" />
     </shape>

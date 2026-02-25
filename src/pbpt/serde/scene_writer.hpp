@@ -79,7 +79,7 @@ void write_shape_nodes(pugi::xml_node& root, WriteContext<T>& ctx) {
 }
 
 template <typename T>
-void write_scene(const PbptXmlResult<T>& result, const std::string& filename) {
+void write_scene(const PbptXmlResult<T>& result, const std::string& filename, bool to_left_handed = false) {
     if (filename.empty()) {
         throw std::invalid_argument("write_scene: filename must not be empty.");
     }
@@ -92,7 +92,7 @@ void write_scene(const PbptXmlResult<T>& result, const std::string& filename) {
     std::filesystem::create_directories(mesh_dir);
     std::filesystem::create_directories(texture_dir);
 
-    WriteContext<T> ctx{result, scene_dir, mesh_dir, texture_dir};
+    WriteContext<T> ctx{result, scene_dir, mesh_dir, texture_dir, to_left_handed};
 
     pugi::xml_document doc;
     auto root = doc.append_child("scene");

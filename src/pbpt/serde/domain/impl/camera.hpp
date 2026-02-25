@@ -86,8 +86,8 @@ struct PerspectiveCameraSerde {
 
         auto transform = node.append_child("transform");
         transform.append_attribute("name") = "to_world";
-        const auto mat_text =
-            ValueCodec<T, geometry::Transform<T>>::write_text(ctx.result.scene.render_transform.camera_to_world(), write_env);
+        const auto mat_text = ValueCodec<T, camera::RenderTransform<T>>::write_text(
+            ctx.result.scene.render_transform, write_env, ctx.to_left_handed);
         transform.append_child("matrix").append_attribute("value") = mat_text.c_str();
 
         const auto res = cam.film_resolution();

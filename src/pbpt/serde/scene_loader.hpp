@@ -82,7 +82,7 @@ std::vector<shape::Primitive<T>> build_primitives_from_resources(const scene::Re
 }
 
 template <typename T>
-PbptXmlResult<T> load_scene(const std::string& filename) {
+PbptXmlResult<T> load_scene(const std::string& filename, bool to_left_handed = false) {
     pugi::xml_document doc;
     if (pugi::xml_parse_result r = doc.load_file(filename.c_str()); !r) {
         throw std::runtime_error(std::string("load_scene XML error: ") + r.description());
@@ -91,7 +91,7 @@ PbptXmlResult<T> load_scene(const std::string& filename) {
     PbptXmlResult<T> result;
     pugi::xml_node root = doc.child("scene");
     validate_mi3_scene_schema(root, filename);
-    LoadContext<T> ctx(result, std::filesystem::path(filename).parent_path());
+    LoadContext<T> ctx(result, std::filesystem::path(filename).parent_path(), to_left_handed);
 
     // parse XML -> load integrator -> load sensor/camera + sampler -> load textures -> load bsdfs -> load shapes
     auto integrator_node = root.child("integrator");
@@ -109,7 +109,8 @@ PbptXmlResult<T> load_scene(const std::string& filename) {
     }
     const ValueCodecReadEnv<T> root_read_env{ctx.result.scene.resources, ctx.base_path};
     if (auto tf = sensor_node.child("transform")) {
-        result.scene.render_transform = ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env);
+        result.scene.render_transform =
+            ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env, ctx.to_left_handed);
     }
 
     {

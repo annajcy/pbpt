@@ -23,6 +23,7 @@ struct RunOptions {
     std::filesystem::path output_root_rel{"output/cbox"};
     std::optional<int> spp_override{};
     std::optional<std::string> only_filter{};
+    bool to_left_handed{true};
 };
 
 std::filesystem::path find_repo_root() {
@@ -40,17 +41,17 @@ std::filesystem::path find_repo_root() {
 }
 
 void render_task(const std::filesystem::path& repo_root, const std::filesystem::path& output_root,
-                 const CboxRenderTask& task, const std::optional<int>& spp_override) {
+                 const CboxRenderTask& task, const std::optional<int>& spp_override, bool to_left_handed) {
     const auto scene_path = repo_root / task.scene_xml_rel;
-    auto result = pbpt::serde::load_scene<double>(scene_path.string());
+    auto result = pbpt::serde::load_scene<double>(scene_path.string(), false);
 
     const auto export_dir = output_root / "scene_export";
     std::filesystem::create_directories(export_dir);
     const auto exported_scene = export_dir / (task.output_stem + ".xml");
-    pbpt::serde::write_scene(result, exported_scene.string());
+    pbpt::serde::write_scene(result, exported_scene.string(), to_left_handed);
 
-    if (task.roundtrip_before_render) {
-        result = pbpt::serde::load_scene<double>(exported_scene.string());
+    if (task.roundtrip_before_render && !to_left_handed) {
+        result = pbpt::serde::load_scene<double>(exported_scene.string(), false);
     }
 
     std::vector<int> spp_values = task.spp_list;
@@ -112,8 +113,12 @@ RunOptions parse_args(int argc, char** argv) {
             options.only_filter = std::string(argv[++i]);
             continue;
         }
+        if (arg == "--to-left-handed") {
+            options.to_left_handed = true;
+            continue;
+        }
         throw std::runtime_error(
-            "Usage: cbox [--output <path>] [--spp <int>] [--only <keyword>]");
+            "Usage: cbox [--output <path>] [--spp <int>] [--only <keyword>] [--to-left-handed]");
     }
     return options;
 }
@@ -144,7 +149,7 @@ int main(int argc, char** argv) {
             }
             try {
                 std::cout << "[cbox] render " << task.scene_xml_rel << std::endl;
-                render_task(repo_root, output_root, task, options.spp_override);
+                render_task(repo_root, output_root, task, options.spp_override, options.to_left_handed);
                 ++rendered;
             } catch (const std::exception& e) {
                 ++failed;
