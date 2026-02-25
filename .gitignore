@@ -90,3 +90,6 @@ merged_sources.txt
 .claude/
 .gemini/
 gha-creds-*.json
+
+
+docs/research/*

@@ -195,7 +195,7 @@ TEST(SceneRoundTrip, TextureScene) {
 
 TEST(SceneRoundTrip, MicrofacetScene) {
     const auto repo = find_repo_root();
-    const auto scene_path = repo / "asset/scene/cbox/cbox_microfacet.xml";
+    const auto scene_path = repo / "asset/scene/cbox/cbox_microfacet_diele_iso.xml";
 
     TempDir temp_dir("microfacet");
     const auto original = pbpt::serde::load_scene<double>(scene_path.string());
