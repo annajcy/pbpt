@@ -10,6 +10,7 @@
 #include "pbpt/serde/value/impl/piecewise_spectrum.hpp"
 #include "pbpt/serde/value/impl/rgb.hpp"
 #include "pbpt/serde/value/impl/microfacet_model.hpp"
+#include "pbpt/radiometry/constant/metal_ior_spectrum.hpp"
 
 #include "pbpt/material/plugin/material/lambertian_material.hpp"
 #include "pbpt/material/plugin/material/dielectric_material.hpp"
@@ -20,6 +21,20 @@
 #include "pbpt/material/plugin/material/conductor_rough_material.hpp"
 
 namespace pbpt::serde {
+
+template <typename T>
+inline T parse_dielectric_eta_from_node(const pugi::xml_node& node, const ValueCodecReadEnv<T>& read_env) {
+    if (const auto eta = parse_child_value<T, T>(node, "float", "eta", read_env)) {
+        return *eta;
+    }
+
+    const T int_ior = parse_child_value<T, T>(node, "float", "int_ior", read_env).value_or(T(1.5));
+    const T ext_ior = parse_child_value<T, T>(node, "float", "ext_ior", read_env).value_or(T(1.0));
+    if (ext_ior <= T(0)) {
+        throw std::runtime_error("invalid ext_ior for dielectric: must be > 0");
+    }
+    return int_ior / ext_ior;
+}
 
 template <typename T>
 struct DiffuseMaterialSerde {
@@ -104,10 +119,7 @@ struct DielectricMaterialSerde {
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
         const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
-        auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
-        if (!eta_opt)
-            eta_opt = parse_child_value<T, T>(node, "float", "intIOR", read_env);
-        T eta = eta_opt.value_or(T(1.5));
+        T eta = parse_dielectric_eta_from_node<T>(node, read_env);
         auto microfacet_model = ValueCodec<T, material::MicrofacetModel<T>>::parse_node(node, read_env);
         return material::DielectricMaterial<T>(eta, microfacet_model);
     }
@@ -117,22 +129,19 @@ struct DielectricMaterialSerde {
         const std::string id(target.id);
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
-        auto eta_node = node.append_child("float");
-        eta_node.append_attribute("name") = "eta";
-        eta_node.append_attribute("value") = mat.eta();
-        auto alpha_x = node.append_child("float");
-        alpha_x.append_attribute("name") = "alpha_x";
-        alpha_x.append_attribute("value") = mat.microfacet_model().alpha_x();
-        auto alpha_y = node.append_child("float");
-        alpha_y.append_attribute("name") = "alpha_y";
-        alpha_y.append_attribute("value") = mat.microfacet_model().alpha_y();
+        auto int_ior_node = node.append_child("float");
+        int_ior_node.append_attribute("name") = "int_ior";
+        int_ior_node.append_attribute("value") = mat.eta();
+        auto ext_ior_node = node.append_child("float");
+        ext_ior_node.append_attribute("name") = "ext_ior";
+        ext_ior_node.append_attribute("value") = T(1);
     }
 };
 
 template <typename T>
 struct DielectricSpecularMaterialSerde {
     static constexpr std::string_view domain = "material";
-    static constexpr std::string_view xml_type = "dielectric_specular";
+    static constexpr std::string_view xml_type = "dielectric";
     using value_type = material::DielectricSpecularMaterial<T>;
     using load_result = value_type;
     using write_target = IdValueWriteTarget<value_type>;
@@ -140,10 +149,7 @@ struct DielectricSpecularMaterialSerde {
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
         const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
-        auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
-        if (!eta_opt)
-            eta_opt = parse_child_value<T, T>(node, "float", "intIOR", read_env);
-        T eta = eta_opt.value_or(T(1.5));
+        T eta = parse_dielectric_eta_from_node<T>(node, read_env);
         return material::DielectricSpecularMaterial<T>(eta);
     }
 
@@ -152,16 +158,19 @@ struct DielectricSpecularMaterialSerde {
         const std::string id(target.id);
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
-        auto eta_node = node.append_child("float");
-        eta_node.append_attribute("name") = "eta";
-        eta_node.append_attribute("value") = mat.eta();
+        auto int_ior_node = node.append_child("float");
+        int_ior_node.append_attribute("name") = "int_ior";
+        int_ior_node.append_attribute("value") = mat.eta();
+        auto ext_ior_node = node.append_child("float");
+        ext_ior_node.append_attribute("name") = "ext_ior";
+        ext_ior_node.append_attribute("value") = T(1);
     }
 };
 
 template <typename T>
 struct DielectricRoughMaterialSerde {
     static constexpr std::string_view domain = "material";
-    static constexpr std::string_view xml_type = "dielectric_rough";
+    static constexpr std::string_view xml_type = "roughdielectric";
     using value_type = material::DielectricRoughMaterial<T>;
     using load_result = value_type;
     using write_target = IdValueWriteTarget<value_type>;
@@ -169,10 +178,7 @@ struct DielectricRoughMaterialSerde {
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
         const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
-        auto eta_opt = parse_child_value<T, T>(node, "float", "eta", read_env);
-        if (!eta_opt)
-            eta_opt = parse_child_value<T, T>(node, "float", "intIOR", read_env);
-        T eta = eta_opt.value_or(T(1.5));
+        T eta = parse_dielectric_eta_from_node<T>(node, read_env);
         auto microfacet_model = ValueCodec<T, material::MicrofacetModel<T>>::parse_node(node, read_env);
         return material::DielectricRoughMaterial<T>(eta, microfacet_model);
     }
@@ -182,15 +188,18 @@ struct DielectricRoughMaterialSerde {
         const std::string id(target.id);
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
-        auto eta_node = node.append_child("float");
-        eta_node.append_attribute("name") = "eta";
-        eta_node.append_attribute("value") = mat.eta();
-        auto alpha_x = node.append_child("float");
-        alpha_x.append_attribute("name") = "alpha_x";
-        alpha_x.append_attribute("value") = mat.microfacet_model().alpha_x();
-        auto alpha_y = node.append_child("float");
-        alpha_y.append_attribute("name") = "alpha_y";
-        alpha_y.append_attribute("value") = mat.microfacet_model().alpha_y();
+        auto int_ior_node = node.append_child("float");
+        int_ior_node.append_attribute("name") = "int_ior";
+        int_ior_node.append_attribute("value") = mat.eta();
+        auto ext_ior_node = node.append_child("float");
+        ext_ior_node.append_attribute("name") = "ext_ior";
+        ext_ior_node.append_attribute("value") = T(1);
+        auto alpha_u = node.append_child("float");
+        alpha_u.append_attribute("name") = "alpha_u";
+        alpha_u.append_attribute("value") = mat.microfacet_model().alpha_x();
+        auto alpha_v = node.append_child("float");
+        alpha_v.append_attribute("name") = "alpha_v";
+        alpha_v.append_attribute("value") = mat.microfacet_model().alpha_y();
     }
 };
 
@@ -205,12 +214,14 @@ struct ConductorMaterialSerde {
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
         const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
+        if (const auto material_name = find_child_value(node, "string", "material")) {
+            const auto eta_k = radiometry::constant::get_metal_eta_k_spectrum<T>(*material_name, ctx.base_path);
+            auto microfacet_model = ValueCodec<T, material::MicrofacetModel<T>>::parse_node(node, read_env);
+            return material::ConductorMaterial<T>(eta_k.eta, eta_k.k, microfacet_model);
+        }
+
         auto eta_value = find_child_value(node, "spectrum", "eta");
-        if (!eta_value)
-            eta_value = find_child_value(node, "string", "eta");
         auto k_value = find_child_value(node, "spectrum", "k");
-        if (!k_value)
-            k_value = find_child_value(node, "string", "k");
 
         radiometry::PiecewiseLinearSpectrumDistribution<T> eta_dist = make_constant_piecewise_spectrum<T>(T(1));
         radiometry::PiecewiseLinearSpectrumDistribution<T> k_dist = make_constant_piecewise_spectrum<T>(T(0));
@@ -248,19 +259,19 @@ struct ConductorMaterialSerde {
         const auto k_text =
             ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::write_text(mat.k_dist(), write_env);
         k_node.append_attribute("value") = k_text.c_str();
-        auto alpha_x = node.append_child("float");
-        alpha_x.append_attribute("name") = "alpha_x";
-        alpha_x.append_attribute("value") = mat.microfacet_model().alpha_x();
-        auto alpha_y = node.append_child("float");
-        alpha_y.append_attribute("name") = "alpha_y";
-        alpha_y.append_attribute("value") = mat.microfacet_model().alpha_y();
+        auto alpha_u = node.append_child("float");
+        alpha_u.append_attribute("name") = "alpha_u";
+        alpha_u.append_attribute("value") = mat.microfacet_model().alpha_x();
+        auto alpha_v = node.append_child("float");
+        alpha_v.append_attribute("name") = "alpha_v";
+        alpha_v.append_attribute("value") = mat.microfacet_model().alpha_y();
     }
 };
 
 template <typename T>
 struct ConductorSpecularMaterialSerde {
     static constexpr std::string_view domain = "material";
-    static constexpr std::string_view xml_type = "conductor_specular";
+    static constexpr std::string_view xml_type = "conductor";
     using value_type = material::ConductorSpecularMaterial<T>;
     using load_result = value_type;
     using write_target = IdValueWriteTarget<value_type>;
@@ -268,12 +279,13 @@ struct ConductorSpecularMaterialSerde {
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
         const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
+        if (const auto material_name = find_child_value(node, "string", "material")) {
+            const auto eta_k = radiometry::constant::get_metal_eta_k_spectrum<T>(*material_name, ctx.base_path);
+            return material::ConductorSpecularMaterial<T>(eta_k.eta, eta_k.k);
+        }
+
         auto eta_value = find_child_value(node, "spectrum", "eta");
-        if (!eta_value)
-            eta_value = find_child_value(node, "string", "eta");
         auto k_value = find_child_value(node, "spectrum", "k");
-        if (!k_value)
-            k_value = find_child_value(node, "string", "k");
 
         radiometry::PiecewiseLinearSpectrumDistribution<T> eta_dist = make_constant_piecewise_spectrum<T>(T(1));
         radiometry::PiecewiseLinearSpectrumDistribution<T> k_dist = make_constant_piecewise_spectrum<T>(T(0));
@@ -316,7 +328,7 @@ struct ConductorSpecularMaterialSerde {
 template <typename T>
 struct ConductorRoughMaterialSerde {
     static constexpr std::string_view domain = "material";
-    static constexpr std::string_view xml_type = "conductor_rough";
+    static constexpr std::string_view xml_type = "roughconductor";
     using value_type = material::ConductorRoughMaterial<T>;
     using load_result = value_type;
     using write_target = IdValueWriteTarget<value_type>;
@@ -324,12 +336,14 @@ struct ConductorRoughMaterialSerde {
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
         const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
 
+        if (const auto material_name = find_child_value(node, "string", "material")) {
+            const auto eta_k = radiometry::constant::get_metal_eta_k_spectrum<T>(*material_name, ctx.base_path);
+            auto microfacet_model = ValueCodec<T, material::MicrofacetModel<T>>::parse_node(node, read_env);
+            return material::ConductorRoughMaterial<T>(eta_k.eta, eta_k.k, microfacet_model);
+        }
+
         auto eta_value = find_child_value(node, "spectrum", "eta");
-        if (!eta_value)
-            eta_value = find_child_value(node, "string", "eta");
         auto k_value = find_child_value(node, "spectrum", "k");
-        if (!k_value)
-            k_value = find_child_value(node, "string", "k");
 
         radiometry::PiecewiseLinearSpectrumDistribution<T> eta_dist = make_constant_piecewise_spectrum<T>(T(1));
         radiometry::PiecewiseLinearSpectrumDistribution<T> k_dist = make_constant_piecewise_spectrum<T>(T(0));
@@ -367,12 +381,12 @@ struct ConductorRoughMaterialSerde {
         const auto k_text =
             ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::write_text(mat.k_dist(), write_env);
         k_node.append_attribute("value") = k_text.c_str();
-        auto alpha_x = node.append_child("float");
-        alpha_x.append_attribute("name") = "alpha_x";
-        alpha_x.append_attribute("value") = mat.microfacet_model().alpha_x();
-        auto alpha_y = node.append_child("float");
-        alpha_y.append_attribute("name") = "alpha_y";
-        alpha_y.append_attribute("value") = mat.microfacet_model().alpha_y();
+        auto alpha_u = node.append_child("float");
+        alpha_u.append_attribute("name") = "alpha_u";
+        alpha_u.append_attribute("value") = mat.microfacet_model().alpha_x();
+        auto alpha_v = node.append_child("float");
+        alpha_v.append_attribute("name") = "alpha_v";
+        alpha_v.append_attribute("value") = mat.microfacet_model().alpha_y();
     }
 };
 

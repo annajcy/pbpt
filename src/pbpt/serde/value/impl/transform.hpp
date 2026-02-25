@@ -82,10 +82,10 @@ struct ValueCodec<T, geometry::Transform<T>> {
 
         for (const auto& child : node.children()) {
             const std::string name = child.name();
-            if (name == "lookAt") {
-                const auto origin = detail::parse_point3<T>(child.attribute("origin").value(), "lookAt.origin");
-                const auto target = detail::parse_point3<T>(child.attribute("target").value(), "lookAt.target");
-                const auto up = detail::parse_vector3<T>(child.attribute("up").value(), "lookAt.up");
+            if (name == "lookat") {
+                const auto origin = detail::parse_point3<T>(child.attribute("origin").value(), "lookat.origin");
+                const auto target = detail::parse_point3<T>(child.attribute("target").value(), "lookat.target");
+                const auto up = detail::parse_vector3<T>(child.attribute("up").value(), "lookat.up");
                 transform = transform * geometry::Transform<T>::look_at(origin, target, up).inversed();
             } else if (name == "matrix") {
                 const char* value = child.attribute("value").value();

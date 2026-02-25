@@ -8,7 +8,23 @@ on:
     branches: [ "main" ]
 
 jobs:
+  scene-schema-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Lint Mitsuba3 Scene Schema
+        run: |
+          python script/compare/lint_mi3_scene_schema.py --report output/compare_mi3/schema_report.json
+
   build-and-test:
+    needs: scene-schema-lint
     strategy:
       fail-fast: false
       matrix:

@@ -34,7 +34,8 @@ consteval bool xml_type_unique_from_index() {
     if constexpr (Index >= std::tuple_size_v<Tuple>) {
         return true;
     } else {
-        return xml_type_unique_against_rest<Tuple, Index, Index + 1>() && xml_type_unique_from_index<Tuple, Index + 1>();
+        return xml_type_unique_against_rest<Tuple, Index, Index + 1>() &&
+               xml_type_unique_from_index<Tuple, Index + 1>();
     }
 }
 
@@ -50,9 +51,8 @@ using TextureSerdeList = std::tuple<BitmapTextureSerde<T>, CheckerboardTextureSe
 
 template <typename T>
 using MaterialSerdeList =
-    std::tuple<DiffuseMaterialSerde<T>, DielectricMaterialSerde<T>, DielectricSpecularMaterialSerde<T>,
-               DielectricRoughMaterialSerde<T>, ConductorMaterialSerde<T>, ConductorSpecularMaterialSerde<T>,
-               ConductorRoughMaterialSerde<T>>;
+    std::tuple<DiffuseMaterialSerde<T>, DielectricSpecularMaterialSerde<T>, DielectricRoughMaterialSerde<T>,
+               ConductorSpecularMaterialSerde<T>, ConductorRoughMaterialSerde<T>>;
 
 template <typename T>
 using ShapeSerdeList = std::tuple<ObjShapeSerde<T>>;

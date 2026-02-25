@@ -20,18 +20,18 @@ struct ValueCodec<T, camera::RenderTransform<T>> {
 
         for (const auto& child : node.children()) {
             const std::string name = child.name();
-            if (name == "lookAt") {
+            if (name == "lookat") {
                 if (has_matrix) {
-                    throw std::runtime_error("Sensor transform cannot contain both lookAt and matrix");
+                    throw std::runtime_error("Sensor transform cannot contain both lookat and matrix");
                 }
-                const auto origin = detail::parse_point3<T>(child.attribute("origin").value(), "lookAt.origin");
-                const auto target = detail::parse_point3<T>(child.attribute("target").value(), "lookAt.target");
-                const auto up = detail::parse_vector3<T>(child.attribute("up").value(), "lookAt.up");
+                const auto origin = detail::parse_point3<T>(child.attribute("origin").value(), "lookat.origin");
+                const auto target = detail::parse_point3<T>(child.attribute("target").value(), "lookat.target");
+                const auto up = detail::parse_vector3<T>(child.attribute("up").value(), "lookat.up");
                 look_at_transform = camera::RenderTransform<T>::look_at(origin, target, up, camera::RenderSpace::World);
                 has_look_at = true;
             } else if (name == "matrix") {
                 if (has_look_at) {
-                    throw std::runtime_error("Sensor transform cannot contain both lookAt and matrix");
+                    throw std::runtime_error("Sensor transform cannot contain both lookat and matrix");
                 }
                 const char* value = child.attribute("value").value();
                 if (!value || value[0] == '\0') {

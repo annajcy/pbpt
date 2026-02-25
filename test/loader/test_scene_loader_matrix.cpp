@@ -47,13 +47,13 @@ TEST(SceneLoaderMatrixTest, LoadsShapeMatrixTransform) {
     const auto xml_path = temp_dir.path / "scene_shape_matrix.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path">
-    <integer name="maxDepth" value="-1"/>
+    <integer name="max_depth" value="-1"/>
   </integrator>
   <sensor type="perspective">
     <float name="fov" value="45"/>
-    <transform name="toWorld">
+    <transform name="to_world">
       <matrix value="1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1"/>
     </transform>
   </sensor>
@@ -62,7 +62,7 @@ TEST(SceneLoaderMatrixTest, LoadsShapeMatrixTransform) {
   </bsdf>
   <shape type="obj">
     <string name="filename" value="tri.obj"/>
-    <transform name="toWorld">
+    <transform name="to_world">
       <matrix value="1,0,0,1, 0,1,0,2, 0,0,1,3, 0,0,0,1"/>
     </transform>
     <ref id="mat_white"/>
@@ -87,13 +87,13 @@ TEST(SceneLoaderMatrixTest, LoadsSensorToWorldMatrix) {
     const auto xml_path = temp_dir.path / "scene_sensor_matrix.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path">
-    <integer name="maxDepth" value="-1"/>
+    <integer name="max_depth" value="-1"/>
   </integrator>
   <sensor type="perspective">
     <float name="fov" value="45"/>
-    <transform name="toWorld">
+    <transform name="to_world">
       <matrix value="1,0,0,5, 0,1,0,6, 0,0,1,7, 0,0,0,1"/>
     </transform>
   </sensor>
@@ -120,11 +120,11 @@ TEST(SceneLoaderMatrixTest, ThrowsOnInvalidMatrixValue) {
     const auto xml_path = temp_dir.path / "scene_invalid_matrix.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
-    <transform name="toWorld">
+    <transform name="to_world">
       <matrix value="1,0,0,1"/>
     </transform>
   </sensor>

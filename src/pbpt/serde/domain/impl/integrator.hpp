@@ -23,13 +23,13 @@ struct PathIntegratorSerde {
         T rr = T(0.9);
 
         for (auto child : node.children("integer")) {
-            if (std::string(child.attribute("name").value()) == "maxDepth") {
+            if (std::string(child.attribute("name").value()) == "max_depth") {
                 int val = child.attribute("value").as_int(-1);
                 max_depth = static_cast<unsigned>(val);
             }
         }
         for (auto child : node.children("float")) {
-            if (std::string(child.attribute("name").value()) == "rrThreshold") {
+            if (std::string(child.attribute("name").value()) == "rr_threshold") {
                 rr = static_cast<T>(child.attribute("value").as_float(0.9f));
             }
         }
@@ -43,12 +43,8 @@ struct PathIntegratorSerde {
         node.append_attribute("type") = xml_type.data();
 
         auto max_depth_node = node.append_child("integer");
-        max_depth_node.append_attribute("name") = "maxDepth";
+        max_depth_node.append_attribute("name") = "max_depth";
         max_depth_node.append_attribute("value") = static_cast<int>(integ.max_depth());
-
-        auto rr_node = node.append_child("float");
-        rr_node.append_attribute("name") = "rrThreshold";
-        rr_node.append_attribute("value") = static_cast<float>(integ.rr_threshold());
     }
 };
 

@@ -96,7 +96,7 @@ void write_scene(const PbptXmlResult<T>& result, const std::string& filename) {
 
     pugi::xml_document doc;
     auto root = doc.append_child("scene");
-    root.append_attribute("version") = "0.5.0";
+    root.append_attribute("version") = "3.0.0";
 
     // Write integrator by dispatching on the runtime AnyIntegrator variant
     auto integrator_node = root.append_child("integrator");

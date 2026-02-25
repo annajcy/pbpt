@@ -169,7 +169,7 @@ struct ObjShapeSerde {
         filename_node.append_attribute("value") = ctx.relative_mesh_path(record.mesh_name).c_str();
 
         auto shape_transform = node.append_child("transform");
-        shape_transform.append_attribute("name") = "toWorld";
+        shape_transform.append_attribute("name") = "to_world";
         auto shape_matrix = shape_transform.append_child("matrix");
         const auto object_to_world_text =
             ValueCodec<T, geometry::Transform<T>>::write_text(record.object_to_world, write_env);

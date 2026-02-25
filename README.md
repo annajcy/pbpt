@@ -4,6 +4,20 @@
 
 Yet another pbrt, but with a focus on modern C++ and extensibility.
 
+## Scene Format Policy
+
+PBPT now accepts **Mitsuba3 scene description only**.
+
+- Required: `<scene version="3.0.0">`
+- Required naming style: Mitsuba3 snake_case fields (for example `to_world`, `fov_axis`, `sample_count`, `max_depth`)
+- Legacy 0.4/0.5 aliases (for example `toWorld`, `fovAxis`, `sampleCount`, `lookAt`) are fail-fast errors in the loader.
+
+Run schema lint before commit:
+
+```bash
+uv run python script/compare/lint_mi3_scene_schema.py
+```
+
 # How to build
 
 ### Install UV

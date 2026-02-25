@@ -84,7 +84,7 @@ TEST(SceneSerdeComponents, TransformSerdeThrowsOnInvalidMatrix) {
 TEST(SceneSerdeComponents, RenderTransformSerdeThrowsOnMixedLookAtAndMatrix) {
     pugi::xml_document doc;
     auto transform = doc.append_child("transform");
-    auto look_at = transform.append_child("lookAt");
+    auto look_at = transform.append_child("lookat");
     look_at.append_attribute("origin") = "0,0,5";
     look_at.append_attribute("target") = "0,0,0";
     look_at.append_attribute("up") = "0,1,0";

@@ -22,3 +22,4 @@
 #include "constant/xyz_spectrum.hpp"
 #include "constant/illuminant_spectrum.hpp"
 #include "constant/standard_color_spaces.hpp"
+#include "constant/metal_ior_spectrum.hpp"

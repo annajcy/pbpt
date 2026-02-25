@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "conan>=2.21.0",
     "matplotlib>=3.10.6",
+    "mitsuba>=3.7",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.22",
     "mkdocs-static-i18n>=1.3.0",

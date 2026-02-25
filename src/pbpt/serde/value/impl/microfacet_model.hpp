@@ -32,14 +32,6 @@ struct ValueCodec<T, material::MicrofacetModel<T>> {
             alpha_y = *alpha;
             alpha_found = true;
         }
-        if (auto alpha = parse_child_value<T, T>(node, "float", "alphaU", env)) {
-            alpha_x = *alpha;
-            alpha_found = true;
-        }
-        if (auto alpha = parse_child_value<T, T>(node, "float", "alphaV", env)) {
-            alpha_y = *alpha;
-            alpha_found = true;
-        }
         if (auto alpha = parse_child_value<T, T>(node, "float", "alpha_u", env)) {
             alpha_x = *alpha;
             alpha_found = true;
@@ -52,8 +44,8 @@ struct ValueCodec<T, material::MicrofacetModel<T>> {
         if (parse_child_value<T, T>(node, "float", "roughness", env) ||
             parse_child_value<T, T>(node, "float", "roughness_x", env) ||
             parse_child_value<T, T>(node, "float", "roughness_y", env) ||
-            parse_child_value<T, T>(node, "float", "roughnessU", env) ||
-            parse_child_value<T, T>(node, "float", "roughnessV", env)) {
+            parse_child_value<T, T>(node, "float", "roughness_u", env) ||
+            parse_child_value<T, T>(node, "float", "roughness_v", env)) {
             roughness_found = true;
         }
 
@@ -71,10 +63,10 @@ struct ValueCodec<T, material::MicrofacetModel<T>> {
             if (auto rough = parse_child_value<T, T>(node, "float", "roughness_y", env)) {
                 alpha_y = roughness_to_alpha(*rough);
             }
-            if (auto rough = parse_child_value<T, T>(node, "float", "roughnessU", env)) {
+            if (auto rough = parse_child_value<T, T>(node, "float", "roughness_u", env)) {
                 alpha_x = roughness_to_alpha(*rough);
             }
-            if (auto rough = parse_child_value<T, T>(node, "float", "roughnessV", env)) {
+            if (auto rough = parse_child_value<T, T>(node, "float", "roughness_v", env)) {
                 alpha_y = roughness_to_alpha(*rough);
             }
         }

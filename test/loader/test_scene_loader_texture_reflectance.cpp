@@ -47,7 +47,7 @@ TEST(SceneLoaderTextureReflectanceTest, LoadsDiffuseReflectanceTextureReference)
     const auto xml_path = temp_dir.path / "scene_texture_reflectance.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -81,7 +81,7 @@ TEST(SceneLoaderTextureReflectanceTest, ThrowsOnMissingReflectanceTextureReferen
     const auto xml_path = temp_dir.path / "scene_texture_reflectance_missing.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>

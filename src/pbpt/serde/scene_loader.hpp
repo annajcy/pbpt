@@ -14,6 +14,7 @@
 #include "pbpt/aggregate/plugin/aggregate/embree_aggregate.hpp"
 #include "pbpt/serde/dispatch.hpp"
 #include "pbpt/serde/domain/typelist.hpp"
+#include "pbpt/serde/mi3_schema_guard.hpp"
 #include "pbpt/serde/value/impl/render_transform.hpp"
 
 namespace pbpt::serde {
@@ -89,6 +90,7 @@ PbptXmlResult<T> load_scene(const std::string& filename) {
 
     PbptXmlResult<T> result;
     pugi::xml_node root = doc.child("scene");
+    validate_mi3_scene_schema(root, filename);
     LoadContext<T> ctx(result, std::filesystem::path(filename).parent_path());
 
     // parse XML -> load integrator -> load sensor/camera + sampler -> load textures -> load bsdfs -> load shapes

@@ -29,10 +29,10 @@ struct PerspectiveCameraSerde {
 
         const float fov = parse_child_value<T, float>(node, "float", "fov", read_env).value_or(0.f);
         const auto axis_str =
-            parse_child_value<T, std::string>(node, "string", "fovAxis", read_env).value_or("smaller");
-        const float focus_d = parse_child_value<T, float>(node, "float", "focusDistance", read_env).value_or(0.f);
-        const float near_clip = -parse_child_value<T, float>(node, "float", "nearClip", read_env).value_or(0.1f);
-        const float far_clip = -parse_child_value<T, float>(node, "float", "farClip", read_env).value_or(10000.0f);
+            parse_child_value<T, std::string>(node, "string", "fov_axis", read_env).value_or("smaller");
+        const float focus_d = parse_child_value<T, float>(node, "float", "focus_distance", read_env).value_or(0.f);
+        const float near_clip = -parse_child_value<T, float>(node, "float", "near_clip", read_env).value_or(0.1f);
+        const float far_clip = -parse_child_value<T, float>(node, "float", "far_clip", read_env).value_or(10000.0f);
 
         int width = 512, height = 512;
         if (auto film_node = node.child("film")) {
@@ -69,23 +69,23 @@ struct PerspectiveCameraSerde {
 
         const auto fov_axis_str = camera::fov_axis_to_string(cam.fov_axis());
         auto fov_axis_node = node.append_child("string");
-        fov_axis_node.append_attribute("name") = "fovAxis";
+        fov_axis_node.append_attribute("name") = "fov_axis";
         fov_axis_node.append_attribute("value") = fov_axis_str.c_str();
 
         auto near_node = node.append_child("float");
-        near_node.append_attribute("name") = "nearClip";
+        near_node.append_attribute("name") = "near_clip";
         near_node.append_attribute("value") = -cam.near_clip();
 
         auto far_node = node.append_child("float");
-        far_node.append_attribute("name") = "farClip";
+        far_node.append_attribute("name") = "far_clip";
         far_node.append_attribute("value") = -cam.far_clip();
 
         auto fd_node = node.append_child("float");
-        fd_node.append_attribute("name") = "focusDistance";
+        fd_node.append_attribute("name") = "focus_distance";
         fd_node.append_attribute("value") = cam.focal_distance();
 
         auto transform = node.append_child("transform");
-        transform.append_attribute("name") = "toWorld";
+        transform.append_attribute("name") = "to_world";
         const auto mat_text =
             ValueCodec<T, geometry::Transform<T>>::write_text(ctx.result.scene.render_transform.camera_to_world(), write_env);
         transform.append_child("matrix").append_attribute("value") = mat_text.c_str();

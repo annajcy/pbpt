@@ -46,7 +46,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnDuplicateBsdfId) {
     const auto xml_path = temp_dir.path / "scene_duplicate_bsdf.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -73,7 +73,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnknownShapeMaterialReference) {
     const auto xml_path = temp_dir.path / "scene_unknown_material_ref.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -97,7 +97,7 @@ TEST(SceneLoaderFailFastTest, ThrowsWhenMeshHasNoMaterialAssignment) {
     const auto xml_path = temp_dir.path / "scene_no_material_assignment.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -119,7 +119,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnsupportedType) {
     const auto xml_path = temp_dir.path / "scene_unsupported_type.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -143,7 +143,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnTextureMissingId) {
     const auto xml_path = temp_dir.path / "scene_texture_missing_id.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
@@ -169,12 +169,12 @@ TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountZero) {
     const auto xml_path = temp_dir.path / "scene_sampler_zero.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
-    <sampler type="ldsampler">
-      <integer name="sampleCount" value="0"/>
+    <sampler type="independent">
+      <integer name="sample_count" value="0"/>
     </sampler>
   </sensor>
 </scene>)XML");
@@ -184,7 +184,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountZero) {
         FAIL() << "Expected std::runtime_error";
     } catch (const std::runtime_error& err) {
         const std::string message = err.what();
-        EXPECT_NE(message.find("sampleCount"), std::string::npos);
+        EXPECT_NE(message.find("sample_count"), std::string::npos);
     }
 }
 
@@ -194,12 +194,12 @@ TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountNegative) {
     const auto xml_path = temp_dir.path / "scene_sampler_negative.xml";
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
-<scene version="0.4.0">
+<scene version="3.0.0">
   <integrator type="path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
-    <sampler type="ldsampler">
-      <integer name="sampleCount" value="-1"/>
+    <sampler type="independent">
+      <integer name="sample_count" value="-1"/>
     </sampler>
   </sensor>
 </scene>)XML");
@@ -209,7 +209,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountNegative) {
         FAIL() << "Expected std::runtime_error";
     } catch (const std::runtime_error& err) {
         const std::string message = err.what();
-        EXPECT_NE(message.find("sampleCount"), std::string::npos);
+        EXPECT_NE(message.find("sample_count"), std::string::npos);
     }
 }
 
@@ -223,4 +223,104 @@ TEST(SceneLoaderFailFastTest, ThrowsWhenShapeInstanceReferencesMissingMesh) {
     resources.shape_instances.push_back(std::move(bad_record));
 
     EXPECT_THROW((void)pbpt::serde::build_primitives_from_resources<double>(resources), std::runtime_error);
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsOnLegacySceneVersion) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_legacy_version");
+    const auto xml_path = temp_dir.path / "scene_legacy_version.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="0.4.0">
+  <integrator type="path"/>
+  <sensor type="perspective">
+    <float name="fov" value="45"/>
+  </sensor>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("version"), std::string::npos);
+        EXPECT_NE(message.find("3.0.0"), std::string::npos);
+    }
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsOnLegacyFieldNames) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_legacy_fields");
+    const auto xml_path = temp_dir.path / "scene_legacy_fields.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="3.0.0">
+  <integrator type="path">
+    <integer name="max_depth" value="2"/>
+  </integrator>
+  <sensor type="perspective">
+    <string name="fovAxis" value="smaller"/>
+    <transform name="to_world">
+      <lookat origin="0, 0, 5" target="0, 0, 0" up="0, 1, 0"/>
+    </transform>
+    <float name="fov" value="45"/>
+  </sensor>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("fovAxis"), std::string::npos);
+        EXPECT_NE(message.find("fov_axis"), std::string::npos);
+    }
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsOnLegacyLookAtTag) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_legacy_lookat");
+    const auto xml_path = temp_dir.path / "scene_legacy_lookat_tag.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="3.0.0">
+  <integrator type="path"/>
+  <sensor type="perspective">
+    <float name="fov" value="45"/>
+    <transform name="to_world">
+      <lookAt origin="0, 0, 5" target="0, 0, 0" up="0, 1, 0"/>
+    </transform>
+  </sensor>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("lookAt"), std::string::npos);
+        EXPECT_NE(message.find("lookat"), std::string::npos);
+    }
+}
+
+TEST(SceneLoaderFailFastTest, ThrowsOnLegacyPluginNames) {
+    TempDir temp_dir("pbpt_scene_loader_fail_fast_legacy_plugin");
+    const auto xml_path = temp_dir.path / "scene_legacy_plugin.xml";
+    write_text_file(xml_path,
+                    R"XML(<?xml version="1.0" encoding="utf-8"?>
+<scene version="3.0.0">
+  <integrator type="path"/>
+  <sensor type="perspective">
+    <float name="fov" value="45"/>
+    <sampler type="ldsampler">
+      <integer name="sample_count" value="1"/>
+    </sampler>
+  </sensor>
+</scene>)XML");
+
+    try {
+        pbpt::serde::load_scene<double>(xml_path.string());
+        FAIL() << "Expected std::runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("ldsampler"), std::string::npos);
+        EXPECT_NE(message.find("independent"), std::string::npos);
+    }
 }

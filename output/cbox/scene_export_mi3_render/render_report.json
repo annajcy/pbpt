@@ -1,0 +1,61 @@
+{
+  "total": 9,
+  "ok": 9,
+  "failed": 0,
+  "records": [
+    {
+      "scene": "cbox.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_caustics_uv_sphere.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_caustics_uv_sphere.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_checkerboard_texture.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_checkerboard_texture.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_cu_spec.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_cu_spec.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_diele_spec.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_diele_spec.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_microfacet_cu_aniso.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_microfacet_cu_aniso.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_microfacet_cu_iso.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_microfacet_cu_iso.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_microfacet_diele_aniso.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_microfacet_diele_aniso.exr",
+      "error": ""
+    },
+    {
+      "scene": "cbox_microfacet_diele_iso.xml",
+      "ok": true,
+      "out_exr": "output/cbox/scene_export_mi3_render/cbox_microfacet_diele_iso.exr",
+      "error": ""
+    }
+  ]
+}
