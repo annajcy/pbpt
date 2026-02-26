@@ -3,14 +3,13 @@
 namespace pbpt::scene {
 
 template <typename ResourcesT>
-concept MaterialLibraryConcept = requires(const ResourcesT& resources) {
-    resources.any_material_library.get(0);
-};
+concept MaterialLibraryConcept = requires(const ResourcesT& resources) { resources.any_material_library.get(0); };
 
 template <typename ResourcesT>
-concept LightLibraryConcept = requires(const ResourcesT& resources) {
-    resources.any_light_library.get(0);
-};
+concept LightLibraryConcept = requires(const ResourcesT& resources) { resources.any_light_library.get(0); };
+
+template <typename ContextT>
+concept LightSamplerAccessConcept = requires(const ContextT& ctx) { ctx.light_sampler; };
 
 template <typename ResourcesT>
 concept SceneResourcesConcept = MaterialLibraryConcept<ResourcesT> && LightLibraryConcept<ResourcesT>;

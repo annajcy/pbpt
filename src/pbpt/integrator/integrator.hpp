@@ -72,8 +72,10 @@ public:
             [&](auto& camera_obj) {
                 std::visit(
                     [&](auto& film_obj, const auto& pixel_filter, const auto& aggregate) {
-                        scene::SceneContext context{
-                            camera_obj, film_obj, pixel_filter, aggregate, scene.render_transform, scene.resources};
+                        scene::SceneContext context{camera_obj,          film_obj,
+                                                    pixel_filter,        aggregate,
+                                                    scene.light_sampler, scene.render_transform,
+                                                    scene.resources};
                         // std::visit on m_sampler once here (outer level),
                         // then enter render_loop_typed which is fully typed on SamplerT.
                         std::visit(

@@ -34,6 +34,7 @@ template <typename SceneContextT, typename T, int N>
 concept PathTraceContextConcept =
     RenderLoopContextConcept<SceneContextT, T, N> && requires(const SceneContextT& context) { context.aggregate; } &&
     aggregate::AggregateIntersectConcept<std::remove_cvref_t<decltype(std::declval<const SceneContextT&>().aggregate)>,
-                                         T>;
+                                         T> &&
+    scene::LightSamplerAccessConcept<SceneContextT>;
 
 }  // namespace pbpt::integrator

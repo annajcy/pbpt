@@ -36,7 +36,8 @@ void write_bsdf_nodes(pugi::xml_node& root, WriteContext<T>& ctx) {
 
 template <typename T>
 void write_shape_nodes(pugi::xml_node& root, WriteContext<T>& ctx) {
-    if (ctx.result.scene.resources.shape_instances.empty() && !ctx.result.scene.resources.mesh_library.name_to_id().empty()) {
+    if (ctx.result.scene.resources.shape_instances.empty() &&
+        !ctx.result.scene.resources.mesh_library.name_to_id().empty()) {
         for (const auto& [mesh_name, mesh_id] : ctx.result.scene.resources.mesh_library.name_to_id()) {
             const auto& mesh = ctx.result.scene.resources.mesh_library.get(mesh_id);
 
@@ -108,6 +109,9 @@ void write_scene(const PbptXmlResult<T>& result, const std::string& filename, bo
 
     // Write sampler by dispatching on integrator's sampler variant
     dispatch_write_sampler<T, SamplerSerdeList<T>>(result.integrator, sensor, ctx);
+
+    auto light_sampler_node = root.append_child("light_sampler");
+    dispatch_write_light_sampler<T, LightSamplerSerdeList<T>>(result.scene.light_sampler, light_sampler_node, ctx);
 
     write_texture_nodes<T>(root, ctx);
     write_bsdf_nodes<T>(root, ctx);

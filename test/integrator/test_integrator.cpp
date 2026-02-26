@@ -89,6 +89,8 @@ struct ConceptTestResources {
     ConceptTestLightLibrary any_light_library{};
 };
 
+struct ConceptTestLightSampler {};
+
 struct ConceptTestAggregate {
     int intersect_ray(const geometry::Ray<double, 3>& /*ray*/) const { return 0; }
     int intersect_ray_differential(const geometry::RayDifferential<double, 3>& /*ray_diff*/) const { return 0; }
@@ -99,6 +101,7 @@ struct ConceptTestSceneContext {
     ConceptTestFilm film{};
     ConceptTestPixelFilter pixel_filter{};
     ConceptTestAggregate aggregate{};
+    ConceptTestLightSampler light_sampler{};
     ConceptTestRenderTransform render_transform{};
     ConceptTestResources resources{};
 };
@@ -289,8 +292,10 @@ TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic) {
     observer.is_cancel_requested = []() { return false; };
 
     std::visit(
-        [&](auto& integrator) { integrator.render(result.scene, output_exr_path.string(), false, observer, result.spp); },
-               result.integrator);
+        [&](auto& integrator) {
+            integrator.render(result.scene, output_exr_path.string(), false, observer, result.spp);
+        },
+        result.integrator);
 
     ASSERT_FALSE(progress_values.empty());
     for (std::size_t i = 0; i < progress_values.size(); ++i) {
@@ -324,13 +329,12 @@ TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
     };
     observer.is_cancel_requested = [&]() { return cancel_requested.load(); };
 
-    EXPECT_THROW(
-        std::visit(
-            [&](auto& integrator) {
-                integrator.render(result.scene, output_exr_path.string(), false, observer, result.spp);
-            },
-            result.integrator),
-        pbpt::integrator::RenderCanceled);
+    EXPECT_THROW(std::visit(
+                     [&](auto& integrator) {
+                         integrator.render(result.scene, output_exr_path.string(), false, observer, result.spp);
+                     },
+                     result.integrator),
+                 pbpt::integrator::RenderCanceled);
     EXPECT_GT(progress_call_count, 0);
     EXPECT_FALSE(std::filesystem::exists(output_exr_path));
 }

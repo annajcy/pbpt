@@ -12,8 +12,8 @@
 #include "pbpt/camera/render_transform.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/spectrum_distribution_type.hpp"
 #include "pbpt/texture/plugin/texture/texture_type.hpp"
-
 #include "pbpt/light/plugin/light/light_type.hpp"
+#include "pbpt/light_sampler/plugin/light_sampler/light_sampler_type.hpp"
 #include "pbpt/camera/plugin/camera/camera_type.hpp"
 #include "pbpt/shape/plugin/shape/shape_type.hpp"
 #include "pbpt/geometry/transform.hpp"
@@ -69,12 +69,14 @@ struct RenderResources {
     std::vector<ShapeInstanceRecord<T>> shape_instances;
 };
 
-template <typename T, typename CameraT, typename FilmT, typename PixelFilterT, typename AggregateT>
+template <typename T, typename CameraT, typename FilmT, typename PixelFilterT, typename AggregateT,
+          typename LightSamplerT>
 struct SceneContext {
     const CameraT& camera;
     FilmT& film;
     const PixelFilterT& pixel_filter;
     const AggregateT& aggregate;
+    const LightSamplerT& light_sampler;
     const camera::RenderTransform<T>& render_transform;
     const RenderResources<T>& resources;
 };
@@ -101,6 +103,9 @@ struct Scene {
 
     // 场景几何与材质
     RenderResources<T> resources;
+
+    // 光源采样器
+    light_sampler::AnyLightSampler<T> light_sampler;
 };
 
 }  // namespace pbpt::scene

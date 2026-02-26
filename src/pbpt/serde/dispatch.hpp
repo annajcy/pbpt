@@ -12,6 +12,7 @@
 #include "pbpt/texture/plugin/texture/texture_type.hpp"
 #include "pbpt/material/plugin/material/material_type.hpp"
 #include "pbpt/integrator/plugin/integrator/integrator_type.hpp"
+#include "pbpt/light_sampler/plugin/light_sampler/light_sampler_type.hpp"
 
 namespace pbpt::serde {
 
@@ -199,6 +200,35 @@ void dispatch_write_sampler_inner(const lds::AnySampler<T>& any_sampler, pugi::x
         dispatch_write_sampler_inner<T, Tuple, Index + 1>(any_sampler, node, ctx);
     } else {
         throw std::runtime_error("Unsupported sampler type for serialization.");
+    }
+}
+
+template <typename T, typename Tuple, std::size_t Index = 0>
+void dispatch_load_light_sampler(const std::string& type, const pugi::xml_node& node, LoadContext<T>& ctx) {
+    if constexpr (Index < std::tuple_size_v<Tuple>) {
+        using SerdeT = std::tuple_element_t<Index, Tuple>;
+        if (type == SerdeT::xml_type) {
+            SerdeT::load(node, ctx);
+            return;
+        }
+        dispatch_load_light_sampler<T, Tuple, Index + 1>(type, node, ctx);
+    } else {
+        throw std::runtime_error("Unsupported light_sampler type: " + type);
+    }
+}
+
+template <typename T, typename Tuple, std::size_t Index = 0>
+void dispatch_write_light_sampler(const light_sampler::AnyLightSampler<T>& any_sampler, pugi::xml_node& node,
+                                  WriteContext<T>& ctx) {
+    if constexpr (Index < std::tuple_size_v<Tuple>) {
+        using SerdeT = std::tuple_element_t<Index, Tuple>;
+        if (const auto* val = std::get_if<typename SerdeT::value_type>(&any_sampler)) {
+            SerdeT::write(ValueWriteTarget<typename SerdeT::value_type>{*val}, node, ctx);
+            return;
+        }
+        dispatch_write_light_sampler<T, Tuple, Index + 1>(any_sampler, node, ctx);
+    } else {
+        throw std::runtime_error("Unsupported light_sampler type for serialization.");
     }
 }
 

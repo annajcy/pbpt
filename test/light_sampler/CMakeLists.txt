@@ -1,0 +1,3 @@
+add_executable(test_uniform_light_sampler test_uniform_light_sampler.cpp)
+target_link_libraries(test_uniform_light_sampler PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_uniform_light_sampler)

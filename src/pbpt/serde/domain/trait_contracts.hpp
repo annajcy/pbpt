@@ -83,4 +83,11 @@ concept SamplerSerdeConcept =
     std::same_as<typename SerdeT::write_target, ValueWriteTarget<typename SerdeT::value_type>> &&
     serde_domain_equals<SerdeT>("sampler");
 
+template <typename T, typename SerdeT>
+concept LightSamplerSerdeConcept =
+    SerdeConcept<T, SerdeT> && std::same_as<typename SerdeT::load_result, void> &&
+    requires { typename SerdeT::value_type; } &&
+    std::same_as<typename SerdeT::write_target, ValueWriteTarget<typename SerdeT::value_type>> &&
+    serde_domain_equals<SerdeT>("light_sampler");
+
 }  // namespace pbpt::serde

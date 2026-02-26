@@ -11,6 +11,7 @@
 #include "pbpt/serde/domain/impl/camera.hpp"
 #include "pbpt/serde/domain/impl/integrator.hpp"
 #include "pbpt/serde/domain/impl/sampler.hpp"
+#include "pbpt/serde/domain/impl/light_sampler.hpp"
 
 namespace pbpt::serde {
 
@@ -66,11 +67,15 @@ using IntegratorSerdeList = std::tuple<PathIntegratorSerde<T>>;
 template <typename T>
 using SamplerSerdeList = std::tuple<LdsSamplerSerde<T>>;
 
+template <typename T>
+using LightSamplerSerdeList = std::tuple<UniformLightSamplerSerde<T>>;
+
 static_assert(has_unique_xml_types<TextureSerdeList<float>>(), "Duplicate xml_type in TextureSerdeList.");
 static_assert(has_unique_xml_types<MaterialSerdeList<float>>(), "Duplicate xml_type in MaterialSerdeList.");
 static_assert(has_unique_xml_types<ShapeSerdeList<float>>(), "Duplicate xml_type in ShapeSerdeList.");
 static_assert(has_unique_xml_types<CameraSerdeList<float>>(), "Duplicate xml_type in CameraSerdeList.");
 static_assert(has_unique_xml_types<IntegratorSerdeList<float>>(), "Duplicate xml_type in IntegratorSerdeList.");
 static_assert(has_unique_xml_types<SamplerSerdeList<float>>(), "Duplicate xml_type in SamplerSerdeList.");
+static_assert(has_unique_xml_types<LightSamplerSerdeList<float>>(), "Duplicate xml_type in LightSamplerSerdeList.");
 
 }  // namespace pbpt::serde

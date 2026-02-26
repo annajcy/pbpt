@@ -16,6 +16,7 @@
 #include "pbpt/serde/domain/typelist.hpp"
 #include "pbpt/serde/mi3_schema_guard.hpp"
 #include "pbpt/serde/value/impl/render_transform.hpp"
+#include "pbpt/light_sampler/plugin/light_sampler/uniform_light_sampler.hpp"
 
 namespace pbpt::serde {
 
@@ -136,6 +137,20 @@ PbptXmlResult<T> load_scene(const std::string& filename, bool to_left_handed = f
 
     auto primitives = build_primitives_from_resources<T>(result.scene.resources);
     result.scene.aggregate = aggregate::EmbreeAggregate<T>(std::move(primitives));
+
+    auto light_sampler_node = root.child("light_sampler");
+    if (light_sampler_node) {
+        std::string sampler_type = light_sampler_node.attribute("type").value();
+        dispatch_load_light_sampler<T, LightSamplerSerdeList<T>>(sampler_type, light_sampler_node, ctx);
+    } else {
+        std::vector<const light::AnyLight<T>*> light_ptrs;
+        const auto& library = ctx.result.scene.resources.any_light_library;
+        light_ptrs.reserve(library.size());
+        for (const auto& [name, id] : library.name_to_id()) {
+            light_ptrs.push_back(&library.get(id));
+        }
+        ctx.result.scene.light_sampler = light_sampler::UniformLightSampler<T>(light_ptrs);
+    }
 
     return result;
 }
