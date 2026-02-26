@@ -9,9 +9,7 @@ namespace pbpt::radiometry {
 // Light Variant
 // 假设光谱分布类型也是标准的 PiecewiseLinear * type(D65)
 template <typename T>
-using StandardEmissionSpectrum =
-    radiometry::MultipliedSpectrumDistribution<T, radiometry::PiecewiseLinearSpectrumDistribution<T>,
-                                               radiometry::constant::CIED65SpectrumType<T>>;
+using StandardEmissionSpectrum = radiometry::PiecewiseLinearSpectrumDistribution<T>;
 
 template <typename T>
 using EmissionSpectrumLibrary = utils::Library<T, StandardEmissionSpectrum<T>>;

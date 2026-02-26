@@ -137,8 +137,7 @@ struct ObjShapeSerde {
             record.emission_spectrum_name = spec_name;
 
             const auto& emission_spec = ctx.result.scene.resources.reflectance_spectrum_library.get(spec_name);
-            auto light_spectrum_dist =
-                radiometry::StandardEmissionSpectrum<T>(emission_spec, radiometry::constant::CIE_D65_ilum<T>);
+            auto light_spectrum_dist = radiometry::StandardEmissionSpectrum<T>(emission_spec);
 
             const auto& mesh = ctx.result.scene.resources.mesh_library.get(name);
             for (int i = 0; i < mesh.triangle_count(); ++i) {

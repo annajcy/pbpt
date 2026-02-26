@@ -146,8 +146,8 @@ inline Scene<T> create_cbox_scene(
     scene.resources.mesh_material_map["cbox_luminaire"] = light_id;
 
     // 5. Setup Lights
-    auto light_spectrum = radiometry::StandardEmissionSpectrum<T>(
-        scene.resources.reflectance_spectrum_library.get("emitter"), radiometry::constant::CIE_D65_ilum<T>);
+    auto light_spectrum =
+        radiometry::StandardEmissionSpectrum<T>(scene.resources.reflectance_spectrum_library.get("emitter"));
 
     auto light_mesh = scene.resources.mesh_library.get("cbox_luminaire");  // mesh_library returns reference
     for (int i = 0; i < light_mesh.triangle_count(); ++i) {

@@ -92,6 +92,24 @@ public:
           m_sensor_response(sensor_response),
           m_color_space(color_space),
           m_image_ratio(image_ratio) {
+        // Compute the emission normalization compensation factor.
+        // project_emission normalizes by g_integral = ∫ illuminant(λ) * ȳ(λ) dλ.
+        // The CIE standard for absolute emission-to-XYZ uses y_integral = ∫ ȳ(λ) dλ.
+        // To match Mitsuba's convention (absolute radiance without illuminant modulation),
+        // we multiply image_ratio by g_integral / y_integral, so the final result becomes:
+        //   sensor_rgb = [∫ L*CMF / g_integral] * (g_integral / y_integral)
+        //              = ∫ L*CMF / y_integral
+        T g_integral{};
+        T y_integral{};
+        for (int lambda = radiometry::constant::lambda_min<int>; lambda <= radiometry::constant::lambda_max<int>;
+             ++lambda) {
+            g_integral += m_scene_illuminant.at(lambda) * m_sensor_response.g().at(lambda);
+            y_integral += m_sensor_response.g().at(lambda);
+        }
+        if (!math::is_zero(g_integral) && !math::is_zero(y_integral)) {
+            m_image_ratio *= g_integral / y_integral;
+        }
+
         math::Matrix<T, 3, radiometry::constant::swatch_reflectances_count> rgb_camera{};
         for (int i = 0; i < radiometry::constant::swatch_reflectances_count; ++i) {
             auto reflectance = radiometry::constant::swatch_reflectances<T>[i];

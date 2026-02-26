@@ -36,7 +36,7 @@ TEST(UniformLightSamplerTest, MultipleLights) {
 
     std::vector<std::pair<T, T>> points = {{400, 1}, {700, 1}};
     radiometry::PiecewiseLinearSpectrumDistribution<T> pwl(points);
-    auto dist = pwl * radiometry::constant::CIE_D65_ilum<T>;
+    auto dist = pwl;
 
     light::AnyLight<T> area_light1 = light::StandardAreaLightType<T>(tri, dist);
     light::AnyLight<T> area_light2 = light::StandardAreaLightType<T>(tri, dist);

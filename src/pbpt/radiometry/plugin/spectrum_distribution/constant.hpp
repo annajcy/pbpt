@@ -15,6 +15,9 @@ private:
     T m_value;
 
 public:
+    /// Default constructor: spectrum with value 0.
+    ConstantSpectrumDistribution() : m_value(T{0}) {}
+
     /// Constructs a spectrum whose value is constant over all wavelengths.
     ConstantSpectrumDistribution(T value) : m_value(value) {}
 
