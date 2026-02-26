@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     }
 
     try {
-        auto result = pbpt::serde::load_scene<double>(scene_path);
+        auto result = pbpt::serde::load_scene<double>(scene_path, {.to_left_handed = false});
         int spp = result.spp;
         if (argc >= 4) {
             spp = std::stoi(argv[3]);
@@ -28,7 +28,8 @@ int main(int argc, char** argv) {
                 throw std::invalid_argument("spp must be > 0");
             }
         }
-        std::visit([&](auto& integrator) { integrator.render(result.scene, output_path, false, spp); }, result.integrator);
+        std::visit([&](auto& integrator) { integrator.render(result.scene, output_path, false, spp); },
+                   result.integrator);
         std::cout << std::format("Rendered '{}' -> {}\n", scene_path, output_path);
     } catch (const std::exception& e) {
         std::cerr << "pbpt_cli failed: " << e.what() << '\n';

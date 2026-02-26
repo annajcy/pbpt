@@ -354,7 +354,7 @@ TEST(PathIntegratorSerde, ParsesMaxDepthAndRrThreshold) {
     rr_node.append_attribute("value") = "0.8";
 
     pbpt::serde::PbptXmlResult<double> parsed_scene{};
-    pbpt::serde::LoadContext<double> env{parsed_scene, std::filesystem::current_path()};
+    pbpt::serde::LoadContext<double> env{parsed_scene, std::filesystem::current_path(), {.load_integrator_rr = true}};
 
     pbpt::serde::PathIntegratorSerde<double>::load(integrator_node, env);
 

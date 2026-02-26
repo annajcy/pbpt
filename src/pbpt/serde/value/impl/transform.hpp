@@ -86,23 +86,23 @@ struct ValueCodec<T, geometry::Transform<T>> {
                 const auto origin = detail::parse_point3<T>(child.attribute("origin").value(), "lookat.origin");
                 const auto target = detail::parse_point3<T>(child.attribute("target").value(), "lookat.target");
                 const auto up = detail::parse_vector3<T>(child.attribute("up").value(), "lookat.up");
-                transform = transform * geometry::Transform<T>::look_at(origin, target, up).inversed();
+                transform = geometry::Transform<T>::look_at(origin, target, up).inversed() * transform;
             } else if (name == "matrix") {
                 const char* value = child.attribute("value").value();
                 if (!value || value[0] == '\0') {
                     throw std::runtime_error("transform matrix is missing value attribute");
                 }
-                transform = transform * geometry::Transform<T>(detail::parse_matrix_4x4_value<T>(value));
+                transform = geometry::Transform<T>(detail::parse_matrix_4x4_value<T>(value)) * transform;
             } else if (name == "translate") {
                 const T x = child.attribute("x") ? parse_scalar(child.attribute("x").value(), env) : T(0);
                 const T y = child.attribute("y") ? parse_scalar(child.attribute("y").value(), env) : T(0);
                 const T z = child.attribute("z") ? parse_scalar(child.attribute("z").value(), env) : T(0);
-                transform = transform * geometry::Transform<T>::translate(math::Vector<T, 3>(x, y, z));
+                transform = geometry::Transform<T>::translate(math::Vector<T, 3>(x, y, z)) * transform;
             } else if (name == "scale") {
                 const T x = child.attribute("x") ? parse_scalar(child.attribute("x").value(), env) : T(1);
                 const T y = child.attribute("y") ? parse_scalar(child.attribute("y").value(), env) : T(1);
                 const T z = child.attribute("z") ? parse_scalar(child.attribute("z").value(), env) : T(1);
-                transform = transform * geometry::Transform<T>::scale(math::Vector<T, 3>(x, y, z));
+                transform = geometry::Transform<T>::scale(math::Vector<T, 3>(x, y, z)) * transform;
             }
         }
 

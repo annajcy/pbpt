@@ -80,7 +80,7 @@ void write_shape_nodes(pugi::xml_node& root, WriteContext<T>& ctx) {
 }
 
 template <typename T>
-void write_scene(const PbptXmlResult<T>& result, const std::string& filename, bool to_left_handed = false) {
+void write_scene(const PbptXmlResult<T>& result, const std::string& filename, const SceneWriteConfig& config = {}) {
     if (filename.empty()) {
         throw std::invalid_argument("write_scene: filename must not be empty.");
     }
@@ -93,7 +93,7 @@ void write_scene(const PbptXmlResult<T>& result, const std::string& filename, bo
     std::filesystem::create_directories(mesh_dir);
     std::filesystem::create_directories(texture_dir);
 
-    WriteContext<T> ctx{result, scene_dir, mesh_dir, texture_dir, to_left_handed};
+    WriteContext<T> ctx{result, scene_dir, mesh_dir, texture_dir, config};
 
     pugi::xml_document doc;
     auto root = doc.append_child("scene");
@@ -110,8 +110,10 @@ void write_scene(const PbptXmlResult<T>& result, const std::string& filename, bo
     // Write sampler by dispatching on integrator's sampler variant
     dispatch_write_sampler<T, SamplerSerdeList<T>>(result.integrator, sensor, ctx);
 
-    auto light_sampler_node = root.append_child("light_sampler");
-    dispatch_write_light_sampler<T, LightSamplerSerdeList<T>>(result.scene.light_sampler, light_sampler_node, ctx);
+    if (ctx.config.write_light_sampler) {
+        auto light_sampler_node = root.append_child("light_sampler");
+        dispatch_write_light_sampler<T, LightSamplerSerdeList<T>>(result.scene.light_sampler, light_sampler_node, ctx);
+    }
 
     write_texture_nodes<T>(root, ctx);
     write_bsdf_nodes<T>(root, ctx);

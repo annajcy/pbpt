@@ -20,7 +20,6 @@
       <integer name="sample_count" value="4" />
     </sampler>
   </sensor>
-  <light_sampler type="uniform" />
   <bsdf id="light" type="diffuse">
     <spectrum name="reflectance" value="400:0.78000000000000003, 500:0.78000000000000003, 600:0.78000000000000003, 700:0.78000000000000003" />
   </bsdf>

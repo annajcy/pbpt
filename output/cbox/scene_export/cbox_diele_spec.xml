@@ -20,7 +20,6 @@
       <integer name="sample_count" value="4" />
     </sampler>
   </sensor>
-  <light_sampler type="uniform" />
   <bsdf id="glass" type="dielectric">
     <float name="int_ior" value="1.5" />
     <float name="ext_ior" value="1" />

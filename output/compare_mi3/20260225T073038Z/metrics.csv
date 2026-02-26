@@ -1,2 +1,0 @@
-scene_path,scene_id,nrmse,psnr,max_abs,diff_exr
-asset/scene/cbox/cbox.xml,asset__scene__cbox__cbox,0.2155836702375218,4.454944765713048,10.703168869018555,/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260225T073038Z/asset__scene__cbox__cbox/diff.exr

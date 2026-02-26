@@ -6,6 +6,7 @@
 #include "pbpt/camera/render_transform.hpp"
 #include "pbpt/serde/value/impl/transform.hpp"
 #include "pbpt/serde/value/value_codec_traits.hpp"
+#include "pbpt/serde/scene_io_config.hpp"
 
 namespace pbpt::serde {
 
@@ -17,7 +18,7 @@ struct ValueCodec<T, camera::RenderTransform<T>> {
     }
 
     static camera::RenderTransform<T> parse_node(const pugi::xml_node& node, const ValueCodecReadEnv<T>& env,
-                                                 bool to_left_handed) {
+                                                 const SceneLoadConfig& config) {
         bool has_look_at = false;
         bool has_matrix = false;
 
@@ -47,7 +48,7 @@ struct ValueCodec<T, camera::RenderTransform<T>> {
             }
         }
 
-        if (to_left_handed) {
+        if (config.to_left_handed) {
             camera_to_world = switch_handedness(camera_to_world);
         }
 
@@ -55,48 +56,48 @@ struct ValueCodec<T, camera::RenderTransform<T>> {
             return camera::RenderTransform<T>::from_camera_to_world(camera_to_world, camera::RenderSpace::World);
         }
         return camera::RenderTransform<T>::from_camera_to_world(geometry::Transform<T>::identity(),
-                                                                 camera::RenderSpace::World);
+                                                                camera::RenderSpace::World);
     }
 
     static camera::RenderTransform<T> parse_node(const pugi::xml_node& node, const ValueCodecReadEnv<T>& env) {
-        return parse_node(node, env, false);
+        return parse_node(node, env, SceneLoadConfig{});
     }
 
     static void write_node(const camera::RenderTransform<T>& value, pugi::xml_node& node,
-                           const ValueCodecWriteEnv<T>& env, bool to_left_handed) {
+                           const ValueCodecWriteEnv<T>& env, const SceneWriteConfig& config) {
         auto matrix = node.append_child("matrix");
-        matrix.append_attribute("value") = write_text(value, env, to_left_handed).c_str();
+        matrix.append_attribute("value") = write_text(value, env, config).c_str();
     }
 
     static void write_node(const camera::RenderTransform<T>& value, pugi::xml_node& node,
                            const ValueCodecWriteEnv<T>& env) {
-        write_node(value, node, env, false);
+        write_node(value, node, env, SceneWriteConfig{});
     }
 
     static camera::RenderTransform<T> parse_text(std::string_view text, const ValueCodecReadEnv<T>& env,
-                                                 bool to_left_handed) {
+                                                 const SceneLoadConfig& config) {
         auto camera_to_world = ValueCodec<T, geometry::Transform<T>>::parse_text(text, env);
-        if (to_left_handed) {
+        if (config.to_left_handed) {
             camera_to_world = switch_handedness(camera_to_world);
         }
         return camera::RenderTransform<T>::from_camera_to_world(camera_to_world, camera::RenderSpace::World);
     }
 
     static camera::RenderTransform<T> parse_text(std::string_view text, const ValueCodecReadEnv<T>& env) {
-        return parse_text(text, env, false);
+        return parse_text(text, env, SceneLoadConfig{});
     }
 
     static std::string write_text(const camera::RenderTransform<T>& value, const ValueCodecWriteEnv<T>& env,
-                                  bool to_left_handed) {
+                                  const SceneWriteConfig& config) {
         auto camera_to_world = value.camera_to_world();
-        if (to_left_handed) {
+        if (config.to_left_handed) {
             camera_to_world = switch_handedness(camera_to_world);
         }
         return ValueCodec<T, geometry::Transform<T>>::write_text(camera_to_world, env);
     }
 
     static std::string write_text(const camera::RenderTransform<T>& value, const ValueCodecWriteEnv<T>& env) {
-        return write_text(value, env, false);
+        return write_text(value, env, SceneWriteConfig{});
     }
 };
 

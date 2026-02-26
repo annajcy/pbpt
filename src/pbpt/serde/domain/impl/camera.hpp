@@ -9,6 +9,7 @@
 #include "pbpt/serde/value/impl/transform.hpp"
 #include "pbpt/serde/value/impl/render_transform.hpp"
 #include "pbpt/camera/plugin/camera/projective_cameras.hpp"
+#include "pbpt/serde/scene_io_config.hpp"
 #include "pbpt/camera/plugin/film/hdr_film.hpp"
 #include "pbpt/camera/plugin/pixel_filter/gaussian_filter.hpp"
 #include "pbpt/camera/pixel_sensor.hpp"
@@ -86,8 +87,8 @@ struct PerspectiveCameraSerde {
 
         auto transform = node.append_child("transform");
         transform.append_attribute("name") = "to_world";
-        const auto mat_text = ValueCodec<T, camera::RenderTransform<T>>::write_text(
-            ctx.result.scene.render_transform, write_env, ctx.to_left_handed);
+        const auto mat_text = ValueCodec<T, camera::RenderTransform<T>>::write_text(ctx.result.scene.render_transform,
+                                                                                    write_env, ctx.config);
         transform.append_child("matrix").append_attribute("value") = mat_text.c_str();
 
         const auto res = cam.film_resolution();

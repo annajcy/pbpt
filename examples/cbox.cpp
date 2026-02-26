@@ -43,15 +43,15 @@ std::filesystem::path find_repo_root() {
 void render_task(const std::filesystem::path& repo_root, const std::filesystem::path& output_root,
                  const CboxRenderTask& task, const std::optional<int>& spp_override, bool to_left_handed) {
     const auto scene_path = repo_root / task.scene_xml_rel;
-    auto result = pbpt::serde::load_scene<double>(scene_path.string(), false);
+    auto result = pbpt::serde::load_scene<double>(scene_path.string(), {.to_left_handed = false});
 
     const auto export_dir = output_root / "scene_export";
     std::filesystem::create_directories(export_dir);
     const auto exported_scene = export_dir / (task.output_stem + ".xml");
-    pbpt::serde::write_scene(result, exported_scene.string(), to_left_handed);
+    pbpt::serde::write_scene(result, exported_scene.string(), {.to_left_handed = to_left_handed});
 
     if (task.roundtrip_before_render && !to_left_handed) {
-        result = pbpt::serde::load_scene<double>(exported_scene.string(), false);
+        result = pbpt::serde::load_scene<double>(exported_scene.string(), {.to_left_handed = false});
     }
 
     std::vector<int> spp_values = task.spp_list;
@@ -69,11 +69,8 @@ void render_task(const std::filesystem::path& repo_root, const std::filesystem::
         }
         const auto out_exr = output_root / (stem + ".exr");
 
-        std::visit(
-            [&](auto& integrator) {
-                integrator.render(result.scene, out_exr.string(), false, spp);
-            },
-            result.integrator);
+        std::visit([&](auto& integrator) { integrator.render(result.scene, out_exr.string(), false, spp); },
+                   result.integrator);
     }
 }
 
@@ -116,8 +113,7 @@ RunOptions parse_args(int argc, char** argv) {
             options.to_left_handed = true;
             continue;
         }
-        throw std::runtime_error(
-            "Usage: cbox [--output <path>] [--spp <int>] [--only <keyword>] [--to-left-handed]");
+        throw std::runtime_error("Usage: cbox [--output <path>] [--spp <int>] [--only <keyword>] [--to-left-handed]");
     }
     return options;
 }
@@ -160,8 +156,7 @@ int main(int argc, char** argv) {
             std::cerr << "[cbox] done with failures: " << failed << std::endl;
             return 1;
         }
-        std::cout << "[cbox] done, rendered tasks: " << rendered << ", outputs at: " << output_root
-                  << std::endl;
+        std::cout << "[cbox] done, rendered tasks: " << rendered << ", outputs at: " << output_root << std::endl;
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "[cbox] failed: " << e.what() << std::endl;

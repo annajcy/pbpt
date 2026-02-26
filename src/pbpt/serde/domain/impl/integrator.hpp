@@ -29,9 +29,11 @@ struct SimplePathIntegratorSerde {
                 max_depth = static_cast<unsigned>(val);
             }
         }
-        for (auto child : node.children("float")) {
-            if (std::string(child.attribute("name").value()) == "rr_threshold") {
-                rr = static_cast<T>(child.attribute("value").as_float(0.9f));
+        if (ctx.config.load_integrator_rr) {
+            for (auto child : node.children("float")) {
+                if (std::string(child.attribute("name").value()) == "rr_threshold") {
+                    rr = static_cast<T>(child.attribute("value").as_float(0.9f));
+                }
             }
         }
 
@@ -44,10 +46,12 @@ struct SimplePathIntegratorSerde {
         max_depth.append_attribute("name") = "max_depth";
         max_depth.append_attribute("value") = std::to_string(target.value.max_depth()).c_str();
 
-        if (std::abs(target.value.rr_threshold() - T(0.9)) > T(1e-5)) {
-            auto rr = node.append_child("float");
-            rr.append_attribute("name") = "rr_threshold";
-            rr.append_attribute("value") = std::to_string(target.value.rr_threshold()).c_str();
+        if (ctx.config.write_integrator_rr) {
+            if (std::abs(target.value.rr_threshold() - T(0.9)) > T(1e-5)) {
+                auto rr = node.append_child("float");
+                rr.append_attribute("name") = "rr_threshold";
+                rr.append_attribute("value") = std::to_string(target.value.rr_threshold()).c_str();
+            }
         }
     }
 };
@@ -68,9 +72,11 @@ struct PathIntegratorSerde {
                 max_depth_str = child.attribute("value").as_int(-1);
             }
         }
-        for (auto child : node.children("float")) {
-            if (std::string(child.attribute("name").value()) == "rr_threshold") {
-                rr = static_cast<T>(child.attribute("value").as_float(0.9f));
+        if (ctx.config.load_integrator_rr) {
+            for (auto child : node.children("float")) {
+                if (std::string(child.attribute("name").value()) == "rr_threshold") {
+                    rr = static_cast<T>(child.attribute("value").as_float(0.9f));
+                }
             }
         }
         ctx.result.integrator = integrator::PathIntegrator<T, 4>(max_depth_str, rr);
@@ -82,10 +88,12 @@ struct PathIntegratorSerde {
         max_depth.append_attribute("name") = "max_depth";
         max_depth.append_attribute("value") = std::to_string(target.value.max_depth()).c_str();
 
-        if (std::abs(target.value.rr_threshold() - T(0.9)) > T(1e-5)) {
-            auto rr = node.append_child("float");
-            rr.append_attribute("name") = "rr_threshold";
-            rr.append_attribute("value") = std::to_string(target.value.rr_threshold()).c_str();
+        if (ctx.config.write_integrator_rr) {
+            if (std::abs(target.value.rr_threshold() - T(0.9)) > T(1e-5)) {
+                auto rr = node.append_child("float");
+                rr.append_attribute("name") = "rr_threshold";
+                rr.append_attribute("value") = std::to_string(target.value.rr_threshold()).c_str();
+            }
         }
     }
 };

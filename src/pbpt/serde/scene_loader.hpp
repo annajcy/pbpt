@@ -83,7 +83,7 @@ std::vector<shape::Primitive<T>> build_primitives_from_resources(const scene::Re
 }
 
 template <typename T>
-PbptXmlResult<T> load_scene(const std::string& filename, bool to_left_handed = false) {
+PbptXmlResult<T> load_scene(const std::string& filename, const SceneLoadConfig& config = {}) {
     pugi::xml_document doc;
     if (pugi::xml_parse_result r = doc.load_file(filename.c_str()); !r) {
         throw std::runtime_error(std::string("load_scene XML error: ") + r.description());
@@ -92,7 +92,7 @@ PbptXmlResult<T> load_scene(const std::string& filename, bool to_left_handed = f
     PbptXmlResult<T> result;
     pugi::xml_node root = doc.child("scene");
     validate_mi3_scene_schema(root, filename);
-    LoadContext<T> ctx(result, std::filesystem::path(filename).parent_path(), to_left_handed);
+    LoadContext<T> ctx(result, std::filesystem::path(filename).parent_path(), config);
 
     // parse XML -> load integrator -> load sensor/camera + sampler -> load textures -> load bsdfs -> load shapes
     auto integrator_node = root.child("integrator");
@@ -111,7 +111,7 @@ PbptXmlResult<T> load_scene(const std::string& filename, bool to_left_handed = f
     const ValueCodecReadEnv<T> root_read_env{ctx.result.scene.resources, ctx.base_path};
     if (auto tf = sensor_node.child("transform")) {
         result.scene.render_transform =
-            ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env, ctx.to_left_handed);
+            ValueCodec<T, camera::RenderTransform<T>>::parse_node(tf, root_read_env, ctx.config);
     }
 
     {
@@ -139,7 +139,7 @@ PbptXmlResult<T> load_scene(const std::string& filename, bool to_left_handed = f
     result.scene.aggregate = aggregate::EmbreeAggregate<T>(std::move(primitives));
 
     auto light_sampler_node = root.child("light_sampler");
-    if (light_sampler_node) {
+    if (ctx.config.load_light_sampler && light_sampler_node) {
         std::string sampler_type = light_sampler_node.attribute("type").value();
         dispatch_load_light_sampler<T, LightSamplerSerdeList<T>>(sampler_type, light_sampler_node, ctx);
     } else {

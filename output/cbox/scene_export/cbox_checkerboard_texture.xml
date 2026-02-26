@@ -20,7 +20,6 @@
       <integer name="sample_count" value="4" />
     </sampler>
   </sensor>
-  <light_sampler type="uniform" />
   <texture id="checkerboard_bitmap_tex" type="bitmap">
     <string name="filename" value="textures/checkerboard_bitmap_tex.exr" />
     <string name="wrap_mode" value="repeat" />

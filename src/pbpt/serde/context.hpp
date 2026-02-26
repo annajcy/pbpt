@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pbpt/serde/scene_io_config.hpp"
+
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -12,7 +14,7 @@ template <typename T>
 struct LoadContext {
     PbptXmlResult<T>& result;
     std::filesystem::path base_path;
-    bool to_left_handed{false};
+    SceneLoadConfig config{};
     std::string resolve_path(const std::string& rel_path) const { return (base_path / rel_path).string(); }
 };
 
@@ -22,7 +24,7 @@ struct WriteContext {
     std::filesystem::path scene_dir;
     std::filesystem::path mesh_dir;
     std::filesystem::path texture_dir;
-    bool to_left_handed{false};
+    SceneWriteConfig config{};
 
     std::unordered_map<int, std::string> texture_name_by_id;
     std::unordered_map<int, std::string> material_name_by_id;
