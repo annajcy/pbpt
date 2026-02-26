@@ -46,7 +46,14 @@ public:
                                         const BxDFFlags flags = BxDFFlags::ALL) const {
         auto wo_local = m_frame.to_local(wo);
         auto wi_local = m_frame.to_local(wi);
-        return std::visit([&](const auto& bxdf) { return bxdf.f(swl, wo_local, wi_local, mode, flags); }, m_bxdf);
+        return std::visit(
+            [&](const auto& bxdf) -> radiometry::SampledSpectrum<T, N> {
+                if (!is_match_flags(bxdf.type(), flags)) {
+                    return radiometry::SampledSpectrum<T, N>::filled(0);
+                }
+                return bxdf.f(swl, wo_local, wi_local, mode);
+            },
+            m_bxdf);
     }
 
     // Evaluate PDF()

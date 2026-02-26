@@ -62,7 +62,7 @@ template <typename T>
 using CameraSerdeList = std::tuple<PerspectiveCameraSerde<T>>;
 
 template <typename T>
-using IntegratorSerdeList = std::tuple<SimplePathIntegratorSerde<T>>;
+using IntegratorSerdeList = std::tuple<SimplePathIntegratorSerde<T>, PathIntegratorSerde<T>>;
 
 template <typename T>
 using SamplerSerdeList = std::tuple<LdsSamplerSerde<T>>;

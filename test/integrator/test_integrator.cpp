@@ -12,7 +12,10 @@
 #include "pbpt/integrator/concepts.hpp"
 #include "pbpt/integrator/domain.hpp"
 #include "pbpt/integrator/plugin/integrator/simple_path_integrator.hpp"
+#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
 #include "pbpt/serde/scene_loader.hpp"
+#include "pbpt/serde/domain/impl/integrator.hpp"
+#include "pbpt/serde/context.hpp"
 
 namespace pbpt::integrator::testing {
 
@@ -337,6 +340,31 @@ TEST(SimplePathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
                  pbpt::integrator::RenderCanceled);
     EXPECT_GT(progress_call_count, 0);
     EXPECT_FALSE(std::filesystem::exists(output_exr_path));
+}
+
+TEST(PathIntegratorSerde, ParsesMaxDepthAndRrThreshold) {
+    pugi::xml_document doc;
+    auto integrator_node = doc.append_child("integrator");
+    integrator_node.append_attribute("type") = "path";
+    integrator_node.append_child("integer").append_attribute("name") = "max_depth";
+    integrator_node.child("integer").append_attribute("value") = "8";
+
+    auto rr_node = integrator_node.append_child("float");
+    rr_node.append_attribute("name") = "rr_threshold";
+    rr_node.append_attribute("value") = "0.8";
+
+    pbpt::serde::PbptXmlResult<double> parsed_scene{};
+    pbpt::serde::LoadContext<double> env{parsed_scene, std::filesystem::current_path()};
+
+    pbpt::serde::PathIntegratorSerde<double>::load(integrator_node, env);
+
+    bool is_path_integrator =
+        std::holds_alternative<pbpt::integrator::PathIntegrator<double, 4>>(env.result.integrator);
+    ASSERT_TRUE(is_path_integrator);
+    const auto& integrator = std::get<pbpt::integrator::PathIntegrator<double, 4>>(env.result.integrator);
+
+    EXPECT_EQ(integrator.max_depth(), 8);
+    EXPECT_NEAR(integrator.rr_threshold(), 0.8, 1e-6);
 }
 
 }  // namespace pbpt::integrator::testing

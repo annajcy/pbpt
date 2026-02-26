@@ -112,4 +112,25 @@ inline T rand(T min = std::numeric_limits<T>::lowest(), T max = std::numeric_lim
     }
 }
 
+/**
+ * @brief Multiple Importance Sampling (MIS) Power Heuristic.
+ *
+ * Calculates the weight for the primary sampling strategy `f` against the alternate strategy `g`.
+ * It assumes a power of 2 (beta = 2), which is the standard heuristic used in rendering.
+ *
+ * @param nf Number of samples taken with strategy f.
+ * @param fPdf PDF of taking a sample with strategy f.
+ * @param ng Number of samples taken with strategy g.
+ * @param gPdf PDF of taking a sample with strategy g.
+ */
+template <typename T>
+inline T power_heuristic(int nf, T fPdf, int ng, T gPdf) {
+    T f = nf * fPdf;
+    T g = ng * gPdf;
+    if (f == T(0) && g == T(0)) {
+        return T(0);
+    }
+    return (f * f) / (f * f + g * g);
+}
+
 };  // namespace pbpt::math

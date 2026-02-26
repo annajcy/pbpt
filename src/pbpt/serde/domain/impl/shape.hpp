@@ -144,7 +144,7 @@ struct ObjShapeSerde {
             for (int i = 0; i < mesh.triangle_count(); ++i) {
                 std::string light_name = std::format("{}_{}", name, i);
                 auto al = light::AreaLight<T, shape::Triangle<T>, decltype(light_spectrum_dist)>(
-                    shape::Triangle<T>(mesh, i), light_spectrum_dist, light::AreaLightSamplingDomain::Shape);
+                    shape::Triangle<T>(mesh, i), light_spectrum_dist, light::AreaLightSamplingDomain::SolidAngle);
                 int lid = ctx.result.scene.resources.any_light_library.add_item(light_name, std::move(al));
                 ctx.result.scene.resources.mesh_light_map[scene::make_mesh_triangle_key(name, i)] = lid;
             }

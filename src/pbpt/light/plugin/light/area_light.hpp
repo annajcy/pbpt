@@ -40,8 +40,8 @@ public:
     template <int N, typename NormalInteractionType>
     std::optional<LightSampleResult<T, N, NormalInteractionType>> sample_light_on_shape(
         const radiometry::SampledWavelength<T, N>& sampled_wavelengths, const NormalInteractionType& ref_point,
-        const math::Point<T, 2>& u_sample) {
-        shape::ShapeSample<T> shape_sample = m_shape.sample_on_shape(u_sample);
+        const math::Point<T, 2>& uc) const {
+        shape::ShapeSample<T> shape_sample = m_shape.sample_on_shape(uc);
 
         VisibilityTester<T, NormalInteractionType> visibility_tester(ref_point, shape_sample.point);
 
@@ -66,8 +66,8 @@ public:
     template <int N, typename NormalInteractionType>
     std::optional<LightSampleResult<T, N, NormalInteractionType>> sample_light_on_solid_angle(
         const radiometry::SampledWavelength<T, N>& sampled_wavelengths, const NormalInteractionType& ref_point,
-        const math::Point<T, 2>& u_sample) {
-        shape::ShapeSample<T> shape_sample = m_shape.sample_on_solid_angle(ref_point.point(), u_sample);
+        const math::Point<T, 2>& uc) const {
+        shape::ShapeSample<T> shape_sample = m_shape.sample_on_solid_angle(ref_point.point(), uc);
 
         auto ref_to_light = shape_sample.point - ref_point.point();
         T distance_squared = ref_to_light.length_squared();
@@ -132,11 +132,11 @@ private:
     template <int N, typename NormalInteractionType>
     std::optional<LightSampleResult<T, N, NormalInteractionType>> sample_light_impl(
         const radiometry::SampledWavelength<T, N>& sampled_wavelengths, const NormalInteractionType& ref_point,
-        const math::Point<T, 2>& u_sample) {
+        const math::Point<T, 2>& uc) const {
         if (m_sampling_domain == AreaLightSamplingDomain::SolidAngle) {
-            return sample_light_on_solid_angle(sampled_wavelengths, ref_point, u_sample);
+            return sample_light_on_solid_angle(sampled_wavelengths, ref_point, uc);
         }
-        return sample_light_on_shape(sampled_wavelengths, ref_point, u_sample);
+        return sample_light_on_shape(sampled_wavelengths, ref_point, uc);
     }
 
     template <typename NormalInteractionType>
@@ -148,9 +148,9 @@ private:
     }
 
     template <int N>
-    radiometry::SampledSpectrum<T, N> Le_impl(
-        const radiometry::SampledWavelength<T, N>& sampled_wavelengths, const math::Point<T, 3>& point,
-        const math::Normal<T, 3>& normal, const math::Vector<T, 3>& wo) const {
+    radiometry::SampledSpectrum<T, N> Le_impl(const radiometry::SampledWavelength<T, N>& sampled_wavelengths,
+                                              const math::Point<T, 3>& point, const math::Normal<T, 3>& normal,
+                                              const math::Vector<T, 3>& wo) const {
         (void)point;
         // Check if emission is from the front face
         if (normal.dot(wo) <= T(0)) {

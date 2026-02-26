@@ -37,26 +37,30 @@ private:
     }
 
     BxDFFlags type_impl() const {
-        return std::visit([](const auto& bxdf) { return bxdf.type(); }, m_bxdf);
+        return std::visit([](const auto& bxdf) -> BxDFFlags { return bxdf.type(); }, m_bxdf);
     }
 
     radiometry::SampledSpectrum<T, N> f_impl(const radiometry::SampledWavelength<T, N>& swl,
                                              const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi,
                                              TransportMode mode) const {
-        return std::visit([&](const auto& bxdf) { return bxdf.f(swl, wo, wi, mode); }, m_bxdf);
+        return std::visit(
+            [&](const auto& bxdf) -> radiometry::SampledSpectrum<T, N> { return bxdf.f(swl, wo, wi, mode); }, m_bxdf);
     };
 
     std::optional<BxDFSampleRecord<T, N>> sample_f_impl(
         const radiometry::SampledWavelength<T, N>& swl, const math::Vector<T, 3>& wo, const T uc,
         const math::Point<T, 2>& u2d, TransportMode mode,
         const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
-        return std::visit([&](const auto& bxdf) { return bxdf.sample_f(swl, wo, uc, u2d, mode, sample_flags); },
-                          m_bxdf);
+        return std::visit(
+            [&](const auto& bxdf) -> std::optional<BxDFSampleRecord<T, N>> {
+                return bxdf.sample_f(swl, wo, uc, u2d, mode, sample_flags);
+            },
+            m_bxdf);
     }
 
     T pdf_impl(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wi, TransportMode mode,
                const BxDFReflTransFlags sample_flags = BxDFReflTransFlags::All) const {
-        return std::visit([&](const auto& bxdf) { return bxdf.pdf(wo, wi, mode, sample_flags); }, m_bxdf);
+        return std::visit([&](const auto& bxdf) -> T { return bxdf.pdf(wo, wi, mode, sample_flags); }, m_bxdf);
     }
 };
 
