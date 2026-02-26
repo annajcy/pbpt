@@ -156,7 +156,9 @@ private:
                 break;
             }
 
-            prev_bsdf_pdf = bsdf_sample.pdf;
+            // For delta distributions (specular), NEE cannot sample the same direction,
+            // so the MIS weight should be 1. Setting prev_bsdf_pdf to 0 signals full weight.
+            prev_bsdf_pdf = has_flag(bsdf_sample.sampled_flags, BxDFFlags::Specular) ? T(0) : bsdf_sample.pdf;
             prev_si = si;
             ray = si.spawn_ray(bsdf_sample.wi);
 
