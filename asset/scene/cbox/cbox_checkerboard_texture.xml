@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <scene version="3.0.0">
-    <integrator type="path">
+    <integrator type="simple_path">
         <integer name="max_depth" value="-1" />
     </integrator>
     <sensor type="perspective">
@@ -86,8 +86,8 @@
     <shape type="obj">
         <string name="filename" value="meshes/bunny_uv.obj" />
         <transform name="to_world">
-            <scale x="1100" y="1100" z="1100" />
             <translate x="204.5" y="-36.6" z="170.1" />
+            <scale x="1100" y="1100" z="1100" />
         </transform>
         <ref id="checkerboard_bitmap" />
     </shape>

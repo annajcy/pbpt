@@ -215,14 +215,14 @@ static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::BitmapTextureSerde<f
 static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::DiffuseMaterialSerde<float>>);
 static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::ObjShapeSerde<float>>);
 static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::PerspectiveCameraSerde<float>>);
-static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::PathIntegratorSerde<float>>);
+static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::SimplePathIntegratorSerde<float>>);
 static_assert(pbpt::serde::SerdeConcept<float, pbpt::serde::LdsSamplerSerde<float>>);
 
 static_assert(pbpt::serde::ValueSerdeConcept<float, pbpt::serde::BitmapTextureSerde<float>>);
 static_assert(pbpt::serde::ValueSerdeConcept<float, pbpt::serde::DiffuseMaterialSerde<float>>);
 static_assert(pbpt::serde::ShapeSerdeConcept<float, pbpt::serde::ObjShapeSerde<float>>);
 static_assert(pbpt::serde::CameraSerdeConcept<float, pbpt::serde::PerspectiveCameraSerde<float>>);
-static_assert(pbpt::serde::IntegratorSerdeConcept<float, pbpt::serde::PathIntegratorSerde<float>>);
+static_assert(pbpt::serde::IntegratorSerdeConcept<float, pbpt::serde::SimplePathIntegratorSerde<float>>);
 static_assert(pbpt::serde::SamplerSerdeConcept<float, pbpt::serde::LdsSamplerSerde<float>>);
 
 }  // namespace

@@ -47,7 +47,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnDuplicateBsdfId) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -74,7 +74,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnknownShapeMaterialReference) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -98,7 +98,7 @@ TEST(SceneLoaderFailFastTest, ThrowsWhenMeshHasNoMaterialAssignment) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -120,7 +120,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnUnsupportedType) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -144,7 +144,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnTextureMissingId) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -170,7 +170,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountZero) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
     <sampler type="independent">
@@ -195,7 +195,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnInvalidSamplerSampleCountNegative) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
     <sampler type="independent">
@@ -231,7 +231,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnLegacySceneVersion) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="0.4.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -253,7 +253,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnLegacyFieldNames) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path">
+  <integrator type="simple_path">
     <integer name="max_depth" value="2"/>
   </integrator>
   <sensor type="perspective">
@@ -281,7 +281,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnLegacyLookAtTag) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
     <transform name="to_world">
@@ -306,7 +306,7 @@ TEST(SceneLoaderFailFastTest, ThrowsOnLegacyPluginNames) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
     <sampler type="ldsampler">

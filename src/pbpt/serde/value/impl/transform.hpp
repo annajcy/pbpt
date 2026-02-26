@@ -109,7 +109,8 @@ struct ValueCodec<T, geometry::Transform<T>> {
         return transform;
     }
 
-    static void write_node(const geometry::Transform<T>& value, pugi::xml_node& node, const ValueCodecWriteEnv<T>& env) {
+    static void write_node(const geometry::Transform<T>& value, pugi::xml_node& node,
+                           const ValueCodecWriteEnv<T>& env) {
         auto matrix = node.append_child("matrix");
         matrix.append_attribute("value") = write_text(value, env).c_str();
     }

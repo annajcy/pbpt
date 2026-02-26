@@ -4,15 +4,15 @@
 #include <pugixml.hpp>
 #include "pbpt/serde/domain/trait_contracts.hpp"
 #include "pbpt/serde/value/value_codec_dispatch.hpp"
-#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
+#include "pbpt/integrator/plugin/integrator/simple_path_integrator.hpp"
 
 namespace pbpt::serde {
 
 template <typename T>
-struct PathIntegratorSerde {
+struct SimplePathIntegratorSerde {
     static constexpr std::string_view domain = "integrator";
-    static constexpr std::string_view xml_type = "path";
-    using value_type = integrator::PathIntegrator<T, 4>;
+    static constexpr std::string_view xml_type = "simple_path";
+    using value_type = integrator::SimplePathIntegrator<T, 4>;
     using load_result = void;
     using write_target = ValueWriteTarget<value_type>;
 
@@ -34,7 +34,7 @@ struct PathIntegratorSerde {
             }
         }
 
-        ctx.result.integrator = integrator::PathIntegrator<T, 4>(max_depth, rr);
+        ctx.result.integrator = integrator::SimplePathIntegrator<T, 4>(max_depth, rr);
     }
 
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
@@ -48,6 +48,6 @@ struct PathIntegratorSerde {
     }
 };
 
-static_assert(IntegratorSerdeConcept<float, PathIntegratorSerde<float>>);
+static_assert(IntegratorSerdeConcept<float, SimplePathIntegratorSerde<float>>);
 
 }  // namespace pbpt::serde

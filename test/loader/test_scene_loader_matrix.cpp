@@ -48,7 +48,7 @@ TEST(SceneLoaderMatrixTest, LoadsShapeMatrixTransform) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path">
+  <integrator type="simple_path">
     <integer name="max_depth" value="-1"/>
   </integrator>
   <sensor type="perspective">
@@ -88,7 +88,7 @@ TEST(SceneLoaderMatrixTest, LoadsSensorToWorldMatrix) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path">
+  <integrator type="simple_path">
     <integer name="max_depth" value="-1"/>
   </integrator>
   <sensor type="perspective">
@@ -121,7 +121,7 @@ TEST(SceneLoaderMatrixTest, ThrowsOnInvalidMatrixValue) {
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
     <transform name="to_world">

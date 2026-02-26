@@ -17,15 +17,15 @@
 namespace pbpt::integrator {
 
 template <typename T, int N>
-class PathIntegrator : public Integrator<PathIntegrator<T, N>, T, N> {
-    friend class Integrator<PathIntegrator<T, N>, T, N>;
+class SimplePathIntegrator : public Integrator<SimplePathIntegrator<T, N>, T, N> {
+    friend class Integrator<SimplePathIntegrator<T, N>, T, N>;
 
 private:
     unsigned m_max_depth = -1;
     T m_rr = T(0.9);
 
 public:
-    PathIntegrator(unsigned max_depth = -1, T rr = T(0.9)) : m_max_depth(max_depth), m_rr(rr) {}
+    SimplePathIntegrator(unsigned max_depth = -1, T rr = T(0.9)) : m_max_depth(max_depth), m_rr(rr) {}
 
     unsigned max_depth() const { return m_max_depth; }
     void set_max_depth(unsigned depth) { m_max_depth = depth; }

@@ -80,15 +80,15 @@ void render_task(const std::filesystem::path& repo_root, const std::filesystem::
 std::vector<CboxRenderTask> build_tasks() {
     std::vector<int> default_spp_list{64};
     return {
-        {"asset/scene/cbox/cbox.xml", "cbox", default_spp_list, true},
-        {"asset/scene/cbox/cbox_cu_spec.xml", "cbox_cu_spec", default_spp_list, true},
-        {"asset/scene/cbox/cbox_diele_spec.xml", "cbox_diele_spec", default_spp_list, true},
+        // {"asset/scene/cbox/cbox.xml", "cbox", default_spp_list, true},
+        // {"asset/scene/cbox/cbox_cu_spec.xml", "cbox_cu_spec", default_spp_list, true},
+        // {"asset/scene/cbox/cbox_diele_spec.xml", "cbox_diele_spec", default_spp_list, true},
         {"asset/scene/cbox/cbox_checkerboard_texture.xml", "cbox_checkerboard_texture", default_spp_list, true},
-        {"asset/scene/cbox/cbox_microfacet_cu_aniso.xml", "cbox_microfacet_cu_aniso", default_spp_list, true},
-        {"asset/scene/cbox/cbox_microfacet_cu_iso.xml", "cbox_microfacet_cu_iso", default_spp_list, true},
-        {"asset/scene/cbox/cbox_microfacet_diele_aniso.xml", "cbox_microfacet_diele_aniso", default_spp_list, true},
-        {"asset/scene/cbox/cbox_microfacet_diele_iso.xml", "cbox_microfacet_diele_iso", default_spp_list, true},
-        {"asset/scene/cbox/cbox_caustics_uv_sphere.xml", "cbox_caustics_uv_sphere", default_spp_list, true},
+        // {"asset/scene/cbox/cbox_microfacet_cu_aniso.xml", "cbox_microfacet_cu_aniso", default_spp_list, true},
+        // {"asset/scene/cbox/cbox_microfacet_cu_iso.xml", "cbox_microfacet_cu_iso", default_spp_list, true},
+        // {"asset/scene/cbox/cbox_microfacet_diele_aniso.xml", "cbox_microfacet_diele_aniso", default_spp_list, true},
+        // {"asset/scene/cbox/cbox_microfacet_diele_iso.xml", "cbox_microfacet_diele_iso", default_spp_list, true},
+        // {"asset/scene/cbox/cbox_caustics_uv_sphere.xml", "cbox_caustics_uv_sphere", default_spp_list, true},
         
     };
 }

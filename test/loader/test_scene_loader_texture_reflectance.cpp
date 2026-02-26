@@ -48,7 +48,7 @@ TEST(SceneLoaderTextureReflectanceTest, LoadsDiffuseReflectanceTextureReference)
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>
@@ -82,7 +82,7 @@ TEST(SceneLoaderTextureReflectanceTest, ThrowsOnMissingReflectanceTextureReferen
     write_text_file(xml_path,
                     R"XML(<?xml version="1.0" encoding="utf-8"?>
 <scene version="3.0.0">
-  <integrator type="path"/>
+  <integrator type="simple_path"/>
   <sensor type="perspective">
     <float name="fov" value="45"/>
   </sensor>

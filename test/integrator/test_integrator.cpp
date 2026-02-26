@@ -11,7 +11,7 @@
 
 #include "pbpt/integrator/concepts.hpp"
 #include "pbpt/integrator/domain.hpp"
-#include "pbpt/integrator/plugin/integrator/path_integrator.hpp"
+#include "pbpt/integrator/plugin/integrator/simple_path_integrator.hpp"
 #include "pbpt/serde/scene_loader.hpp"
 
 namespace pbpt::integrator::testing {
@@ -278,7 +278,7 @@ TEST(Radiometric, ParallelogramAreaIntegral) {
     EXPECT_NEAR(res, 0.2308367977, 0.01);
 }
 
-TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic) {
+TEST(SimplePathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic) {
     TempDir temp_dir("pbpt_integrator_observer");
     const auto scene_xml_path = temp_dir.path / "tiny_scene.xml";
     const auto output_exr_path = temp_dir.path / "tiny_scene.exr";
@@ -310,7 +310,7 @@ TEST(PathIntegratorObserver, ProgressCallbacksInRangeAndMonotonic) {
     EXPECT_GT(std::filesystem::file_size(output_exr_path), 0);
 }
 
-TEST(PathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
+TEST(SimplePathIntegratorObserver, CancelStopsRenderAndSkipsOutputWrite) {
     TempDir temp_dir("pbpt_integrator_cancel");
     const auto scene_xml_path = temp_dir.path / "tiny_scene.xml";
     const auto output_exr_path = temp_dir.path / "tiny_scene_canceled.exr";
