@@ -1,6 +1,7 @@
 
 set(TEST_SRCS
     test_bxdf.cpp
+    test_microfacet_model.cpp
 )
 
 foreach(SRC ${TEST_SRCS})

@@ -68,7 +68,15 @@ public:
     }
 
     T D_visible(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wm) const {
-        return D(wm) * G1(wo) * std::abs(wo.dot(wm)) / std::abs(geometry::cos_theta(wo));
+        const T cos_theta_o = geometry::cos_theta(wo);
+        const T abs_cos_theta_o = std::abs(cos_theta_o);
+        if (abs_cos_theta_o == T(0)) {
+            return T(0);
+        }
+
+        const T dot_wo_wm = wo.dot(wm);
+        const T same_side_dot = (cos_theta_o >= T(0)) ? dot_wo_wm : -dot_wo_wm;
+        return D(wm) * G1(wo) * std::max(T(0), same_side_dot) / abs_cos_theta_o;
     }
 
     T pdf_wm(const math::Vector<T, 3>& wo, const math::Vector<T, 3>& wm) const { return D_visible(wo, wm); }

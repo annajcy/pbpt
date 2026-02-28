@@ -106,18 +106,17 @@ public:
     TriangleMesh(const camera::RenderTransform<T>& render_transform, const std::string& obj_path,
                  bool is_reverse_orientation = false,
                  const geometry::Transform<T>& object_to_world = geometry::Transform<T>::identity())
-        : TriangleMesh(render_transform, utils::load_obj_mesh<T>(obj_path), is_reverse_orientation,
-                       object_to_world) {}
+        : TriangleMesh(render_transform, utils::load_obj_mesh<T>(obj_path), is_reverse_orientation, object_to_world) {}
 
     TriangleMesh(const camera::RenderTransform<T>& render_transform, const std::vector<int>& indices,
                  const std::vector<math::Point<T, 3>>& positions, const std::vector<math::Normal<T, 3>>& normals = {},
-                                 const std::vector<math::Point<T, 2>>& uvs = {}, bool is_reverse_orientation = false,
-                                 const geometry::Transform<T>& object_to_world = geometry::Transform<T>::identity())
-                : m_render_transform(render_transform),
-                    m_object_to_world(object_to_world),
-                    m_indices(indices),
-                    m_uvs(uvs),
-                    m_is_reverse_orientation(is_reverse_orientation) {
+                 const std::vector<math::Point<T, 2>>& uvs = {}, bool is_reverse_orientation = false,
+                 const geometry::Transform<T>& object_to_world = geometry::Transform<T>::identity())
+        : m_render_transform(render_transform),
+          m_object_to_world(object_to_world),
+          m_indices(indices),
+          m_uvs(uvs),
+          m_is_reverse_orientation(is_reverse_orientation) {
         const auto object_to_render = m_render_transform.object_to_render_from_object_to_world(m_object_to_world);
         m_triangle_count = static_cast<int>(m_indices.size() / 3);
         m_vertices_count = static_cast<int>(positions.size());
@@ -149,9 +148,7 @@ public:
     geometry::Transform<T> object_to_render_transform() const {
         return m_render_transform.object_to_render_from_object_to_world(m_object_to_world);
     }
-    geometry::Transform<T> render_to_object_transform() const {
-        return object_to_render_transform().inversed();
-    }
+    geometry::Transform<T> render_to_object_transform() const { return object_to_render_transform().inversed(); }
     const geometry::Transform<T>& object_to_world_transform() const { return m_object_to_world; }
 
     // Accessors
@@ -187,13 +184,9 @@ public:
 
     // --- Shape Interface Implementation ---
 
-    geometry::Transform<T> object_to_render_transform_impl() const {
-        return m_mesh.object_to_render_transform();
-    }
+    geometry::Transform<T> object_to_render_transform_impl() const { return m_mesh.object_to_render_transform(); }
 
-    geometry::Transform<T> render_to_object_transform_impl() const {
-        return m_mesh.render_to_object_transform();
-    }
+    geometry::Transform<T> render_to_object_transform_impl() const { return m_mesh.render_to_object_transform(); }
 
     T area_impl() const {
         auto idx = get_indices();
@@ -298,8 +291,12 @@ public:
 
             ns = (b0 * n0 + b1 * n1 + b2 * n2).normalized();
             bool faceforward_flipped = false;
+            // When vertex normals exist, trust them as the authoritative direction.
+            // Faceforward the geometric normal ng to match the interpolated shading normal ns,
+            // NOT the other way around. This fixes meshes where face winding is inconsistent
+            // with vertex normals (e.g. inward-pointing geometric normals from reversed winding).
             if (ng.dot(ns.to_vector()) < 0) {
-                ns = -ns;
+                ng = -ng;
                 faceforward_flipped = true;
             }
 
