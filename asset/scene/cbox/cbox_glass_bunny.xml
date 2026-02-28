@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scene version="3.0.0">
+    <integrator type="simple_path">
+        <integer name="max_depth" value="-1" />
+    </integrator>
+    <sensor type="perspective">
+        <string name="fov_axis" value="smaller" />
+        <float name="near_clip" value="10" />
+        <float name="far_clip" value="2800" />
+        <float name="focus_distance" value="1000" />
+        <transform name="to_world">
+            <lookat origin="278, 273, -800" target="278, 273, -799" up="0, 1, 0" />
+        </transform>
+        <float name="fov" value="39.3077" />
+        <sampler type="independent">
+            <integer name="sample_count" value="4" />
+        </sampler>
+        <film type="hdrfilm">
+            <integer name="width" value="512" />
+            <integer name="height" value="512" />
+            <rfilter type="gaussian" />
+        </film>
+    </sensor>
+    <texture type="checkerboard" id="checker_uv">
+        <rgb name="color0" value="0.95 0.95 0.95" />
+        <rgb name="color1" value="0.05 0.05 0.05" />
+        <transform name="to_uv">
+            <scale x="8" y="8" />
+        </transform>
+    </texture>
+    <texture type="bitmap" id="checkerboard_bitmap_tex">
+        <string name="filename" value="textures/checkerboard.bmp" />
+        <string name="wrap_mode" value="repeat" />
+    </texture>
+    <bsdf type="dielectric" id="glass">
+        <float name="int_ior" value="1.5" />
+        <float name="ext_ior" value="1.0" />
+    </bsdf>
+    <bsdf type="diffuse" id="box">
+        <rgb name="reflectance" value="0.73 0.73 0.73" />
+    </bsdf>
+    <bsdf type="diffuse" id="white">
+        <rgb name="reflectance" value="0.78 0.78 0.78" />
+    </bsdf>
+    <bsdf type="diffuse" id="checkerboard">
+        <ref name="reflectance" id="checker_uv" />
+    </bsdf>
+    <bsdf type="diffuse" id="checkerboard_bitmap">
+        <ref name="reflectance" id="checkerboard_bitmap_tex" />
+    </bsdf>
+    <bsdf type="diffuse" id="red">
+        <rgb name="reflectance" value="0.63 0.06 0.06" />
+    </bsdf>
+    <bsdf type="diffuse" id="green">
+        <rgb name="reflectance" value="0.14 0.45 0.14" />
+    </bsdf>
+    <bsdf type="diffuse" id="light">
+        <rgb name="reflectance" value="0.78 0.78 0.78" />
+    </bsdf>
+    <shape type="obj">
+        <string name="filename" value="meshes/cbox_luminaire.obj" />
+        <transform name="to_world">
+            <translate x="0" y="-0.5" z="0" />
+        </transform>
+        <ref id="light" />
+        <emitter type="area">
+            <spectrum name="radiance" value="400:0, 500:8, 600:15.6, 700:18.4" />
+        </emitter>
+    </shape>
+    <shape type="obj">
+        <string name="filename" value="meshes/cbox_floor.obj" />
+        <ref id="white" />
+    </shape>
+    <shape type="obj">
+        <string name="filename" value="meshes/cbox_ceiling.obj" />
+        <ref id="white" />
+    </shape>
+    <shape type="obj">
+        <string name="filename" value="meshes/cbox_back.obj" />
+        <ref id="white" />
+    </shape>
+    <shape type="obj">
+        <string name="filename" value="meshes/cbox_greenwall.obj" />
+        <ref id="green" />
+    </shape>
+    <shape type="obj">
+        <string name="filename" value="meshes/cbox_redwall.obj" />
+        <ref id="red" />
+    </shape>
+    <shape type="obj">
+        <string name="filename" value="meshes/bunny_uv.obj" />
+        <transform name="to_world">
+            <scale x="1100" y="1100" z="1100" />
+            <translate x="204.5" y="-36.6" z="170.1" />
+        </transform>
+        <ref id="glass" />
+    </shape>
+</scene>

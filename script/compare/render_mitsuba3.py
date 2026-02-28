@@ -26,12 +26,108 @@ def _worker(
     queue: Any,
 ) -> None:
     try:
+        global mi, dr
         import mitsuba as mi
+        import drjit as dr
 
         mi.set_variant(variant)
         resolver = mi.Thread.thread().file_resolver()
         for resource_dir in resource_dirs:
             resolver.append(resource_dir)
+
+        import drjit as dr
+
+        class SimplePathIntegrator(mi.SamplingIntegrator):
+            def __init__(self, props=mi.Properties()):
+                super().__init__(props)
+                self.max_depth = props.get("max_depth", -1)
+                self.rr_depth = props.get("rr_depth", 5)
+
+            def sample(self, scene, sampler, ray_, medium, active):
+                ray = mi.Ray3f(ray_)
+                active = mi.Bool(active)
+                throughput = mi.Spectrum(1.0)
+                result = mi.Spectrum(0.0)
+                depth = mi.UInt32(0)
+                eta = mi.Float(1.0)
+
+                valid_ray = scene.ray_intersect(ray_, active).is_valid()
+                max_depth = mi.UInt32(self.max_depth if self.max_depth >= 0 else 100)
+                rr_depth = mi.UInt32(self.rr_depth)
+
+                @dr.syntax
+                def run_loop(
+                    scene,
+                    sampler,
+                    ray,
+                    throughput,
+                    result,
+                    eta,
+                    depth,
+                    active,
+                    max_depth,
+                    rr_depth,
+                ):
+                    while active:
+                        si = scene.ray_intersect(ray, active)
+                        escaped = active & ~si.is_valid()
+                        env = scene.environment()
+                        if env is not None:
+                            result += dr.select(
+                                escaped, throughput * env.eval(si, escaped), 0.0
+                            )
+                        active &= si.is_valid()
+
+                        emitter = si.emitter(scene, active)
+                        hit_emitter = active & (emitter != None)
+                        result += dr.select(
+                            hit_emitter, throughput * emitter.eval(si, hit_emitter), 0.0
+                        )
+
+                        bsdf = si.bsdf(ray)
+                        active &= bsdf != None
+
+                        ctx = mi.BSDFContext()
+                        bs, bsdf_val = bsdf.sample(
+                            ctx,
+                            si,
+                            sampler.next_1d(active),
+                            sampler.next_2d(active),
+                            active,
+                        )
+                        throughput[active] *= bsdf_val
+                        active &= dr.max(throughput) != 0.0
+
+                        ray[active] = si.spawn_ray(si.to_world(bs.wo))
+                        eta[active] *= bs.eta
+                        depth += 1
+                        rr_active = active & (depth >= rr_depth)
+                        q = dr.minimum(dr.max(throughput) * dr.square(eta), 0.95)
+                        rr_continue = sampler.next_1d(rr_active) < q
+                        throughput[rr_active] *= dr.rcp(dr.detach(q))
+                        active &= ~rr_active | rr_continue
+
+                        if max_depth > 0:
+                            active &= depth < max_depth
+
+                    return result
+
+                result = run_loop(
+                    scene,
+                    sampler,
+                    ray,
+                    throughput,
+                    result,
+                    eta,
+                    depth,
+                    active,
+                    max_depth,
+                    rr_depth,
+                )
+                return result, valid_ray, []
+
+        mi.register_integrator("simple_path", lambda props: SimplePathIntegrator(props))
+
         scene = mi.load_file(scene_path)
         image = mi.render(scene, spp=spp, seed=seed)
         mi.util.write_bitmap(out_exr, image)
@@ -62,7 +158,15 @@ def run_mitsuba3(
     start = time.perf_counter()
     proc = ctx.Process(
         target=_worker,
-        args=(str(scene_path), str(out_exr), spp, seed, variant, resource_dirs_str, queue),
+        args=(
+            str(scene_path),
+            str(out_exr),
+            spp,
+            seed,
+            variant,
+            resource_dirs_str,
+            queue,
+        ),
     )
     proc.start()
     proc.join(timeout=timeout_sec)
@@ -88,7 +192,12 @@ def run_mitsuba3(
 
     duration_ms = int((time.perf_counter() - start) * 1000)
     out_exists = out_exr.exists()
-    error_code = classify_mi3_error(timed_out=timed_out, traceback_text=trace, exit_code=exit_code, out_exr_exists=out_exists)
+    error_code = classify_mi3_error(
+        timed_out=timed_out,
+        traceback_text=trace,
+        exit_code=exit_code,
+        out_exr_exists=out_exists,
+    )
 
     return {
         "ok": error_code == "",
@@ -129,12 +238,14 @@ def run_mitsuba3(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Render scene with Mitsuba3 Python API.")
+    parser = argparse.ArgumentParser(
+        description="Render scene with Mitsuba3 Python API."
+    )
     parser.add_argument("--scene-path", required=True)
     parser.add_argument("--out-exr", required=True)
     parser.add_argument("--spp", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--variant", default="scalar_spectral")
+    parser.add_argument("--variant", default="llvm_ad_spectral")
     parser.add_argument("--timeout-sec", type=int, default=300)
     parser.add_argument("--resource-dir", action="append", default=[])
     parser.add_argument("--log-path", default="")

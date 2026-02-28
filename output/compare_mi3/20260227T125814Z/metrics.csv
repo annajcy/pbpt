@@ -1,0 +1,2 @@
+scene_path,scene_id,nrmse,psnr,max_abs,diff_exr
+asset/scene/cbox/cbox_microfacet_diele_aniso.xml,asset__scene__cbox__cbox_microfacet_diele_aniso,0.028978897244991773,21.754549444072826,1.7537269592285156,/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T125814Z/asset__scene__cbox__cbox_microfacet_diele_aniso/diff.exr

@@ -72,19 +72,28 @@ def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> 
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run PBPT vs Mitsuba3 comparable pipeline.")
+    parser = argparse.ArgumentParser(
+        description="Run PBPT vs Mitsuba3 comparable pipeline."
+    )
     parser.add_argument("--scene-list", default="script/compare/in_scope_scenes.txt")
-    parser.add_argument("--out-of-scope-list", default="script/compare/out_of_scope_scenes.txt")
+    parser.add_argument(
+        "--out-of-scope-list", default="script/compare/out_of_scope_scenes.txt"
+    )
     parser.add_argument("--output-root", default="output/compare_mi3")
     parser.add_argument("--run-id", default="")
     parser.add_argument("--pbpt-binary", default="build/Release/examples/pbpt_cli")
     parser.add_argument("--spp-pbpt", type=int, default=16)
     parser.add_argument("--spp-mi3", type=int, default=16)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--variant", default="scalar_spectral")
+    parser.add_argument("--variant", default="llvm_ad_spectral")
     parser.add_argument("--timeout-sec", type=int, default=300)
     parser.add_argument("--max-parallel-jobs", type=int, default=1)
-    parser.add_argument("--limit", type=int, default=0, help="Debug: process only first N in-scope scenes.")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Debug: process only first N in-scope scenes.",
+    )
     args = parser.parse_args()
 
     root = repo_root()
@@ -169,7 +178,12 @@ def main() -> int:
 
         compare_result: dict[str, Any]
         if pbpt_result["ok"] and mi3_result.get("ok", False):
-            compare_result = compare_exr(ref_exr=mi3_exr, test_exr=pbpt_exr, diff_exr=diff_exr, variant=args.variant)
+            compare_result = compare_exr(
+                ref_exr=mi3_exr,
+                test_exr=pbpt_exr,
+                diff_exr=diff_exr,
+                variant=args.variant,
+            )
         else:
             compare_result = {
                 "ok": False,
@@ -310,20 +324,30 @@ def main() -> int:
         for r in summary_rows
         if r["status"] == "COMPARABLE"
     ]
-    write_csv(metrics_csv, metric_rows, ["scene_path", "scene_id", "nrmse", "psnr", "max_abs", "diff_exr"])
+    write_csv(
+        metrics_csv,
+        metric_rows,
+        ["scene_path", "scene_id", "nrmse", "psnr", "max_abs", "diff_exr"],
+    )
 
     write_text(summary_md, build_summary_md(summary_rows, run_id))
 
-    print(json.dumps({
-        "run_id": run_id,
-        "summary_csv": str(summary_csv),
-        "failures_csv": str(failures_csv),
-        "metrics_csv": str(metrics_csv),
-        "summary_md": str(summary_md),
-        "record_count": len(summary_rows),
-        "in_scope_count": len(in_scope),
-        "out_of_scope_count": len(out_scope),
-    }, ensure_ascii=True, indent=2))
+    print(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "summary_csv": str(summary_csv),
+                "failures_csv": str(failures_csv),
+                "metrics_csv": str(metrics_csv),
+                "summary_md": str(summary_md),
+                "record_count": len(summary_rows),
+                "in_scope_count": len(in_scope),
+                "out_of_scope_count": len(out_scope),
+            },
+            ensure_ascii=True,
+            indent=2,
+        )
+    )
 
     return 0
 

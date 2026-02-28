@@ -1,5 +1,5 @@
 asset/scene/cbox/cbox.xml
-asset/scene/cbox/cbox_caustics_uv_sphere.xml
+asset/scene/cbox/cbox_glass_bunny.xml
 asset/scene/cbox/cbox_checkerboard_texture.xml
 asset/scene/cbox/cbox_cu_spec.xml
 asset/scene/cbox/cbox_diele_spec.xml

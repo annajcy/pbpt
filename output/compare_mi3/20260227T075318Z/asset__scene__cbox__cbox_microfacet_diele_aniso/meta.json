@@ -1,0 +1,99 @@
+{
+  "timestamp_utc": "2026-02-27T11:11:18Z",
+  "run_id": "20260227T075318Z",
+  "scene_rel": "asset/scene/cbox/cbox_microfacet_diele_aniso.xml",
+  "scene_abs": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/cbox_microfacet_diele_aniso.xml",
+  "scene_id": "asset__scene__cbox__cbox_microfacet_diele_aniso",
+  "status": "PBPT_TIMEOUT",
+  "params": {
+    "spp_pbpt": 2048,
+    "spp_mi3": 2048,
+    "seed": 42,
+    "variant": "llvm_ad_spectral",
+    "timeout_sec": 1800
+  },
+  "paths": {
+    "pbpt_exr": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/pbpt.exr",
+    "mi3_exr": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/mi3.exr",
+    "diff_exr": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/diff.exr",
+    "pbpt_log": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/pbpt.log",
+    "mi3_log": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/mi3.log"
+  },
+  "pbpt": {
+    "ok": false,
+    "error_code": "PBPT_TIMEOUT",
+    "timestamp_utc": "2026-02-27T11:09:05Z",
+    "scene_path": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/cbox_microfacet_diele_aniso.xml",
+    "out_exr": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/pbpt.exr",
+    "out_exr_exists": false,
+    "spp": 2048,
+    "timeout_sec": 1800,
+    "command": [
+      "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/build/Release/examples/pbpt_cli",
+      "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/cbox_microfacet_diele_aniso.xml",
+      "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/pbpt.exr",
+      "2048"
+    ],
+    "result": {
+      "command": [
+        "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/build/Release/examples/pbpt_cli",
+        "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/cbox_microfacet_diele_aniso.xml",
+        "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/pbpt.exr",
+        "2048"
+      ],
+      "cwd": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt",
+      "exit_code": 124,
+      "duration_ms": 1800010,
+      "stdout": "",
+      "stderr": "",
+      "timed_out": true
+    }
+  },
+  "mi3": {
+    "ok": true,
+    "error_code": "",
+    "timestamp_utc": "2026-02-27T11:11:18Z",
+    "scene_path": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/cbox_microfacet_diele_aniso.xml",
+    "out_exr": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/mi3.exr",
+    "out_exr_exists": true,
+    "spp": 2048,
+    "seed": 42,
+    "variant": "llvm_ad_spectral",
+    "timeout_sec": 1800,
+    "command": [
+      "python",
+      "render_mitsuba3.py",
+      "--scene-path",
+      "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox/cbox_microfacet_diele_aniso.xml",
+      "--out-exr",
+      "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/output/compare_mi3/20260227T075318Z/asset__scene__cbox__cbox_microfacet_diele_aniso/mi3.exr",
+      "--spp",
+      "2048",
+      "--seed",
+      "42",
+      "--variant",
+      "llvm_ad_spectral"
+    ],
+    "resource_dirs": [
+      "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt/asset/scene/cbox",
+      "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt"
+    ],
+    "result": {
+      "command": [
+        "mitsuba-python-worker"
+      ],
+      "cwd": "/Users/jinceyang/Desktop/codebase/graphics/rtr2/external/pbpt",
+      "exit_code": 0,
+      "duration_ms": 133687,
+      "stdout": "",
+      "stderr": "",
+      "timed_out": false
+    }
+  },
+  "compare": {
+    "ok": false,
+    "error_code": "",
+    "duration_ms": 0,
+    "metrics": {}
+  }
+}
