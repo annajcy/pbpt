@@ -12,6 +12,15 @@ using namespace pbpt::radiometry::constant;
 
 namespace pbpt::radiometry::testing {
 
+namespace {
+struct SmoothEmissionSpectrum {
+    double at(double lambda) const {
+        const double centered = (lambda - 550.0) / 55.0;
+        return 0.1 + 0.9 * std::exp(-0.5 * centered * centered);
+    }
+};
+}  // namespace
+
 class ColorTest : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -350,6 +359,73 @@ TEST_F(ColorTest, XYZFromReflectanceUnderIlluminant) {
     EXPECT_GT(xyz.x(), 0.0);
     EXPECT_GT(xyz.y(), 0.0);
     EXPECT_GT(xyz.z(), 0.0);
+}
+
+TEST_F(ColorTest, ProjectEmissionUsesEqualEnergyYNormalization) {
+    using T = double;
+    SmoothEmissionSpectrum emission;
+
+    ResponseSpectrum<decltype(CIE_X<T>)> response(CIE_X<T>, CIE_Y<T>, CIE_Z<T>);
+    auto projected = project_emission<T, RGB>(emission, response);
+
+    T sum_x{};
+    T sum_y{};
+    T sum_z{};
+    T y_integral{};
+    for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
+        const T value = emission.at(static_cast<T>(lambda));
+        sum_x += value * CIE_X<T>.at(lambda);
+        sum_y += value * CIE_Y<T>.at(lambda);
+        sum_z += value * CIE_Z<T>.at(lambda);
+        y_integral += CIE_Y<T>.at(lambda);
+    }
+
+    EXPECT_NEAR(projected.r(), sum_x / y_integral, 1e-10);
+    EXPECT_NEAR(projected.g(), sum_y / y_integral, 1e-10);
+    EXPECT_NEAR(projected.b(), sum_z / y_integral, 1e-10);
+}
+
+TEST_F(ColorTest, ProjectSampledEmissionMatchesProjectEmissionOnDenseGrid) {
+    using T = double;
+    constexpr int N = constant::lambda_max<int> - constant::lambda_min<int> + 1;
+
+    SmoothEmissionSpectrum emission;
+    ResponseSpectrum<decltype(CIE_X<T>)> response(CIE_X<T>, CIE_Y<T>, CIE_Z<T>);
+
+    math::Vector<T, N> wavelengths_values;
+    math::Vector<T, N> emission_values;
+    math::Vector<T, N> pdf_values;
+    for (int i = 0; i < N; ++i) {
+        const T lambda = static_cast<T>(constant::lambda_min<int> + i);
+        wavelengths_values[i] = lambda;
+        emission_values[i] = emission.at(lambda);
+        pdf_values[i] = T(1);
+    }
+
+    SampledWavelength<T, N> wavelengths(wavelengths_values);
+    SampledSpectrum<T, N> sampled_emission(emission_values);
+    SampledPdf<T, N> pdf(pdf_values);
+
+    auto projected_full = project_emission<T, RGB>(emission, response);
+    auto projected_sampled = project_sampled_emission<T, RGB, N>(sampled_emission, wavelengths, pdf, response);
+
+    EXPECT_NEAR(projected_sampled.r(), projected_full.r(), 1e-10);
+    EXPECT_NEAR(projected_sampled.g(), projected_full.g(), 1e-10);
+    EXPECT_NEAR(projected_sampled.b(), projected_full.b(), 1e-10);
+}
+
+TEST_F(ColorTest, XYZFromEmissionMatchesProjectEmission) {
+    using T = double;
+    SmoothEmissionSpectrum emission;
+
+    auto xyz = XYZ<T>::from_emission(emission);
+
+    ResponseSpectrum<decltype(CIE_X<T>)> response(CIE_X<T>, CIE_Y<T>, CIE_Z<T>);
+    auto expected = project_emission<T, XYZ>(emission, response);
+
+    EXPECT_NEAR(xyz.x(), expected.x(), 1e-12);
+    EXPECT_NEAR(xyz.y(), expected.y(), 1e-12);
+    EXPECT_NEAR(xyz.z(), expected.z(), 1e-12);
 }
 
 // =============================================================================

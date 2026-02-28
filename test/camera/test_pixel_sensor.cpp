@@ -78,9 +78,9 @@ TEST(PixelSensorTest, RadianceToSensorRgbAppliesResponseSpectrumAndImageRatio) {
     radiometry::ResponseSpectrum<radiometry::constant::XYZSpectrumType<T>> response(
         radiometry::constant::CIE_X<T>, radiometry::constant::CIE_Y<T>, radiometry::constant::CIE_Z<T>);
 
-    auto projected_rgb = radiometry::project_emission<T, radiometry::RGB, decltype(radiance), Illuminant,
-                                                      radiometry::constant::XYZSpectrumType<T>>(
-        radiance, radiometry::constant::CIE_D65_ilum<T>, response);
+    auto projected_rgb =
+        radiometry::project_emission<T, radiometry::RGB, decltype(radiance), radiometry::constant::XYZSpectrumType<T>>(
+            radiance, response);
     auto expected_sensor_rgb = radiometry::RGB<T>(projected_rgb * image_ratio);
 
     auto sensor_rgb = sensor.radiance_to_sensor_rgb(radiance);

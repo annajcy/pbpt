@@ -37,30 +37,23 @@ D65 在分子分母中大致抵消，但因为 D65 是非均匀光谱（蓝端�
 第一步：移除发射光谱的 D65 调制
 将 StandardEmissionSpectrum 从 PiecewiseLinear × D65 变为纯 PiecewiseLinear，让发射光谱直接就是绝对辐射亮度 $L(\lambda)$。
 
-第二步：补偿 PixelSensor 的归一化差异
-移除 D65 后，
+第二步：统一 project_emission 的归一化定义
+现在直接把 
 
 project_emission
- 计算的是：
+ 和 
 
-$$\text{sensor-rgb}Y = \frac{\int L(\lambda) \cdot \bar{y}(\lambda) , d\lambda}{\underbrace{\int D65(\lambda) \cdot \bar{y}(\lambda) , d\lambda}{g_integral}}$$
+project_sampled_emission
+ 改成 CIE 标准归一化：
 
-而 Mitsuba 期望的是：
+$$\text{sensor-rgb}_c = \frac{\int L(\lambda) \cdot \text{response}_c(\lambda) , d\lambda}{\int \bar{y}(\lambda) , d\lambda}$$
 
-$$\text{XYZ}Y = \frac{\int L(\lambda) \cdot \bar{y}(\lambda) , d\lambda}{\underbrace{\int \bar{y}(\lambda) , d\lambda}{y_integral}}$$
+这样底层函数就直接满足绝对发射光谱到 XYZ/RGB 的数学定义，不再依赖场景 illuminant 作为分母。
 
-两者的比值就是：
-
-$$\frac{\text{Mitsuba}}{\text{PBPT}} = \frac{g_integral}{y_integral} = \frac{\int D65 \cdot \bar{y}}{\int \bar{y}} \approx \frac{10567}{87.5} \approx 120.7$$
-
-所以我在 
+因此 
 
 PixelSensor
- 构造函数中计算 g_integral / y_integral 并乘到 image_ratio 上。最终公式变成：
-
-$$\text{output} = \frac{\int L \cdot \text{CMF}}{g_integral} \times \frac{g_integral}{y_integral} = \frac{\int L \cdot \text{CMF}}{y_integral}$$
-
-这恰好等于 Mitsuba 的 CIE 标准公式。
+ 中原先的 `g_integral / y_integral` 补偿逻辑可以删除，输出结果由底层公式直接给出。
 
 为什么还有 ~18% 的偏差？
 剩余偏差来自 PBPT 和 Mitsuba 在 XYZ → sRGB 转换路径上的差异：

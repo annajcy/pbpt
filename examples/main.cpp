@@ -398,7 +398,7 @@ int main() {
         radiometry::TabularSpectrumDistribution<double, radiometry::constant::luminantD65Range::LMinValue,
                                                 radiometry::constant::luminantD65Range::LMaxValue>>
         illuminant_spectrum(rspn, D65, scale);
-    auto xyz_from_illuminant = radiometry::XYZ<double>::from_emission(illuminant_spectrum, D65);
+    auto xyz_from_illuminant = radiometry::XYZ<double>::from_emission(illuminant_spectrum);
     std::cout << "XYZ from Illuminant Spectrum: " << xyz_from_illuminant << std::endl;
     auto rgb_from_illuminant = radiometry::constant::sRGB<double>.to_rgb(xyz_from_illuminant);
     std::cout << "sRGB from Illuminant Spectrum: " << rgb_from_illuminant << std::endl;

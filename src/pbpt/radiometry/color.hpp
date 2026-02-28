@@ -153,31 +153,31 @@ inline constexpr Color<T> project_reflectance(const ReflectanceSpectrumType& ref
 }
 
 /**
- * @brief Project an emission spectrum using a response and reference illuminant.
+ * @brief Project an emission spectrum onto a 3-channel response.
  *
- * Similar to @c project_illuminant, but using an emission spectrum
- * instead of a reflectance.
+ * Integrates emission(lambda) * response(lambda) over wavelength.
+ * If @p is_normalize_by_g is true, the result is normalized by the
+ * equal-energy Y integral (sum of the response's green/Y channel),
+ * which matches standard CIE emission-to-XYZ normalization.
  */
-template <typename T, template <typename> class Color, typename EmissionSpectrumType, typename IlluminantSpectrumType,
-          typename ResponseSpectrumType>
+template <typename T, template <typename> class Color, typename EmissionSpectrumType, typename ResponseSpectrumType>
 inline constexpr Color<T> project_emission(const EmissionSpectrumType& emission,
-                                           const IlluminantSpectrumType& illuminant,
                                            const ResponseSpectrum<ResponseSpectrumType>& response,
                                            bool is_normalize_by_g = true) {
     T r{}, g{}, b{};
-    T g_integral{};
+    T y_integral{};
     for (int lambda = constant::lambda_min<int>; lambda <= constant::lambda_max<int>; ++lambda) {
-        g_integral += illuminant.at(lambda) * response.g().at(lambda);
+        y_integral += response.g().at(lambda);
         r += emission.at(lambda) * response.r().at(lambda);
         g += emission.at(lambda) * response.g().at(lambda);
         b += emission.at(lambda) * response.b().at(lambda);
     }
 
-    if (!is_normalize_by_g || math::is_zero(g_integral)) {
+    if (!is_normalize_by_g || math::is_zero(y_integral)) {
         return Color<T>(r, g, b);
     }
 
-    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
+    return Color<T>(r / y_integral, g / y_integral, b / y_integral);
 }
 
 /**
@@ -237,11 +237,12 @@ inline constexpr Color<T> project_sampled_reflectance(const SampledSpectrum<T, N
 
 /**
  * @brief Monte Carlo version of @c project_emission using sampled wavelengths.
+ *
+ * The optional normalization uses the sampled equal-energy Y integral:
+ * average(response_y(lambda_i) / p(lambda_i)).
  */
-template <typename T, template <typename> class Color, int N, typename EmissionSpectrumType,
-          typename IlluminantSpectrumType, typename ResponseSpectrumType>
+template <typename T, template <typename> class Color, int N, typename ResponseSpectrumType>
 inline constexpr Color<T> project_sampled_emission(const SampledSpectrum<T, N>& emission,
-                                                   const SampledSpectrum<T, N>& illuminant,
                                                    const SampledWavelength<T, N>& wavelengths,
                                                    const SampledPdf<T, N>& pdf,
                                                    const ResponseSpectrum<ResponseSpectrumType>& response,
@@ -249,12 +250,12 @@ inline constexpr Color<T> project_sampled_emission(const SampledSpectrum<T, N>& 
     T r = (response.r().sample(wavelengths) * emission * pdf.inv()).average();
     T g = (response.g().sample(wavelengths) * emission * pdf.inv()).average();
     T b = (response.b().sample(wavelengths) * emission * pdf.inv()).average();
-    T g_integral = (response.g().sample(wavelengths) * illuminant * pdf.inv()).average();
-    if (!is_normalize_by_g || math::is_zero(g_integral)) {
+    T y_integral = (response.g().sample(wavelengths) * pdf.inv()).average();
+    if (!is_normalize_by_g || math::is_zero(y_integral)) {
         return Color<T>(r, g, b);
     }
 
-    return Color<T>(r / g_integral, g / g_integral, b / g_integral);
+    return Color<T>(r / y_integral, g / y_integral, b / y_integral);
 }
 
 /**
@@ -332,21 +333,18 @@ public:
             ResponseSpectrum<ResponseSpectrumType>{constant::CIE_X<T>, constant::CIE_Y<T>, constant::CIE_Z<T>});
     }
 
-    // emission with referenced illuminant XYZ
     /**
-     * @brief Construct XYZ of an emission spectrum under a reference illuminant.
+     * @brief Construct XYZ of an emission spectrum.
      *
-     * This is typically used when an emission is meant to be referenced
-     * to a particular white point (e.g. D65).
+     * Uses CIE XYZ color-matching functions and equal-energy Y
+     * normalization for absolute emission-to-XYZ projection.
      */
-    template <typename EmissionSpectrumType, typename IlluminantSpectrumType>
-    static XYZ<T> from_emission(const EmissionSpectrumType& emission,
-                                const IlluminantSpectrumType& illuminant  // e.g D65
-    ) {
+    template <typename EmissionSpectrumType>
+    static XYZ<T> from_emission(const EmissionSpectrumType& emission) {
         using ResponseSpectrumType =
             TabularSpectrumDistribution<T, constant::XYZRange::LMinValue, constant::XYZRange::LMaxValue>;
-        return project_emission<T, XYZ, EmissionSpectrumType, IlluminantSpectrumType, ResponseSpectrumType>(
-            emission, illuminant,
+        return project_emission<T, XYZ, EmissionSpectrumType, ResponseSpectrumType>(
+            emission,
             ResponseSpectrum<ResponseSpectrumType>{constant::CIE_X<T>, constant::CIE_Y<T>, constant::CIE_Z<T>});
     }
 
