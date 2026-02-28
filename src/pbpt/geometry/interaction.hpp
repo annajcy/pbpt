@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 #include <optional>
 #include <algorithm>
 
@@ -35,40 +36,49 @@ inline T safe_ray_tmax(T dist, T factor = static_cast<T>(3.0)) {
 }
 
 /**
+ * @brief Compute a conservative t_min for rays spawned from surfaces.
+ *
+ * A small positive t_min helps suppress self-intersection when downstream
+ * intersection code uses inclusive comparisons (e.g. t_hit >= t_min) and
+ * when ray origins are converted to lower precision (e.g. Embree occlusion
+ * using float).
+ */
+template <typename T>
+inline T safe_ray_tmin(T factor = static_cast<T>(1.0)) {
+    return math::epsilon_v<T> * factor;
+}
+
+/**
  * @brief Offset a ray origin to avoid self-intersection (Shadow Acne).
  */
 template <typename T>
 inline math::Point<T, 3> offset_ray_origin(const math::Point<T, 3>& p_lower, const math::Point<T, 3>& p_upper,
                                            const math::Vector<T, 3>& dir,  // Direction of the NEW ray
                                            const math::Normal<T, 3>& n) {
-    // Determine the offset magnitude based on the error box projection onto the normal
-    auto d = std::abs(n.x()) * (p_upper.x() - p_lower.x()) + std::abs(n.y()) * (p_upper.y() - p_lower.y()) +
-             std::abs(n.z()) * (p_upper.z() - p_lower.z());
+    const auto p_mid = p_lower.mid(p_upper);
 
-    auto p_mid = p_lower.mid(p_upper);
+    const auto p_error = (p_upper - p_lower).abs() * static_cast<T>(0.5);
 
-    // Scaling factor for robustness (gamma(7) is standard in PBRT)
-    // Assuming math::gamma<T>(7) exists. If not, use (7 * machine_epsilon).
-    constexpr T gamma7 = math::gamma<T>(7);
-
-    d += static_cast<T>(2) * gamma7 *
-         (std::abs(p_mid.x() * std::abs(n.x())) + std::abs(p_mid.y() * std::abs(n.y())) +
-          std::abs(p_mid.z() * std::abs(n.z())));
-
-    // Minimal offset to handle cases where calculation yields zero (e.g. at origin)
-    if (d < math::epsilon_v<T> * static_cast<T>(1024)) {
-        d = math::epsilon_v<T> * static_cast<T>(1024);
-    }
+    T d = std::abs(n.x()) * p_error.x() + std::abs(n.y()) * p_error.y() + std::abs(n.z()) * p_error.z();
 
     auto nv = n.to_vector();
     math::Vector<T, 3> offset = d * nv;
 
-    // Flip offset if ray direction is opposite to normal (transmissive/refractive case)
+    // Flip offset if ray direction is opposite to the normal (e.g. transmissive case).
     if (nv.dot(dir) < static_cast<T>(0)) {
         offset = -offset;
     }
 
-    return p_mid + offset;
+    auto p_offset = p_mid + offset;
+    for (int i = 0; i < 3; ++i) {
+        if (offset[i] > static_cast<T>(0)) {
+            p_offset[i] = std::nextafter(p_offset[i], std::numeric_limits<T>::infinity());
+        } else if (offset[i] < static_cast<T>(0)) {
+            p_offset[i] = std::nextafter(p_offset[i], -std::numeric_limits<T>::infinity());
+        }
+    }
+
+    return p_offset;
 }
 
 // -----------------------------------------------------------------------------
@@ -169,14 +179,14 @@ public:
     // --- Ray Spawning ---
     Ray<T, 3> spawn_ray(const math::Vector<T, 3>& wi) const {
         auto o = offset_ray_origin(m_p_lower, m_p_upper, wi, m_n);
-        return Ray<T, 3>(o, wi);
+        return Ray<T, 3>(o, wi, std::numeric_limits<T>::infinity(), safe_ray_tmin<T>());
     }
 
     RayDifferential<T, 3> spawn_ray_differential(const math::Vector<T, 3>& wi,
                                                  const RayDifferentialOffset<T>& diffs_offset) const {
         // 1. Compute main ray origin with Shadow Acne avoidance
         auto o = offset_ray_origin(m_p_lower, m_p_upper, wi, m_n);
-        Ray<T, 3> main_ray(o, wi);
+        Ray<T, 3> main_ray(o, wi, std::numeric_limits<T>::infinity(), safe_ray_tmin<T>());
 
         // 2. Apply position deltas to the SAFE origin
         // This ensures differential rays maintain a similar distance from the surface
@@ -187,8 +197,8 @@ public:
         auto dir_x = wi + diffs_offset.dwdx;
         auto dir_y = wi + diffs_offset.dwdy;
 
-        Ray<T, 3> ray_x(ox, dir_x);
-        Ray<T, 3> ray_y(oy, dir_y);
+        Ray<T, 3> ray_x(ox, dir_x, std::numeric_limits<T>::infinity(), safe_ray_tmin<T>());
+        Ray<T, 3> ray_y(oy, dir_y, std::numeric_limits<T>::infinity(), safe_ray_tmin<T>());
 
         return RayDifferential<T, 3>(main_ray, {ray_x, ray_y});
     }
@@ -199,10 +209,14 @@ public:
 
         auto o = offset_ray_origin(m_p_lower, m_p_upper, dir, m_n);
 
-        auto dist = dir.length();
-        dir = dir / dist;  // Normalize
+        auto to_target = p_to - o;
+        auto dist = to_target.length();
+        if (math::is_zero(dist)) {
+            return Ray<T, 3>(o, dir, static_cast<T>(0));
+        }
+        auto wi = to_target / dist;  // Normalize
 
-        return Ray<T, 3>(o, dir, safe_ray_tmax(dist));
+        return Ray<T, 3>(o, wi, safe_ray_tmax(dist), safe_ray_tmin<T>());
     }
 
     void flip_normal() {

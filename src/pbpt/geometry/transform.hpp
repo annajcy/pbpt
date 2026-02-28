@@ -329,9 +329,11 @@ public:
             dndv = -dndv;
         }
 
+        auto p_bounds = this->transform_bounds(Bounds<T, 3>(si.p_lower(), si.p_upper()));
+
         auto result = SurfaceInteraction<T>(
-            this->transform_point(si.p_lower()), this->transform_point(si.p_upper()), this->transform_vector(si.wo()),
-            n, si.uv(), this->transform_vector(si.dpdu()), this->transform_vector(si.dpdv()), dndu, dndv);
+            p_bounds.min(), p_bounds.max(), this->transform_vector(si.wo()), n, si.uv(), this->transform_vector(si.dpdu()),
+            this->transform_vector(si.dpdv()), dndu, dndv);
         return result;
     }
 
