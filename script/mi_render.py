@@ -101,5 +101,5 @@ scene_path = root / 'output/cbox/scene_export/cbox_checkerboard_texture.xml'
 scene_path = root / 'asset/scene/cbox/cbox_microfacet_diele_iso.xml'
 
 scene = mi.load_file(str(scene_path))
-image = mi.render(scene, spp=256, seed=1)
+image = mi.render(scene, spp=1024, seed=1)
 mi.util.write_bitmap('cbox_render.exr', image)
