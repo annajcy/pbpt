@@ -1,9 +1,11 @@
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <variant>
 
 #include <gtest/gtest.h>
+#include <pugixml.hpp>
 
 #include "pbpt/camera/plugin/camera/projective_cameras.hpp"
 #include "pbpt/serde/scene_loader.hpp"
@@ -149,6 +151,47 @@ pbpt::serde::PbptXmlResult<T> roundtrip_result(const std::filesystem::path& inpu
     return pbpt::serde::load_scene<T>(out_path.string());
 }
 
+template <typename T>
+bool has_any_ggx_microfacet_material(const pbpt::serde::PbptXmlResult<T>& result) {
+    const auto& library = result.scene.resources.any_material_library;
+    for (const auto& [name, id] : library.name_to_id()) {
+        const auto& mat = library.get(id);
+        bool is_ggx = std::visit(
+            [](const auto& m) {
+                using M = std::decay_t<decltype(m)>;
+                if constexpr (std::is_same_v<M, pbpt::material::DielectricMaterial<T>> ||
+                              std::is_same_v<M, pbpt::material::DielectricRoughMaterial<T>> ||
+                              std::is_same_v<M, pbpt::material::ConductorMaterial<T>> ||
+                              std::is_same_v<M, pbpt::material::ConductorRoughMaterial<T>>) {
+                    return m.microfacet_model().distribution() == pbpt::material::MicrofacetDistribution::GGX;
+                } else {
+                    return false;
+                }
+            },
+            mat);
+        if (is_ggx) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int count_distribution_tags(const std::filesystem::path& xml_path) {
+    pugi::xml_document doc;
+    if (!doc.load_file(xml_path.string().c_str())) {
+        throw std::runtime_error("failed to load xml: " + xml_path.string());
+    }
+    int count = 0;
+    for (auto bsdf : doc.child("scene").children("bsdf")) {
+        for (auto child : bsdf.children("string")) {
+            if (std::string(child.attribute("name").value()) == "distribution") {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 }  // namespace
 
 TEST(SceneRoundTrip, DiffuseScene) {
@@ -243,4 +286,63 @@ TEST(SceneRoundTrip, SppRoundTrip) {
 
     const auto reloaded = pbpt::serde::load_scene<double>(out_path.string());
     EXPECT_EQ(reloaded.spp, 16);
+}
+
+TEST(SceneRoundTrip, MicrofacetDistributionSceneIoConfig) {
+    const auto repo = find_repo_root();
+    const auto scene_path = repo / "asset/scene/cbox/cbox_microfacet_diele_iso.xml";
+
+    TempDir temp_dir("microfacet_distribution_scene_io_config");
+    const auto input_path = temp_dir.path / "input_with_distribution.xml";
+    std::filesystem::copy_file(scene_path, input_path, std::filesystem::copy_options::overwrite_existing);
+
+    {
+        pugi::xml_document doc;
+        ASSERT_TRUE(doc.load_file(input_path.string().c_str()));
+        bool injected = false;
+        for (auto bsdf : doc.child("scene").children("bsdf")) {
+            if (std::string(bsdf.attribute("type").value()) != "roughdielectric") {
+                continue;
+            }
+            auto distribution = bsdf.append_child("string");
+            distribution.append_attribute("name") = "distribution";
+            distribution.append_attribute("value") = "ggx";
+            injected = true;
+        }
+        ASSERT_TRUE(injected);
+
+        const auto source_scene_dir = scene_path.parent_path();
+        for (auto shape : doc.child("scene").children("shape")) {
+            for (auto str : shape.children("string")) {
+                if (std::string(str.attribute("name").value()) != "filename") {
+                    continue;
+                }
+                const auto original = std::filesystem::path(str.attribute("value").value());
+                if (!original.is_absolute()) {
+                    const auto resolved = (source_scene_dir / original).lexically_normal();
+                    str.attribute("value").set_value(resolved.string().c_str());
+                }
+            }
+        }
+
+        ASSERT_TRUE(doc.save_file(input_path.string().c_str(), "  "));
+    }
+
+    const auto loaded_default = pbpt::serde::load_scene<double>(input_path.string());
+    EXPECT_FALSE(has_any_ggx_microfacet_material(loaded_default));
+
+    pbpt::serde::SceneLoadConfig load_cfg{};
+    load_cfg.load_microfacet_dist = true;
+    const auto loaded_with_distribution = pbpt::serde::load_scene<double>(input_path.string(), load_cfg);
+    EXPECT_TRUE(has_any_ggx_microfacet_material(loaded_with_distribution));
+
+    const auto out_default = temp_dir.path / "out_default.xml";
+    pbpt::serde::write_scene(loaded_with_distribution, out_default.string());
+    EXPECT_EQ(count_distribution_tags(out_default), 0);
+
+    pbpt::serde::SceneWriteConfig write_cfg{};
+    write_cfg.write_microfacet_dist = true;
+    const auto out_with_distribution = temp_dir.path / "out_with_distribution.xml";
+    pbpt::serde::write_scene(loaded_with_distribution, out_with_distribution.string(), write_cfg);
+    EXPECT_GT(count_distribution_tags(out_with_distribution), 0);
 }

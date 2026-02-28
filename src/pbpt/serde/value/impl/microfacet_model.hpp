@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
@@ -19,6 +20,7 @@ struct ValueCodec<T, material::MicrofacetModel<T>> {
         T alpha_y = T(0.1);
         bool alpha_found = false;
         bool roughness_found = false;
+        auto distribution = material::MicrofacetDistribution::Beckmann;
 
         if (auto alpha = parse_child_value<T, T>(node, "float", "alpha", env)) {
             alpha_x = alpha_y = *alpha;
@@ -71,13 +73,22 @@ struct ValueCodec<T, material::MicrofacetModel<T>> {
             }
         }
 
-        return material::MicrofacetModel<T>(alpha_x, alpha_y);
+        if (env.load_microfacet_dist) {
+            if (auto distribution_text = parse_child_value<T, std::string>(node, "string", "distribution", env)) {
+                distribution = parse_distribution(*distribution_text);
+            }
+        }
+
+        return material::MicrofacetModel<T>(alpha_x, alpha_y, distribution);
     }
 
     static void write_node(const material::MicrofacetModel<T>& value, pugi::xml_node& node,
                            const ValueCodecWriteEnv<T>& env) {
         write_child_value<T, T>(node, "float", "alpha_x", value.alpha_x(), env);
         write_child_value<T, T>(node, "float", "alpha_y", value.alpha_y(), env);
+        if (env.write_microfacet_dist && value.distribution() == material::MicrofacetDistribution::GGX) {
+            write_child_value<T, std::string>(node, "string", "distribution", "ggx", env);
+        }
     }
 
     static material::MicrofacetModel<T> parse_text(std::string_view text, const ValueCodecReadEnv<T>& env) {
@@ -104,6 +115,18 @@ struct ValueCodec<T, material::MicrofacetModel<T>> {
 
 private:
     static T roughness_to_alpha(T roughness) { return std::sqrt(std::max(T(0), roughness)); }
+
+    static material::MicrofacetDistribution parse_distribution(std::string value) {
+        std::transform(value.begin(), value.end(), value.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (value == "beckmann" || value == "beckman") {
+            return material::MicrofacetDistribution::Beckmann;
+        }
+        if (value == "ggx") {
+            return material::MicrofacetDistribution::GGX;
+        }
+        throw std::runtime_error("invalid microfacet distribution '" + value + "', expected beckmann|ggx");
+    }
 };
 
 }  // namespace pbpt::serde

@@ -22,6 +22,7 @@ template <typename T>
 struct ValueCodecReadEnv {
     const scene::RenderResources<T>& resources;
     std::filesystem::path base_dir;
+    bool load_microfacet_dist{false};
 
     std::string resolve_path(const std::string& rel_path) const { return (base_dir / rel_path).string(); }
 };
@@ -32,6 +33,7 @@ struct ValueCodecWriteEnv {
     std::filesystem::path scene_dir;
     std::filesystem::path mesh_dir;
     std::filesystem::path texture_dir;
+    bool write_microfacet_dist{false};
 };
 
 template <typename T, typename ValueT, typename Enable = void>

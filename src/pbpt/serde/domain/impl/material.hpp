@@ -45,7 +45,7 @@ struct DiffuseMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path, ctx.config.load_microfacet_dist};
 
         auto spectrum_value = find_child_value(node, "spectrum", "reflectance");
         auto rgb_value = find_child_value(node, "rgb", "reflectance");
@@ -78,7 +78,7 @@ struct DiffuseMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir, ctx.config.write_microfacet_dist};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -117,7 +117,7 @@ struct DielectricMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path, ctx.config.load_microfacet_dist};
 
         T eta = parse_dielectric_eta_from_node<T>(node, read_env);
         auto microfacet_model = ValueCodec<T, material::MicrofacetModel<T>>::parse_node(node, read_env);
@@ -147,7 +147,7 @@ struct DielectricSpecularMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path, ctx.config.load_microfacet_dist};
 
         T eta = parse_dielectric_eta_from_node<T>(node, read_env);
         return material::DielectricSpecularMaterial<T>(eta);
@@ -176,7 +176,7 @@ struct DielectricRoughMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path, ctx.config.load_microfacet_dist};
 
         T eta = parse_dielectric_eta_from_node<T>(node, read_env);
         auto microfacet_model = ValueCodec<T, material::MicrofacetModel<T>>::parse_node(node, read_env);
@@ -186,6 +186,8 @@ struct DielectricRoughMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
+        const ValueCodecWriteEnv<T> write_env{
+            ctx.result.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir, ctx.config.write_microfacet_dist};
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
         auto int_ior_node = node.append_child("float");
@@ -194,12 +196,7 @@ struct DielectricRoughMaterialSerde {
         auto ext_ior_node = node.append_child("float");
         ext_ior_node.append_attribute("name") = "ext_ior";
         ext_ior_node.append_attribute("value") = T(1);
-        auto alpha_u = node.append_child("float");
-        alpha_u.append_attribute("name") = "alpha_u";
-        alpha_u.append_attribute("value") = mat.microfacet_model().alpha_x();
-        auto alpha_v = node.append_child("float");
-        alpha_v.append_attribute("name") = "alpha_v";
-        alpha_v.append_attribute("value") = mat.microfacet_model().alpha_y();
+        ValueCodec<T, material::MicrofacetModel<T>>::write_node(mat.microfacet_model(), node, write_env);
     }
 };
 
@@ -212,7 +209,7 @@ struct ConductorMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path, ctx.config.load_microfacet_dist};
 
         if (const auto material_name = find_child_value(node, "string", "material")) {
             const auto eta_k = radiometry::constant::get_metal_eta_k_spectrum<T>(*material_name, ctx.base_path);
@@ -245,7 +242,7 @@ struct ConductorMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir, ctx.config.write_microfacet_dist};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -259,12 +256,7 @@ struct ConductorMaterialSerde {
         const auto k_text =
             ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::write_text(mat.k_dist(), write_env);
         k_node.append_attribute("value") = k_text.c_str();
-        auto alpha_u = node.append_child("float");
-        alpha_u.append_attribute("name") = "alpha_u";
-        alpha_u.append_attribute("value") = mat.microfacet_model().alpha_x();
-        auto alpha_v = node.append_child("float");
-        alpha_v.append_attribute("name") = "alpha_v";
-        alpha_v.append_attribute("value") = mat.microfacet_model().alpha_y();
+        ValueCodec<T, material::MicrofacetModel<T>>::write_node(mat.microfacet_model(), node, write_env);
     }
 };
 
@@ -277,7 +269,7 @@ struct ConductorSpecularMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path, ctx.config.load_microfacet_dist};
 
         if (const auto material_name = find_child_value(node, "string", "material")) {
             const auto eta_k = radiometry::constant::get_metal_eta_k_spectrum<T>(*material_name, ctx.base_path);
@@ -308,7 +300,7 @@ struct ConductorSpecularMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir, ctx.config.write_microfacet_dist};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -334,7 +326,7 @@ struct ConductorRoughMaterialSerde {
     using write_target = IdValueWriteTarget<value_type>;
 
     static value_type load(const pugi::xml_node& node, LoadContext<T>& ctx) {
-        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path};
+        const ValueCodecReadEnv<T> read_env{ctx.result.scene.resources, ctx.base_path, ctx.config.load_microfacet_dist};
 
         if (const auto material_name = find_child_value(node, "string", "material")) {
             const auto eta_k = radiometry::constant::get_metal_eta_k_spectrum<T>(*material_name, ctx.base_path);
@@ -367,7 +359,7 @@ struct ConductorRoughMaterialSerde {
     static void write(const write_target& target, pugi::xml_node& node, WriteContext<T>& ctx) {
         const auto& mat = target.value;
         const std::string id(target.id);
-        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources,ctx.mesh_dir, ctx.texture_dir};
+        const ValueCodecWriteEnv<T> write_env{ctx.result.scene.resources, ctx.scene_dir, ctx.mesh_dir, ctx.texture_dir, ctx.config.write_microfacet_dist};
 
         node.append_attribute("id") = id.c_str();
         node.append_attribute("type") = xml_type.data();
@@ -381,12 +373,7 @@ struct ConductorRoughMaterialSerde {
         const auto k_text =
             ValueCodec<T, radiometry::PiecewiseLinearSpectrumDistribution<T>>::write_text(mat.k_dist(), write_env);
         k_node.append_attribute("value") = k_text.c_str();
-        auto alpha_u = node.append_child("float");
-        alpha_u.append_attribute("name") = "alpha_u";
-        alpha_u.append_attribute("value") = mat.microfacet_model().alpha_x();
-        auto alpha_v = node.append_child("float");
-        alpha_v.append_attribute("name") = "alpha_v";
-        alpha_v.append_attribute("value") = mat.microfacet_model().alpha_y();
+        ValueCodec<T, material::MicrofacetModel<T>>::write_node(mat.microfacet_model(), node, write_env);
     }
 };
 

@@ -101,7 +101,8 @@ TEST(BxDFTest, ConductorRoughWhiteFurnace) {
     Float roughness = 0.5;
 
     MicrofacetModel<Float> microfacet(MicrofacetModel<Float>::roughness_to_alpha(roughness),
-                                      MicrofacetModel<Float>::roughness_to_alpha(roughness));
+                                      MicrofacetModel<Float>::roughness_to_alpha(roughness),
+                                      MicrofacetDistribution::GGX);
 
     ConductorRoughBxDF<Float, N> conductor(eta, k, microfacet);
 
@@ -127,7 +128,8 @@ TEST(BxDFTest, ConductorRoughWhiteFurnace) {
     // Lower roughness -> less energy loss
     constexpr Float smooth_roughness = 0.01;
     MicrofacetModel<Float> smooth_mf(MicrofacetModel<Float>::roughness_to_alpha(smooth_roughness),
-                                     MicrofacetModel<Float>::roughness_to_alpha(smooth_roughness));
+                                     MicrofacetModel<Float>::roughness_to_alpha(smooth_roughness),
+                                     MicrofacetDistribution::GGX);
     ConductorRoughBxDF<Float, N> smooth_conductor(eta, k, smooth_mf);
 
     auto rho_hh_smooth = smooth_conductor.rou_hh(swl, samples.uc, samples.u2d_i, samples.u2d_o);
@@ -149,7 +151,8 @@ TEST(BxDFTest, DielectricRoughWhiteFurnace) {
     // 2. Roughness
     Float roughness = 0.5;
     MicrofacetModel<Float> microfacet(MicrofacetModel<Float>::roughness_to_alpha(roughness),
-                                      MicrofacetModel<Float>::roughness_to_alpha(roughness));
+                                      MicrofacetModel<Float>::roughness_to_alpha(roughness),
+                                      MicrofacetDistribution::GGX);
 
     // DielectricRoughBxDF(eta, microfacet, type=Refl|Trans)
     // If we test reflection + transmission, the sum should be < 1.0 due to MS loss.

@@ -34,13 +34,16 @@ void expect_matrix_equal(const pbpt::math::Matrix<T, 4, 4>& a, const pbpt::math:
 }
 
 pbpt::serde::ValueCodecReadEnv<double> make_read_env(const std::filesystem::path& base_path,
-                                                     const pbpt::scene::RenderResources<double>& resources) {
-    return pbpt::serde::ValueCodecReadEnv<double>{resources, base_path};
+                                                     const pbpt::scene::RenderResources<double>& resources,
+                                                     bool load_microfacet_dist = false) {
+    return pbpt::serde::ValueCodecReadEnv<double>{resources, base_path, load_microfacet_dist};
 }
 
-pbpt::serde::ValueCodecWriteEnv<double> make_write_env(const pbpt::scene::RenderResources<double>& resources) {
+pbpt::serde::ValueCodecWriteEnv<double> make_write_env(const pbpt::scene::RenderResources<double>& resources,
+                                                       bool write_microfacet_dist = false) {
     const auto cwd = std::filesystem::current_path();
-    return pbpt::serde::ValueCodecWriteEnv<double>{resources, cwd, cwd / "meshes", cwd / "textures"};
+    return pbpt::serde::ValueCodecWriteEnv<double>{resources, cwd, cwd / "meshes", cwd / "textures",
+                                                   write_microfacet_dist};
 }
 
 }  // namespace
@@ -182,6 +185,120 @@ TEST(SceneSerdeComponents, MicrofacetSerdeDefaultsToAlphaPointOne) {
         pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::parse_node(bsdf, read_env);
     EXPECT_NEAR(model.alpha_x(), 0.1, 1e-9);
     EXPECT_NEAR(model.alpha_y(), 0.1, 1e-9);
+    EXPECT_EQ(model.distribution(), pbpt::material::MicrofacetDistribution::Beckmann);
+}
+
+TEST(SceneSerdeComponents, MicrofacetSerdeIgnoresDistributionByDefault) {
+    pugi::xml_document doc;
+    auto bsdf = doc.append_child("bsdf");
+    auto distribution = bsdf.append_child("string");
+    distribution.append_attribute("name") = "distribution";
+    distribution.append_attribute("value") = "gGx";
+
+    pbpt::scene::RenderResources<double> resources{};
+    const auto read_env = make_read_env(std::filesystem::current_path(), resources);
+
+    const auto model =
+        pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::parse_node(bsdf, read_env);
+    EXPECT_EQ(model.distribution(), pbpt::material::MicrofacetDistribution::Beckmann);
+}
+
+TEST(SceneSerdeComponents, MicrofacetSerdeParsesGgxDistributionWhenEnabled) {
+    pugi::xml_document doc;
+    auto bsdf = doc.append_child("bsdf");
+    auto distribution = bsdf.append_child("string");
+    distribution.append_attribute("name") = "distribution";
+    distribution.append_attribute("value") = "gGx";
+
+    pbpt::scene::RenderResources<double> resources{};
+    const auto read_env = make_read_env(std::filesystem::current_path(), resources, true);
+
+    const auto model =
+        pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::parse_node(bsdf, read_env);
+    EXPECT_EQ(model.distribution(), pbpt::material::MicrofacetDistribution::GGX);
+}
+
+TEST(SceneSerdeComponents, MicrofacetSerdeWritesDistributionOnlyForGgx) {
+    pbpt::scene::RenderResources<double> resources{};
+    const auto write_env_default = make_write_env(resources, false);
+    const auto write_env_enabled = make_write_env(resources, true);
+
+    {
+        pugi::xml_document doc;
+        auto bsdf = doc.append_child("bsdf");
+        const pbpt::material::MicrofacetModel<double> model(0.2, 0.3, pbpt::material::MicrofacetDistribution::GGX);
+        pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::write_node(model, bsdf,
+                                                                                               write_env_default);
+        bool found_distribution = false;
+        for (auto child : bsdf.children("string")) {
+            if (std::string(child.attribute("name").value()) == "distribution") {
+                found_distribution = true;
+            }
+        }
+        EXPECT_FALSE(found_distribution);
+    }
+
+    {
+        pugi::xml_document doc;
+        auto bsdf = doc.append_child("bsdf");
+        const pbpt::material::MicrofacetModel<double> model(0.2, 0.3, pbpt::material::MicrofacetDistribution::GGX);
+        pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::write_node(model, bsdf,
+                                                                                               write_env_enabled);
+        bool found_distribution = false;
+        for (auto child : bsdf.children("string")) {
+            if (std::string(child.attribute("name").value()) == "distribution") {
+                found_distribution = true;
+                EXPECT_EQ(std::string(child.attribute("value").value()), "ggx");
+            }
+        }
+        EXPECT_TRUE(found_distribution);
+    }
+
+    {
+        pugi::xml_document doc;
+        auto bsdf = doc.append_child("bsdf");
+        const pbpt::material::MicrofacetModel<double> model(0.2, 0.3, pbpt::material::MicrofacetDistribution::Beckmann);
+        pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::write_node(model, bsdf,
+                                                                                               write_env_enabled);
+        bool found_distribution = false;
+        for (auto child : bsdf.children("string")) {
+            if (std::string(child.attribute("name").value()) == "distribution") {
+                found_distribution = true;
+            }
+        }
+        EXPECT_FALSE(found_distribution);
+    }
+}
+
+TEST(SceneSerdeComponents, MicrofacetSerdeParsesBeckmanAlias) {
+    pugi::xml_document doc;
+    auto bsdf = doc.append_child("bsdf");
+    auto distribution = bsdf.append_child("string");
+    distribution.append_attribute("name") = "distribution";
+    distribution.append_attribute("value") = "beckman";
+
+    pbpt::scene::RenderResources<double> resources{};
+    const auto read_env = make_read_env(std::filesystem::current_path(), resources, true);
+
+    const auto model =
+        pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::parse_node(bsdf, read_env);
+    EXPECT_EQ(model.distribution(), pbpt::material::MicrofacetDistribution::Beckmann);
+}
+
+TEST(SceneSerdeComponents, MicrofacetSerdeThrowsOnInvalidDistribution) {
+    pugi::xml_document doc;
+    auto bsdf = doc.append_child("bsdf");
+    auto distribution = bsdf.append_child("string");
+    distribution.append_attribute("name") = "distribution";
+    distribution.append_attribute("value") = "blinn";
+
+    pbpt::scene::RenderResources<double> resources{};
+    const auto read_env = make_read_env(std::filesystem::current_path(), resources, true);
+
+    auto parse_invalid_distribution = [&] {
+        (void)pbpt::serde::ValueCodec<double, pbpt::material::MicrofacetModel<double>>::parse_node(bsdf, read_env);
+    };
+    EXPECT_THROW(parse_invalid_distribution(), std::runtime_error);
 }
 
 namespace {

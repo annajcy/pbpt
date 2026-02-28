@@ -74,7 +74,7 @@ void render_task(const std::filesystem::path& repo_root, const std::filesystem::
 }
 
 std::vector<CboxRenderTask> build_tasks() {
-    std::vector<int> default_spp_list{64};
+    std::vector<int> default_spp_list{1024};
     return {
         // {"asset/scene/cbox/cbox.xml", "cbox", default_spp_list, true},
         // {"asset/scene/cbox/cbox_cu_spec.xml", "cbox_cu_spec", default_spp_list, true},

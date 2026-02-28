@@ -134,9 +134,24 @@ int bin_index_cos_phi(const Vector<double, 3>& wm, int cos_bins, int phi_bins) {
     return cos_bin * phi_bins + phi_bin;
 }
 
+const std::vector<MicrofacetDistribution> kDistributions = {
+    MicrofacetDistribution::Beckmann,
+    MicrofacetDistribution::GGX,
+};
+
+const char* distribution_name(MicrofacetDistribution distribution) {
+    switch (distribution) {
+        case MicrofacetDistribution::Beckmann:
+            return "beckmann";
+        case MicrofacetDistribution::GGX:
+            return "ggx";
+    }
+    return "unknown";
+}
+
 }  // namespace
 
-TEST(MicrofacetModelTest, GgxNdfNormalizes) {
+TEST(MicrofacetModelTest, NdfNormalizesForAllDistributions) {
     using Float = double;
     const std::vector<std::pair<Float, Float>> alpha_pairs = {
         {0.02, 0.18},
@@ -149,27 +164,31 @@ TEST(MicrofacetModelTest, GgxNdfNormalizes) {
     constexpr std::size_t sample_count = static_cast<std::size_t>(u_count) * static_cast<std::size_t>(v_count);
     const Float uniform_pdf = sample_uniform_hemisphere_pdf<Float>();
 
-    for (std::size_t alpha_index = 0; alpha_index < alpha_pairs.size(); ++alpha_index) {
-        const auto [alpha_x, alpha_y] = alpha_pairs[alpha_index];
-        MicrofacetModel<Float> microfacet(alpha_x, alpha_y);
+    for (std::size_t dist_index = 0; dist_index < kDistributions.size(); ++dist_index) {
+        const auto distribution = kDistributions[dist_index];
+        for (std::size_t alpha_index = 0; alpha_index < alpha_pairs.size(); ++alpha_index) {
+            const auto [alpha_x, alpha_y] = alpha_pairs[alpha_index];
+            MicrofacetModel<Float> microfacet(alpha_x, alpha_y, distribution);
 
-        Float estimate = 0;
-        RandomStream<Float> rng(1337u + static_cast<std::uint32_t>(alpha_index));
-        for_stratified_uv_jittered<Float>(u_count, v_count, rng, [&](const Point<Float, 2>& uv) {
-            const auto wm_point = sample_uniform_hemisphere(uv);
-            const auto wm = wm_point.to_vector();
-            const Float d_val = microfacet.D(wm);
-            const Float cos_val = pbpt::geometry::cos_theta(wm);
-            estimate += d_val * cos_val / uniform_pdf;
-        });
-        estimate /= static_cast<Float>(sample_count);
+            Float estimate = 0;
+            RandomStream<Float> rng(1337u + static_cast<std::uint32_t>(dist_index * 17 + alpha_index));
+            for_stratified_uv_jittered<Float>(u_count, v_count, rng, [&](const Point<Float, 2>& uv) {
+                const auto wm_point = sample_uniform_hemisphere(uv);
+                const auto wm = wm_point.to_vector();
+                const Float d_val = microfacet.D(wm);
+                const Float cos_val = pbpt::geometry::cos_theta(wm);
+                estimate += d_val * cos_val / uniform_pdf;
+            });
+            estimate /= static_cast<Float>(sample_count);
 
-        EXPECT_NEAR(estimate, 1.0, 1e-2) << "NDF normalization failed: alpha_x=" << alpha_x
-                                         << " alpha_y=" << alpha_y << " estimate=" << estimate;
+            EXPECT_NEAR(estimate, 1.0, 1e-2) << "NDF normalization failed: distribution=" << distribution_name(distribution)
+                                             << " alpha_x=" << alpha_x << " alpha_y=" << alpha_y
+                                             << " estimate=" << estimate;
+        }
     }
 }
 
-TEST(MicrofacetModelTest, GgxVndfPdfNormalizes) {
+TEST(MicrofacetModelTest, VndfPdfNormalizesForAllDistributions) {
     using Float = double;
     const std::vector<std::pair<Float, Float>> alpha_pairs = {
         {0.02, 0.18},
@@ -188,24 +207,27 @@ TEST(MicrofacetModelTest, GgxVndfPdfNormalizes) {
     constexpr int t_steps = 1024;
     constexpr int phi_steps = 1024;
 
-    for (std::size_t alpha_index = 0; alpha_index < alpha_pairs.size(); ++alpha_index) {
-        const auto [alpha_x, alpha_y] = alpha_pairs[alpha_index];
-        MicrofacetModel<Float> microfacet(alpha_x, alpha_y);
+    for (const auto distribution : kDistributions) {
+        for (std::size_t alpha_index = 0; alpha_index < alpha_pairs.size(); ++alpha_index) {
+            const auto [alpha_x, alpha_y] = alpha_pairs[alpha_index];
+            MicrofacetModel<Float> microfacet(alpha_x, alpha_y, distribution);
 
-        for (std::size_t wo_index = 0; wo_index < wo_list.size(); ++wo_index) {
-            const auto wo = wo_list[wo_index];
-            ASSERT_GT(wo.z(), 0.0);
+            for (std::size_t wo_index = 0; wo_index < wo_list.size(); ++wo_index) {
+                const auto wo = wo_list[wo_index];
+                ASSERT_GT(wo.z(), 0.0);
 
-            const Float estimate = integrate_pdf_wm_over_hemisphere(microfacet, wo, t_steps, phi_steps);
+                const Float estimate = integrate_pdf_wm_over_hemisphere(microfacet, wo, t_steps, phi_steps);
 
-            EXPECT_NEAR(estimate, 1.0, 1e-2) << "VNDF pdf normalization failed: alpha_x=" << alpha_x
-                                             << " alpha_y=" << alpha_y << " wo=(" << wo.x() << "," << wo.y() << ","
-                                             << wo.z() << ") estimate=" << estimate;
+                EXPECT_NEAR(estimate, 1.0, 1e-2) << "VNDF pdf normalization failed: distribution="
+                                                 << distribution_name(distribution) << " alpha_x=" << alpha_x
+                                                 << " alpha_y=" << alpha_y << " wo=(" << wo.x() << "," << wo.y() << ","
+                                                 << wo.z() << ") estimate=" << estimate;
+            }
         }
     }
 }
 
-TEST(MicrofacetModelTest, GgxVndfPdfNormalizesForNegativeWo) {
+TEST(MicrofacetModelTest, VndfPdfNormalizesForNegativeWoForAllDistributions) {
     using Float = double;
     const std::vector<std::pair<Float, Float>> alpha_pairs = {
         {0.02, 0.18},
@@ -217,15 +239,18 @@ TEST(MicrofacetModelTest, GgxVndfPdfNormalizesForNegativeWo) {
     constexpr int t_steps = 1024;
     constexpr int phi_steps = 1024;
 
-    for (const auto& [alpha_x, alpha_y] : alpha_pairs) {
-        MicrofacetModel<Float> microfacet(alpha_x, alpha_y);
-        const Float estimate = integrate_pdf_wm_over_hemisphere(microfacet, wo_inside, t_steps, phi_steps);
-        EXPECT_NEAR(estimate, 1.0, 1e-2) << "VNDF pdf normalization failed for negative wo: alpha_x=" << alpha_x
-                                         << " alpha_y=" << alpha_y << " estimate=" << estimate;
+    for (const auto distribution : kDistributions) {
+        for (const auto& [alpha_x, alpha_y] : alpha_pairs) {
+            MicrofacetModel<Float> microfacet(alpha_x, alpha_y, distribution);
+            const Float estimate = integrate_pdf_wm_over_hemisphere(microfacet, wo_inside, t_steps, phi_steps);
+            EXPECT_NEAR(estimate, 1.0, 1e-2) << "VNDF pdf normalization failed for negative wo: distribution="
+                                             << distribution_name(distribution) << " alpha_x=" << alpha_x
+                                             << " alpha_y=" << alpha_y << " estimate=" << estimate;
+        }
     }
 }
 
-TEST(MicrofacetModelTest, SampleWmMatchesPdfWmHistogram) {
+TEST(MicrofacetModelTest, SampleWmMatchesPdfWmHistogramForAllDistributions) {
     using Float = double;
 
     constexpr int cos_bins = 12;
@@ -236,8 +261,6 @@ TEST(MicrofacetModelTest, SampleWmMatchesPdfWmHistogram) {
     constexpr int v_count = 512;
     constexpr std::size_t observed_sample_count = static_cast<std::size_t>(u_count) * static_cast<std::size_t>(v_count);
 
-    const MicrofacetModel<Float> microfacet(0.02, 0.18);
-
     const std::vector<Vector<Float, 3>> wo_list = {
         Vector<Float, 3>(0, 0, 1),
         normalize_or_throw(Vector<Float, 3>(0.6, 0.0, 0.8)),
@@ -246,51 +269,74 @@ TEST(MicrofacetModelTest, SampleWmMatchesPdfWmHistogram) {
     constexpr int t_steps = 64;
     constexpr int phi_steps = 32;
 
-    for (std::size_t wo_index = 0; wo_index < wo_list.size(); ++wo_index) {
-        const auto wo = wo_list[wo_index];
-        ASSERT_GT(wo.z(), 0.0);
+    for (std::size_t dist_index = 0; dist_index < kDistributions.size(); ++dist_index) {
+        const auto distribution = kDistributions[dist_index];
+        const MicrofacetModel<Float> microfacet(0.02, 0.18, distribution);
 
-        std::vector<double> expected_probability(bin_count, 0.0);
-        for (int cos_bin = 0; cos_bin < cos_bins; ++cos_bin) {
-            const double z_low = static_cast<double>(cos_bin) / static_cast<double>(cos_bins);
-            const double z_high = static_cast<double>(cos_bin + 1) / static_cast<double>(cos_bins);
-            for (int phi_bin = 0; phi_bin < phi_bins; ++phi_bin) {
-                const double phi_low = (static_cast<double>(phi_bin) / static_cast<double>(phi_bins)) *
-                                       (2.0 * math::pi_v<double>);
-                const double phi_high = (static_cast<double>(phi_bin + 1) / static_cast<double>(phi_bins)) *
-                                        (2.0 * math::pi_v<double>);
-                const double expected_prob =
-                    integrate_pdf_wm_over_bin(microfacet, wo, z_low, z_high, phi_low, phi_high, t_steps, phi_steps);
-                expected_probability[static_cast<std::size_t>(cos_bin * phi_bins + phi_bin)] = expected_prob;
+        for (std::size_t wo_index = 0; wo_index < wo_list.size(); ++wo_index) {
+            const auto wo = wo_list[wo_index];
+            ASSERT_GT(wo.z(), 0.0);
+
+            std::vector<double> expected_probability(bin_count, 0.0);
+            for (int cos_bin = 0; cos_bin < cos_bins; ++cos_bin) {
+                const double z_low = static_cast<double>(cos_bin) / static_cast<double>(cos_bins);
+                const double z_high = static_cast<double>(cos_bin + 1) / static_cast<double>(cos_bins);
+                for (int phi_bin = 0; phi_bin < phi_bins; ++phi_bin) {
+                    const double phi_low = (static_cast<double>(phi_bin) / static_cast<double>(phi_bins)) *
+                                           (2.0 * math::pi_v<double>);
+                    const double phi_high = (static_cast<double>(phi_bin + 1) / static_cast<double>(phi_bins)) *
+                                            (2.0 * math::pi_v<double>);
+                    const double expected_prob =
+                        integrate_pdf_wm_over_bin(microfacet, wo, z_low, z_high, phi_low, phi_high, t_steps, phi_steps);
+                    expected_probability[static_cast<std::size_t>(cos_bin * phi_bins + phi_bin)] = expected_prob;
+                }
+            }
+
+            std::vector<std::size_t> observed_count(bin_count, 0);
+            const std::uint32_t seed_base = (distribution == MicrofacetDistribution::GGX) ? 42u : 4242u;
+            RandomStream<Float> observed_rng(seed_base + static_cast<std::uint32_t>(wo_index));
+            for_stratified_uv_jittered<Float>(u_count, v_count, observed_rng, [&](const Point<Float, 2>& uv) {
+                const auto wm = microfacet.sample_wm(wo, uv);
+                const int idx = bin_index_cos_phi(wm, cos_bins, phi_bins);
+                observed_count[static_cast<std::size_t>(idx)] += 1;
+            });
+
+            double expected_sum = 0.0;
+            for (const auto value : expected_probability) {
+                expected_sum += value;
+            }
+            EXPECT_NEAR(expected_sum, 1.0, 2e-2) << "Expected bin probabilities should sum to ~1; distribution="
+                                                 << distribution_name(distribution) << " got " << expected_sum;
+
+            constexpr double probability_threshold = 5e-4;
+            for (int idx = 0; idx < bin_count; ++idx) {
+                const double expected_prob = expected_probability[static_cast<std::size_t>(idx)];
+                if (expected_prob < probability_threshold) {
+                    continue;
+                }
+                const double observed_prob = static_cast<double>(observed_count[static_cast<std::size_t>(idx)]) /
+                                             static_cast<double>(observed_sample_count);
+                const double rel_error = std::abs(observed_prob - expected_prob) / expected_prob;
+                EXPECT_LT(rel_error, 0.15) << "Histogram mismatch: distribution=" << distribution_name(distribution)
+                                           << " wo_index=" << wo_index << " idx=" << idx
+                                           << " expected=" << expected_prob << " observed=" << observed_prob
+                                           << " rel_error=" << rel_error;
             }
         }
+    }
+}
 
-        std::vector<std::size_t> observed_count(bin_count, 0);
-        RandomStream<Float> observed_rng(42u + static_cast<std::uint32_t>(wo_index));
-        for_stratified_uv_jittered<Float>(u_count, v_count, observed_rng, [&](const Point<Float, 2>& uv) {
-            const auto wm = microfacet.sample_wm(wo, uv);
-            const int idx = bin_index_cos_phi(wm, cos_bins, phi_bins);
-            observed_count[static_cast<std::size_t>(idx)] += 1;
-        });
+TEST(MicrofacetModelTest, SampleWmStaysUpperHemisphereForNegativeWo) {
+    using Float = double;
+    const Vector<Float, 3> wo_inside = normalize_or_throw(Vector<Float, 3>(0.3, -0.4, -0.8660254037844386));
 
-        double expected_sum = 0.0;
-        for (const auto value : expected_probability) {
-            expected_sum += value;
-        }
-        EXPECT_NEAR(expected_sum, 1.0, 2e-2) << "Expected bin probabilities should sum to ~1; got " << expected_sum;
-
-        constexpr double probability_threshold = 5e-4;
-        for (int idx = 0; idx < bin_count; ++idx) {
-            const double expected_prob = expected_probability[static_cast<std::size_t>(idx)];
-            if (expected_prob < probability_threshold) {
-                continue;
-            }
-            const double observed_prob =
-                static_cast<double>(observed_count[static_cast<std::size_t>(idx)]) / static_cast<double>(observed_sample_count);
-            const double rel_error = std::abs(observed_prob - expected_prob) / expected_prob;
-            EXPECT_LT(rel_error, 0.15) << "Histogram mismatch: wo_index=" << wo_index << " idx=" << idx
-                                       << " expected=" << expected_prob << " observed=" << observed_prob
-                                       << " rel_error=" << rel_error;
+    RandomStream<Float> rng(20260228u);
+    for (const auto distribution : kDistributions) {
+        const MicrofacetModel<Float> microfacet(0.12, 0.35, distribution);
+        for (int i = 0; i < 8192; ++i) {
+            const auto wm = microfacet.sample_wm(wo_inside, rng.next_2d());
+            EXPECT_GE(wm.z(), -1e-7) << "wm should remain in upper hemisphere for distribution="
+                                     << distribution_name(distribution);
         }
     }
 }
@@ -299,7 +345,7 @@ TEST(MicrofacetModelTest, DielectricRoughSamplingMatchesUniform) {
     using Float = double;
     constexpr int N = 4;
 
-    const MicrofacetModel<Float> microfacet(0.02, 0.18);
+    const MicrofacetModel<Float> microfacet(0.02, 0.18, MicrofacetDistribution::GGX);
     DielectricRoughBxDF<Float, N> bxdf(1.5, microfacet);
 
     SampledWavelength<Float, N> swl{};

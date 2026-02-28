@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <type_traits>
 
 #include "pbpt/math/utils.hpp"
@@ -145,6 +146,31 @@ template <typename T>
 constexpr T inverse_sigmoid(T s) {
     math::assert_if(s <= 0 && s >= 1, "s must be in (0, 1)");
     return (s - 0.5) / std::sqrt(s * (1.0 - s));
+}
+
+/**
+ * @brief Inverse error function approximation with Newton refinement.
+ *
+ * Uses Winitzki initialization (`a = 0.147`) followed by two Newton steps.
+ */
+template <typename T>
+inline T erf_inv(T x) {
+    constexpr T a = T(0.147);
+    constexpr T eps = T(1e-6);
+    x = std::clamp(x, T(-1) + eps, T(1) - eps);
+
+    const T ln = std::log(T(1) - x * x);
+    const T tt1 = T(2) / (math::pi_v<T> * a) + ln / T(2);
+    const T tt2 = ln / a;
+    T y = std::copysign(std::sqrt(std::sqrt(tt1 * tt1 - tt2) - tt1), x);
+
+    const T deriv_scale = T(2) / std::sqrt(math::pi_v<T>);
+    for (int i = 0; i < 2; ++i) {
+        const T err = std::erf(y) - x;
+        const T deriv = deriv_scale * std::exp(-y * y);
+        y -= err / deriv;
+    }
+    return y;
 }
 
 }  // namespace pbpt::math
