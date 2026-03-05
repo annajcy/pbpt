@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/texture/plugin/texture/bitmap_texture.hpp"
 #include "pbpt/texture/plugin/texture/checkerboard_texture.hpp"
 #include "pbpt/texture/image.hpp"

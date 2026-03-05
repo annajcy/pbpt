@@ -4,7 +4,7 @@
 #include <cmath>
 #include "pbpt/utils/image_io.hpp"
 #include "pbpt/texture/image.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 using namespace pbpt;
 

@@ -4,9 +4,9 @@
 #include <cmath>
 #include <vector>
 
-#include "pbpt/math/type_alias.hpp"
+#include "pbpt/math/basic/type_alias.hpp"
 #include "pbpt/pbpt.h"
-#include "pbpt/math/random_generator.hpp"
+#include "pbpt/math/basic/random_generator.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/black_body.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/constant.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/multiplied.hpp"

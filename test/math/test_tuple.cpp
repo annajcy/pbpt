@@ -25,13 +25,28 @@ namespace pbpt::math::testing {
 
 // 创建一个简单的Tuple派生类用于测试
 template <typename T, int N>
-class TestTuple : public Tuple<TestTuple, T, N> {
+class TestTuple : public Tuple<TestTuple<T, N>, T, N> {
 public:
-    using Base = Tuple<TestTuple, T, N>;
+    using Base = Tuple<TestTuple<T, N>, T, N>;
     using Base::Base;
 
     static constexpr const char* name() { return "TestTuple"; }
 };
+
+}  // namespace pbpt::math::testing
+
+namespace pbpt::math {
+
+// rebind_trait specialization — required for cast<U,M>() and operator== with different types.
+template <typename T, int N>
+struct rebind_trait<pbpt::math::testing::TestTuple<T, N>> {
+    template <typename U, int M>
+    using type = pbpt::math::testing::TestTuple<U, M>;
+};
+
+}  // namespace pbpt::math
+
+namespace pbpt::math::testing {
 
 // Test fixture for Tuple tests
 class TupleTest : public ::testing::Test {

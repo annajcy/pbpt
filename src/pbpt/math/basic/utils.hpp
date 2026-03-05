@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "type_alias.hpp"
+#include "pbpt/math/basic/type_alias.hpp"
 
 namespace pbpt::math {
 

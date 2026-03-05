@@ -3,7 +3,7 @@
 
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/geometry/ray.hpp"
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 #include "pbpt/shape/shape.hpp"
 #include "pbpt/shape/plugin/shape/sphere.hpp"
 using namespace pbpt::math;

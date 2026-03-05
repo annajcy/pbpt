@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <vector>
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 #include "pbpt/texture/image.hpp"
 
 namespace pbpt::utils {
@@ -25,7 +25,7 @@ namespace pbpt::utils {
  * @throws std::runtime_error if writing the EXR file fails.
  */
 template <typename T>
-void write_hdr_image(const std::filesystem::path& output_path, const texture::Image<math::Vector<T, 3>>& image) {
+inline void write_hdr_image(const std::filesystem::path& output_path, const texture::Image<math::Vector<T, 3>>& image) {
     int width = image.width();
     int height = image.height();
 
@@ -80,7 +80,7 @@ void write_hdr_image(const std::filesystem::path& output_path, const texture::Im
  * @throws std::runtime_error if reading the EXR file fails.
  */
 template <typename T>
-texture::Image<math::Vector<T, 3>> read_hdr_image(const std::filesystem::path& input_path) {
+inline texture::Image<math::Vector<T, 3>> read_hdr_image(const std::filesystem::path& input_path) {
     if (!std::filesystem::exists(input_path)) {
         throw std::runtime_error("File not found: " + input_path.string());
     }
@@ -159,7 +159,7 @@ texture::Image<math::Vector<T, 3>> read_hdr_image(const std::filesystem::path& i
  * @param image       Source image to write.
  */
 template <typename T>
-void write_ldr_image(const std::filesystem::path& output_path, const texture::Image<math::Vector<T, 3>>& image) {
+inline void write_ldr_image(const std::filesystem::path& output_path, const texture::Image<math::Vector<T, 3>>& image) {
     int width = image.width();
     int height = image.height();
 
@@ -196,7 +196,7 @@ void write_ldr_image(const std::filesystem::path& output_path, const texture::Im
  * @return            Image read from file.
  */
 template <typename T>
-texture::Image<math::Vector<T, 3>> read_ldr_image(const std::filesystem::path& input_path) {
+inline texture::Image<math::Vector<T, 3>> read_ldr_image(const std::filesystem::path& input_path) {
     if (!std::filesystem::exists(input_path)) {
         throw std::runtime_error("File not found: " + input_path.string());
     }
@@ -235,7 +235,7 @@ texture::Image<math::Vector<T, 3>> read_ldr_image(const std::filesystem::path& i
  * @param image       Source image to write.
  */
 template <typename T>
-void write_image(const std::filesystem::path& output_path, const texture::Image<math::Vector<T, 3>>& image) {
+inline void write_image(const std::filesystem::path& output_path, const texture::Image<math::Vector<T, 3>>& image) {
     std::string ext = output_path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return std::tolower(c); });
 
@@ -253,7 +253,7 @@ void write_image(const std::filesystem::path& output_path, const texture::Image<
  * Supports .exr via OpenEXR and .png/.jpg/.bmp/.tga via stb_image.
  */
 template <typename T>
-texture::Image<math::Vector<T, 3>> read_image(const std::filesystem::path& input_path) {
+inline texture::Image<math::Vector<T, 3>> read_image(const std::filesystem::path& input_path) {
     std::string ext = input_path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return std::tolower(c); });
 
@@ -265,7 +265,7 @@ texture::Image<math::Vector<T, 3>> read_image(const std::filesystem::path& input
 }
 
 template <typename T>
-void convert_image(const std::filesystem::path& input_path, const std::filesystem::path& output_path) {
+inline void convert_image(const std::filesystem::path& input_path, const std::filesystem::path& output_path) {
     auto hdr_image = read_image<T>(input_path);
     write_image<T>(output_path, hdr_image);
 }

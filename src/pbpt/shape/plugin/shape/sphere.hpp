@@ -14,10 +14,10 @@
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/geometry/ray.hpp"
 #include "pbpt/geometry/transform.hpp"
-#include "pbpt/math/function.hpp"
-#include "pbpt/math/normal.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/basic/function.hpp"
+#include "pbpt/math/spatial/normal.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/shape/shape.hpp"
 
 namespace pbpt::shape {

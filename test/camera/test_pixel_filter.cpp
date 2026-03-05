@@ -3,7 +3,7 @@
 
 #include "pbpt/camera/plugin/pixel_filter/box_filter.hpp"
 #include "pbpt/camera/plugin/pixel_filter/tent_filter.hpp"
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 
 namespace pbpt::camera::testing {
 

@@ -9,8 +9,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "pbpt/math/utils.hpp"
-#include "type_alias.hpp"
+#include "pbpt/math/basic/utils.hpp"
+#include "pbpt/math/basic/type_alias.hpp"
 
 namespace pbpt::math {
 
@@ -172,5 +172,30 @@ inline T erf_inv(T x) {
     }
     return y;
 }
+
+// ---------------------------------------------------------------------------
+// GLM-style scalar wrappers
+// ---------------------------------------------------------------------------
+
+template <typename T>
+constexpr T radians(T degree) { return deg2rad(degree); }
+
+template <typename T>
+constexpr T degrees(T radian) { return rad2deg(radian); }
+
+template <typename T>
+constexpr T clamp(T value, T min_value, T max_value) { return std::clamp(value, min_value, max_value); }
+
+template <typename T>
+constexpr T max(T lhs, T rhs) { return std::max(lhs, rhs); }
+
+template <typename T>
+constexpr T min(T lhs, T rhs) { return std::min(lhs, rhs); }
+
+template <typename T>
+constexpr T asin(T value) { return std::asin(value); }
+
+template <typename T>
+constexpr T atan2(T y, T x) { return std::atan2(y, x); }
 
 }  // namespace pbpt::math

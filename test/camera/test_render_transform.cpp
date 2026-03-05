@@ -1,8 +1,8 @@
 #include "pbpt/camera/render_transform.hpp"
 #include "pbpt/geometry/transform.hpp"
-#include "pbpt/math/function.hpp"
-#include "pbpt/math/type_alias.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/basic/function.hpp"
+#include "pbpt/math/basic/type_alias.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include <gtest/gtest.h>
 
 using namespace pbpt;

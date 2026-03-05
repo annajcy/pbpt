@@ -4,9 +4,9 @@
  */
 #pragma once
 
-#include "pbpt/math/matrix.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/matrix/matrix.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 #include "color.hpp"
 

@@ -7,10 +7,10 @@
 #include <cstdlib>
 #include <utility>
 
-#include "pbpt/math/function.hpp"
-#include "pbpt/math/normal.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/basic/function.hpp"
+#include "pbpt/math/spatial/normal.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/sampler/2d.hpp"
 #include "pbpt/sampler/3d.hpp"
 

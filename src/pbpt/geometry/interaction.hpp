@@ -10,10 +10,10 @@
 #include <optional>
 #include <algorithm>
 
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
-#include "pbpt/math/normal.hpp"
-#include "pbpt/math/matrix.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
+#include "pbpt/math/spatial/normal.hpp"
+#include "pbpt/math/matrix/matrix.hpp"
 #include "pbpt/geometry/ray.hpp"
 
 namespace pbpt::geometry {

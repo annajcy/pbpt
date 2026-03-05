@@ -4,8 +4,8 @@
 
 #include "pbpt/geometry/ray.hpp"
 #include "pbpt/geometry/transform.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/shape/plugin/shape/triangle.hpp"
 
 namespace pbpt::shape::testing {

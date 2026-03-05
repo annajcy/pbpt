@@ -8,7 +8,7 @@
 
 #include "pbpt/integrator/integrator.hpp"
 #include "pbpt/material/bxdf.hpp"
-#include "pbpt/math/utils.hpp"
+#include "pbpt/math/basic/utils.hpp"
 #include "pbpt/scene/scene.hpp"
 #include "pbpt/light_sampler/light_sampler.hpp"
 

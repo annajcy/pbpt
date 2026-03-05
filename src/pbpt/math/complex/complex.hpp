@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 namespace pbpt::math {
 
@@ -127,11 +127,9 @@ public:
     }
 
     constexpr T length() const noexcept { return std::hypot(m_real, m_imag); }
-
     constexpr T squared_length() const noexcept { return m_real * m_real + m_imag * m_imag; }
 
     constexpr math::Vector<T, 2> to_vector() const noexcept { return math::Vector<T, 2>(m_real, m_imag); }
-
     constexpr Complex<T> conjugate() const noexcept { return Complex<T>(m_real, -m_imag); }
 
     // eulur's formula e^(a + bi) = e^a * (cos(b) + i sin(b))
@@ -141,14 +139,12 @@ public:
     }
 
     friend constexpr Complex<T> operator*(T scalar, const Complex<T>& complex) noexcept { return complex * scalar; }
-
     friend Complex<T> operator/(T lhs, const Complex<T>& rhs) {
         T denom = rhs.m_real * rhs.m_real + rhs.m_imag * rhs.m_imag;
         return Complex<T>((lhs * rhs.m_real) / denom, (-lhs * rhs.m_imag) / denom);
     }
 
     friend Complex<T> operator-(T lhs, const Complex<T>& rhs) { return Complex<T>(lhs - rhs.m_real, -rhs.m_imag); }
-
     friend Complex<T> operator+(T lhs, const Complex<T>& rhs) { return Complex<T>(lhs + rhs.m_real, rhs.m_imag); }
 };
 

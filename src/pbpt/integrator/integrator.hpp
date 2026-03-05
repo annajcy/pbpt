@@ -13,7 +13,7 @@
 
 #include "pbpt/integrator/concepts.hpp"
 
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 #include "pbpt/sampler/2d.hpp"
 #include "pbpt/utils/image_io.hpp"
 #include "pbpt/utils/progress_bar.hpp"

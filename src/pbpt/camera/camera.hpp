@@ -10,8 +10,8 @@
 #include "pbpt/geometry/ray.hpp"
 #include "pbpt/geometry/transform.hpp"
 
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 namespace pbpt::camera {
 
@@ -177,10 +177,7 @@ public:
      * @return 3D point in camera space on the z = 0 plane.
      */
     math::Point<T, 3> apply_viewport_to_camera(const math::Point<T, 2>& p, T viewport_depth = T{0.0}) const {
-        math::Homogeneous<T, 4> hp =
-            math::Homogeneous<T, 4>::from_point(math::Point<T, 3>(p.x(), p.y(), viewport_depth));
-        auto hc = viewport_to_camera().transform_homogeneous(hp);
-        return hc.to_point();
+        return viewport_to_camera().transform_point(math::Point<T, 3>(p.x(), p.y(), viewport_depth));
     }
 
     /**

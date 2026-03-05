@@ -8,10 +8,10 @@
 #include <cmath>
 #include <type_traits>
 
-#include "function.hpp"
-#include "matrix.hpp"
-#include "operator.hpp"
-#include "vector.hpp"
+#include "pbpt/math/basic/function.hpp"
+#include "pbpt/math/matrix/matrix.hpp"
+#include "pbpt/math/basic/comparison.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 namespace pbpt::math {
 
@@ -219,5 +219,46 @@ constexpr Quaternion<T> operator*(T lhs, const Quaternion<T>& rhs) {
 
 using Quat = Quaternion<Float>;
 using quat = Quat;
+
+// ---------------------------------------------------------------------------
+// GLM-style free-function wrappers (from compat.hpp)
+// ---------------------------------------------------------------------------
+
+template <typename T>
+constexpr auto normalize(const Quaternion<T>& q) { return q.normalized(); }
+
+template <typename T>
+constexpr Matrix<T, 3, 3> mat3_cast(const Quaternion<T>& q) { return q.to_mat3(); }
+
+template <typename T>
+constexpr Matrix<T, 4, 4> mat4_cast(const Quaternion<T>& q) { return q.to_mat4(); }
+
+template <typename T>
+constexpr Quaternion<T> quat_cast(const Matrix<T, 3, 3>& m) { return Quaternion<T>::from_mat3(m); }
+
+template <typename T>
+constexpr Quaternion<T> angleAxis(T angle_rad, const Vector<T, 3>& axis) {
+    return Quaternion<T>::from_axis_angle(angle_rad, axis);
+}
+
+template <typename T>
+constexpr Vector<T, 3> eulerAngles(const Quaternion<T>& q) { return q.to_euler_xyz(); }
+
+template <typename T>
+constexpr Quaternion<T> rotation(const Vector<T, 3>& from, const Vector<T, 3>& to) {
+    return Quaternion<T>::rotation(from, to);
+}
+
+template <typename T>
+constexpr Quaternion<T> rotate(const Quaternion<T>& q, T angle_rad, const Vector<T, 3>& axis) {
+    return Quaternion<T>::from_axis_angle(angle_rad, axis) * q;
+}
+
+/// Generic identity() helper — calls T::identity() for any type that has it.
+template <typename T>
+constexpr T identity() { return T::identity(); }
+
+template <>
+constexpr Quat identity<Quat>() { return Quat::identity(); }
 
 }  // namespace pbpt::math

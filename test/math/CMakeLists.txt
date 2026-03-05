@@ -19,10 +19,6 @@ add_executable(test_matrix test_matrix.cpp)
 target_link_libraries(test_matrix PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_matrix)
 
-add_executable(test_homo test_homo.cpp)
-target_link_libraries(test_homo PRIVATE pbpt GTest::gtest_main)
-gtest_discover_tests(test_homo)
-
 add_executable(test_octahedral test_octahedral.cpp)
 target_link_libraries(test_octahedral PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_octahedral)
@@ -34,3 +30,7 @@ gtest_discover_tests(test_complex)
 add_executable(test_quaternion test_quaternion.cpp)
 target_link_libraries(test_quaternion PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_quaternion)
+
+add_executable(test_algebra_verify test_algebra_verify.cpp)
+target_link_libraries(test_algebra_verify PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_algebra_verify)

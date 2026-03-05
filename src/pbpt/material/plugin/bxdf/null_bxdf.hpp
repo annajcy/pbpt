@@ -5,7 +5,7 @@
 
 #include "pbpt/geometry/spherical.hpp"
 #include "pbpt/material/bxdf.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::material {

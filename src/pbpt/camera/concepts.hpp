@@ -4,7 +4,7 @@
 
 #include "pbpt/camera/camera.hpp"
 #include "pbpt/geometry/ray.hpp"
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::camera {

@@ -4,56 +4,51 @@
  */
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <iomanip>
 #include <format>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
-#include "pbpt/math/matrix.hpp"
-#include "pbpt/math/normal.hpp"
-#include "pbpt/math/octahedral.hpp"
-#include "pbpt/math/tuple.hpp"
-#include "pbpt/math/complex.hpp"
+#include "pbpt/math/complex/complex.hpp"
+#include "pbpt/math/matrix/matrix.hpp"
+#include "pbpt/math/spatial/normal.hpp"
+#include "pbpt/math/special/octahedral.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/tuple.hpp"
 
 namespace pbpt::math {
 
 // =============================================================================
-// Tuple-based types (Vector, Point, Normal, Homogeneous)
+// Tuple-based types (Vector, Point, Normal)
 // =============================================================================
 
 /**
- * @brief Returns a readable name for tuple-based math types.
- *
- * Distinguishes between Vector, Point, Normal and Homogeneous instantiations
- * to produce a string such as `Vector<float, 3>`.
+ * @brief Returns a human-readable type name for tuple-based math types.
  */
-template <template <typename, int> typename Derived, typename T, int N>
+template <typename Derived, typename T, int N>
 std::string tuple_name() {
-    if constexpr (std::is_same_v<Derived<T, N>, Vector<T, N>>) {
+    if constexpr (std::is_same_v<Derived, Vector<T, N>>) {
         return std::format("Vector<{}, {}>", typeid(T).name(), N);
-    } else if constexpr (std::is_same_v<Derived<T, N>, Point<T, N>>) {
+    } else if constexpr (std::is_same_v<Derived, Point<T, N>>) {
         return std::format("Point<{}, {}>", typeid(T).name(), N);
-    } else if constexpr (std::is_same_v<Derived<T, N>, Normal<T, N>>) {
+    } else if constexpr (std::is_same_v<Derived, Normal<T, N>>) {
         return std::format("Normal<{}, {}>", typeid(T).name(), N);
-    } else if constexpr (std::is_same_v<Derived<T, N>, Homogeneous<T, N>>) {
-        return std::format("Homogeneous<{}, {}>", typeid(T).name(), N);
     } else {
         return "Unknown";
     }
 }
 
 /**
- * @brief Format a tuple-based math type with type info and fixed precision.
+ * @brief Formats a tuple-based math type with type info and fixed precision.
  * @return String of the form `Vector<T, N>(v0, v1, ...)`.
  */
-template <template <typename, int> typename Derived, typename T, int N>
+template <typename Derived, typename T, int N>
 std::string to_string(const Tuple<Derived, T, N>& t) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(6);
     oss << tuple_name<Derived, T, N>() << "(";
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
         oss << t[i] << (i == N - 1 ? "" : ", ");
-    }
     oss << ")";
     return oss.str();
 }
@@ -62,15 +57,11 @@ std::string to_string(const Tuple<Derived, T, N>& t) {
 // Matrix types
 // =============================================================================
 
-/**
- * @brief Format a matrix with type info and multi-line layout.
- */
 template <typename T, int R, int C>
 std::string to_string(const Matrix<T, R, C>& m) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(6);
-    oss << std::format("Matrix<{}, {}, {}>(", typeid(T).name(), R, C);
-    oss << "\n";
+    oss << std::format("Matrix<{}, {}, {}>(", typeid(T).name(), R, C) << "\n";
     for (int r = 0; r < R; ++r) {
         oss << "\t[";
         for (int c = 0; c < C; ++c) {
@@ -88,9 +79,6 @@ std::string to_string(const Matrix<T, R, C>& m) {
 // OctahedralVector type
 // =============================================================================
 
-/**
- * @brief Format an octahedral vector and its decoded XYZ components.
- */
 template <typename T>
 std::string to_string(const OctahedralVector<T>& oct) {
     std::ostringstream oss;
@@ -106,9 +94,6 @@ std::string to_string(const OctahedralVector<T>& oct) {
 // Complex type
 // =============================================================================
 
-/**
- * @brief Format a complex number.
- */
 template <typename T>
 std::string to_string(const Complex<T>& c) {
     std::ostringstream oss;
@@ -119,33 +104,25 @@ std::string to_string(const Complex<T>& c) {
 }
 
 // =============================================================================
-// Extended formatting functions with custom precision
+// Extended formatting with custom precision
 // =============================================================================
 
-/**
- * @brief Format a tuple with caller-provided decimal precision.
- */
-template <template <typename, int> typename Derived, typename T, int N>
+template <typename Derived, typename T, int N>
 std::string to_string_precision(const Tuple<Derived, T, N>& t, int precision) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(precision);
-    oss << Derived<T, N>::name() << "(";
-    for (int i = 0; i < N; ++i) {
+    oss << tuple_name<Derived, T, N>() << "(";
+    for (int i = 0; i < N; ++i)
         oss << t[i] << (i == N - 1 ? "" : ", ");
-    }
     oss << ")";
     return oss.str();
 }
 
-/**
- * @brief Format a matrix with caller-provided decimal precision.
- */
 template <typename T, int R, int C>
 std::string to_string_precision(const Matrix<T, R, C>& m, int precision) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(precision);
     oss << std::format("Matrix<{}, {}, {}>(", typeid(T).name(), R, C);
-
     for (int r = 0; r < R; ++r) {
         if (r > 0)
             oss << ", ";
@@ -162,33 +139,25 @@ std::string to_string_precision(const Matrix<T, R, C>& m, int precision) {
 }
 
 // =============================================================================
-// Compact formatting functions (without type information)
+// Compact formatting (no type info)
 // =============================================================================
 
-/**
- * @brief Compact tuple formatter without type information.
- */
-template <template <typename, int> typename Derived, typename T, int N>
+template <typename Derived, typename T, int N>
 std::string to_string_compact(const Tuple<Derived, T, N>& t) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(3);
     oss << "(";
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
         oss << t[i] << (i == N - 1 ? "" : ", ");
-    }
     oss << ")";
     return oss.str();
 }
 
-/**
- * @brief Compact single-line matrix formatter.
- */
 template <typename T, int R, int C>
 std::string to_string_compact(const Matrix<T, R, C>& m) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(3);
     oss << "[";
-
     for (int r = 0; r < R; ++r) {
         if (r > 0)
             oss << "; ";
@@ -202,33 +171,25 @@ std::string to_string_compact(const Matrix<T, R, C>& m) {
     return oss.str();
 }
 
-/**
- * @brief Stream insertion for tuple-based math types.
- */
-template <template <typename, int> typename Derived, typename T, int N>
+// =============================================================================
+// Stream insertion operators
+// =============================================================================
+
+template <typename Derived, typename T, int N>
 std::ostream& operator<<(std::ostream& os, const Tuple<Derived, T, N>& t) {
     return os << to_string(t);
 }
 
-/**
- * @brief Stream insertion for matrices.
- */
 template <typename T, int R, int C>
 std::ostream& operator<<(std::ostream& os, const Matrix<T, R, C>& m) {
     return os << to_string(m);
 }
 
-/**
- * @brief Stream insertion for octahedral vectors.
- */
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const OctahedralVector<T>& oct) {
     return os << to_string(oct);
 }
 
-/**
- * @brief Stream insertion for complex numbers.
- */
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Complex<T>& c) {
     return os << to_string(c);

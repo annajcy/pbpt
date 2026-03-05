@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "pbpt/geometry/interaction.hpp"
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 #include "pbpt/texture/image.hpp"
 #include "pbpt/texture/mipmap.hpp"
 

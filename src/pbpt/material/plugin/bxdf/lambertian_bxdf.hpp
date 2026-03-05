@@ -4,7 +4,7 @@
 #include <optional>
 
 #include "pbpt/material/bxdf.hpp"
-#include "pbpt/math/function.hpp"
+#include "pbpt/math/basic/function.hpp"
 #include "pbpt/sampler/3d.hpp"
 
 #include "pbpt/material/optics.hpp"

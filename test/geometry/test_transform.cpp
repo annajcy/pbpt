@@ -6,6 +6,23 @@ namespace pbpt::geometry::testing {
 
 constexpr Float kEpsilon = 1e-6;
 
+// Helpers replacing the removed Homogeneous type.
+// Applies a 4x4 matrix to a point (w=1) and performs the projective divide.
+// TM = matrix scalar, TP = point scalar (may differ when using Transform<double> with Pt3=Point<float>).
+template <typename TM, typename TP>
+static Point<TM, 3> mat_apply_point(const Matrix<TM, 4, 4>& m, const Point<TP, 3>& p) {
+    auto h = m * Vector<TM, 4>(TM(p.x()), TM(p.y()), TM(p.z()), TM(1));
+    const TM inv_w = TM(1) / h[3];
+    return Point<TM, 3>(h[0] * inv_w, h[1] * inv_w, h[2] * inv_w);
+}
+
+// Applies a 4x4 matrix to a direction vector (w=0); w component is discarded.
+template <typename TM, typename TV>
+static Vector<TM, 3> mat_apply_vector(const Matrix<TM, 4, 4>& m, const Vector<TV, 3>& v) {
+    auto h = m * Vector<TM, 4>(TM(v.x()), TM(v.y()), TM(v.z()), TM(0));
+    return Vector<TM, 3>(h[0], h[1], h[2]);
+}
+
 // A test fixture to hold common test data.
 class TransformTest : public ::testing::Test {
 protected:
@@ -21,14 +38,14 @@ protected:
 
 TEST_F(TransformTest, Translate) {
     const Vec3 translation_vec(5, -2, 100);
-    const Mat4 t = Transform<double>::translate(translation_vec).matrix();
+    const auto t = Transform<double>::translate(translation_vec).matrix();
 
-    const Pt3 p_transformed = (t * Homo4::from_point(origin)).to_point();
+    const auto p_transformed = mat_apply_point(t, origin);
     EXPECT_DOUBLE_EQ(p_transformed.x(), 5.0);
     EXPECT_DOUBLE_EQ(p_transformed.y(), -2.0);
     EXPECT_DOUBLE_EQ(p_transformed.z(), 100.0);
 
-    const Vec3 v_transformed = (t * Homo4::from_vector(v_up)).to_vector();
+    const auto v_transformed = mat_apply_vector(t, v_up);
     EXPECT_DOUBLE_EQ(v_transformed.x(), v_up.x());
     EXPECT_DOUBLE_EQ(v_transformed.y(), v_up.y());
     EXPECT_DOUBLE_EQ(v_transformed.z(), v_up.z());
@@ -36,24 +53,24 @@ TEST_F(TransformTest, Translate) {
 
 TEST_F(TransformTest, Scale) {
     const Vec3 scale_vec(2, 3, 0.5);
-    const Mat4 s = Transform<double>::scale(scale_vec).matrix();
+    const auto s = Transform<double>::scale(scale_vec).matrix();
 
     const Pt3 p_start(1, 1, 10);
-    const Pt3 p_transformed = (s * Homo4::from_point(p_start)).to_point();
+    const auto p_transformed = mat_apply_point(s, p_start);
     EXPECT_DOUBLE_EQ(p_transformed.x(), 1.0 * 2.0);
     EXPECT_DOUBLE_EQ(p_transformed.y(), 1.0 * 3.0);
     EXPECT_DOUBLE_EQ(p_transformed.z(), 10.0 * 0.5);
 
     const Vec3 v_start(1, 1, 10);
-    const Vec3 v_transformed = (s * Homo4::from_vector(v_start)).to_vector();
+    const auto v_transformed = mat_apply_vector(s, v_start);
     EXPECT_DOUBLE_EQ(v_transformed.x(), 1.0 * 2.0);
     EXPECT_DOUBLE_EQ(v_transformed.y(), 1.0 * 3.0);
     EXPECT_DOUBLE_EQ(v_transformed.z(), 10.0 * 0.5);
 }
 
 TEST_F(TransformTest, RotateZ90Degrees) {
-    const Mat4 rz = Transform<double>::rotate_z(deg2rad(90.0)).matrix();
-    const Pt3 p_transformed = (rz * Homo4::from_point(p_x)).to_point();
+    const auto rz = Transform<double>::rotate_z(deg2rad(90.0)).matrix();
+    const auto p_transformed = mat_apply_point(rz, p_x);
 
     // It should end up on the Y-axis
     EXPECT_NEAR(p_transformed.x(), 0.0, kEpsilon);
@@ -62,10 +79,10 @@ TEST_F(TransformTest, RotateZ90Degrees) {
 }
 
 TEST_F(TransformTest, RotateY90Degrees) {
-    const Mat4 ry = Transform<double>::rotate_y(deg2rad(90.0)).matrix();
+    const auto ry = Transform<double>::rotate_y(deg2rad(90.0)).matrix();
 
     // Rotate a point on the X-axis around Y
-    const Pt3 p_transformed = (ry * Homo4::from_point(p_x)).to_point();
+    const auto p_transformed = mat_apply_point(ry, p_x);
 
     // It should end up on the negative Z-axis
     EXPECT_NEAR(p_transformed.x(), 0.0, kEpsilon);
@@ -74,10 +91,10 @@ TEST_F(TransformTest, RotateY90Degrees) {
 }
 
 TEST_F(TransformTest, RotateX90Degrees) {
-    const Mat4 rx = Transform<double>::rotate_x(deg2rad(90.0)).matrix();
+    const auto rx = Transform<double>::rotate_x(deg2rad(90.0)).matrix();
 
     // Rotate a point on the Y-axis around X
-    const Pt3 p_transformed = (rx * Homo4::from_point(p_y)).to_point();
+    const auto p_transformed = mat_apply_point(rx, p_y);
 
     // It should end up on the Z-axis
     EXPECT_NEAR(p_transformed.x(), 0.0, kEpsilon);
@@ -105,11 +122,11 @@ TEST_F(TransformTest, LookAt) {
     const Pt3 eye(0, 0, 10);
     const Pt3 target(0, 0, 0);
     const Vec3 up(0, 1, 0);
-    const Mat4 view_matrix = Transform<double>::look_at(eye, target, up).matrix();
+    const auto view_matrix = Transform<double>::look_at(eye, target, up).matrix();
 
     // A point in the world at (5, 0, 0)
     const Pt3 world_point(5, 0, 0);
-    const Pt3 view_point = (view_matrix * Homo4::from_point(world_point)).to_point();
+    const auto view_point = mat_apply_point(view_matrix, world_point);
 
     // In view space, X should be 5, Y should be 0, Z should be -10 (10 units
     // away from camera looking down -Z)
@@ -118,16 +135,16 @@ TEST_F(TransformTest, LookAt) {
     EXPECT_NEAR(view_point.z(), -10.0, kEpsilon);
 
     // The world origin should be at (0,0,-10) in view space
-    const Pt3 origin_in_view = (view_matrix * Homo4::from_point(origin)).to_point();
+    const auto origin_in_view = mat_apply_point(view_matrix, origin);
     EXPECT_NEAR(origin_in_view.z(), -10.0, kEpsilon);
 }
 
 TEST_F(TransformTest, Orthographic) {
-    const Mat4 ortho_matrix = Transform<double>::orthographic(-10.0, 10.0, -5.0, 5.0, 1.0, 101.0).matrix();
+    const auto ortho_matrix = Transform<double>::orthographic(-10.0, 10.0, -5.0, 5.0, 1.0, 101.0).matrix();
 
     // A point at the top-right-far corner of the view volume
     const Pt3 top_right_far(10, 5, 101);
-    const Pt3 p1_ndc = (ortho_matrix * Homo4::from_point(top_right_far)).to_point();
+    const auto p1_ndc = mat_apply_point(ortho_matrix, top_right_far);
     // Should map to (1, 1, 1) in Normalized Device Coordinates (NDC)
     EXPECT_NEAR(p1_ndc.x(), 1.0, kEpsilon);
     EXPECT_NEAR(p1_ndc.y(), 1.0, kEpsilon);
@@ -136,7 +153,7 @@ TEST_F(TransformTest, Orthographic) {
 
     // A point at the bottom-left-near corner
     const Pt3 bottom_left_near(-10, -5, 1);
-    const Pt3 p2_ndc = (ortho_matrix * Homo4::from_point(bottom_left_near)).to_point();
+    const auto p2_ndc = mat_apply_point(ortho_matrix, bottom_left_near);
     // Should map to (-1, -1, 0) in NDC
     EXPECT_NEAR(p2_ndc.x(), -1.0, kEpsilon);
     EXPECT_NEAR(p2_ndc.y(), -1.0, kEpsilon);
@@ -149,23 +166,29 @@ TEST_F(TransformTest, Perspective) {
     const Float aspect = 1.0;
     const Float z_near = 1.0;
     const Float z_far = 100.0;
-    const Mat4 persp_matrix = Transform<double>::perspective(fov_rad, aspect, z_near, z_far).matrix();
+    const auto persp_matrix = Transform<double>::perspective(fov_rad, aspect, z_near, z_far).matrix();
     std::cout << "Perspective Matrix:\n" << persp_matrix << std::endl;
 
     // Test a point on the near plane. Its Z should map to 0 in NDC.
     const Pt3 near_plane_point(0, 0, z_near);
-    const Homo4 near_clip = persp_matrix * Homo4::from_point(near_plane_point);
-    const Pt3 near_ndc = near_clip.to_point();  // Perform perspective divide
+    const auto near_clip = persp_matrix * Vector<double, 4>(double(near_plane_point.x()),
+                                                             double(near_plane_point.y()),
+                                                             double(near_plane_point.z()), 1.0);
+    const double near_w = near_clip[3];
+    const auto near_ndc = Point<double, 3>(near_clip[0] / near_w, near_clip[1] / near_w, near_clip[2] / near_w);
     EXPECT_NEAR(near_ndc.z(), 0.0, kEpsilon);
 
     // Test a point on the far plane. Its Z should map to 1 in NDC.
     const Pt3 far_plane_point(50, 50, z_far);  // A point within the frustum on the far plane
-    const Homo4 far_clip = persp_matrix * Homo4::from_point(far_plane_point);
-    const Pt3 far_ndc = far_clip.to_point();
+    const auto far_clip = persp_matrix * Vector<double, 4>(double(far_plane_point.x()),
+                                                            double(far_plane_point.y()),
+                                                            double(far_plane_point.z()), 1.0);
+    const double far_w = far_clip[3];
+    const auto far_ndc = Point<double, 3>(far_clip[0] / far_w, far_clip[1] / far_w, far_clip[2] / far_w);
     EXPECT_NEAR(far_ndc.z(), 1.0, kEpsilon);
 
     // Also check the w component before division for the far point
-    EXPECT_NEAR(far_clip.to_vector_raw().w(), z_far, kEpsilon);
+    EXPECT_NEAR(far_w, double(z_far), kEpsilon);
 }
 
 // --- Identity Transform Tests ---

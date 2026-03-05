@@ -2,8 +2,8 @@
 
 #include <optional>
 #include "pbpt/geometry/transform.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 #include "pbpt/shape/shape.hpp"
 

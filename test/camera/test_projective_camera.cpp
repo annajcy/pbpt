@@ -20,9 +20,9 @@
 #include "pbpt/camera/plugin/pixel_filter/gaussian_filter.hpp"
 #include "pbpt/sampler/2d.hpp"
 #include "pbpt/geometry/ray.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
-#include "pbpt/math/format.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
+#include "pbpt/math/basic/format.hpp"
 
 namespace pbpt::camera::testing {
 

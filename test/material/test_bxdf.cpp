@@ -8,8 +8,8 @@
 #include "pbpt/material/model.hpp"
 #include "pbpt/material/optics.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
-#include "pbpt/math/random_generator.hpp"
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/basic/random_generator.hpp"
+#include "pbpt/math/spatial/point.hpp"
 
 using namespace pbpt;
 using namespace pbpt::material;

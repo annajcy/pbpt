@@ -2,7 +2,7 @@
 #include <cmath>
 
 #include "pbpt/camera/pixel_sensor.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/color.hpp"
 #include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
 #include "pbpt/radiometry/constant/standard_color_spaces.hpp"

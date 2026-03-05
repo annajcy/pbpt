@@ -6,6 +6,7 @@
 #include <limits>
 #include <random>
 #include <type_traits>
+#include <utility>
 
 namespace pbpt::math::testing {
 
@@ -407,6 +408,36 @@ TEST_F(MatrixTest, ConstMatrixViewTest) {
     EXPECT_EQ(copy.at(0, 1), 123.0f);
 }
 
+TEST_F(MatrixTest, MatrixViewColumnStrideRegression) {
+    Mat4 m(0.0f, 1.0f, 2.0f, 3.0f,
+           10.0f, 11.0f, 12.0f, 13.0f,
+           20.0f, 21.0f, 22.0f, 23.0f,
+           30.0f, 31.0f, 32.0f, 33.0f);
+
+    auto sub = m.view<2, 2>(1, 1);
+    auto col0 = sub.col(0);
+
+    EXPECT_EQ(col0[0], 11.0f);
+    EXPECT_EQ(col0[1], 21.0f);
+
+    col0[1] = 123.0f;
+    EXPECT_EQ(m.at(2, 1), 123.0f);
+
+    const Mat4& const_m = m;
+    auto const_sub = const_m.view<2, 2>(1, 1);
+    auto const_col0 = const_sub.col(0);
+    EXPECT_EQ(const_col0[0], 11.0f);
+    EXPECT_EQ(const_col0[1], 123.0f);
+}
+
+TEST_F(MatrixTest, ConstViewsAreNotAssignable) {
+    using ConstRowElemRef = decltype(std::declval<const Mat3&>().row(0)[0]);
+    static_assert(!std::is_assignable_v<ConstRowElemRef, Float>);
+
+    using ConstViewElemRef = decltype(std::declval<const Mat4&>().view<2, 2>(0, 0).at(0, 0));
+    static_assert(!std::is_assignable_v<ConstViewElemRef, Float>);
+}
+
 TEST_F(MatrixTest, ViewApplyWithStdFunction) {
     // Test VectorView::apply
     // Mat3 m(Vec3(1, 2, 3), Vec3(4, 5, 6), Vec3(7, 8, 9));
@@ -451,15 +482,15 @@ TEST_F(MatrixHomoTransformTest, PointTranslation) {
     translation_matrix[1][3] = -2.0;
 
     const Pt3 p_original(10, 20, 30);
-    const Homo4 h_original = Homo4::from_point(p_original);
+    const Vector<Float, 4> h_original(p_original.x(), p_original.y(), p_original.z(), Float(1));
 
-    const Homo4 h_transformed = Homo4::from_vector_raw(translation_matrix * h_original.to_vector_raw());
-    const Pt3 p_final = h_transformed.to_point();
+    const auto h_transformed = translation_matrix * h_original;
+    const Pt3 p_final(h_transformed[0], h_transformed[1], h_transformed[2]);
 
-    EXPECT_DOUBLE_EQ(h_transformed.to_vector_raw().w(), 1.0);  // Check it's still a point
-    EXPECT_DOUBLE_EQ(p_final.x(), 10.0 + 5.0);
-    EXPECT_DOUBLE_EQ(p_final.y(), 20.0 - 2.0);
-    EXPECT_DOUBLE_EQ(p_final.z(), 30.0);
+    EXPECT_DOUBLE_EQ(double(h_transformed[3]), 1.0);  // Check it's still a point
+    EXPECT_DOUBLE_EQ(double(p_final.x()), 10.0 + 5.0);
+    EXPECT_DOUBLE_EQ(double(p_final.y()), 20.0 - 2.0);
+    EXPECT_DOUBLE_EQ(double(p_final.z()), 30.0);
 }
 
 TEST_F(MatrixHomoTransformTest, VectorTranslation) {
@@ -468,15 +499,15 @@ TEST_F(MatrixHomoTransformTest, VectorTranslation) {
     translation_matrix[1][3] = -2.0;
 
     const Vec3 v_original(1, 1, 1);
-    const Homo4 h_original(v_original.x(), v_original.y(), v_original.z(), 0.0);
+    const Vector<Float, 4> h_original(v_original.x(), v_original.y(), v_original.z(), Float(0));
 
-    const Homo4 h_transformed = Homo4(translation_matrix * h_original.to_vector_raw());
-    const Vec3 v_final = h_transformed.to_vector();
+    const auto h_transformed = translation_matrix * h_original;
+    const Vec3 v_final(h_transformed[0], h_transformed[1], h_transformed[2]);
 
-    EXPECT_DOUBLE_EQ(h_transformed.to_vector_raw().w(), 0.0);  // Check it's still a vector
-    EXPECT_DOUBLE_EQ(v_final.x(), v_original.x());
-    EXPECT_DOUBLE_EQ(v_final.y(), v_original.y());
-    EXPECT_DOUBLE_EQ(v_final.z(), v_original.z());
+    EXPECT_DOUBLE_EQ(double(h_transformed[3]), 0.0);  // Check it's still a vector
+    EXPECT_DOUBLE_EQ(double(v_final.x()), double(v_original.x()));
+    EXPECT_DOUBLE_EQ(double(v_final.y()), double(v_original.y()));
+    EXPECT_DOUBLE_EQ(double(v_final.z()), double(v_original.z()));
 }
 
 TEST_F(MatrixHomoTransformTest, PointRotation) {
@@ -489,10 +520,10 @@ TEST_F(MatrixHomoTransformTest, PointRotation) {
     rotation_matrix[3][3] = 1.0;
 
     const Pt3 p_original(10, 0, 0);
-    const Homo4 h_original = Homo4::from_point(p_original);
+    const Vector<Float, 4> h_original(p_original.x(), p_original.y(), p_original.z(), Float(1));
 
-    const Homo4 h_transformed = Homo4::from_vector_raw(rotation_matrix * h_original.to_vector_raw());
-    const Pt3 p_final = h_transformed.to_point();
+    const auto h_transformed = rotation_matrix * h_original;
+    const Pt3 p_final(h_transformed[0], h_transformed[1], h_transformed[2]);
 
     EXPECT_NEAR(p_final.x(), 0.0, 1e-9);
     EXPECT_NEAR(p_final.y(), 10.0, 1e-9);
@@ -511,14 +542,14 @@ TEST_F(MatrixHomoTransformTest, CombinedScaleAndTranslate) {
     const Mat4 combined_matrix = translate_matrix * scale_matrix;
 
     const Pt3 p_original(10, 10, 10);
-    const Homo4 h_original = Homo4::from_point(p_original);
+    const Vector<Float, 4> h_original(p_original.x(), p_original.y(), p_original.z(), Float(1));
 
-    const Homo4 h_transformed = Homo4::from_vector_raw(combined_matrix * h_original.to_vector_raw());
-    const Pt3 p_final = h_transformed.to_point();
+    const auto h_transformed = combined_matrix * h_original;
+    const Pt3 p_final(h_transformed[0], h_transformed[1], h_transformed[2]);
 
-    EXPECT_DOUBLE_EQ(p_final.x(), 25.0);
-    EXPECT_DOUBLE_EQ(p_final.y(), 20.0);
-    EXPECT_DOUBLE_EQ(p_final.z(), 20.0);
+    EXPECT_DOUBLE_EQ(double(p_final.x()), 25.0);
+    EXPECT_DOUBLE_EQ(double(p_final.y()), 20.0);
+    EXPECT_DOUBLE_EQ(double(p_final.z()), 20.0);
 }
 
 // Note: The following test would fail to compile due to static_assert/requires
@@ -781,14 +812,6 @@ protected:
         return result;
     }
 
-    template <typename T, int N>
-    Homogeneous<T, N + 1> create_random_homogeneous() {
-        Vector<T, N> v = create_random_vector<T, N>();
-        T w = random_value<T>(T(0.1), T(2));  // Avoid zero weight
-        auto result = Homogeneous<T, N + 1>::from_vector(v);
-        result.w() = w;
-        return result;
-    }
 };
 
 TEST_F(RandomMatrixTest, RandomMatrixOperations) {
@@ -853,48 +876,12 @@ TEST_F(RandomMatrixTest, RandomVectorOperations) {
     }
 }
 
-TEST_F(RandomMatrixTest, RandomHomogeneousOperations) {
-    const int num_tests = 50;
-
-    for (int test = 0; test < num_tests; ++test) {
-        auto h1 = create_random_homogeneous<float, 3>();
-        auto h2 = create_random_homogeneous<float, 3>();
-
-        // Test conversion to vector and back
-        if (h1.is_vector()) {
-            auto v1 = h1.to_vector();
-            auto h1_reconstructed = Homogeneous<float, 4>::from_vector(v1);
-            EXPECT_TRUE(h1 == h1_reconstructed);
-        }
-
-        // Test homogeneous addition
-        auto sum = h1 + h2;
-        // Note: Adding two points creates a vector, which is mathematically correct
-
-        // Test scalar multiplication
-        float scalar = random_value<float>(0.1f, 5.0f);
-        auto scaled = scalar * h1;
-
-        // Test standardization (if it's a point)
-        if (h1.is_point() && std::abs(h1.w()) > 1e-6f) {
-            auto standardized = h1.standardized();
-            EXPECT_FLOAT_EQ(standardized.w(), 1.0f);
-
-            // Check that the 3D point remains the same after standardization
-            auto original_point = h1.to_point();
-            auto standardized_point = standardized.to_point();
-            EXPECT_TRUE(original_point == standardized_point);
-        }
-    }
-}
-
 TEST_F(RandomMatrixTest, RandomMatrixVectorMultiplication) {
     const int num_tests = 100;
 
     for (int test = 0; test < num_tests; ++test) {
         auto m = create_random_matrix<float, 4, 4>();
         auto v = create_random_vector<float, 4>();
-        auto h = create_random_homogeneous<float, 3>();
 
         // Test matrix-vector multiplication
         auto result_v = m * v;
@@ -908,15 +895,6 @@ TEST_F(RandomMatrixTest, RandomMatrixVectorMultiplication) {
             }
             EXPECT_NEAR(result_v[i], expected, 1e-5f);
         }
-
-        // Test matrix-homogeneous multiplication
-        auto result_h = m * h;
-        static_assert(std::is_same_v<decltype(result_h), Homogeneous<float, 4>>);
-
-        // Verify by converting homogeneous to vector and multiplying
-        auto h_as_vector = h.to_vector_raw();
-        auto expected_vector = m * h_as_vector;
-        EXPECT_TRUE(result_h.to_vector_raw() == expected_vector);
     }
 }
 

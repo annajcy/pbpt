@@ -3,8 +3,8 @@
 #include <optional>
 
 #include "pbpt/geometry/interaction.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 namespace pbpt::texture {
 
 enum class WrapMode { Repeat, Clamp };

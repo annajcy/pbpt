@@ -10,7 +10,7 @@
 #include <utility>
 #include "pbpt/sampler/1d.hpp"
 #include "pbpt/sampler/utils.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/constant/lambda.hpp"
 
 namespace pbpt::radiometry {

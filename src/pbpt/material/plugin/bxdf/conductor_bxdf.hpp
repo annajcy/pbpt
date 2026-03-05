@@ -8,7 +8,7 @@
 #include "pbpt/material/model.hpp"
 #include "pbpt/material/plugin/bxdf/conductor_rough_bxdf.hpp"
 #include "pbpt/material/plugin/bxdf/conductor_specular_bxdf.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::material {

@@ -6,10 +6,10 @@
 
 #include <array>
 
-#include "pbpt/math/matrix.hpp"
-#include "pbpt/math/operator.hpp"
-#include "pbpt/math/vector.hpp"
-#include "pbpt/math/format.hpp"
+#include "pbpt/math/matrix/matrix.hpp"
+#include "pbpt/math/basic/comparison.hpp"
+#include "pbpt/math/spatial/vector.hpp"
+#include "pbpt/math/basic/format.hpp"
 
 #include "color.hpp"
 #include "color_space.hpp"

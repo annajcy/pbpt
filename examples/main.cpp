@@ -7,8 +7,8 @@
 
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/geometry/ray.hpp"
-#include "pbpt/math/normal.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/normal.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/constant/illuminant_spectrum.hpp"
 #include "pbpt/radiometry/constant/swatch_reflectances_spectrum.hpp"
 #include "pbpt/integrator/domain.hpp"
@@ -46,7 +46,7 @@ int main() {
     auto transform = geometry::Transform<float>::translate(math::Vec3{1.0, 2.0, 3.0});
     std::cout << "Transform Matrix: " << transform.matrix() << std::endl;
 
-    math::Homo4 homo3 = math::Homo4::from_vector(math::Vec3{1.0, 2.0, 3.0});
+    math::Vector<math::Float, 4> homo3(1.0, 2.0, 3.0, 0.0);
     std::cout << "Homo3: " << homo3 << std::endl;
 
     math::Vec3 vec(1.0, 2.0, 3.0);
@@ -87,7 +87,7 @@ int main() {
     auto row = m[0][1];
     std::cout << row << std::endl;
 
-    auto subm = math::Mat4::MatView<2, 2>(m, 1, 1);
+    auto subm = m.view<2, 2>(1, 1);
     subm.visit([](auto& val, int row, int col) {
         std::cout << "Submatrix Element [" << row << "][" << col << "]: " << val << std::endl;
     });
@@ -96,16 +96,17 @@ int main() {
 
     std::cout << "4x4 Matrix Addition:\n" << m << std::endl;
 
-    auto ho = math::Homo4::from_vector(math::Vec3(1.0, 2.0, 3.0));
-    auto ho2 = math::Homo4::from_point(math::Pt3(4.0, 5.0, 6.0));
+    auto ho = math::Vector<math::Float, 4>(1.0, 2.0, 3.0, 0.0);
+    auto ho2 = math::Vector<math::Float, 4>(4.0, 5.0, 6.0, 1.0);
     std::cout << "Homo3 from Vector: " << ho << std::endl;
     std::cout << "Homo3 from Point: " << ho2 << std::endl;
 
     auto ho3 = ho + ho2;
     std::cout << "Homo3 Sum: " << ho3 << std::endl;
-    std::cout << "Homo3 Vector: " << ho3.to_point() << std::endl;
+    const auto inv_w = math::Float(1) / ho3[3];
+    std::cout << "Homo3 Point: " << math::Pt3(ho3[0] * inv_w, ho3[1] * inv_w, ho3[2] * inv_w) << std::endl;
 
-    auto pp = math::Homo4::from_point(math::Pt3(1.0, 2.0, 3.0));
+    auto pp = math::Vector<math::Float, 4>(1.0, 2.0, 3.0, 1.0);
     std::cout << "Homo3 from Point: " << pp << std::endl;
 
     geometry::Trans tr = geometry::Trans::translate(math::Vec3(1.0, 2.0, 3.0));

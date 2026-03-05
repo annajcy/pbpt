@@ -2,7 +2,7 @@
 
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/light/plugin/light/area_light.hpp"
-#include "pbpt/math/function.hpp"
+#include "pbpt/math/basic/function.hpp"
 #include "pbpt/aggregate/plugin/aggregate/linear_aggregate.hpp"
 #include "pbpt/geometry/transform.hpp"
 #include "pbpt/radiometry/plugin/spectrum_distribution/constant.hpp"

@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <optional>
-#include "pbpt/math/complex.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/complex/complex.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 
 namespace pbpt::material {

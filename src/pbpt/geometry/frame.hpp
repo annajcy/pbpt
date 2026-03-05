@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <concepts>
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "transform.hpp"
 
 namespace pbpt::geometry {

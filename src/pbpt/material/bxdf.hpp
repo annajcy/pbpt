@@ -7,9 +7,9 @@
 #include "pbpt/geometry/ray.hpp"
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/geometry/spherical.hpp"
-#include "pbpt/math/function.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/basic/function.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 #include "pbpt/sampler/3d.hpp"
 

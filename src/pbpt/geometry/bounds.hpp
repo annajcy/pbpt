@@ -9,11 +9,11 @@
 #include <optional>
 #include <utility>
 
-#include "pbpt/math/function.hpp"
-#include "pbpt/math/operator.hpp"
-#include "pbpt/math/utils.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/basic/function.hpp"
+#include "pbpt/math/basic/comparison.hpp"
+#include "pbpt/math/basic/utils.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 #include "ray.hpp"
 

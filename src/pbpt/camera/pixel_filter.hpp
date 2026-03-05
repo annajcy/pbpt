@@ -7,9 +7,9 @@
 #include <array>
 #include <cmath>
 #include <vector>
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 #include "pbpt/sampler/2d.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 namespace pbpt::camera {
 

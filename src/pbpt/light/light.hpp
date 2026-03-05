@@ -2,9 +2,9 @@
 
 #include <optional>
 #include "pbpt/geometry/transform.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
-#include "pbpt/math/normal.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
+#include "pbpt/math/spatial/normal.hpp"
 #include "pbpt/radiometry/sampled_spectrum.hpp"
 #include "visibility_tester.hpp"
 

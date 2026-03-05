@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <vector>
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/spatial/point.hpp"
 #include "pbpt/texture/image.hpp"
 
 namespace pbpt::utils {

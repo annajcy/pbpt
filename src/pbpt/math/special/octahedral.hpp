@@ -8,7 +8,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "vector.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 namespace pbpt::math {
 

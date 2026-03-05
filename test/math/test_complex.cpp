@@ -7,8 +7,8 @@
 #include <sstream>
 #include <cmath>
 
-#include "pbpt/math/complex.hpp"
-#include "pbpt/math/format.hpp"
+#include "pbpt/math/complex/complex.hpp"
+#include "pbpt/math/basic/format.hpp"
 
 namespace pbpt::math::testing {
 

@@ -3,8 +3,8 @@
 #include <cstdint>
 
 #include "pbpt/lds/lds_sampler.hpp"
-#include "pbpt/math/random_generator.hpp"
-#include "pbpt/math/point.hpp"
+#include "pbpt/math/basic/random_generator.hpp"
+#include "pbpt/math/spatial/point.hpp"
 
 namespace pbpt::lds {
 

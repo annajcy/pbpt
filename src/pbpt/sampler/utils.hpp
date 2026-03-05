@@ -5,9 +5,9 @@
 #pragma once
 
 #include <array>
-#include "pbpt/math/function.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/basic/function.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 namespace pbpt::sampler {
 

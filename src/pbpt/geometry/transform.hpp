@@ -7,16 +7,15 @@
 #include <utility>
 
 #include "pbpt/geometry/interaction.hpp"
-#include "pbpt/math/homogeneous.hpp"
-#include "pbpt/math/type_alias.hpp"
-#include "pbpt/math/matrix.hpp"
-#include "pbpt/math/normal.hpp"
-#include "pbpt/math/point.hpp"
-#include "pbpt/math/vector.hpp"
+#include "pbpt/math/basic/type_alias.hpp"
+#include "pbpt/math/matrix/matrix.hpp"
+#include "pbpt/math/spatial/normal.hpp"
+#include "pbpt/math/spatial/point.hpp"
+#include "pbpt/math/spatial/vector.hpp"
 
 #include "bounds.hpp"
 #include "ray.hpp"
-#include "pbpt/math/format.hpp"
+#include "pbpt/math/basic/format.hpp"
 #include <iostream>
 
 using namespace pbpt::math;
@@ -187,6 +186,24 @@ public:
         return Transform<T>(m, m.inversed());
     }
 
+    // -----------------------------------------------------------------------
+    // Private projective helpers (replaces Homogeneous dependency)
+    // -----------------------------------------------------------------------
+
+    static constexpr Vector<T, 4> lift_point(const Point<T, 3>& p) {
+        return Vector<T, 4>(p.x(), p.y(), p.z(), T(1));
+    }
+    static constexpr Vector<T, 4> lift_vector(const Vector<T, 3>& v) {
+        return Vector<T, 4>(v.x(), v.y(), v.z(), T(0));
+    }
+    static constexpr Point<T, 3> drop_point(const Vector<T, 4>& h) {
+        const T inv_w = T(1) / h.w();
+        return Point<T, 3>(h.x() * inv_w, h.y() * inv_w, h.z() * inv_w);
+    }
+    static constexpr Vector<T, 3> drop_vector(const Vector<T, 4>& h) {
+        return Vector<T, 3>(h.x(), h.y(), h.z());
+    }
+
     /// Compare two transforms for exact matrix equality.
     constexpr bool operator==(const Transform<T>& rhs) const { return m_mat == rhs.m_mat; }
 
@@ -262,19 +279,14 @@ public:
         return Transform(m_mat * rhs.matrix(), rhs.inverse_matrix() * m_inv);
     }
 
-    /// Transform a homogeneous 4D vector.
-    constexpr Homogeneous<T, 4> transform_homogeneous(const Homogeneous<T, 4>& rhs) const { return m_mat * rhs; }
-
     /// Transform a 3D point.
     constexpr Point<T, 3> transform_point(const Point<T, 3>& p) const {
-        auto result = (m_mat * Homogeneous<T, 4>::from_point(p));
-        return result.to_point();
+        return drop_point(m_mat * lift_point(p));
     }
 
     /// Transform a 3D vector (ignores translation).
     constexpr Vector<T, 3> transform_vector(const Vector<T, 3>& v) const {
-        auto result = (m_mat * Homogeneous<T, 4>::from_vector(v));
-        return result.to_vector();
+        return drop_vector(m_mat * lift_vector(v));
     }
 
     /**
@@ -392,7 +404,7 @@ TransformDecompositionResult<T> fast_decompose_transform(const Transform<T>& tra
     Transform<T> Txf = Transform<T>::translate(t);
 
     // --- 2) A = upper-left 3x3 ---
-    MatrixView<T, 4, 4, 3, 3> Aview{M4, 0, 0};
+    ConstMatrixView<T, 4, 4, 3, 3> Aview{M4, 0, 0};
     Matrix<T, 3, 3> A = Aview.to_matrix();  // A = R * S  (no shear assumed)
 
     // --- 3) scales = column norms ---
