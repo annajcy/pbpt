@@ -218,23 +218,30 @@ constexpr Quaternion<T> operator*(T lhs, const Quaternion<T>& rhs) {
 }
 
 using Quat = Quaternion<Float>;
-using quat = Quat;
 
 // ---------------------------------------------------------------------------
 // GLM-style free-function wrappers (from compat.hpp)
 // ---------------------------------------------------------------------------
 
 template <typename T>
-constexpr auto normalize(const Quaternion<T>& q) { return q.normalized(); }
+constexpr auto normalize(const Quaternion<T>& q) {
+    return q.normalized();
+}
 
 template <typename T>
-constexpr Matrix<T, 3, 3> mat3_cast(const Quaternion<T>& q) { return q.to_mat3(); }
+constexpr Matrix<T, 3, 3> mat3_cast(const Quaternion<T>& q) {
+    return q.to_mat3();
+}
 
 template <typename T>
-constexpr Matrix<T, 4, 4> mat4_cast(const Quaternion<T>& q) { return q.to_mat4(); }
+constexpr Matrix<T, 4, 4> mat4_cast(const Quaternion<T>& q) {
+    return q.to_mat4();
+}
 
 template <typename T>
-constexpr Quaternion<T> quat_cast(const Matrix<T, 3, 3>& m) { return Quaternion<T>::from_mat3(m); }
+constexpr Quaternion<T> quat_cast(const Matrix<T, 3, 3>& m) {
+    return Quaternion<T>::from_mat3(m);
+}
 
 template <typename T>
 constexpr Quaternion<T> angleAxis(T angle_rad, const Vector<T, 3>& axis) {
@@ -242,7 +249,9 @@ constexpr Quaternion<T> angleAxis(T angle_rad, const Vector<T, 3>& axis) {
 }
 
 template <typename T>
-constexpr Vector<T, 3> eulerAngles(const Quaternion<T>& q) { return q.to_euler_xyz(); }
+constexpr Vector<T, 3> eulerAngles(const Quaternion<T>& q) {
+    return q.to_euler_xyz();
+}
 
 template <typename T>
 constexpr Quaternion<T> rotation(const Vector<T, 3>& from, const Vector<T, 3>& to) {
@@ -256,9 +265,13 @@ constexpr Quaternion<T> rotate(const Quaternion<T>& q, T angle_rad, const Vector
 
 /// Generic identity() helper — calls T::identity() for any type that has it.
 template <typename T>
-constexpr T identity() { return T::identity(); }
+constexpr T identity() {
+    return T::identity();
+}
 
 template <>
-constexpr Quat identity<Quat>() { return Quat::identity(); }
+constexpr Quat identity<Quat>() {
+    return Quat::identity();
+}
 
 }  // namespace pbpt::math

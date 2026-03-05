@@ -1048,11 +1048,6 @@ using Mat3x4 = Matrix<Float, 3, 4>;
 using Mat4x3 = Matrix<Float, 4, 3>;
 
 // Lower-case aliases for migration from GLM-style naming.
-using mat2 = Mat2;
-using mat3 = Mat3;
-using mat4 = Mat4;
-using mat3x4 = Mat3x4;
-using mat4x3 = Mat4x3;
 
 // ---------------------------------------------------------------------------
 // algebra_traits specialization (required by HasAlgebraTraits / MatrixAlgebra)
@@ -1088,12 +1083,16 @@ inline constexpr Matrix<T, N, N> identity_v<Matrix<T, N, N>> = Matrix<T, N, N>::
 /// Returns the transposed copy of matrix m.
 template <typename T, int R, int C>
     requires std::is_floating_point_v<T>
-constexpr Matrix<T, C, R> transpose(const Matrix<T, R, C>& m) { return m.transposed(); }
+constexpr Matrix<T, C, R> transpose(const Matrix<T, R, C>& m) {
+    return m.transposed();
+}
 
 /// Returns the inverse of a square matrix.
 template <typename T, int N>
     requires std::is_floating_point_v<T>
-constexpr Matrix<T, N, N> inverse(const Matrix<T, N, N>& m) { return m.inversed(); }
+constexpr Matrix<T, N, N> inverse(const Matrix<T, N, N>& m) {
+    return m.inversed();
+}
 
 /// Returns the trace (sum of main diagonal) of a square matrix.
 template <typename T, int N>
@@ -1108,7 +1107,9 @@ constexpr T trace(const Matrix<T, N, N>& m) {
 /// Free-function determinant — required by MatrixAlgebra concept.
 template <typename T, int N>
     requires std::is_floating_point_v<T>
-constexpr T determinant(const Matrix<T, N, N>& m) { return m.determinant(); }
+constexpr T determinant(const Matrix<T, N, N>& m) {
+    return m.determinant();
+}
 
 // ---------------------------------------------------------------------------
 // GLM-style matrix transform helpers (from compat.hpp)

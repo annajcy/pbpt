@@ -40,8 +40,7 @@ public:
     template <typename U>
         requires(N == 4 && std::is_convertible_v<U, T>)
     constexpr Vector(const Vector<U, 3>& xyz, U w)
-        : Base(static_cast<T>(xyz.x()), static_cast<T>(xyz.y()),
-               static_cast<T>(xyz.z()), static_cast<T>(w)) {}
+        : Base(static_cast<T>(xyz.x()), static_cast<T>(xyz.y()), static_cast<T>(xyz.z()), static_cast<T>(w)) {}
 
     // -----------------------------------------------------------------------
     // Compound assignment
@@ -158,9 +157,7 @@ public:
         return result;
     }
 
-    constexpr auto length() const {
-        return std::sqrt(static_cast<promote_int_to_float_t<T>>(length_squared()));
-    }
+    constexpr auto length() const { return std::sqrt(static_cast<promote_int_to_float_t<T>>(length_squared())); }
 
     constexpr auto normalized() const {
         using R = promote_int_to_float_t<T>;
@@ -239,33 +236,41 @@ inline constexpr Vector<T, N> zero_v<Vector<T, N>> = Vector<T, N>::zeros();
 
 /// length(v) — required by Normed<Vector> and GLM-style compat.
 template <typename T, int N>
-constexpr auto length(const Vector<T, N>& v) { return v.length(); }
+constexpr auto length(const Vector<T, N>& v) {
+    return v.length();
+}
 
 /// length_squared(v) — required by Normed<Vector>.
 template <typename T, int N>
-constexpr auto length_squared(const Vector<T, N>& v) { return v.length_squared(); }
+constexpr auto length_squared(const Vector<T, N>& v) {
+    return v.length_squared();
+}
 
 /// normalized(v) — required by Normed<Vector>.
 template <typename T, int N>
-constexpr auto normalized(const Vector<T, N>& v) { return v.normalized(); }
+constexpr auto normalized(const Vector<T, N>& v) {
+    return v.normalized();
+}
 
 /// normalize(v) — GLM-style alias for normalized().
 template <typename T, int N>
-constexpr auto normalize(const Vector<T, N>& v) { return v.normalized(); }
+constexpr auto normalize(const Vector<T, N>& v) {
+    return v.normalized();
+}
 
 /// dot(v, u) — required by InnerProduct<Vector, S>. Supports cross-scalar types.
 template <typename T, typename U, int N>
-constexpr auto dot(const Vector<T, N>& lhs, const Vector<U, N>& rhs) { return lhs.dot(rhs); }
+constexpr auto dot(const Vector<T, N>& lhs, const Vector<U, N>& rhs) {
+    return lhs.dot(rhs);
+}
 
 /**
  * @brief 3D cross product between two vectors.
  */
 template <typename T>
 constexpr auto cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
-    return Vector<T, 3>(
-        std::fma(lhs.y(), rhs.z(), -lhs.z() * rhs.y()),
-        std::fma(lhs.z(), rhs.x(), -lhs.x() * rhs.z()),
-        std::fma(lhs.x(), rhs.y(), -lhs.y() * rhs.x()));
+    return Vector<T, 3>(std::fma(lhs.y(), rhs.z(), -lhs.z() * rhs.y()), std::fma(lhs.z(), rhs.x(), -lhs.x() * rhs.z()),
+                        std::fma(lhs.x(), rhs.y(), -lhs.y() * rhs.x()));
 }
 
 /**
@@ -288,8 +293,7 @@ constexpr promote_int_to_float_t<T> angle_between(const Vector<T, 3>& v1, const 
  */
 template <std::floating_point T>
 constexpr std::pair<Vector<T, 3>, Vector<T, 3>> coordinate_system(const Vector<T, 3>& v1) {
-    assert_if([&v1]() { return !v1.is_normalized(); },
-              "Input vector to coordinate_system must be normalized");
+    assert_if([&v1]() { return !v1.is_normalized(); }, "Input vector to coordinate_system must be normalized");
     const T sign = std::copysign(T(1), v1.z());
     const T a = T(-1) / (sign + v1.z());
     const T b = v1.x() * v1.y() * a;
@@ -311,15 +315,5 @@ using Vec1i = Vector<Int, 1>;
 using Vec2i = Vector<Int, 2>;
 using Vec3i = Vector<Int, 3>;
 using Vec4i = Vector<Int, 4>;
-
-// Lower-case aliases for migration from GLM-style naming.
-using vec1 = Vec1;
-using vec2 = Vec2;
-using vec3 = Vec3;
-using vec4 = Vec4;
-using vec1i = Vec1i;
-using vec2i = Vec2i;
-using vec3i = Vec3i;
-using vec4i = Vec4i;
 
 }  // namespace pbpt::math
