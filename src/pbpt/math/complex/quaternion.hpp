@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include <algorithm>
 #include <cmath>
 #include <type_traits>
 
@@ -244,12 +243,12 @@ constexpr Quaternion<T> quat_cast(const Matrix<T, 3, 3>& m) {
 }
 
 template <typename T>
-constexpr Quaternion<T> angleAxis(T angle_rad, const Vector<T, 3>& axis) {
+constexpr Quaternion<T> angle_axis(T angle_rad, const Vector<T, 3>& axis) {
     return Quaternion<T>::from_axis_angle(angle_rad, axis);
 }
 
 template <typename T>
-constexpr Vector<T, 3> eulerAngles(const Quaternion<T>& q) {
+constexpr Vector<T, 3> euler_angles(const Quaternion<T>& q) {
     return q.to_euler_xyz();
 }
 

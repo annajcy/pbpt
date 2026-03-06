@@ -11,7 +11,7 @@ TEST(QuaternionTest, IdentityRotateVector) {
 }
 
 TEST(QuaternionTest, AxisAngleRotate90DegY) {
-    const Quat q = angleAxis(radians(90.0f), Vec3(0.0f, 1.0f, 0.0f));
+    const Quat q = angle_axis(radians(90.0f), Vec3(0.0f, 1.0f, 0.0f));
     const Vec3 z(0.0f, 0.0f, 1.0f);
     const Vec3 x(1.0f, 0.0f, 0.0f);
     const Vec3 rz = normalize(q * z);
@@ -21,7 +21,7 @@ TEST(QuaternionTest, AxisAngleRotate90DegY) {
 }
 
 TEST(QuaternionTest, Mat3RoundTrip) {
-    const Quat q0 = normalize(angleAxis(radians(33.0f), Vec3(1.0f, 2.0f, 3.0f)));
+    const Quat q0 = normalize(angle_axis(radians(33.0f), Vec3(1.0f, 2.0f, 3.0f)));
     const Mat3 m = mat3_cast(q0);
     const Quat q1 = normalize(quat_cast(m));
     EXPECT_NEAR(q0.w(), q1.w(), 1e-4f);
