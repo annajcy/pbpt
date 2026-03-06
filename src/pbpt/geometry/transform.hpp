@@ -18,9 +18,9 @@
 #include "pbpt/math/basic/format.hpp"
 #include <iostream>
 
-using namespace pbpt::math;
-
 namespace pbpt::geometry {
+namespace math = pbpt::math;
+
 
 /**
  * @brief 4×4 homogeneous transform with cached inverse.
@@ -35,40 +35,40 @@ namespace pbpt::geometry {
 template <typename T>
 class Transform {
 private:
-    Matrix<T, 4, 4> m_mat;
-    Matrix<T, 4, 4> m_inv;
+    math::Matrix<T, 4, 4> m_mat;
+    math::Matrix<T, 4, 4> m_inv;
 
 public:
-    constexpr Transform<T>() : m_mat(Matrix<T, 4, 4>::identity()), m_inv(Matrix<T, 4, 4>::identity()) {}
+    constexpr Transform<T>() : m_mat(math::Matrix<T, 4, 4>::identity()), m_inv(math::Matrix<T, 4, 4>::identity()) {}
 
     /// Construct from a 4×4 matrix; the inverse is computed automatically.
-    constexpr Transform<T>(const Matrix<T, 4, 4>& m) : m_mat(m), m_inv(m.inversed()) {}
+    constexpr Transform<T>(const math::Matrix<T, 4, 4>& m) : m_mat(m), m_inv(m.inversed()) {}
 
     /// Construct from a matrix and its explicit inverse.
-    constexpr Transform<T>(const Matrix<T, 4, 4>& m, const Matrix<T, 4, 4>& inv) : m_mat(m), m_inv(inv) {}
+    constexpr Transform<T>(const math::Matrix<T, 4, 4>& m, const math::Matrix<T, 4, 4>& inv) : m_mat(m), m_inv(inv) {}
 
     /// Identity transform.
-    static constexpr Transform<T> identity() { return Transform<T>(Matrix<T, 4, 4>::identity()); }
+    static constexpr Transform<T> identity() { return Transform<T>(math::Matrix<T, 4, 4>::identity()); }
 
     /**
      * @brief Translation by vector @p t.
      */
-    static constexpr Transform<T> translate(const Vector<T, 3>& t) {
-        Matrix<T, 4, 4> m(T(1), T(0), T(0), t.x(), T(0), T(1), T(0), t.y(), T(0), T(0), T(1), t.z(), T(0), T(0), T(0),
+    static constexpr Transform<T> translate(const math::Vector<T, 3>& t) {
+        math::Matrix<T, 4, 4> m(T(1), T(0), T(0), t.x(), T(0), T(1), T(0), t.y(), T(0), T(0), T(1), t.z(), T(0), T(0), T(0),
                           T(1));
-        Matrix<T, 4, 4> inv(T(1), T(0), T(0), -t.x(), T(0), T(1), T(0), -t.y(), T(0), T(0), T(1), -t.z(), T(0), T(0),
+        math::Matrix<T, 4, 4> inv(T(1), T(0), T(0), -t.x(), T(0), T(1), T(0), -t.y(), T(0), T(0), T(1), -t.z(), T(0), T(0),
                             T(0), T(1));
         return Transform<T>(m, inv);
     }
 
     /// Uniform scaling by factor @p s.
-    static constexpr Transform<T> scale(T s) { return scale(Vector<T, 3>{s, s, s}); }
+    static constexpr Transform<T> scale(T s) { return scale(math::Vector<T, 3>{s, s, s}); }
 
     /// Non-uniform scaling along x, y, z.
-    static constexpr Transform<T> scale(const Vector<T, 3>& s) {
-        Matrix<T, 4, 4> m(s.x(), T(0), T(0), T(0), T(0), s.y(), T(0), T(0), T(0), T(0), s.z(), T(0), T(0), T(0), T(0),
+    static constexpr Transform<T> scale(const math::Vector<T, 3>& s) {
+        math::Matrix<T, 4, 4> m(s.x(), T(0), T(0), T(0), T(0), s.y(), T(0), T(0), T(0), T(0), s.z(), T(0), T(0), T(0), T(0),
                           T(1));
-        Matrix<T, 4, 4> inv(T(1) / s.x(), T(0), T(0), T(0), T(0), T(1) / s.y(), T(0), T(0), T(0), T(0), T(1) / s.z(),
+        math::Matrix<T, 4, 4> inv(T(1) / s.x(), T(0), T(0), T(0), T(0), T(1) / s.y(), T(0), T(0), T(0), T(0), T(1) / s.z(),
                             T(0), T(0), T(0), T(0), T(1));
         return Transform<T>(m, inv);
     }
@@ -76,21 +76,21 @@ public:
     /// Rotation around the x-axis by @p angle_rad (right-handed).
     static Transform<T> rotate_x(T angle_rad) {
         T s = std::sin(angle_rad), c = std::cos(angle_rad);
-        Matrix<T, 4, 4> m(T(1), T(0), T(0), T(0), T(0), c, -s, T(0), T(0), s, c, T(0), T(0), T(0), T(0), T(1));
+        math::Matrix<T, 4, 4> m(T(1), T(0), T(0), T(0), T(0), c, -s, T(0), T(0), s, c, T(0), T(0), T(0), T(0), T(1));
         return Transform<T>(m, m.transposed());
     }
 
     /// Rotation around the y-axis by @p angle_rad (right-handed).
     static Transform<T> rotate_y(T angle_rad) {
         T s = std::sin(angle_rad), c = std::cos(angle_rad);
-        Matrix<T, 4, 4> m(c, T(0), s, T(0), T(0), T(1), T(0), T(0), -s, T(0), c, T(0), T(0), T(0), T(0), T(1));
+        math::Matrix<T, 4, 4> m(c, T(0), s, T(0), T(0), T(1), T(0), T(0), -s, T(0), c, T(0), T(0), T(0), T(0), T(1));
         return Transform<T>(m, m.transposed());
     }
 
     /// Rotation around the z-axis by @p angle_rad (right-handed).
     static Transform<T> rotate_z(T angle_rad) {
         T s = std::sin(angle_rad), c = std::cos(angle_rad);
-        Matrix<T, 4, 4> m(c, -s, T(0), T(0), s, c, T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1));
+        math::Matrix<T, 4, 4> m(c, -s, T(0), T(0), s, c, T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1));
         return Transform<T>(m, m.transposed());
     }
 
@@ -99,12 +99,12 @@ public:
      *
      * The axis is normalized internally before constructing the matrix.
      */
-    static Transform<T> rotate(T angle_rad, const Vector<T, 3>& axis) {
-        Vector<T, 3> a = axis.normalized();
+    static Transform<T> rotate(T angle_rad, const math::Vector<T, 3>& axis) {
+        math::Vector<T, 3> a = axis.normalized();
         T s = std::sin(angle_rad), c = std::cos(angle_rad), omc = T(1) - c;
         T ax = a.x(), ay = a.y(), az = a.z();
 
-        Matrix<T, 4, 4> m(c + ax * ax * omc, ax * ay * omc - az * s, ax * az * omc + ay * s, T(0),
+        math::Matrix<T, 4, 4> m(c + ax * ax * omc, ax * ay * omc - az * s, ax * az * omc + ay * s, T(0),
                           ay * ax * omc + az * s, c + ay * ay * omc, ay * az * omc - ax * s, T(0),
                           az * ax * omc - ay * s, az * ay * omc + ax * s, c + az * az * omc, T(0), T(0), T(0), T(0),
                           T(1));
@@ -117,8 +117,8 @@ public:
      * The bottom row and rightmost column are set to represent an affine
      * transform with no translation.
      */
-    static Transform<T> from_mat3x3(Matrix<T, 3, 3> m) {
-        Matrix<T, 4, 4> mat(m.at(0, 0), m.at(0, 1), m.at(0, 2), T(0), m.at(1, 0), m.at(1, 1), m.at(1, 2), T(0),
+    static Transform<T> from_mat3x3(math::Matrix<T, 3, 3> m) {
+        math::Matrix<T, 4, 4> mat(m.at(0, 0), m.at(0, 1), m.at(0, 2), T(0), m.at(1, 0), m.at(1, 1), m.at(1, 2), T(0),
                             m.at(2, 0), m.at(2, 1), m.at(2, 2), T(0), T(0), T(0), T(0), T(1));
         return Transform<T>(mat, mat.inversed());
     }
@@ -129,11 +129,11 @@ public:
      * Builds a right-handed look-at matrix that transforms points from
      * world space into camera space.
      */
-    static constexpr Transform<T> look_at(const Point<T, 3>& eye, const Point<T, 3>& target, const Vector<T, 3>& up) {
-        Vector<T, 3> f = (target - eye).normalized();
-        Vector<T, 3> s = cross(f, up).normalized();
-        Vector<T, 3> u = cross(s, f);
-        Matrix<T, 4, 4> m(s.x(), s.y(), s.z(), -s.dot(eye.to_vector()), u.x(), u.y(), u.z(), -u.dot(eye.to_vector()),
+    static constexpr Transform<T> look_at(const math::Point<T, 3>& eye, const math::Point<T, 3>& target, const math::Vector<T, 3>& up) {
+        math::Vector<T, 3> f = (target - eye).normalized();
+        math::Vector<T, 3> s = math::cross(f, up).normalized();
+        math::Vector<T, 3> u = math::cross(s, f);
+        math::Matrix<T, 4, 4> m(s.x(), s.y(), s.z(), -s.dot(eye.to_vector()), u.x(), u.y(), u.z(), -u.dot(eye.to_vector()),
                           -f.x(), -f.y(), -f.z(), f.dot(eye.to_vector()), T(0), T(0), T(0), T(1));
         return Transform<T>(m, m.inversed());
     }
@@ -145,7 +145,7 @@ public:
      * and near/far planes into the canonical clip space cube.
      */
     static constexpr Transform<T> orthographic(T left, T right, T bottom, T top, T near, T far) {
-        Matrix<T, 4, 4> m(T(2) / (right - left), T(0), T(0), -(right + left) / (right - left), T(0),
+        math::Matrix<T, 4, 4> m(T(2) / (right - left), T(0), T(0), -(right + left) / (right - left), T(0),
                           T(2) / (top - bottom), T(0), -(top + bottom) / (top - bottom), T(0), T(0),
                           T(1) / (far - near), -near / (far - near), T(0), T(0), T(0), T(1));
         return Transform<T>(m, m.inversed());
@@ -158,7 +158,7 @@ public:
      * space where an orthographic transform can be applied.
      */
     static Transform<T> pesp_to_ortho(T near, T far) {
-        Matrix<T, 4, 4> m(near, T(0), T(0), T(0), T(0), near, T(0), T(0), T(0), T(0), near + far, -near * far, T(0),
+        math::Matrix<T, 4, 4> m(near, T(0), T(0), T(0), T(0), near, T(0), T(0), T(0), T(0), near + far, -near * far, T(0),
                           T(0), T(1), T(0));
         return Transform<T>(m, m.inversed());
     }
@@ -181,7 +181,7 @@ public:
      * Perspective division can be applied before or after this transform.
      */
     static Transform<T> viewport(T width, T height) {
-        Matrix<T, 4, 4> m(width / T(2), T(0), T(0), width / T(2), T(0), height / T(2), T(0), height / T(2), T(0), T(0),
+        math::Matrix<T, 4, 4> m(width / T(2), T(0), T(0), width / T(2), T(0), height / T(2), T(0), height / T(2), T(0), T(0),
                           T(1), T(0), T(0), T(0), T(0), T(1));
         return Transform<T>(m, m.inversed());
     }
@@ -190,18 +190,18 @@ public:
     // Private projective helpers (replaces Homogeneous dependency)
     // -----------------------------------------------------------------------
 
-    static constexpr Vector<T, 4> lift_point(const Point<T, 3>& p) {
-        return Vector<T, 4>(p.x(), p.y(), p.z(), T(1));
+    static constexpr math::Vector<T, 4> lift_point(const math::Point<T, 3>& p) {
+        return math::Vector<T, 4>(p.x(), p.y(), p.z(), T(1));
     }
-    static constexpr Vector<T, 4> lift_vector(const Vector<T, 3>& v) {
-        return Vector<T, 4>(v.x(), v.y(), v.z(), T(0));
+    static constexpr math::Vector<T, 4> lift_vector(const math::Vector<T, 3>& v) {
+        return math::Vector<T, 4>(v.x(), v.y(), v.z(), T(0));
     }
-    static constexpr Point<T, 3> drop_point(const Vector<T, 4>& h) {
+    static constexpr math::Point<T, 3> drop_point(const math::Vector<T, 4>& h) {
         const T inv_w = T(1) / h.w();
-        return Point<T, 3>(h.x() * inv_w, h.y() * inv_w, h.z() * inv_w);
+        return math::Point<T, 3>(h.x() * inv_w, h.y() * inv_w, h.z() * inv_w);
     }
-    static constexpr Vector<T, 3> drop_vector(const Vector<T, 4>& h) {
-        return Vector<T, 3>(h.x(), h.y(), h.z());
+    static constexpr math::Vector<T, 3> drop_vector(const math::Vector<T, 4>& h) {
+        return math::Vector<T, 3>(h.x(), h.y(), h.z());
     }
 
     /// Compare two transforms for exact matrix equality.
@@ -211,19 +211,19 @@ public:
     constexpr bool operator!=(const Transform<T>& rhs) const { return !(*this == rhs); }
 
     /// Get the forward 4×4 matrix.
-    constexpr const Matrix<T, 4, 4>& matrix() const { return m_mat; }
+    constexpr const math::Matrix<T, 4, 4>& matrix() const { return m_mat; }
     /// Get the inverse 4×4 matrix.
-    constexpr const Matrix<T, 4, 4>& inverse_matrix() const { return m_inv; }
+    constexpr const math::Matrix<T, 4, 4>& inverse_matrix() const { return m_inv; }
 
     /// Set the matrix and recompute its inverse.
-    constexpr Transform<T>& set_matrix(const Matrix<T, 4, 4>& m) {
+    constexpr Transform<T>& set_matrix(const math::Matrix<T, 4, 4>& m) {
         m_mat = m;
         m_inv = m.inversed();
         return *this;
     }
 
     /// Set both matrix and inverse explicitly.
-    constexpr Transform<T>& set_matrix(const Matrix<T, 4, 4>& m, const Matrix<T, 4, 4>& inv) {
+    constexpr Transform<T>& set_matrix(const math::Matrix<T, 4, 4>& m, const math::Matrix<T, 4, 4>& inv) {
         m_mat = m;
         m_inv = inv;
         return *this;
@@ -239,9 +239,9 @@ public:
      * checking whether their lengths remain 1.
      */
     constexpr bool has_scale() const {
-        return !is_equal(((*this).transform_vector(Vector<T, 3>(1, 0, 0))).length_squared(), T(1)) ||
-               !is_equal(((*this).transform_vector(Vector<T, 3>(0, 1, 0))).length_squared(), T(1)) ||
-               !is_equal(((*this).transform_vector(Vector<T, 3>(0, 0, 1))).length_squared(), T(1));
+        return !math::is_equal(((*this).transform_vector(math::Vector<T, 3>(1, 0, 0))).length_squared(), T(1)) ||
+               !math::is_equal(((*this).transform_vector(math::Vector<T, 3>(0, 1, 0))).length_squared(), T(1)) ||
+               !math::is_equal(((*this).transform_vector(math::Vector<T, 3>(0, 0, 1))).length_squared(), T(1));
     }
 
     /// Invert this transform in-place by swapping matrix and inverse.
@@ -267,7 +267,7 @@ public:
      * 3×3 linear part.
      */
     constexpr bool is_swaps_handedness() const {
-        Matrix<T, 3, 3> upper3x3 = m_mat.template view<3, 3>(0, 0).to_matrix();
+        math::Matrix<T, 3, 3> upper3x3 = m_mat.template view<3, 3>(0, 0).to_matrix();
         return upper3x3.determinant() < T(0);
     }
 
@@ -280,12 +280,12 @@ public:
     }
 
     /// Transform a 3D point.
-    constexpr Point<T, 3> transform_point(const Point<T, 3>& p) const {
+    constexpr math::Point<T, 3> transform_point(const math::Point<T, 3>& p) const {
         return drop_point(m_mat * lift_point(p));
     }
 
     /// Transform a 3D vector (ignores translation).
-    constexpr Vector<T, 3> transform_vector(const Vector<T, 3>& v) const {
+    constexpr math::Vector<T, 3> transform_vector(const math::Vector<T, 3>& v) const {
         return drop_vector(m_mat * lift_vector(v));
     }
 
@@ -296,11 +296,11 @@ public:
      * which is required for correct transformation in the presence of
      * non-uniform scale.
      */
-    constexpr Normal<T, 3> transform_normal(const Normal<T, 3>& n) const {
+    constexpr math::Normal<T, 3> transform_normal(const math::Normal<T, 3>& n) const {
         auto inv_t = m_inv.transposed();
         auto linear_part = inv_t.template view<3, 3>(0, 0).to_matrix();
         auto transformed = linear_part * n.to_vector();
-        return Normal<T, 3>::from_vector(transformed);
+        return math::Normal<T, 3>::from_vector(transformed);
     }
 
     /// Transform a 3D ray (origin and direction, preserving t-range).
@@ -351,14 +351,14 @@ public:
 
     constexpr auto transform_volume(const T area) const {
         // Scale area by the determinant of the upper-left 3x3 matrix
-        Matrix<T, 3, 3> linear_part = m_mat.template view<3, 3>(0, 0).to_matrix();
+        math::Matrix<T, 3, 3> linear_part = m_mat.template view<3, 3>(0, 0).to_matrix();
         T scale_factor = std::abs(linear_part.determinant());
         return area * scale_factor;
     }
 };
 
 /// Common alias for a float-based transform.
-using Trans = Transform<Float>;
+using Trans = Transform<math::Float>;
 
 /**
  * @brief Result of decomposing a transform into translation, rotation and scale.
@@ -396,19 +396,19 @@ struct TransformDecompositionResult {
 template <typename T>
 TransformDecompositionResult<T> fast_decompose_transform(const Transform<T>& transform) {
     const auto& M4 = transform.matrix();  // 4x4
-    using Mat3 = Matrix<T, 3, 3>;
-    using Vec3 = Vector<T, 3>;
+    using Mat3 = math::Matrix<T, 3, 3>;
+    using Vec3 = math::Vector<T, 3>;
 
     // --- 1) Translation ---
     const Vec3 t(M4.at(0, 3), M4.at(1, 3), M4.at(2, 3));
     Transform<T> Txf = Transform<T>::translate(t);
 
     // --- 2) A = upper-left 3x3 ---
-    ConstMatrixView<T, 4, 4, 3, 3> Aview{M4, 0, 0};
-    Matrix<T, 3, 3> A = Aview.to_matrix();  // A = R * S  (no shear assumed)
+    math::ConstMatrixView<T, 4, 4, 3, 3> Aview{M4, 0, 0};
+    math::Matrix<T, 3, 3> A = Aview.to_matrix();  // A = R * S  (no shear assumed)
 
     // --- 3) scales = column norms ---
-    Vector<T, 3> s{};
+    math::Vector<T, 3> s{};
     const T eps = T(1e-12);
     for (int c = 0; c < 3; ++c) {
         // 手动求列范数（VectorView 无 /=）
@@ -420,7 +420,7 @@ TransformDecompositionResult<T> fast_decompose_transform(const Transform<T>& tra
     }
 
     // --- 4) R = A * S^{-1}：逐列除尺度 ---
-    Matrix<T, 3, 3> R = A;
+    math::Matrix<T, 3, 3> R = A;
     for (int c = 0; c < 3; ++c) {
         T invs = T(1) / s[c];
         for (int r = 0; r < 3; ++r)

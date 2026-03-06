@@ -11,9 +11,9 @@
 #include "pbpt/math/spatial/point.hpp"
 #include "pbpt/math/spatial/vector.hpp"
 
-using namespace pbpt::math;
-
 namespace pbpt::geometry {
+namespace math = pbpt::math;
+
 
 /**
  * @brief Geometric ray with a normalized direction and parameter range.
@@ -30,8 +30,8 @@ namespace pbpt::geometry {
 template <typename T, int N>
 class Ray {
 private:
-    Point<T, N> m_origin{};
-    Vector<T, N> m_direction{};
+    math::Point<T, N> m_origin{};
+    math::Vector<T, N> m_direction{};
     T m_tmax{};
     T m_tmin{};
 
@@ -48,7 +48,7 @@ public:
      * @param tmin      Lower bound of the valid parameter interval.
      * @return Ray with the given attributes.
      */
-    static constexpr Ray<T, N> from_unit_direction(const Point<T, N>& origin, const Vector<T, N>& direction,
+    static constexpr Ray<T, N> from_unit_direction(const math::Point<T, N>& origin, const math::Vector<T, N>& direction,
                                                    T tmax = std::numeric_limits<T>::infinity(),
                                                    T tmin = -std::numeric_limits<T>::infinity()) {
         Ray<T, N> ray(origin, direction, tmax, tmin);
@@ -62,8 +62,8 @@ public:
      * and the parameter range to [-inf, +inf].
      */
     constexpr Ray<T, N>()
-        : m_origin(Point<T, N>::zeros()),
-          m_direction(Vector<T, N>::zeros()),
+        : m_origin(math::Point<T, N>::zeros()),
+          m_direction(math::Vector<T, N>::zeros()),
           m_tmax(std::numeric_limits<T>::infinity()),
           m_tmin(-std::numeric_limits<T>::infinity()) {
         m_direction.x() = 1.0;
@@ -82,7 +82,7 @@ public:
      * @param t_min     Lower bound of the valid parameter interval.
      */
     template <typename U>
-    constexpr Ray<T, N>(const Point<U, N>& origin, const Vector<U, N>& direction,
+    constexpr Ray<T, N>(const math::Point<U, N>& origin, const math::Vector<U, N>& direction,
                         T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
         : m_origin(origin), m_direction(direction.normalized()), m_tmax(t_max), m_tmin(t_min) {}
 
@@ -93,7 +93,7 @@ public:
      * default parameter range is [0, +inf).
      */
     template <typename U>
-    constexpr Ray<T, N>(const Point<U, N>& origin, const Point<U, N>& target,
+    constexpr Ray<T, N>(const math::Point<U, N>& origin, const math::Point<U, N>& target,
                         T t_max = std::numeric_limits<T>::infinity(), T t_min = static_cast<T>(0.0))
         : m_origin(origin), m_direction((target - origin).normalized()), m_tmax(t_max), m_tmin(t_min) {}
 
@@ -127,8 +127,8 @@ public:
      * @return Point corresponding to this parameter.
      */
     template <typename U>
-    constexpr Point<T, N> at(U t) const {
-        assert_if(t < m_tmin || t > m_tmax, "Ray parameter t out of bounds");
+    constexpr math::Point<T, N> at(U t) const {
+        math::assert_if(t < m_tmin || t > m_tmax, "Ray parameter t out of bounds");
         return m_origin + static_cast<T>(t) * m_direction;
     }
 };
@@ -193,13 +193,13 @@ public:
 
     /// Access a differential ray by index (mutable), with bounds checking.
     constexpr Ray<T, N>& differential_ray(int index) {
-        assert_if([&]() { return index < 0 || index >= N - 1; }, "RayDifferential index out of range");
+        math::assert_if([&]() { return index < 0 || index >= N - 1; }, "RayDifferential index out of range");
         return m_differential_rays[index];
     }
 
     /// Access a differential ray by index (const), with bounds checking.
     constexpr const Ray<T, N>& differential_ray(int index) const {
-        assert_if([&]() { return index < 0 || index >= N - 1; }, "RayDifferential index out of range");
+        math::assert_if([&]() { return index < 0 || index >= N - 1; }, "RayDifferential index out of range");
         return m_differential_rays[index];
     }
 

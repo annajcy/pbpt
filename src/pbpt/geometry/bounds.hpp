@@ -17,9 +17,9 @@
 
 #include "ray.hpp"
 
-using namespace pbpt::math;
-
 namespace pbpt::geometry {
+namespace math = pbpt::math;
+
 
 /**
  * @brief Axis-aligned bounding box in N dimensions.
@@ -35,13 +35,13 @@ namespace pbpt::geometry {
 template <typename T, int N>
 class Bounds {
 private:
-    Point<T, N> m_min;
-    Point<T, N> m_max;
+    math::Point<T, N> m_min;
+    math::Point<T, N> m_max;
 
 public:
     constexpr Bounds<T, N>() noexcept
-        : m_min(Point<T, N>::filled(std::numeric_limits<T>::max())),
-          m_max(Point<T, N>::filled(std::numeric_limits<T>::lowest())) {}
+        : m_min(math::Point<T, N>::filled(std::numeric_limits<T>::max())),
+          m_max(math::Point<T, N>::filled(std::numeric_limits<T>::lowest())) {}
 
     /**
      * @brief Construct a bounding box that encloses a list of points.
@@ -50,7 +50,7 @@ public:
      * all given points.
      */
     template <typename First, typename... Rest>
-        requires std::same_as<Point<T, N>, First> && (std::same_as<Point<T, N>, Rest> && ...)
+        requires std::same_as<math::Point<T, N>, First> && (std::same_as<math::Point<T, N>, Rest> && ...)
     constexpr explicit Bounds(const First& first, const Rest&... rest) : m_min(first), m_max(first) {
         (unite(rest), ...);
     }
@@ -61,8 +61,8 @@ public:
      * For each dimension i, bit i of @p index selects either the min
      * (bit = 0) or max (bit = 1) coordinate.
      */
-    Point<T, N> corner(int index) const {
-        Point<T, N> p;
+    math::Point<T, N> corner(int index) const {
+        math::Point<T, N> p;
         for (int i = 0; i < N; i++) {
             if ((index & (1 << i)) == 0) {
                 p[i] = m_min[i];
@@ -74,7 +74,7 @@ public:
     }
 
     /// Expand this box to include a point.
-    constexpr Bounds<T, N>& unite(const Point<T, N>& point) {
+    constexpr Bounds<T, N>& unite(const math::Point<T, N>& point) {
         for (int i = 0; i < N; ++i) {
             m_min[i] = std::min(m_min[i], point[i]);
             m_max[i] = std::max(m_max[i], point[i]);
@@ -90,7 +90,7 @@ public:
     }
 
     /// Return a new box equal to this box united with a point.
-    constexpr Bounds<T, N> united(const Point<T, N>& point) const {
+    constexpr Bounds<T, N> united(const math::Point<T, N>& point) const {
         Bounds<T, N> box(*this);
         box.unite(point);
         return box;
@@ -109,7 +109,7 @@ public:
      */
     constexpr bool is_overlapped(const Bounds<T, N>& box) const {
         for (int i = 0; i < N; ++i) {
-            if (is_less(m_max[i], box.m_min[i]) || is_greater(m_min[i], box.m_max[i]))
+            if (math::is_less(m_max[i], box.m_min[i]) || math::is_greater(m_min[i], box.m_max[i]))
                 return false;
         }
         return true;
@@ -136,7 +136,7 @@ public:
      * The check is inclusive: points on the boundary are considered
      * inside.
      */
-    constexpr bool contains(const Point<T, N>& point) const {
+    constexpr bool contains(const math::Point<T, N>& point) const {
         for (int i = 0; i < N; ++i) {
             if (point[i] < m_min[i] || point[i] > m_max[i]) {
                 return false;
@@ -170,10 +170,10 @@ public:
      * Each component is computed as
      * (p[i] - min[i]) / (max[i] - min[i]).
      */
-    constexpr Vector<T, N> offset(const Point<T, N>& p) const {
-        Vector<T, N> offset;
+    constexpr math::Vector<T, N> offset(const math::Point<T, N>& p) const {
+        math::Vector<T, N> offset;
         for (int i = 0; i < N; ++i) {
-            assert_if(is_zero(m_max[i] - m_min[i]), "Zero division error");
+            math::assert_if(math::is_zero(m_max[i] - m_min[i]), "Zero division error");
             offset[i] = (p[i] - m_min[i]) / (m_max[i] - m_min[i]);
         }
         return offset;
@@ -185,8 +185,8 @@ public:
      * Each component is computed as
      * min[i] + offset[i] * (max[i] - min[i]).
      */
-    constexpr const Point<T, N> interpolate(const std::array<T, N>& offset) const {
-        Point<T, N> p;
+    constexpr const math::Point<T, N> interpolate(const std::array<T, N>& offset) const {
+        math::Point<T, N> p;
         for (size_t i = 0; i < N; ++i) {
             p[i] = m_min[i] + offset[i] * (m_max[i] - m_min[i]);
         }
@@ -194,19 +194,19 @@ public:
     }
 
     /// Get the minimum corner (const).
-    constexpr const Point<T, N>& min() const { return m_min; }
+    constexpr const math::Point<T, N>& min() const { return m_min; }
     /// Get the maximum corner (const).
-    constexpr const Point<T, N>& max() const { return m_max; }
+    constexpr const math::Point<T, N>& max() const { return m_max; }
 
     /// Get the minimum corner (mutable).
-    constexpr Point<T, N>& min() { return m_min; }
+    constexpr math::Point<T, N>& min() { return m_min; }
     /// Get the maximum corner (mutable).
-    constexpr Point<T, N>& max() { return m_max; }
+    constexpr math::Point<T, N>& max() { return m_max; }
 
     /// Get the center of the box.
-    constexpr Point<T, N> center() const { return m_min.mid(m_max); }
+    constexpr math::Point<T, N> center() const { return m_min.mid(m_max); }
     /// Get the diagonal vector max - min.
-    constexpr Vector<T, N> diagonal() const { return m_max - m_min; }
+    constexpr math::Vector<T, N> diagonal() const { return m_max - m_min; }
 
     /// Get the hyper-volume (product of extents in all dimensions).
     constexpr T volume() const { return diagonal().product(); }
@@ -249,7 +249,7 @@ std::optional<std::pair<T, T>> intersect_ray_bounds(const Ray<T, N>& ray, const 
     const auto& d = ray.direction();
 
     for (int i = 0; i < N; ++i) {
-        if (is_zero(d[i])) {
+        if (math::is_zero(d[i])) {
             // 平行该轴方向的 slab
             if (o[i] < bounds.min()[i] || o[i] > bounds.max()[i])
                 return std::nullopt;
@@ -273,8 +273,8 @@ std::optional<std::pair<T, T>> intersect_ray_bounds(const Ray<T, N>& ray, const 
 }
 
 /// Axis-aligned bounding box in 3D using the default scalar type.
-using Bounds3 = Bounds<Float, 3>;
+using Bounds3 = Bounds<math::Float, 3>;
 /// Axis-aligned bounding box in 2D using the default scalar type.
-using Bounds2 = Bounds<Float, 2>;
+using Bounds2 = Bounds<math::Float, 2>;
 
 }  // namespace pbpt::geometry

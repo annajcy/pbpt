@@ -12,9 +12,9 @@
 
 #include "transform.hpp"
 
-using namespace pbpt::math;
-
 namespace pbpt::geometry {
+namespace math = pbpt::math;
+
 
 /**
  * @brief Solid angle cone around a unit direction.
@@ -28,7 +28,7 @@ namespace pbpt::geometry {
 template <typename T>
 class DirectionalCone {
 private:
-    Vector<T, 3> m_direction;
+    math::Vector<T, 3> m_direction;
     T m_cosine_theta;
 
 public:
@@ -37,8 +37,8 @@ public:
      *
      * The opening angle is 90 degrees around @p direction.
      */
-    constexpr static DirectionalCone<T> hemisphere(const Vector<T, 3>& direction = Vector<T, 3>(0, 0, 1)) {
-        return DirectionalCone<T>(direction, pi_v<T> / T(2));
+    constexpr static DirectionalCone<T> hemisphere(const math::Vector<T, 3>& direction = math::Vector<T, 3>(0, 0, 1)) {
+        return DirectionalCone<T>(direction, math::pi_v<T> / T(2));
     }
 
     /**
@@ -46,8 +46,8 @@ public:
      *
      * The opening angle is 180 degrees; all directions are inside.
      */
-    constexpr static DirectionalCone<T> entire_sphere(const Vector<T, 3>& direction = Vector<T, 3>(0, 0, 1)) {
-        return DirectionalCone<T>(direction, pi_v<T>);
+    constexpr static DirectionalCone<T> entire_sphere(const math::Vector<T, 3>& direction = math::Vector<T, 3>(0, 0, 1)) {
+        return DirectionalCone<T>(direction, math::pi_v<T>);
     }
 
     /**
@@ -56,13 +56,13 @@ public:
      * @param direction Unit axis of the cone (will be normalized by caller).
      * @param angle     Half-angle of the cone in radians.
      */
-    constexpr DirectionalCone(const Vector<T, 3>& direction, T angle)
+    constexpr DirectionalCone(const math::Vector<T, 3>& direction, T angle)
         : m_direction(direction), m_cosine_theta(std::cos(angle)) {}
 
     /**
      * @brief Test whether a direction lies inside the cone.
      */
-    constexpr bool contains(const Vector<T, 3>& v) const {
+    constexpr bool contains(const math::Vector<T, 3>& v) const {
         T cos_theta = m_direction.dot(v.normalized());
         return cos_theta >= m_cosine_theta;
     }
@@ -77,11 +77,11 @@ public:
         if (other.is_degenerate() || this->is_degenerate())
             return false;
 
-        T theta_this = safe_acos(m_cosine_theta);
-        T theta_other = safe_acos(other.m_cosine_theta);
-        T theta_delta = angle_between(m_direction, other.m_direction);
+        T theta_this = math::safe_acos(m_cosine_theta);
+        T theta_other = math::safe_acos(other.m_cosine_theta);
+        T theta_delta = math::angle_between(m_direction, other.m_direction);
 
-        return is_less_equal(theta_delta, std::min(theta_this + theta_other, pi_v<T>));
+        return math::is_less_equal(theta_delta, std::min(theta_this + theta_other, math::pi_v<T>));
     }
 
     /**
@@ -96,26 +96,26 @@ public:
         if (this->is_degenerate())
             return other;
 
-        T theta_delta = angle_between(m_direction, other.m_direction);
-        T theta_this = safe_acos(m_cosine_theta);
-        T theta_other = safe_acos(other.m_cosine_theta);
+        T theta_delta = math::angle_between(m_direction, other.m_direction);
+        T theta_this = math::safe_acos(m_cosine_theta);
+        T theta_other = math::safe_acos(other.m_cosine_theta);
 
-        if (is_less_equal(std::min(theta_delta + theta_other, pi_v<T>), theta_this)) {
+        if (math::is_less_equal(std::min(theta_delta + theta_other, math::pi_v<T>), theta_this)) {
             return *this;
-        } else if (is_less_equal(std::min(theta_delta + theta_this, pi_v<T>), theta_other)) {
+        } else if (math::is_less_equal(std::min(theta_delta + theta_this, math::pi_v<T>), theta_other)) {
             return other;
         } else {
             T theta_o = (theta_this + theta_other + theta_delta) / 2;
-            if (is_greater_equal(theta_o, pi_v<T>)) {
-                return DirectionalCone<T>::entire_sphere(Vector<T, 3>(0, 0, 1));
+            if (math::is_greater_equal(theta_o, math::pi_v<T>)) {
+                return DirectionalCone<T>::entire_sphere(math::Vector<T, 3>(0, 0, 1));
             }
 
-            auto rotate = cross(this->m_direction, other.m_direction);
-            if (is_zero(rotate.length())) {
+            auto rotate = math::cross(this->m_direction, other.m_direction);
+            if (math::is_zero(rotate.length())) {
                 if (this->m_direction.dot(other.m_direction) > 0) {
                     return DirectionalCone<T>(this->m_direction, theta_o);
                 } else {
-                    return DirectionalCone<T>::entire_sphere(Vector<T, 3>(0, 0, 1));
+                    return DirectionalCone<T>::entire_sphere(math::Vector<T, 3>(0, 0, 1));
                 }
             }
             auto theta_r = theta_o - theta_this;
@@ -128,7 +128,7 @@ public:
     constexpr bool is_degenerate() const { return m_cosine_theta == std::numeric_limits<T>::infinity(); }
 
     /// Get the opening angle in radians.
-    constexpr T angle() const { return safe_acos(m_cosine_theta); }
+    constexpr T angle() const { return math::safe_acos(m_cosine_theta); }
 
     /// Get the cosine of the opening angle (const).
     constexpr const T& cosine_theta() const { return m_cosine_theta; }
@@ -137,7 +137,7 @@ public:
     constexpr T& cosine_theta() { return m_cosine_theta; }
 
     /// Get the cone axis direction.
-    constexpr Vector<T, 3> direction() const { return m_direction; }
+    constexpr math::Vector<T, 3> direction() const { return m_direction; }
 
     /**
      * @brief Bound all directions from a point to an axis-aligned box.
@@ -146,15 +146,15 @@ public:
      * point @p p to any point inside @p bounds. If @p p lies inside
      * the box, the entire sphere is returned.
      */
-    static DirectionalCone<T> bound_subtended_directions(const Point<T, 3>& p, const Bounds<T, 3>& bounds) {
+    static DirectionalCone<T> bound_subtended_directions(const math::Point<T, 3>& p, const Bounds<T, 3>& bounds) {
         if (bounds.contains(p)) {
-            return DirectionalCone<T>::entire_sphere(Vector<T, 3>(0, 0, 1));
+            return DirectionalCone<T>::entire_sphere(math::Vector<T, 3>(0, 0, 1));
         }
 
-        Point<T, 3> sphere_center = bounds.center();
-        Vector<T, 3> diagonal = bounds.diagonal();
+        math::Point<T, 3> sphere_center = bounds.center();
+        math::Vector<T, 3> diagonal = bounds.diagonal();
         T sphere_radius = diagonal.length() / T(2);
-        Vector<T, 3> direction = (sphere_center - p).normalized();
+        math::Vector<T, 3> direction = (sphere_center - p).normalized();
         T dist_to_center = p.distance(sphere_center);
 
         T angle;
@@ -162,7 +162,7 @@ public:
             return DirectionalCone<T>::entire_sphere(direction);
         } else {
             T sin_theta = sphere_radius / dist_to_center;
-            angle = safe_asin(sin_theta);
+            angle = math::safe_asin(sin_theta);
         }
 
         return DirectionalCone<T>(direction, angle);
