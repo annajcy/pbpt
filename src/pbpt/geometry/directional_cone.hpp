@@ -4,8 +4,6 @@
  */
 #pragma once
 
-#include <concepts>
-
 #include "pbpt/math/basic/function.hpp"
 #include "pbpt/math/basic/comparison.hpp"
 #include "pbpt/math/spatial/vector.hpp"
@@ -13,9 +11,6 @@
 #include "transform.hpp"
 
 namespace pbpt::geometry {
-namespace math = pbpt::math;
-
-
 /**
  * @brief Solid angle cone around a unit direction.
  *

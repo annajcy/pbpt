@@ -5,7 +5,6 @@
 #pragma once
 
 #include <array>
-#include <type_traits>
 #include <optional>
 #include <utility>
 
@@ -18,9 +17,6 @@
 #include "ray.hpp"
 
 namespace pbpt::geometry {
-namespace math = pbpt::math;
-
-
 /**
  * @brief Axis-aligned bounding box in N dimensions.
  *

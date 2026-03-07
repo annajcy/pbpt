@@ -16,12 +16,8 @@
 #include "bounds.hpp"
 #include "ray.hpp"
 #include "pbpt/math/basic/format.hpp"
-#include <iostream>
 
 namespace pbpt::geometry {
-namespace math = pbpt::math;
-
-
 /**
  * @brief 4×4 homogeneous transform with cached inverse.
  *

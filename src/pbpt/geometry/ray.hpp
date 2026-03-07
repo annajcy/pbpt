@@ -12,9 +12,7 @@
 #include "pbpt/math/spatial/vector.hpp"
 
 namespace pbpt::geometry {
-namespace math = pbpt::math;
-
-
+    
 /**
  * @brief Geometric ray with a normalized direction and parameter range.
  *

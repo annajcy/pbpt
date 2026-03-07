@@ -89,7 +89,7 @@ public:
     // Keep these if you need to export the frame to a matrix for other systems
 
     constexpr Transform<T> local_to_render_transform() const {
-        return Transform<T>::from_mat3x3(Matrix<T, 3, 3>::from_cols(m_t, m_b, m_n));
+        return Transform<T>::from_mat3x3(math::Matrix<T, 3, 3>::from_cols(m_t, m_b, m_n));
     }
 
     constexpr Transform<T> render_to_local_transform() const {

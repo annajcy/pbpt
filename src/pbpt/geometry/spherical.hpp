@@ -15,8 +15,6 @@
 #include "pbpt/math/basic/type_alias.hpp"
 
 namespace pbpt::geometry {
-namespace math = pbpt::math;
-
 
 /**
  * @brief Wrap an angle into the [0, 2π) range.
