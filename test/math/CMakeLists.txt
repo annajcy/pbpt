@@ -19,6 +19,10 @@ add_executable(test_matrix test_matrix.cpp)
 target_link_libraries(test_matrix PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_matrix)
 
+add_executable(test_matrix_transform test_matrix_transform.cpp)
+target_link_libraries(test_matrix_transform PRIVATE pbpt GTest::gtest_main)
+gtest_discover_tests(test_matrix_transform)
+
 add_executable(test_octahedral test_octahedral.cpp)
 target_link_libraries(test_octahedral PRIVATE pbpt GTest::gtest_main)
 gtest_discover_tests(test_octahedral)

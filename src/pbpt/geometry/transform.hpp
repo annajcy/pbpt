@@ -8,7 +8,9 @@
 
 #include "pbpt/geometry/interaction.hpp"
 #include "pbpt/math/basic/type_alias.hpp"
+#include "pbpt/math/complex/quaternion.hpp"
 #include "pbpt/math/matrix/matrix.hpp"
+#include "pbpt/math/matrix/matrix_transform.hpp"
 #include "pbpt/math/spatial/normal.hpp"
 #include "pbpt/math/spatial/point.hpp"
 #include "pbpt/math/spatial/vector.hpp"
@@ -50,11 +52,7 @@ public:
      * @brief Translation by vector @p t.
      */
     static constexpr Transform<T> translate(const math::Vector<T, 3>& t) {
-        math::Matrix<T, 4, 4> m(T(1), T(0), T(0), t.x(), T(0), T(1), T(0), t.y(), T(0), T(0), T(1), t.z(), T(0), T(0), T(0),
-                          T(1));
-        math::Matrix<T, 4, 4> inv(T(1), T(0), T(0), -t.x(), T(0), T(1), T(0), -t.y(), T(0), T(0), T(1), -t.z(), T(0), T(0),
-                            T(0), T(1));
-        return Transform<T>(m, inv);
+        return Transform<T>(math::translate(t), math::translate(-t));
     }
 
     /// Uniform scaling by factor @p s.
@@ -62,31 +60,24 @@ public:
 
     /// Non-uniform scaling along x, y, z.
     static constexpr Transform<T> scale(const math::Vector<T, 3>& s) {
-        math::Matrix<T, 4, 4> m(s.x(), T(0), T(0), T(0), T(0), s.y(), T(0), T(0), T(0), T(0), s.z(), T(0), T(0), T(0), T(0),
-                          T(1));
-        math::Matrix<T, 4, 4> inv(T(1) / s.x(), T(0), T(0), T(0), T(0), T(1) / s.y(), T(0), T(0), T(0), T(0), T(1) / s.z(),
-                            T(0), T(0), T(0), T(0), T(1));
-        return Transform<T>(m, inv);
+        return Transform<T>(math::scale(s), math::scale(math::Vector<T, 3>(T(1) / s.x(), T(1) / s.y(), T(1) / s.z())));
     }
 
     /// Rotation around the x-axis by @p angle_rad (right-handed).
     static Transform<T> rotate_x(T angle_rad) {
-        T s = std::sin(angle_rad), c = std::cos(angle_rad);
-        math::Matrix<T, 4, 4> m(T(1), T(0), T(0), T(0), T(0), c, -s, T(0), T(0), s, c, T(0), T(0), T(0), T(0), T(1));
+        const math::Matrix<T, 4, 4> m = math::rotate_x(angle_rad);
         return Transform<T>(m, m.transposed());
     }
 
     /// Rotation around the y-axis by @p angle_rad (right-handed).
     static Transform<T> rotate_y(T angle_rad) {
-        T s = std::sin(angle_rad), c = std::cos(angle_rad);
-        math::Matrix<T, 4, 4> m(c, T(0), s, T(0), T(0), T(1), T(0), T(0), -s, T(0), c, T(0), T(0), T(0), T(0), T(1));
+        const math::Matrix<T, 4, 4> m = math::rotate_y(angle_rad);
         return Transform<T>(m, m.transposed());
     }
 
     /// Rotation around the z-axis by @p angle_rad (right-handed).
     static Transform<T> rotate_z(T angle_rad) {
-        T s = std::sin(angle_rad), c = std::cos(angle_rad);
-        math::Matrix<T, 4, 4> m(c, -s, T(0), T(0), s, c, T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1));
+        const math::Matrix<T, 4, 4> m = math::rotate_z(angle_rad);
         return Transform<T>(m, m.transposed());
     }
 
@@ -96,14 +87,17 @@ public:
      * The axis is normalized internally before constructing the matrix.
      */
     static Transform<T> rotate(T angle_rad, const math::Vector<T, 3>& axis) {
-        math::Vector<T, 3> a = axis.normalized();
-        T s = std::sin(angle_rad), c = std::cos(angle_rad), omc = T(1) - c;
-        T ax = a.x(), ay = a.y(), az = a.z();
+        const math::Matrix<T, 4, 4> m = math::rotate(angle_rad, axis);
+        return Transform<T>(m, m.transposed());
+    }
 
-        math::Matrix<T, 4, 4> m(c + ax * ax * omc, ax * ay * omc - az * s, ax * az * omc + ay * s, T(0),
-                          ay * ax * omc + az * s, c + ay * ay * omc, ay * az * omc - ax * s, T(0),
-                          az * ax * omc - ay * s, az * ay * omc + ax * s, c + az * az * omc, T(0), T(0), T(0), T(0),
-                          T(1));
+    /**
+     * @brief Rotation by @p angle_rad around an arbitrary axis.
+     *
+     * The axis is normalized internally before constructing the matrix.
+     */
+    static Transform<T> rotate(const pbpt::math::Quaternion<T>& q) {
+        const math::Matrix<T, 4, 4> m = math::rotate(q);
         return Transform<T>(m, m.transposed());
     }
 
@@ -114,8 +108,7 @@ public:
      * transform with no translation.
      */
     static Transform<T> from_mat3x3(math::Matrix<T, 3, 3> m) {
-        math::Matrix<T, 4, 4> mat(m.at(0, 0), m.at(0, 1), m.at(0, 2), T(0), m.at(1, 0), m.at(1, 1), m.at(1, 2), T(0),
-                            m.at(2, 0), m.at(2, 1), m.at(2, 2), T(0), T(0), T(0), T(0), T(1));
+        const math::Matrix<T, 4, 4> mat = math::from_mat3x3(m);
         return Transform<T>(mat, mat.inversed());
     }
 
@@ -126,11 +119,7 @@ public:
      * world space into camera space.
      */
     static constexpr Transform<T> look_at(const math::Point<T, 3>& eye, const math::Point<T, 3>& target, const math::Vector<T, 3>& up) {
-        math::Vector<T, 3> f = (target - eye).normalized();
-        math::Vector<T, 3> s = math::cross(f, up).normalized();
-        math::Vector<T, 3> u = math::cross(s, f);
-        math::Matrix<T, 4, 4> m(s.x(), s.y(), s.z(), -s.dot(eye.to_vector()), u.x(), u.y(), u.z(), -u.dot(eye.to_vector()),
-                          -f.x(), -f.y(), -f.z(), f.dot(eye.to_vector()), T(0), T(0), T(0), T(1));
+        const math::Matrix<T, 4, 4> m = math::look_at(eye, target, up);
         return Transform<T>(m, m.inversed());
     }
 
@@ -141,9 +130,7 @@ public:
      * and near/far planes into the canonical clip space cube.
      */
     static constexpr Transform<T> orthographic(T left, T right, T bottom, T top, T near, T far) {
-        math::Matrix<T, 4, 4> m(T(2) / (right - left), T(0), T(0), -(right + left) / (right - left), T(0),
-                          T(2) / (top - bottom), T(0), -(top + bottom) / (top - bottom), T(0), T(0),
-                          T(1) / (far - near), -near / (far - near), T(0), T(0), T(0), T(1));
+        const math::Matrix<T, 4, 4> m = math::orthographic(left, right, bottom, top, near, far);
         return Transform<T>(m, m.inversed());
     }
 
@@ -153,9 +140,8 @@ public:
      * This transform maps a perspective frustum into an intermediate
      * space where an orthographic transform can be applied.
      */
-    static Transform<T> pesp_to_ortho(T near, T far) {
-        math::Matrix<T, 4, 4> m(near, T(0), T(0), T(0), T(0), near, T(0), T(0), T(0), T(0), near + far, -near * far, T(0),
-                          T(0), T(1), T(0));
+    static Transform<T> perspective_to_orthographic(T near, T far) {
+        const math::Matrix<T, 4, 4> m = math::perspective_to_orthographic(near, far);
         return Transform<T>(m, m.inversed());
     }
 
@@ -165,10 +151,8 @@ public:
      * Uses a vertical field of view, aspect ratio and near/far planes.
      */
     static Transform<T> perspective(T fov_y_rad, T aspect_xy, T near, T far) {
-        auto persp_to_ortho = pesp_to_ortho(near, far);
-        T right = near * std::tan(fov_y_rad / T(2)) * aspect_xy, left = -right;
-        T top = near * std::tan(fov_y_rad / T(2)), bottom = -top;
-        return orthographic(left, right, bottom, top, near, far) * persp_to_ortho;
+        const math::Matrix<T, 4, 4> m = math::perspective(fov_y_rad, aspect_xy, near, far);
+        return Transform<T>(m, m.inversed());
     }
 
     /**
@@ -177,8 +161,7 @@ public:
      * Perspective division can be applied before or after this transform.
      */
     static Transform<T> viewport(T width, T height) {
-        math::Matrix<T, 4, 4> m(width / T(2), T(0), T(0), width / T(2), T(0), height / T(2), T(0), height / T(2), T(0), T(0),
-                          T(1), T(0), T(0), T(0), T(0), T(1));
+        const math::Matrix<T, 4, 4> m = math::viewport(width, height);
         return Transform<T>(m, m.inversed());
     }
 

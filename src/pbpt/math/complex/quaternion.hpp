@@ -15,6 +15,21 @@
 namespace pbpt::math {
 
 template <typename T>
+class Quaternion;
+
+template <typename T>
+constexpr Quaternion<T> operator*(const Quaternion<T>& lhs, const Quaternion<T>& rhs);
+
+template <typename T>
+constexpr Quaternion<T> operator*(T lhs, const Quaternion<T>& rhs);
+
+template <typename T>
+constexpr Quaternion<T> operator*(const Quaternion<T>& lhs, T rhs);
+
+template <typename T>
+constexpr Quaternion<T> operator/(const Quaternion<T>& lhs, T rhs);
+
+template <typename T>
 class Quaternion {
 private:
     T m_w{T(1)};
@@ -62,22 +77,42 @@ public:
         return conjugated() * (T(1) / ls);
     }
 
-    constexpr Quaternion operator*(const Quaternion& rhs) const {
-        return Quaternion(m_w * rhs.m_w - m_x * rhs.m_x - m_y * rhs.m_y - m_z * rhs.m_z,
-                          m_w * rhs.m_x + m_x * rhs.m_w + m_y * rhs.m_z - m_z * rhs.m_y,
-                          m_w * rhs.m_y - m_x * rhs.m_z + m_y * rhs.m_w + m_z * rhs.m_x,
-                          m_w * rhs.m_z + m_x * rhs.m_y - m_y * rhs.m_x + m_z * rhs.m_w);
+    constexpr Quaternion& operator+=(const Quaternion& rhs) {
+        this->m_w = m_w + rhs.m_w;
+        this->m_x = m_x + rhs.m_x;
+        this->m_y = m_y + rhs.m_y;
+        this->m_z = m_z + rhs.m_z;
+        return *this;
     }
 
-    constexpr Quaternion operator*(T rhs) const { return Quaternion(m_w * rhs, m_x * rhs, m_y * rhs, m_z * rhs); }
-
-    constexpr Quaternion operator/(T rhs) const {
-        assert_if([&]() { return is_equal(rhs, T(0)); }, "Quaternion division by zero");
-        return Quaternion(m_w / rhs, m_x / rhs, m_y / rhs, m_z / rhs);
+    constexpr Quaternion& operator-=(const Quaternion& rhs) {
+        this->m_w = m_w - rhs.m_w;
+        this->m_x = m_x - rhs.m_x;
+        this->m_y = m_y - rhs.m_y;
+        this->m_z = m_z - rhs.m_z;
+        return *this;
     }
 
     constexpr Quaternion& operator*=(const Quaternion& rhs) {
-        *this = (*this) * rhs;
+        const T new_w = m_w * rhs.m_w - m_x * rhs.m_x - m_y * rhs.m_y - m_z * rhs.m_z;
+        const T new_x = m_w * rhs.m_x + m_x * rhs.m_w + m_y * rhs.m_z - m_z * rhs.m_y;
+        const T new_y = m_w * rhs.m_y - m_x * rhs.m_z + m_y * rhs.m_w + m_z * rhs.m_x;
+        const T new_z = m_w * rhs.m_z + m_x * rhs.m_y - m_y * rhs.m_x + m_z * rhs.m_w;
+        m_w = new_w;
+        m_x = new_x;
+        m_y = new_y;
+        m_z = new_z;
+        return *this;
+    }
+
+    constexpr Quaternion& operator*=(T rhs) {
+        *this = Quaternion(m_w * rhs, m_x * rhs, m_y * rhs, m_z * rhs);
+        return *this;
+    }
+
+    constexpr Quaternion& operator/=(T rhs) {
+        assert_if([&]() { return is_equal(rhs, T(0)); }, "Quaternion division by zero");
+        *this = Quaternion(m_w / rhs, m_x / rhs, m_y / rhs, m_z / rhs);
         return *this;
     }
 
@@ -212,15 +247,48 @@ public:
 };
 
 template <typename T>
+constexpr Quaternion<T> operator+(Quaternion<T> lhs, const Quaternion<T>& rhs) {
+    lhs += rhs;
+    return lhs;
+}
+
+template <typename T>
+constexpr Quaternion<T> operator-(const Quaternion<T>& lhs, const Quaternion<T>& rhs) {
+    Quaternion<T> out = lhs;
+    out -= rhs;
+    return out;
+}
+
+template <typename T>
+constexpr Quaternion<T> operator*(const Quaternion<T>& lhs, const Quaternion<T>& rhs) {
+    Quaternion<T> out = lhs;
+    out *= rhs;
+    return out;
+}
+
+template <typename T>
 constexpr Quaternion<T> operator*(T lhs, const Quaternion<T>& rhs) {
     return rhs * lhs;
 }
 
-using Quat = Quaternion<Float>;
+template <typename T>
+constexpr Quaternion<T> operator*(const Quaternion<T>& lhs, T rhs) {
+    Quaternion<T> out = lhs;
+    out *= rhs;
+    return out;
+}
 
-// ---------------------------------------------------------------------------
-// GLM-style free-function wrappers (from compat.hpp)
-// ---------------------------------------------------------------------------
+template <typename T>
+constexpr Quaternion<T> operator/(const Quaternion<T>& lhs, T rhs) {
+    Quaternion<T> out = lhs;
+    out /= rhs;
+    return out;
+}
+
+template <typename T>
+constexpr Quaternion<T> operator-(const Quaternion<T>& lhs) {
+    return Quaternion<T>(-lhs.w(), -lhs.x(), -lhs.y(), -lhs.z());
+}
 
 template <typename T>
 constexpr auto normalize(const Quaternion<T>& q) {
@@ -268,9 +336,10 @@ constexpr T identity() {
     return T::identity();
 }
 
+using Quat = Quaternion<Float>;
+
 template <>
 constexpr Quat identity<Quat>() {
     return Quat::identity();
 }
-
 }  // namespace pbpt::math

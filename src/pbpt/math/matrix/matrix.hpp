@@ -1119,62 +1119,6 @@ constexpr T determinant(const Matrix<T, N, N>& m) {
 }
 
 // ---------------------------------------------------------------------------
-// GLM-style matrix transform helpers (from compat.hpp)
-// ---------------------------------------------------------------------------
-
-template <typename T>
-constexpr Matrix<T, 4, 4> translate(const Matrix<T, 4, 4>& m, const Vector<T, 3>& t) {
-    Matrix<T, 4, 4> tr = Matrix<T, 4, 4>::identity();
-    tr[0][3] = t.x();
-    tr[1][3] = t.y();
-    tr[2][3] = t.z();
-    return m * tr;
-}
-
-template <typename T>
-constexpr Matrix<T, 4, 4> scale(const Matrix<T, 4, 4>& m, const Vector<T, 3>& s) {
-    Matrix<T, 4, 4> sm = Matrix<T, 4, 4>::identity();
-    sm[0][0] = s.x();
-    sm[1][1] = s.y();
-    sm[2][2] = s.z();
-    return m * sm;
-}
-
-template <typename T>
-constexpr Matrix<T, 4, 4> lookAt(const Vector<T, 3>& eye, const Vector<T, 3>& target, const Vector<T, 3>& up) {
-    const Vector<T, 3> f = (target - eye).normalized();
-    const Vector<T, 3> s = cross(f, up).normalized();
-    const Vector<T, 3> u = cross(s, f);
-
-    return Matrix<T, 4, 4>(s.x(), s.y(), s.z(), -s.dot(eye), u.x(), u.y(), u.z(), -u.dot(eye), -f.x(), -f.y(), -f.z(),
-                           f.dot(eye), T(0), T(0), T(0), T(1));
-}
-
-template <typename T>
-constexpr Matrix<T, 4, 4> perspective(T fov_y_rad, T aspect_xy, T near, T far) {
-    const T tan_half = std::tan(fov_y_rad / T(2));
-    Matrix<T, 4, 4> out{};
-    out[0][0] = T(1) / (aspect_xy * tan_half);
-    out[1][1] = T(1) / tan_half;
-    out[2][2] = -(far + near) / (far - near);
-    out[2][3] = -(T(2) * far * near) / (far - near);
-    out[3][2] = -T(1);
-    return out;
-}
-
-template <typename T>
-constexpr Matrix<T, 4, 4> ortho(T left, T right, T bottom, T top, T near, T far) {
-    Matrix<T, 4, 4> out = Matrix<T, 4, 4>::identity();
-    out[0][0] = T(2) / (right - left);
-    out[1][1] = T(2) / (top - bottom);
-    out[2][2] = -T(2) / (far - near);
-    out[0][3] = -(right + left) / (right - left);
-    out[1][3] = -(top + bottom) / (top - bottom);
-    out[2][3] = -(far + near) / (far - near);
-    return out;
-}
-
-// ---------------------------------------------------------------------------
 // solve_LMS algorithm
 // ---------------------------------------------------------------------------
 

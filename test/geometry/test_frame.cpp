@@ -2,9 +2,10 @@
 
 #include "pbpt/pbpt.h"
 
+
 namespace pbpt::geometry::testing {
 
-using Vec3d = Vector<double, 3>;
+using Vec3d = math::Vector<double, 3>;
 
 constexpr double kEps = 1e-6;
 
@@ -16,8 +17,8 @@ TEST(FrameTest, ConstructFromNormalRightHanded) {
     EXPECT_NEAR(f.t().dot(f.n()), 0.0, kEps);
     EXPECT_NEAR(f.b().dot(f.n()), 0.0, kEps);
     EXPECT_NEAR(f.t().dot(f.b()), 0.0, kEps);
-    // Right-handed: cross(t, b) == n
-    Vec3d cross_tb = cross(f.t(), f.b());
+    // Right-handed: math::cross(t, b) == n
+    Vec3d cross_tb = math::cross(f.t(), f.b());
     EXPECT_NEAR(cross_tb.x(), f.n().x(), kEps);
     EXPECT_NEAR(cross_tb.y(), f.n().y(), kEps);
     EXPECT_NEAR(cross_tb.z(), f.n().z(), kEps);
@@ -31,7 +32,7 @@ TEST(FrameTest, ConstructFromNormalMinusZ) {
     EXPECT_NEAR(f.t().dot(f.n()), 0.0, kEps);
     EXPECT_NEAR(f.b().dot(f.n()), 0.0, kEps);
     EXPECT_NEAR(f.t().dot(f.b()), 0.0, kEps);
-    Vec3d cross_tb = cross(f.t(), f.b());
+    Vec3d cross_tb = math::cross(f.t(), f.b());
     EXPECT_NEAR(cross_tb.x(), f.n().x(), kEps);
     EXPECT_NEAR(cross_tb.y(), f.n().y(), kEps);
     EXPECT_NEAR(cross_tb.z(), f.n().z(), kEps);
@@ -53,8 +54,8 @@ TEST(FrameTest, ConstructFromTangentAndNormal) {
     EXPECT_NEAR(f.t().dot(f.n()), 0.0, kEps);
     EXPECT_NEAR(f.b().dot(f.n()), 0.0, kEps);
     EXPECT_NEAR(f.t().dot(f.b()), 0.0, kEps);
-    // Right-handed: cross(t, b) == n
-    Vec3d cross_tb = cross(f.t(), f.b());
+    // Right-handed: math::cross(t, b) == n
+    Vec3d cross_tb = math::cross(f.t(), f.b());
     EXPECT_NEAR(cross_tb.x(), f.n().x(), kEps);
     EXPECT_NEAR(cross_tb.y(), f.n().y(), kEps);
     EXPECT_NEAR(cross_tb.z(), f.n().z(), kEps);
@@ -99,7 +100,7 @@ TEST(FrameTest, RightHandedConsistency) {
 
     // Right-handed frame
     Frame<double> f_right(normal);
-    Vec3d cross_right = cross(f_right.t(), f_right.b());
+    Vec3d cross_right = math::cross(f_right.t(), f_right.b());
     EXPECT_NEAR(cross_right.dot(f_right.n()), 1.0, kEps);
 }
 
@@ -134,8 +135,8 @@ TEST(FrameTest, TangentNormalConstructor) {
     Vec3d normal(0.0, 1.0, 0.0);
     Frame<double> f(tangent, normal);
 
-    // Expected bitangent should be cross(normal, tangent)
-    Vec3d expected_b = cross(normal, tangent);
+    // Expected bitangent should be math::cross(normal, tangent)
+    Vec3d expected_b = math::cross(normal, tangent);
     EXPECT_NEAR(f.b().x(), expected_b.x(), kEps);
     EXPECT_NEAR(f.b().y(), expected_b.y(), kEps);
     EXPECT_NEAR(f.b().z(), expected_b.z(), kEps);
@@ -165,7 +166,7 @@ TEST(FrameTest, MultipleVectorTransformation) {
 
 TEST(FrameTest, FloatTypeCompatibility) {
     // Test with float type instead of double
-    using Vec3f = Vector<float, 3>;
+    using Vec3f = math::Vector<float, 3>;
     Vec3f normal_f(0.0f, 0.0f, 1.0f);
     Frame<float> f_float(normal_f);
 

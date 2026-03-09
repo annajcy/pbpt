@@ -11,7 +11,7 @@ TEST(QuaternionTest, IdentityRotateVector) {
 }
 
 TEST(QuaternionTest, AxisAngleRotate90DegY) {
-    const Quat q = angle_axis(radians(90.0f), Vec3(0.0f, 1.0f, 0.0f));
+    const Quat q = Quat::from_axis_angle(radians(90.0f), Vec3(0.0f, 1.0f, 0.0f));
     const Vec3 z(0.0f, 0.0f, 1.0f);
     const Vec3 x(1.0f, 0.0f, 0.0f);
     const Vec3 rz = normalize(q * z);
@@ -21,9 +21,9 @@ TEST(QuaternionTest, AxisAngleRotate90DegY) {
 }
 
 TEST(QuaternionTest, Mat3RoundTrip) {
-    const Quat q0 = normalize(angle_axis(radians(33.0f), Vec3(1.0f, 2.0f, 3.0f)));
-    const Mat3 m = mat3_cast(q0);
-    const Quat q1 = normalize(quat_cast(m));
+    const Quat q0 = normalize(Quat::from_axis_angle(radians(33.0f), Vec3(1.0f, 2.0f, 3.0f)));
+    const Mat3 m = q0.to_mat3();
+    const Quat q1 = normalize(Quat::from_mat3(m));
     EXPECT_NEAR(q0.w(), q1.w(), 1e-4f);
     EXPECT_NEAR(q0.x(), q1.x(), 1e-4f);
     EXPECT_NEAR(q0.y(), q1.y(), 1e-4f);
@@ -32,7 +32,7 @@ TEST(QuaternionTest, Mat3RoundTrip) {
 
 TEST(QuaternionTest, RotationFromToDegenerate) {
     const Vec3 v(1.0f, 0.0f, 0.0f);
-    const Quat q = rotation(v, v);
+    const Quat q = Quat::rotation(v, v);
     const Vec3 rv = q * v;
     EXPECT_NEAR(rv.x(), v.x(), 1e-4f);
     EXPECT_NEAR(rv.y(), v.y(), 1e-4f);

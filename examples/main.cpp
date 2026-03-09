@@ -126,19 +126,19 @@ int main() {
     auto res = integrator::integrate<double>(
         hemisphere, [&n](const math::Vector<double, 3>& wi) { return 1.0 * n.dot(wi); }, sample_count, rng2d);
 
-    std::cout << "Estimated: " << res << ", Expected: " << pi_v<double> << "\n";
+    std::cout << "Estimated: " << res << ", Expected: " << math::pi_v<double> << "\n";
 
     integrator::UniformDiskDomain<double> disk{};
     auto res_disk =
         integrator::integrate<double>(disk, [](const math::Point<double, 2>& p) { return 1.0f; }, sample_count, rng2d);
 
-    std::cout << "Estimated: " << res_disk << ", Expected: " << pi_v<double> << "\n";
+    std::cout << "Estimated: " << res_disk << ", Expected: " << math::pi_v<double> << "\n";
 
     integrator::CosineWeightedHemisphereDomain<double> proj_hemi{};
     auto res_proj_hemi = integrator::integrate<double>(
         proj_hemi, [&n](const math::Vector<double, 3>& wi) { return 1.0f; }, sample_count, rng2d);
 
-    std::cout << "Estimated: " << res_proj_hemi << ", Expected: " << pi_v<double> << "\n";
+    std::cout << "Estimated: " << res_proj_hemi << ", Expected: " << math::pi_v<double> << "\n";
 
     integrator::UniformParallelogramAreaDomain<double> para{math::Point<double, 3>(-1.0, 4.0, -1.0),
                                                             math::Vector<double, 3>(2.0, 0.0, 0.0),

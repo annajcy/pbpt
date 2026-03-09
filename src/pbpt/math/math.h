@@ -14,6 +14,7 @@
 #include "pbpt/math/complex/complex.hpp"
 #include "pbpt/math/complex/quaternion.hpp"
 #include "pbpt/math/matrix/matrix.hpp"
+#include "pbpt/math/matrix/matrix_transform.hpp"
 #include "pbpt/math/matrix/matrix_views.hpp"
 #include "pbpt/math/spatial/normal.hpp"
 #include "pbpt/math/spatial/point.hpp"
