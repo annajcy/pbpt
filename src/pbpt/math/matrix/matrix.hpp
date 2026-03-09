@@ -286,6 +286,13 @@ public:
         return std::ranges::any_of(m_data, [](T val) { return std::isnan(val); });
     }
 
+    /// @brief Check if all elements of the matrix are finite
+    [[nodiscard]] constexpr bool is_finite() const noexcept
+        requires std::is_floating_point_v<T>
+    {
+        return std::ranges::all_of(m_data, [](T val) { return std::isfinite(val); });
+    }
+
     // Assignment operators with type safety
     /// Adds another matrix to this one in-place.
     template <typename U>
