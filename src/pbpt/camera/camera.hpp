@@ -191,15 +191,19 @@ public:
      * @param right  Right plane in camera x.
      * @param bottom Bottom plane in camera y.
      * @param top    Top plane in camera y.
-     * @param near   Near plane in camera z.
-     * @param far    Far plane in camera z.
+     * @param near   Near clipping distance from the camera. Positive values
+     *               are converted internally to the signed camera-space plane.
+     * @param far    Far clipping distance from the camera. Positive values
+     *               are converted internally to the signed camera-space plane.
      * @param width  Viewport width in pixels.
      * @param height Viewport height in pixels.
      * @return CameraProjection representing this orthographic setup.
      */
     static CameraProjection<T> orthographic(T left, T right, T bottom, T top, T near, T far, T width, T height) {
+        const T near_z = -std::abs(near);
+        const T far_z = -std::abs(far);
         geometry::Transform<T> camera_to_clip =
-            geometry::Transform<T>::orthographic(left, right, bottom, top, near, far);
+            geometry::Transform<T>::orthographic(left, right, bottom, top, near_z, far_z);
         geometry::Transform<T> clip_to_viewport = geometry::Transform<T>::viewport(width, height);
         return CameraProjection<T>(camera_to_clip, clip_to_viewport);
     }
@@ -213,14 +217,18 @@ public:
      *
      * @param fov_y_rad Vertical field of view in radians.
      * @param aspect_xy Aspect ratio (width / height).
-     * @param near      Near plane in camera z.
-     * @param far       Far plane in camera z.
+     * @param near      Near clipping distance from the camera. Positive values
+     *                  are converted internally to the signed camera-space plane.
+     * @param far       Far clipping distance from the camera. Positive values
+     *                  are converted internally to the signed camera-space plane.
      * @param width     Viewport width in pixels.
      * @param height    Viewport height in pixels.
      * @return CameraProjection representing this perspective setup.
      */
     static CameraProjection<T> perspective(T fov_y_rad, T aspect_xy, T near, T far, T width, T height) {
-        geometry::Transform<T> camera_to_clip = geometry::Transform<T>::perspective(fov_y_rad, aspect_xy, near, far);
+        const T near_z = -std::abs(near);
+        const T far_z = -std::abs(far);
+        geometry::Transform<T> camera_to_clip = geometry::Transform<T>::perspective(fov_y_rad, aspect_xy, near_z, far_z);
         geometry::Transform<T> clip_to_viewport = geometry::Transform<T>::viewport(width, height);
         return CameraProjection<T>(camera_to_clip, clip_to_viewport);
     }
@@ -234,7 +242,9 @@ public:
      * @tparam T Scalar type
      * @param fov_degrees Field of view in degrees
      * @param fov_axis Which axis FOV applies to: "x", "y", "smaller", "larger"
-     * @param near_clip Near clipping plane distance
+     * @param near_clip Near clipping distance. Positive values are interpreted
+     *                  as distances from the camera and converted internally
+     *                  to the signed camera-space plane.
      * @param width Film width in pixels
      * @param height Film height in pixels
      * @return Physical film size (width, height)
@@ -245,10 +255,8 @@ public:
         T aspect = T(width) / T(height);
         const T near_distance = std::abs(near_clip);
 
-        // Calculate the physical size of the dimension to which FOV applies
-        // near_clip may be negative in a right-handed -Z-forward camera setup.
-        // Film dimensions must stay positive; using signed near flips the film
-        // and mirrors the rendered image horizontally/vertically.
+        // Film dimensions must stay positive even though the low-level
+        // projection path uses signed camera-space planes.
         T physical_size_for_fov = 2 * near_distance * std::tan(fov_rad / 2);
 
         T physical_width, physical_height;
@@ -330,8 +338,9 @@ public:
     static CameraProjection<T> create_perspective_projection(const math::Vector<int, 2>& film_resolution,
                                                              const math::Vector<T, 2>& film_physical_size, T near,
                                                              T far) {
+        const T near_distance = std::abs(near);
         T aspect = film_physical_size.x() / film_physical_size.y();
-        T fov_y = 2 * std::atan2(film_physical_size.y() / 2, near);
+        T fov_y = 2 * std::atan2(film_physical_size.y() / 2, near_distance);
         return CameraProjection<T>::perspective(fov_y, aspect, near, far, film_resolution.x(), film_resolution.y());
     }
 

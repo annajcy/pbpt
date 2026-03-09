@@ -99,9 +99,9 @@ TEST(MatrixTransformTest, ExtractHelpersRecoverTrsComponents) {
 }
 
 TEST(MatrixTransformTest, OrthographicMapsNearAndFarDepths) {
-    const auto ortho = orthographic(-10.0, 10.0, -5.0, 5.0, 1.0, 101.0);
-    const auto near_ndc = mat_apply_point(ortho, Point<double, 3>(-10.0, -5.0, 1.0));
-    const auto far_ndc = mat_apply_point(ortho, Point<double, 3>(10.0, 5.0, 101.0));
+    const auto ortho = orthographic(-10.0, 10.0, -5.0, 5.0, -1.0, -101.0);
+    const auto near_ndc = mat_apply_point(ortho, Point<double, 3>(-10.0, -5.0, -1.0));
+    const auto far_ndc = mat_apply_point(ortho, Point<double, 3>(10.0, 5.0, -101.0));
 
     EXPECT_NEAR(near_ndc.x(), -1.0, 1e-6);
     EXPECT_NEAR(near_ndc.y(), -1.0, 1e-6);
@@ -112,8 +112,8 @@ TEST(MatrixTransformTest, OrthographicMapsNearAndFarDepths) {
 }
 
 TEST(MatrixTransformTest, PerspectiveMatchesTransformFactory) {
-    const auto matrix_perspective = perspective(deg2rad(60.0), 1.5, 0.5, 50.0);
-    const auto transform_perspective = geometry::Transform<double>::perspective(deg2rad(60.0), 1.5, 0.5, 50.0).matrix();
+    const auto matrix_perspective = perspective(deg2rad(60.0), 1.5, -0.5, -50.0);
+    const auto transform_perspective = geometry::Transform<double>::perspective(deg2rad(60.0), 1.5, -0.5, -50.0).matrix();
     expect_matrices_near(matrix_perspective, transform_perspective, 1e-9);
 }
 

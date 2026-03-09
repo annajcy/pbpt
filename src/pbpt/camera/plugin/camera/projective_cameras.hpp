@@ -307,8 +307,8 @@ public:
      * @param film           AnyFilm<T> (owns width/height).
      * @param fov_degrees    Field of view in degrees.
      * @param fov_axis       Axis to which FOV applies.
-     * @param near           Near plane in camera z.
-     * @param far            Far plane in camera z.
+     * @param near           Near clipping distance from the camera.
+     * @param far            Far clipping distance from the camera.
      * @param focal_distance Distance from lens to focal plane along +z.
      ***/
     ThinLensPerspectiveCamera(AnyFilm<T> film, T fov_degrees, FovAxis fov_axis, T near, T far, T focal_distance)

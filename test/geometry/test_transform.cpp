@@ -141,10 +141,10 @@ TEST_F(TransformTest, LookAt) {
 }
 
 TEST_F(TransformTest, Orthographic) {
-    const auto ortho_matrix = Transform<double>::orthographic(-10.0, 10.0, -5.0, 5.0, 1.0, 101.0).matrix();
+    const auto ortho_matrix = Transform<double>::orthographic(-10.0, 10.0, -5.0, 5.0, -1.0, -101.0).matrix();
 
     // A point at the top-right-far corner of the view volume
-    const math::Pt3 top_right_far(10, 5, 101);
+    const math::Pt3 top_right_far(10, 5, -101);
     const auto p1_ndc = mat_apply_point(ortho_matrix, top_right_far);
     // Should map to (1, 1, 1) in Normalized Device Coordinates (NDC)
     EXPECT_NEAR(p1_ndc.x(), 1.0, kEpsilon);
@@ -153,7 +153,7 @@ TEST_F(TransformTest, Orthographic) {
                 kEpsilon);  // Far plane maps to 1 with this formula
 
     // A point at the bottom-left-near corner
-    const math::Pt3 bottom_left_near(-10, -5, 1);
+    const math::Pt3 bottom_left_near(-10, -5, -1);
     const auto p2_ndc = mat_apply_point(ortho_matrix, bottom_left_near);
     // Should map to (-1, -1, 0) in NDC
     EXPECT_NEAR(p2_ndc.x(), -1.0, kEpsilon);
@@ -165,8 +165,8 @@ TEST_F(TransformTest, Orthographic) {
 TEST_F(TransformTest, Perspective) {
     const math::Float fov_rad = static_cast<math::Float>(M_PI / 2.0);  // 90 degrees
     const math::Float aspect = 1.0;
-    const math::Float z_near = 1.0;
-    const math::Float z_far = 100.0;
+    const math::Float z_near = -1.0;
+    const math::Float z_far = -100.0;
     const auto persp_matrix = Transform<double>::perspective(fov_rad, aspect, z_near, z_far).matrix();
     std::cout << "Perspective Matrix:\n" << persp_matrix << std::endl;
 
@@ -180,7 +180,7 @@ TEST_F(TransformTest, Perspective) {
     EXPECT_NEAR(near_ndc.z(), 0.0, kEpsilon);
 
     // Test a point on the far plane. Its Z should map to 1 in NDC.
-    const math::Pt3 far_plane_point(50, 50, z_far);  // A point within the frustum on the far plane
+    const math::Pt3 far_plane_point(-50, -50, z_far);  // A point within the frustum on the far plane
     const auto far_clip = persp_matrix * math::Vector<double, 4>(double(far_plane_point.x()),
                                                             double(far_plane_point.y()),
                                                             double(far_plane_point.z()), 1.0);
@@ -189,7 +189,7 @@ TEST_F(TransformTest, Perspective) {
     EXPECT_NEAR(far_ndc.z(), 1.0, kEpsilon);
 
     // Also check the w component before division for the far point
-    EXPECT_NEAR(far_w, double(z_far), kEpsilon);
+    EXPECT_NEAR(far_w, double(-z_far), kEpsilon);
 }
 
 // --- Identity Transform Tests ---

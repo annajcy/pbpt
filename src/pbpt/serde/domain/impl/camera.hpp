@@ -32,8 +32,8 @@ struct PerspectiveCameraSerde {
         const auto axis_str =
             parse_child_value<T, std::string>(node, "string", "fov_axis", read_env).value_or("smaller");
         const float focus_d = parse_child_value<T, float>(node, "float", "focus_distance", read_env).value_or(0.f);
-        const float near_clip = -parse_child_value<T, float>(node, "float", "near_clip", read_env).value_or(0.1f);
-        const float far_clip = -parse_child_value<T, float>(node, "float", "far_clip", read_env).value_or(10000.0f);
+        const float near_clip = parse_child_value<T, float>(node, "float", "near_clip", read_env).value_or(0.1f);
+        const float far_clip = parse_child_value<T, float>(node, "float", "far_clip", read_env).value_or(10000.0f);
 
         int width = 512, height = 512;
         if (auto film_node = node.child("film")) {
@@ -75,11 +75,11 @@ struct PerspectiveCameraSerde {
 
         auto near_node = node.append_child("float");
         near_node.append_attribute("name") = "near_clip";
-        near_node.append_attribute("value") = -cam.near_clip();
+        near_node.append_attribute("value") = cam.near_clip();
 
         auto far_node = node.append_child("float");
         far_node.append_attribute("name") = "far_clip";
-        far_node.append_attribute("value") = -cam.far_clip();
+        far_node.append_attribute("value") = cam.far_clip();
 
         auto fd_node = node.append_child("float");
         fd_node.append_attribute("name") = "focus_distance";

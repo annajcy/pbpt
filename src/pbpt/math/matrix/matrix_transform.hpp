@@ -125,16 +125,17 @@ constexpr Matrix<T, 4, 4> orthographic(T left, T right, T bottom, T top, T near,
 
 template <typename T>
 constexpr Matrix<T, 4, 4> perspective_to_orthographic(T near, T far) {
-    return Matrix<T, 4, 4>(near, T(0), T(0), T(0), T(0), near, T(0), T(0), T(0), T(0), near + far, -near * far,
-                           T(0), T(0), T(1), T(0));
+    return Matrix<T, 4, 4>(-near, T(0), T(0), T(0), T(0), -near, T(0), T(0), T(0), T(0), -(near + far), near * far,
+                           T(0), T(0), -T(1), T(0));
 }
 
 template <typename T>
 constexpr Matrix<T, 4, 4> perspective(T fov_y_rad, T aspect_xy, T near, T far) {
     const Matrix<T, 4, 4> persp_to_ortho = perspective_to_orthographic(near, far);
-    const T               right = near * std::tan(fov_y_rad / T(2)) * aspect_xy;
+    const T               near_distance = std::abs(near);
+    const T               right = near_distance * std::tan(fov_y_rad / T(2)) * aspect_xy;
     const T               left = -right;
-    const T               top = near * std::tan(fov_y_rad / T(2));
+    const T               top = near_distance * std::tan(fov_y_rad / T(2));
     const T               bottom = -top;
     return orthographic(left, right, bottom, top, near, far) * persp_to_ortho;
 }
