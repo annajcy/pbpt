@@ -1118,6 +1118,20 @@ constexpr T determinant(const Matrix<T, N, N>& m) {
     return m.determinant();
 }
 
+/// Returns the skew-symmetric matrix such that `cross_matrix(v) * w == cross(v, w)`.
+template <typename T>
+    requires std::is_floating_point_v<T>
+constexpr Matrix<T, 3, 3> cross_matrix(const Vector<T, 3>& v) {
+    Matrix<T, 3, 3> result = Matrix<T, 3, 3>::zeros();
+    result[0][1]           = -v.z();
+    result[0][2]           = v.y();
+    result[1][0]           = v.z();
+    result[1][2]           = -v.x();
+    result[2][0]           = -v.y();
+    result[2][1]           = v.x();
+    return result;
+}
+
 // ---------------------------------------------------------------------------
 // solve_LMS algorithm
 // ---------------------------------------------------------------------------
