@@ -1,7 +1,9 @@
 site_name: PBPT
 site_description: Physically Based Path Tracer API and guides
+site_url: https://annajcy.github.io/pbpt/
 repo_url: https://github.com/annajcy/pbpt
 edit_uri: edit/main/docs/
+strict: true
 
 docs_dir: docs
 

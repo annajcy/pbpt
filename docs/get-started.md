@@ -9,7 +9,7 @@ This guide helps you build PBPT and run your first example.
 - Conan 2.x
 - Python and `uv` (for docs tooling)
 
-## 1) Install dependencies (Conan)
+## 1 Install dependencies (Conan)
 
 ```bash
 uv run conan install . \
@@ -19,7 +19,7 @@ uv run conan install . \
   -s build_type=Release -s compiler.cppstd=23 --build=missing
 ```
 
-## 2) Configure and build
+## 2 Configure and build
 
 ```bash
 cmake -S . -B build/Release \
@@ -29,20 +29,21 @@ cmake -S . -B build/Release \
 cmake --build build/Release -j
 ```
 
-## 3) Run an example
+## 3 Run an example
 
 After building, run one of the example executables from `build/Release/examples/` (name depends on your generator/platform), then check rendered outputs under `output/`.
 
-## 4) Build and preview docs
+## 4 Build and preview docs
 
 ```bash
-uv run mkdocs build
+uv run doxygen Doxyfile.in
+uv run mkdocs build --strict
 uv run mkdocs serve
 ```
 
 Open `http://127.0.0.1:8000` to preview the documentation site.
 
-## 5) API docs
+## 5 API docs
 
 To build Doxygen API docs:
 

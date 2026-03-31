@@ -38,7 +38,8 @@ Use `uv run` to execute Python/Conan commands; no manual environment activation 
 Build docs locally:
 
 ```bash
-uv run mkdocs build
+uv run doxygen Doxyfile.in
+uv run mkdocs build --strict
 uv run mkdocs serve
 ```
 
@@ -47,6 +48,8 @@ Then open `http://127.0.0.1:8000`.
 - Home: `docs/index.md`
 - Overview: `docs/overview.md`
 - Get Started: `docs/get-started.md`
+
+The default deployment target is GitHub Pages via `.github/workflows/docs.yml`.
 
 ### Conan Build
 
